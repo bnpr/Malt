@@ -8,10 +8,10 @@ For a detail explanation of the project, please watch the video below
 
 [![Watch the video](https://img.youtube.com/vi/g9NHz9mzuBc/maxresdefault.jpg)](https://www.youtube.com/watch?v=g9NHz9mzuBc)
 
-## Milestones:
+## Milestones (provisional):
 1. Basic building block nodes
- - a NPR mix shader to combine all NPR shader nodes
- - few basic npr shader nodes
+ - a npr mix shader to combine all NPR shader nodes 
+ - few basic npr shader nodes (X-toon, soft/hard edge Toon, Half Lambert, Phong etc)
 2. Layer UI, not using node editor to make material
-3. Separate BEER from Cycles
+3. Separate BEER from Cycles?
 4. More NPR shaders
