@@ -13,3 +13,6 @@ For a detail explanation of the project, please watch the video below
 2. Layer UI
 3. More npr shaders
 4. Make it stupidly easy to add your own custom npr shader
+
+## Shader List:
+https://docs.google.com/spreadsheets/d/1PzEgDB8d6vHqGSSmOa-_IF8u5USBEzD0ycEW-LztSOc/edit?usp=sharing
