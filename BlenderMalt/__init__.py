@@ -10,6 +10,18 @@ bl_info = {
 
 import bpy
 
+#ENSURE DEPENDENCIES ARE INSTALLED
+try:
+    import OpenGL, pcpp
+except:
+    import os, subprocess, ensurepip
+    ensurepip.bootstrap()
+    os.environ.pop("PIP_REQ_TRACKER", None) #https://developer.blender.org/T71856 :(
+    dependencies = ['PyOpenGL','pcpp']
+    for dependency in dependencies:
+        subprocess.check_call([bpy.app.binary_path_python, '-m', 'pip', 'install', dependency])
+
+
 from . import Material
 from . import Properties
 from . import MaltPipeline
@@ -33,25 +45,6 @@ if "bpy" in locals():
     for module in modules:
         importlib.reload(module)
 
-class OT_MaltInstallDependencies(bpy.types.Operator):
-    bl_idname = "wm.malt_install_dependencies"
-    bl_label = "Install Malt Dependencies"
-
-    def execute(self, context):
-        import os
-        import subprocess
-        import ensurepip
-        ensurepip.bootstrap()
-        os.environ.pop("PIP_REQ_TRACKER", None) #https://developer.blender.org/T71856 :(
-        pybin = bpy.app.binary_path_python
-        dependencies = [
-            'PyOpenGL',
-            'pcpp',
-        ]
-        for dependency in dependencies:
-            subprocess.check_call([pybin, '-m', 'pip', 'install', dependency])
-        return {'FINISHED'}
-
 
 class Preferences(bpy.types.AddonPreferences):
     # this must match the addon name
@@ -62,7 +55,6 @@ class Preferences(bpy.types.AddonPreferences):
     def draw(self, context):
         layout = self.layout
         layout.prop(self, "shader_library_path")
-        layout.operator('wm.malt_install_dependencies')
 
 
 class OT_MaltPrintError(bpy.types.Operator):
@@ -89,7 +81,6 @@ class OT_MaltPrintError(bpy.types.Operator):
         return {'RUNNING_MODAL'}
 
 classes=[
-    OT_MaltInstallDependencies,
     Preferences,
     OT_MaltPrintError,
 ]
