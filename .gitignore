@@ -3,5 +3,7 @@
 !.gitattributes
 !.gitmodules
 
+!.github
+
 __pycache__
 
