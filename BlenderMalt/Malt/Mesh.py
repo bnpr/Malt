@@ -1,27 +1,34 @@
 # Copyright (c) 2020 BlenderNPR and contributors. MIT license.
 
+import ctypes
+
 from .GL import *
 
 class Mesh(object):
 
-    def __init__(self, position, index, normal=None, uvs={}, colors={}):
+    def __init__(self, position, index, normal=None, uvs=[], colors=[]):
         self.position = None
         self.normal = None
-        self.uvs = {}
-        self.colors = {}
+        self.uvs = []
+        self.colors = []
 
         self.index_count = len(index)
 
         self.VAO = None
         self.EBO = gl_buffer(GL_INT, 1)
-        index_buffer = gl_buffer(GL_UNSIGNED_INT, len(index), index)
+        index_buffer = index
+        #make sure it's an uint32 c array
+        if isinstance(index_buffer, ctypes.Array) == False or index_buffer._type_ != ctypes.c_uint32:
+            index_buffer = gl_buffer(GL_UNSIGNED_INT, len(index), index)
         glGenBuffers(1, self.EBO)
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, self.EBO[0])
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, len(index_buffer) * 4, index_buffer, GL_STATIC_DRAW)
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0)
         
         def load_VBO(data):
-            data = gl_buffer(GL_FLOAT, len(data), data)
+            #make sure it's a float c array
+            if isinstance(data, ctypes.Array) == False or data._type_ != ctypes.c_float:
+                data = gl_buffer(GL_FLOAT, len(data), data)
             VBO = gl_buffer(GL_INT, 1)
             glGenBuffers(1, VBO)
             glBindBuffer(GL_ARRAY_BUFFER, VBO[0])
@@ -32,10 +39,10 @@ class Mesh(object):
         self.position = load_VBO(position)
         if normal:
             self.normal = load_VBO(normal)
-        for key, value in uvs.items():
-            self.uvs[key] = load_VBO(value)
-        for key, value in colors.items():
-            self.colors[key] = load_VBO(value)
+        for uv in uvs:
+            self.uvs.append(load_VBO(uv))
+        for color in colors:
+            self.colors.append(load_VBO(color))
     
     #Blender uses different OGL contexts, this function should only be called from the draw callback
     #https://developer.blender.org/T65208
@@ -57,11 +64,11 @@ class Mesh(object):
         
         uv0_index = 2
         color0_index = 10
-        for key, value in self.uvs.items():
-            assert(uv0_index + key < color0_index)
-            bind_VBO(value, uv0_index + key, 2)
-        for key, value in self.colors.items():
-            bind_VBO(value, color0_index + key, 4)
+        for i, uv in enumerate(self.uvs):
+            assert(uv0_index + i < color0_index)
+            bind_VBO(uv, uv0_index + i, 2)
+        for i, color in enumerate(self.colors):
+            bind_VBO(color, color0_index + i, 4)
 
         glBindVertexArray(0)
 
@@ -84,10 +91,10 @@ class Mesh(object):
         delete_buffer(self.EBO)
         delete_buffer(self.position)
         delete_buffer(self.normal)
-        for key, value in self.uvs.items():
-            delete_buffer(value)
-        for key, value in self.colors.items():
-            delete_buffer(value)
+        for uv in self.uvs:
+            delete_buffer(uv)
+        for color in self.colors:
+            delete_buffer(color)
         if self.VAO:
             glDeleteVertexArrays(1, self.VAO)
             

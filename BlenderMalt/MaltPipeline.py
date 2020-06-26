@@ -43,7 +43,7 @@ class MaltPipeline(bpy.types.PropertyGroup):
         layout.prop(self, "pipeline_class")
 
 
-class MaltPipelinePanel(bpy.types.Panel):
+class MALT_PT_Pipeline(bpy.types.Panel):
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
 
@@ -60,7 +60,7 @@ class MaltPipelinePanel(bpy.types.Panel):
 
 classes = (
     MaltPipeline,
-    MaltPipelinePanel,
+    MALT_PT_Pipeline,
 )
 
 @bpy.app.handlers.persistent

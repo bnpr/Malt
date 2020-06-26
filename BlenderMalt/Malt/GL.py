@@ -1,5 +1,7 @@
 # Copyright (c) 2020 BlenderNPR and contributors. MIT license. 
 
+import collections
+
 import OpenGL
 OpenGL.ERROR_LOGGING = False
 OpenGL.FULL_LOGGING = False
@@ -35,9 +37,9 @@ def gl_buffer(type, size, data=None):
     }
     gl_type = (types[type] * size)
     if data:
-        if size > 1:
+        try:
             return gl_type(*data)
-        else:
+        except:
             return gl_type(data)
     else:
         return gl_type()
@@ -94,14 +96,27 @@ class GLUniform(object):
         self.base_type = base_type
         self.base_size = base_size
         self.array_length = array_length
-        self.value = value
         self.set_function = uniform_type_set_function(self.type)
+        self.value = None
+        self.set_value(value)
+    
+    def is_sampler(self):
+        return 'SAMPLER' in GL_ENUMS[self.type]
     
     def set_value(self, value):
         self.value = gl_buffer(self.base_type, self.base_size * self.array_length, value)
     
     def bind(self):
         self.set_function(self.index, self.array_length, self.value)
+    
+    def copy(self):
+        return GLUniform(
+            self.index,
+            self.type, 
+            self.base_type, 
+            self.base_size, 
+            self.array_length,
+            self.value)
 
 def uniform_type_to_base_type_and_size(type):
     base_types = {

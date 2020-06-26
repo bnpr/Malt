@@ -10,8 +10,8 @@ class Camera(object):
 
 class Material(object):
 
-    def __init__(self, shader_path, parameters={}):
-        self.shader_path = shader_path
+    def __init__(self, shader, parameters={}):
+        self.shader = shader
         self.parameters = parameters
 
 class Object(object):

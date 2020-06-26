@@ -31,9 +31,6 @@ class Pipeline(object):
             'uniforms':{}, 
             'error':None,
         }
-    
-    def load_mesh(self, position, index, normal=None, uvs={}, colors={}):
-        return Mesh(position,index,normal,uvs,colors)
 
     def render(self, resolution, scene):
         #return texture

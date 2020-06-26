@@ -22,16 +22,18 @@ except:
         subprocess.check_call([bpy.app.binary_path_python, '-m', 'pip', 'install', dependency])
 
 
-from . import Material
-from . import Properties
+from . import MaltMaterial
+from . import MaltProperties
+from . import MaltMeshes
 from . import MaltPipeline
-from . import RenderEngine
+from . import MaltRenderEngine
 
 modules = [
-    Properties,#Properties must register before Material
-    Material,
+    MaltProperties,#MaltProperties must register before MaltMaterial
+    MaltMaterial,
+    MaltMeshes,
     MaltPipeline,
-    RenderEngine,
+    MaltRenderEngine,
 ]
 
 from . import Malt

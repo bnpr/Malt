@@ -56,6 +56,14 @@ _obj_vertex='''
 #version 450 core
 layout (location = 0) in vec3 in_position;
 layout (location = 1) in vec3 in_normal;
+layout (location = 2) in vec2 in_uv0;
+layout (location = 3) in vec2 in_uv1;
+layout (location = 4) in vec2 in_uv2;
+layout (location = 5) in vec2 in_uv3;
+layout (location = 10) in vec4 in_color0;
+layout (location = 11) in vec4 in_color1;
+layout (location = 12) in vec4 in_color2;
+layout (location = 13) in vec4 in_color3;
 
 uniform mat4 _projection;
 uniform mat4 _camera;
@@ -63,11 +71,23 @@ uniform mat4 _model;
 
 out vec3 position;
 out vec3 normal;
+out vec2 uv[4];
+out vec4 color[4];
 
 void main()
 {
     position = (_model * vec4(in_position,1)).xyz;
     normal = normalize(mat3(_model) * in_normal);
+
+    uv[0]=in_uv0;
+    uv[1]=in_uv1;
+    uv[2]=in_uv2;
+    uv[3]=in_uv3;
+
+    color[0]=in_color0;
+    color[1]=in_color1;
+    color[2]=in_color2;
+    color[3]=in_color3;
 
     gl_Position = _projection * _camera * vec4(position,1);
 }
@@ -82,12 +102,14 @@ uniform mat4 _model;
 
 in vec3 position;
 in vec3 normal;
+in vec2 uv[4];
+in vec4 color[4];
 
-layout (location = 0) out vec4 color;
+layout (location = 0) out vec4 COLOR;
 
 void main()
 {
-    color = vec4(1,1,0,1);
+    COLOR = vec4(1,1,0,1);
     //float n_dot = dot(vec3(0,0,1), normal);
     //color.b = n_dot;
 }
@@ -102,6 +124,8 @@ uniform mat4 _model;
 
 in vec3 position;
 in vec3 normal;
+in vec2 uv[4];
+in vec4 color[4];
 
 layout (location = 0) out vec4 COLOR;
 
@@ -137,12 +161,8 @@ class PipelineTest(Pipeline):
         vertex = _obj_vertex
         pixel = _obj_pixel_pre + shader_source
         shader = Shader(vertex, pixel)
-        self.shaders[shader_path] = {
-            'MAIN_PASS' : shader
-        }
         return {
-            'uniforms':shader.uniforms,
-            'error':shader.error,
+            'MAIN_PASS' : shader,
         }
     
     def resize_render_targets(self, resolution):
@@ -172,12 +192,8 @@ class PipelineTest(Pipeline):
         
         for obj in scene.objects:
             shader = self.obj_shader
-            if obj.material and obj.material.shader_path in self.shaders.keys():
-                shader = self.shaders[obj.material.shader_path]['MAIN_PASS']
-                for name, parameter in obj.material.parameters.items():
-                    if name in shader.uniforms.keys():
-                        shader.uniforms[name].set_value(parameter)
-            
+            if obj.material and obj.material.shader['MAIN_PASS']:
+                shader = obj.material.shader['MAIN_PASS']
             shader.uniforms['_projection'].set_value(scene.camera.projection_matrix)
             shader.uniforms['_camera'].set_value(scene.camera.camera_matrix)
             shader.uniforms['_model'].set_value(obj.matrix)

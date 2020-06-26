@@ -1,5 +1,7 @@
 # Copyright (c) 2020 BlenderNPR and contributors. MIT license. 
 
+from itertools import chain
+
 import bpy
 
 from .Malt.PipelineTest import PipelineTest
@@ -8,8 +10,7 @@ from .Malt import GL
 from .Malt import Scene
 
 from . import MaltPipeline
-
-from itertools import chain
+from . import MaltMeshes
 
 class MaltRenderEngine(bpy.types.RenderEngine):
     # These three members are used by blender to set up the
@@ -32,39 +33,48 @@ class MaltRenderEngine(bpy.types.RenderEngine):
     def get_pipeline(self):
         return MaltPipeline.get_pipeline()
     
-    def load_mesh(self, mesh_object):
-        mesh = mesh_object.to_mesh()
-        #TODO: Blender indexes vertex positions and normals, but not uvs and colors,
-        #we might need to do our own indexing or don't do indexing at all
-        mesh.calc_loop_triangles()
-        positions = [0]*len(mesh.vertices)*3
-        mesh.vertices.foreach_get("co", positions)
-        normals = [0]*len(mesh.vertices)*3
-        mesh.vertices.foreach_get("normal", normals)
-        indices = [0]*len(mesh.loop_triangles)*3
-        mesh.loop_triangles.foreach_get("vertices", indices)
-
-        self.meshes[mesh_object.name] = self.get_pipeline().load_mesh(positions, indices, normals)
-    
     def load_scene(self, context, depsgraph):
+
         def flatten_matrix(matrix):
             return list(chain.from_iterable(matrix.transposed()))
+
         scene = Scene.Scene()
+        
         #Camera
         view_3d = context.region_data 
         camera_matrix = flatten_matrix(view_3d.view_matrix)
         projection_matrix = flatten_matrix(view_3d.window_matrix)
         scene.camera = Scene.Camera(camera_matrix, projection_matrix)
+
         #Objects
-        for obj in context.scene.objects:
-            if obj.type == 'MESH':
+        materials = {}
+        def add_object(obj, matrix):
+            if obj.type in ('MESH','CURVE','SURFACE','FONT'):
                 material = None
-                slots = obj.material_slots 
-                if len(slots) > 0 and slots[0].material:
-                    malt = slots[0].material.malt
-                    material = Scene.Material(malt.shader_source, malt.parameters)
-                matrix = flatten_matrix(obj.matrix_world)
-                scene.objects.append(Scene.Object(matrix, self.meshes[obj.name], material))
+                if len(obj.material_slots) > 0 and obj.material_slots[0].material:
+                    material_name = obj.material_slots[0].material.name_full
+                    if material_name not in materials.keys():
+                        #load material
+                        malt = obj.material_slots[0].material.malt
+                        shader = malt.get_shader()
+                        if shader:
+                            pipeline_shaders = shader[self.get_pipeline().__class__.__name__]
+                            materials[material_name] = Scene.Material(pipeline_shaders)
+                        else:
+                            materials[material_name] = None
+                    material = materials[material_name]
+
+                mesh = MaltMeshes.get_mesh(obj)
+                matrix = flatten_matrix(matrix)
+                scene.objects.append(Scene.Object(matrix, mesh, material))
+
+        for obj in depsgraph.objects:
+                add_object(obj, obj.matrix_world)
+        
+        for instance in depsgraph.object_instances:
+            if instance.instance_object:
+                add_object(instance.instance_object, instance.matrix_world)
+
         return scene
 
     # This is the method called by Blender for both final renders (F12) and
@@ -98,19 +108,20 @@ class MaltRenderEngine(bpy.types.RenderEngine):
     # should be read from Blender in the same thread. Typically a render
     # thread will be started to do the work while keeping Blender responsive.
     def view_update(self, context, depsgraph):
+        #MAKE SURE WE LOAD MESHES FROM HERE SINCE THEY ARE ALREADY EVALUATED
+        #TODO: Optionally update only in object mode
         if self.first_update:
             # First time initialization
             self.first_update = False
             # Loop over all datablocks used in the scene.
             for datablock in depsgraph.ids:
                 if datablock.__class__  is bpy.types.Object and datablock.type == 'MESH':
-                    self.load_mesh(datablock)
+                    MaltMeshes.get_mesh(datablock)
         else:
             # Test which datablocks changed
             for update in depsgraph.updates:
-                if update.is_updated_geometry:
-                    if update.id.__class__  is bpy.types.Object and update.id.type == 'MESH':
-                        self.load_mesh(update.id)
+                if update.id.__class__  is bpy.types.Object and update.id.type == 'MESH':
+                    MaltMeshes.get_mesh(update.id)
 
     # For viewport renders, this method is called whenever Blender redraws
     # the 3D viewport. The renderer is expected to quickly draw the render
