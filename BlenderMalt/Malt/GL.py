@@ -90,11 +90,10 @@ def compile_gl_program(vertex, fragment):
     return (program, error)
 
 class GLUniform(object):
-    def __init__(self, index, type, base_type, base_size, array_length, value):
+    def __init__(self, index, type, value, array_length=1):
         self.index = index
         self.type = type
-        self.base_type = base_type
-        self.base_size = base_size
+        self.base_type, self.base_size = uniform_type_to_base_type_and_size(self.type)
         self.array_length = array_length
         self.set_function = uniform_type_set_function(self.type)
         self.value = None
@@ -113,10 +112,8 @@ class GLUniform(object):
         return GLUniform(
             self.index,
             self.type, 
-            self.base_type, 
-            self.base_size, 
-            self.array_length,
-            self.value)
+            self.value, 
+            self.array_length)
 
 def uniform_type_to_base_type_and_size(type):
     base_types = {
@@ -162,6 +159,12 @@ def reflect_program_uniforms(program):
         array_length, uniform_type, uniform_name)
         name = buffer_to_string(uniform_name)
 
+        #Uniform location can be different from index
+        location = glGetUniformLocation(program, name)
+
+        if location == -1:
+            continue #A built-in uniform or an Uniform Block
+
         base_type, size = uniform_type_to_base_type_and_size(uniform_type[0])
 
         #TODO: Should use glGetnUniform to support arrays
@@ -173,11 +176,32 @@ def reflect_program_uniforms(program):
             GL_BOOL : glGetUniformiv, #TODO: check,
         }
         value = gl_buffer(base_type, size * array_length[0])
-        gl_get[base_type](program, i, value)
+        gl_get[base_type](program, location, value)
 
-        uniforms[name] = GLUniform(i, uniform_type[0], base_type, size, array_length[0], value)
+        uniforms[name] = GLUniform(location, uniform_type[0], value, array_length[0])
     
     return uniforms
+
+def reflect_program_uniform_blocks(program):
+    block_count = gl_buffer(GL_INT,1)
+    max_string_length = 128
+    block_name = gl_buffer(GL_BYTE, max_string_length)
+    block_bind = gl_buffer(GL_INT, 1)
+    block_size = gl_buffer(GL_INT, 1)
+
+    glGetProgramiv(program, GL_ACTIVE_UNIFORM_BLOCKS, block_count)
+
+    blocks = {}
+    for i in range(0, block_count[0]):
+        glGetActiveUniformBlockName(program, i, max_string_length, NULL, block_name)
+        name = buffer_to_string(block_name)
+        glGetActiveUniformBlockiv(program, i, GL_UNIFORM_BLOCK_BINDING, block_bind)
+        glGetActiveUniformBlockiv(program, i, GL_UNIFORM_BLOCK_DATA_SIZE, block_size)
+        blocks[name] = block_bind[0]
+    
+    return blocks
+
+
 
 def uniform_type_set_function(uniform_type):
     base_type, size = uniform_type_to_base_type_and_size(uniform_type)

@@ -29,9 +29,11 @@ class SunLight(object):
 
 class SpotLight(object):
 
-    def __init__(self, position, direction, radius, color=(1,1,1), parameters={}):
+    def __init__(self, position, direction, angle, angle_blend, radius, color=(1,1,1), parameters={}):
         self.position = position
         self.direction = direction
+        self.angle = angle
+        self.angle_blend = angle_blend
         self.radius = radius
         self.color = color
         

@@ -22,6 +22,7 @@ except:
         subprocess.check_call([bpy.app.binary_path_python, '-m', 'pip', 'install', dependency])
 
 
+from . import MaltLights
 from . import MaltMaterial
 from . import MaltProperties
 from . import MaltMeshes
@@ -30,6 +31,7 @@ from . import MaltRenderEngine
 
 modules = [
     MaltProperties,#MaltProperties must register before MaltMaterial
+    MaltLights,
     MaltMaterial,
     MaltMeshes,
     MaltPipeline,

@@ -9,6 +9,9 @@ from . import RenderTarget
 from . import Scene
 from . import Shader
 from . import Texture
+from . import UBO
+
+from .Render import Lighting
 
 modules = [
     GL,
@@ -20,4 +23,6 @@ modules = [
     Scene,
     Shader,
     Texture,
+    UBO,
+    Lighting,
 ]

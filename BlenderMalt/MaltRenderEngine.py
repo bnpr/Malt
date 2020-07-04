@@ -4,6 +4,8 @@ from itertools import chain
 
 import bpy
 
+from mathutils import Vector,Matrix,Quaternion
+
 from .Malt.PipelineTest import PipelineTest
 from .Malt.Mesh import Mesh
 from .Malt import GL
@@ -52,21 +54,45 @@ class MaltRenderEngine(bpy.types.RenderEngine):
             if obj.type in ('MESH','CURVE','SURFACE','FONT'):
                 material = None
                 if len(obj.material_slots) > 0 and obj.material_slots[0].material:
-                    material_name = obj.material_slots[0].material.name_full
+                    blend_material = obj.material_slots[0].material
+                    material_name = blend_material.name_full
                     if material_name not in materials.keys():
                         #load material
-                        malt = obj.material_slots[0].material.malt
-                        shader = malt.get_shader()
+                        shader = blend_material.malt.get_shader()
                         if shader:
                             pipeline_shaders = shader[self.get_pipeline().__class__.__name__]
-                            materials[material_name] = Scene.Material(pipeline_shaders)
+                            parameters = blend_material.malt_parameters.get_parameters()
+                            materials[material_name] = Scene.Material(pipeline_shaders, parameters)
                         else:
                             materials[material_name] = None
                     material = materials[material_name]
 
                 mesh = MaltMeshes.get_mesh(obj)
                 matrix = flatten_matrix(matrix)
-                scene.objects.append(Scene.Object(matrix, mesh, material))
+                scene.objects.append(Scene.Object(matrix, mesh, material, obj.malt_parameters.get_parameters()))
+           
+            elif obj.type == 'LIGHT':
+                malt_light = obj.data.malt
+                color = malt_light.color[:]
+                position = obj.matrix_world.translation[:]
+                direction = (obj.matrix_world.to_quaternion() @ Vector((0.0,0.0,-1.0)))[:]
+                parameters = obj.malt_parameters.get_parameters()
+                
+                if obj.data.type == 'SUN':
+                    scene.sun_lights.append(
+                        Scene.SunLight(direction,color,parameters)
+                    )
+                
+                elif obj.data.type == 'POINT':
+                    scene.point_lights.append(
+                        Scene.PointLight(position, malt_light.radius, color, parameters)
+                    )
+                
+                elif obj.data.type == 'SPOT':
+                    scene.spot_lights.append(
+                        Scene.SpotLight(position, direction, malt_light.spot_angle, malt_light.spot_blend_angle, 
+                        malt_light.radius, color, parameters)
+                    )
 
         for obj in depsgraph.objects:
                 add_object(obj, obj.matrix_world)
@@ -215,6 +241,7 @@ def get_panels():
     exclude_panels = {
         'VIEWLAYER_PT_filter',
         'VIEWLAYER_PT_layer_passes',
+        'DATA_PT_area',
     }
 
     panels = []

@@ -5,23 +5,19 @@ from .Shader import Shader
 
 class PipelineParameters(object):
 
-    def __init__(self):
-        self.world = {}
-        self.camera = {}
-        self.object = {}
-        self.mesh = {}
-        self.material = {}
-        self.light = {}
-        self.sun_light = {}
-        self.spot_light = {}
-        self.spot_light = {}
-
+    def __init__(self, scene={}, world={}, camera={}, object={}, material={}, light={}):
+        self.scene = scene
+        self.world = world
+        self.camera = camera
+        self.object = object
+        self.material = material
+        self.light = light
+        
 
 class Pipeline(object):
 
     def __init__(self):
         self.parameters = PipelineParameters()
-        self.shaders = {}
 
     def get_parameters(self):
         return self.parameters

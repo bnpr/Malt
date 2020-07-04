@@ -1,4 +1,4 @@
-# Copyright (c) 2020 BlenderNPR and contributors. MIT license. 
+# Copyright (c) 2020 BlenderNPR and contributors. MIT license.
 
 from .GL import *
 from .Pipeline import Pipeline
@@ -6,6 +6,13 @@ from .Mesh import Mesh
 from .Shader import Shader
 from .Texture import Texture
 from .RenderTarget import RenderTarget
+from .Parameter import Parameter
+from .UBO import UBO
+
+from .Render import Lighting
+
+_glsl_version = """#version 450 core
+"""
 
 _vertex = '''
 #version 330 core
@@ -115,8 +122,7 @@ void main()
 }
 '''
 
-_obj_pixel_pre='''
-#version 450 core
+_obj_pixel_pre= _glsl_version + Lighting.GLSL + '''
 
 uniform mat4 _projection;
 uniform mat4 _camera;
@@ -132,11 +138,19 @@ layout (location = 0) out vec4 COLOR;
 #define MAIN_PASS void main()
 '''
 
+
 class PipelineTest(Pipeline):
 
     def __init__(self):
         super().__init__()
-        
+
+        '''
+        self.parameters.scene["test"] = GLUniform(-1, GL_FLOAT_VEC4, (1,1,0,1))
+        self.parameters.world["test"] = GLUniform(-1, GL_FLOAT_VEC4, (1,1,0,1))
+        self.parameters.object["test"] = GLUniform(-1, GL_FLOAT_VEC4, (1,1,0,1))
+        self.parameters.light["test"] = GLUniform(-1, GL_FLOAT_VEC4, (1,1,0,1))
+        '''
+
         self.resolution = None
 
         self.obj_shader = Shader(_obj_vertex, _obj_pixel)
@@ -156,6 +170,10 @@ class PipelineTest(Pipeline):
         ]
         self.quad = Mesh(positions, indices)
 
+        self.light_data = Lighting.LightsBuffer()
+        self.light_UBO = UBO()
+
+
     def compile_shader(self, shader_path):
         shader_source = load_preprocessed_file(shader_path)
         vertex = _obj_vertex
@@ -169,7 +187,7 @@ class PipelineTest(Pipeline):
         self.resolution = resolution
         w,h = self.resolution
 
-        self.t_color = Texture((w,h))
+        self.t_color = Texture((w,h), GL_RGB32F)
         self.t_color_b = Texture((w,h))
         self.t_depth = Texture((w,h), GL_DEPTH24_STENCIL8, GL_UNSIGNED_INT_24_8)
         self.fbo = RenderTarget([self.t_color, self.t_color_b], self.t_depth)
@@ -189,6 +207,28 @@ class PipelineTest(Pipeline):
         glEnable(GL_DEPTH_TEST)
         glEnable(GL_CULL_FACE)
         glCullFace(GL_BACK)
+
+        for i, sun_light in enumerate(scene.sun_lights):
+            self.light_data.sun_lights[i].color = sun_light.color
+            self.light_data.sun_lights[i].direction = sun_light.direction
+        self.light_data.sun_lights_count = len(scene.sun_lights)
+        
+        for i, point_light in enumerate(scene.point_lights):
+            self.light_data.point_lights[i].color = point_light.color
+            self.light_data.point_lights[i].position = point_light.position
+            self.light_data.point_lights[i].radius = point_light.radius
+        self.light_data.point_lights_count = len(scene.point_lights)
+
+        for i, spot_light in enumerate(scene.spot_lights):
+            self.light_data.spot_lights[i].color = spot_light.color
+            self.light_data.spot_lights[i].position = spot_light.position
+            self.light_data.spot_lights[i].direction = spot_light.direction
+            self.light_data.spot_lights[i].angle = spot_light.angle
+            self.light_data.spot_lights[i].angle_blend = spot_light.angle_blend
+            self.light_data.spot_lights[i].radius = spot_light.radius
+        self.light_data.spot_lights_count = len(scene.spot_lights)
+        
+        self.light_UBO.load_data(self.light_data)
         
         for obj in scene.objects:
             shader = self.obj_shader
@@ -198,6 +238,8 @@ class PipelineTest(Pipeline):
             shader.uniforms['_camera'].set_value(scene.camera.camera_matrix)
             shader.uniforms['_model'].set_value(obj.matrix)
             shader.bind()
+            if 'scene_lights_block' in shader.uniform_blocks.keys():
+                self.light_UBO.bind(shader.uniform_blocks['scene_lights_block'])
             obj.mesh.draw()
 
         return self.t_color

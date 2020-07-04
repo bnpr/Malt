@@ -12,11 +12,13 @@ class Shader(object):
             self.error = 'NO SOURCE'
         self.uniforms = {}
         self.textures = {}
+        self.uniform_blocks = {}
         if self.error is None:
             self.uniforms = reflect_program_uniforms(self.program)
             for name, uniform in self.uniforms.items():
                 if uniform.is_sampler():
                     self.textures[name] = None
+            self.uniform_blocks = reflect_program_uniform_blocks(self.program)
     
     def bind(self):
         glUseProgram(self.program)
@@ -40,6 +42,8 @@ class Shader(object):
             new.uniforms[name] = uniform.copy()
         for name, texture in self.textures.items():
             new.textures[name] = texture
+        for name, block in self.uniform_blocks.items():
+            new.uniform_blocks[name] = block
         
         return new
 

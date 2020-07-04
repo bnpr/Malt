@@ -14,6 +14,7 @@ SHADERS = {}
 class MaltMaterial(bpy.types.PropertyGroup):
 
     def update_source(self, context):
+        #TODO: Store source locally (for linked data and deleted files)
         global SHADERS
         self.compiler_error = ''
         uniforms = {}
@@ -73,7 +74,7 @@ class MaltMaterial(bpy.types.PropertyGroup):
     shader_source : bpy.props.StringProperty(name="Shader Source", subtype='FILE_PATH', update=update_source)
     compiler_error : bpy.props.StringProperty(name="Compiler Error")
 
-    parameters : bpy.props.PointerProperty(type=MaltPropertyGroup, name="Parameters")
+    parameters : bpy.props.PointerProperty(type=MaltPropertyGroup, name="Shader Parameters")
     
     def draw_ui(self, layout):
         layout.prop(self, 'shader_source')
