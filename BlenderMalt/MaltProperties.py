@@ -3,6 +3,48 @@
 import bpy
 
 from .Malt import GL
+from .Malt import Texture
+
+__GRADIENTS = {}
+__GRADIENT_RESOLUTION = 256
+
+# WORKAROUND: We can't declare color ramps from python,
+# so we store them as nodes inside a material
+def get_color_ramp(material, name):
+    #TODO: Create a node tree for each ID with Malt Properties to store ramps ??? (Node Trees are ID types)
+    '''
+    if '__MALT_COLOR_RAMPS_INTERNAL__' not in bpy.data.materials:
+        material = bpy.data.materials.new('__MALT_COLOR_RAMPS_INTERNAL__')
+        material.use_nodes = True
+        material.use_fake_user = True
+    '''
+    if material.use_nodes == False:
+        material.use_nodes = True
+    nodes = material.node_tree.nodes
+
+    if name not in nodes:
+       node = nodes.new('ShaderNodeValToRGB')
+       node.name = name
+    
+    return nodes[name]
+
+
+def get_color_ramp_texture(material, name):
+    node = get_color_ramp(material, name)
+    #pixels = [0,0,0,0]*__GRADIENT_RESOLUTION
+    pixels = []
+    if material.name_full not in __GRADIENTS:
+        __GRADIENTS[material.name_full] = {}
+    gradients = __GRADIENTS[material.name_full]
+    if name not in gradients:
+        for i in range(0, __GRADIENT_RESOLUTION):
+            pixel = node.color_ramp.evaluate( i*(1.0 / __GRADIENT_RESOLUTION))
+            pixels.extend(pixel)
+        gradients[name] = Texture.Gradient(pixels, __GRADIENT_RESOLUTION)
+    
+    return gradients[name]
+
+
 
 # WORKAROUND: For some reason bpy.types.Image can't be used directly in CollectionProperty, 
 # although it's an ID type, so we wrap it inside a PropertyGroup
@@ -42,12 +84,15 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
             
             rna[name]['active'] = True
             
-            if uniform.is_sampler():
+            if uniform.type == GL.GL_SAMPLER_2D:
                 if name not in self.textures:
                     self.textures.add().name = name
                 if name in self.keys():
                     self.pop(name)
                 continue
+
+            if uniform.type == GL.GL_SAMPLER_1D:
+                get_color_ramp(self.id_data, name)
             
             is_default = 'default' in rna[name].keys() and rna[name]['default'][:] == self[name][:]
             type_changed = 'type' in rna[name].keys() and rna[name]['type'] != uniform.type
@@ -66,6 +111,9 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                 rna[name]['use_soft_limits'] = True
                 rna[name]['soft_min'] = 0.0
                 rna[name]['soft_max'] = 1.0
+            else:
+                rna[name]['subtype'] = 'NONE'
+                rna[name]['use_soft_limits'] = False
     
 
     def get_parameters(self):
@@ -90,9 +138,13 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
         for key in rna.keys():
             if rna[key]['active'] == False:
                 continue
-            if key in self.textures.keys():
+            
+            if rna[key]['type'] == GL.GL_SAMPLER_2D:
                 layout.label(text=key + " :")
                 layout.template_ID(self.textures[key], "texture", new="image.new", open="image.open")
+            elif rna[key]['type'] == GL.GL_SAMPLER_1D:
+                layout.label(text=key + " :")
+                layout.template_color_ramp(get_color_ramp(self.id_data, key), 'color_ramp')
             else:
                 #TODO: add subtype toggle
                 layout.prop(self, '["'+key+'"]')
@@ -183,6 +235,17 @@ classes = (
     MALT_PT_Light,
 )
 
+@bpy.app.handlers.persistent
+def depsgraph_update(scene, depsgraph):
+    for update in depsgraph.updates:
+        #if isinstance(update.id, bpy.types.NodeTree):
+        if update.id.__class__ == bpy.types.Material:
+            __GRADIENTS[update.id.name_full] = {}
+            for screen in bpy.data.screens:
+                for area in screen.areas:
+                    area.tag_redraw()
+
+
 def register():
     for _class in classes: bpy.utils.register_class(_class)
 
@@ -193,6 +256,9 @@ def register():
     bpy.types.Material.malt_parameters = bpy.props.PointerProperty(type=MaltPropertyGroup)
     bpy.types.Light.malt_parameters = bpy.props.PointerProperty(type=MaltPropertyGroup)
 
+    bpy.app.handlers.depsgraph_update_post.append(depsgraph_update)
+
+
 def unregister():
     for _class in classes: bpy.utils.unregister_class(_class)
 
@@ -202,4 +268,7 @@ def unregister():
     del bpy.types.Object.malt_parameters
     del bpy.types.Material.malt_parameters
     del bpy.types.Light.malt_parameters
+
+    bpy.app.handlers.depsgraph_update_post.append(depsgraph_update)
+
 

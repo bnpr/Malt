@@ -6,6 +6,7 @@ import bpy
 
 from .Malt.Shader import Shader
 from .MaltProperties import MaltPropertyGroup
+from . import MaltProperties
 from . import MaltPipeline
 
 #ShaderPath/PipelineName/PassName
@@ -62,6 +63,9 @@ class MaltMaterial(bpy.types.PropertyGroup):
                 for name, parameter in self.parameters.items():
                     if name in pass_shader_copy.uniforms.keys():
                         pass_shader_copy.uniforms[name].set_value(parameter)
+                    
+                    if name in pass_shader_copy.textures.keys():
+                        pass_shader_copy.textures[name] = MaltProperties.get_color_ramp_texture(self.id_data, name)
 
                 for name, texture in self.parameters.textures.items():
                     if texture.texture and name in pass_shader_copy.textures.keys():

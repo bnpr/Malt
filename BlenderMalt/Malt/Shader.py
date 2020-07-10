@@ -15,11 +15,15 @@ class Shader(object):
         self.uniform_blocks = {}
         if self.error is None:
             self.uniforms = reflect_program_uniforms(self.program)
+            texture_index = 0
             for name, uniform in self.uniforms.items():
                 if uniform.is_sampler():
+                    uniform.set_value(texture_index)
+                    texture_index += 1 
                     self.textures[name] = None
+
             self.uniform_blocks = reflect_program_uniform_blocks(self.program)
-    
+        
     def bind(self):
         glUseProgram(self.program)
         for uniform in self.uniforms.values():

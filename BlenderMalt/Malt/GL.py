@@ -3,9 +3,9 @@
 import collections
 
 import OpenGL
-OpenGL.ERROR_LOGGING = False
-OpenGL.FULL_LOGGING = False
-OpenGL.ERROR_ON_COPY = False
+#OpenGL.ERROR_LOGGING = False
+#OpenGL.FULL_LOGGING = False
+#OpenGL.ERROR_ON_COPY = False
 from OpenGL.GL import *
 
 if True: 
@@ -195,6 +195,7 @@ def reflect_program_uniform_blocks(program):
     for i in range(0, block_count[0]):
         glGetActiveUniformBlockName(program, i, max_string_length, NULL, block_name)
         name = buffer_to_string(block_name)
+        glUniformBlockBinding(program, i, i) # All Uniform Blocks are binded at 0 by default. :/
         glGetActiveUniformBlockiv(program, i, GL_UNIFORM_BLOCK_BINDING, block_bind)
         glGetActiveUniformBlockiv(program, i, GL_UNIFORM_BLOCK_DATA_SIZE, block_size)
         blocks[name] = block_bind[0]
@@ -267,6 +268,30 @@ def load_preprocessed_file(file_path, include_directories=[], definitions=[]):
     for definition in definitions:
         preprocessor.define(definition)
     preprocessor.parse(open(file_path, 'r').read())
+    preprocessor.write(output)
+    processed = output.getvalue()
+    #fix LINE directive paths (C:\Path -> C:\\Path) to avoid compiler warnings
+    processed = processed.replace('\\','\\\\')
+    return processed
+
+
+def shader_preprocessor(shader_source, include_directories=[], definitions=[]):
+    import pcpp
+    from io import StringIO
+    from os import path
+
+    class Preprocessor(pcpp.Preprocessor):
+        def on_comment(self,token):
+            #Don't remove comments
+            return True
+
+    output = StringIO()
+    preprocessor = Preprocessor()
+    for directory in include_directories:
+        preprocessor.add_path(directory)
+    for definition in definitions:
+        preprocessor.define(definition)
+    preprocessor.parse(shader_source)
     preprocessor.write(output)
     processed = output.getvalue()
     #fix LINE directive paths (C:\Path -> C:\\Path) to avoid compiler warnings

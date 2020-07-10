@@ -11,6 +11,7 @@ from . import Shader
 from . import Texture
 from . import UBO
 
+from .Render import Common
 from .Render import Lighting
 
 modules = [
@@ -24,5 +25,6 @@ modules = [
     Shader,
     Texture,
     UBO,
+    Common,
     Lighting,
 ]

@@ -10,132 +10,33 @@ from .Parameter import Parameter
 from .UBO import UBO
 
 from .Render import Lighting
+from .Render import Common
 
-_glsl_version = """#version 450 core
-"""
+_obj_vertex_default='''
+#version 410 core
 
-_vertex = '''
-#version 330 core
-layout (location = 0) in vec4 vertex_position;
+#define VERTEX_SHADER
 
-uniform vec2 scale = vec2(1,1);
-
-out vec4 position;
-
-void main()
-{
-    position = vertex_position;
-    position = vec4(position.xy * scale,0.5,1);
-    gl_Position = position;
-}
+#include "Common.glsl"
 '''
 
-_pixel = '''
-#version 330 core
-layout (location = 0) out vec4 color_A;
-layout (location = 1) out vec4 color_B;
-in vec4 position;
+_obj_pixel_pre='''
+#version 410 core
 
-uniform vec4 color = vec4(1,1,0,1);
+#define PIXEL_SHADER
 
-void main()
-{
-    vec2 uv = (position.xy + vec2(1,1)) / 2.0;
-    color_A = color;
-    color_B = color;
-}
-'''
+#include "Common.glsl"
 
-_pixel_texture='''
-#version 450 core
-in vec4 position;
-
-layout(binding=0) uniform sampler2D color;
-
-void main()
-{
-    vec2 uv = (position.xy + vec2(1,1)) / 2.0;
-    gl_FragColor = texture(color, position.xy);
-}
-'''
-
-_obj_vertex='''
-#version 450 core
-layout (location = 0) in vec3 in_position;
-layout (location = 1) in vec3 in_normal;
-layout (location = 2) in vec2 in_uv0;
-layout (location = 3) in vec2 in_uv1;
-layout (location = 4) in vec2 in_uv2;
-layout (location = 5) in vec2 in_uv3;
-layout (location = 10) in vec4 in_color0;
-layout (location = 11) in vec4 in_color1;
-layout (location = 12) in vec4 in_color2;
-layout (location = 13) in vec4 in_color3;
-
-uniform mat4 _projection;
-uniform mat4 _camera;
-uniform mat4 _model;
-
-out vec3 position;
-out vec3 normal;
-out vec2 uv[4];
-out vec4 color[4];
-
-void main()
-{
-    position = (_model * vec4(in_position,1)).xyz;
-    normal = normalize(mat3(_model) * in_normal);
-
-    uv[0]=in_uv0;
-    uv[1]=in_uv1;
-    uv[2]=in_uv2;
-    uv[3]=in_uv3;
-
-    color[0]=in_color0;
-    color[1]=in_color1;
-    color[2]=in_color2;
-    color[3]=in_color3;
-
-    gl_Position = _projection * _camera * vec4(position,1);
-}
-'''
-
-_obj_pixel='''
-#version 450 core
-
-uniform mat4 _projection;
-uniform mat4 _camera;
-uniform mat4 _model;
-
-in vec3 position;
-in vec3 normal;
-in vec2 uv[4];
-in vec4 color[4];
-
-layout (location = 0) out vec4 COLOR;
-
-void main()
-{
-    COLOR = vec4(1,1,0,1);
-    //float n_dot = dot(vec3(0,0,1), normal);
-    //color.b = n_dot;
-}
-'''
-
-_obj_pixel_pre= _glsl_version + Lighting.GLSL + '''
-
-uniform mat4 _projection;
-uniform mat4 _camera;
-uniform mat4 _model;
-
-in vec3 position;
-in vec3 normal;
-in vec2 uv[4];
-in vec4 color[4];
-
-layout (location = 0) out vec4 COLOR;
+layout (location = 0) out vec4 OUT_COLOR;
 
 #define MAIN_PASS void main()
+'''
+
+_obj_pixel_default= '''
+MAIN_PASS
+{
+    OUT_COLOR = vec4(1,1,0,1);
+}
 '''
 
 
@@ -144,6 +45,7 @@ class PipelineTest(Pipeline):
     def __init__(self):
         super().__init__()
 
+        self.parameters.world["Background Color"] = GLUniform(-1, GL_FLOAT_VEC4, (0.5,0.5,0.5,1))
         '''
         self.parameters.scene["test"] = GLUniform(-1, GL_FLOAT_VEC4, (1,1,0,1))
         self.parameters.world["test"] = GLUniform(-1, GL_FLOAT_VEC4, (1,1,0,1))
@@ -153,10 +55,7 @@ class PipelineTest(Pipeline):
 
         self.resolution = None
 
-        self.obj_shader = Shader(_obj_vertex, _obj_pixel)
-
-        self.shader = Shader(_vertex, _pixel)
-        self.texture_shader = Shader(_vertex, _pixel_texture)
+        self.default_shader = self.compile_shader_from_source(_obj_pixel_default)
 
         positions=[
             1.0,  1.0, 0.0,
@@ -170,27 +69,41 @@ class PipelineTest(Pipeline):
         ]
         self.quad = Mesh(positions, indices)
 
+        self.common_data = Common.CommonBuffer()
+        self.common_UBO = UBO()
+        
         self.light_data = Lighting.LightsBuffer()
         self.light_UBO = UBO()
+    
 
+    def compile_shader_from_source(self, shader_source, include_dirs=[]):
+        from os import path
 
-    def compile_shader(self, shader_path):
-        shader_source = load_preprocessed_file(shader_path)
-        vertex = _obj_vertex
-        pixel = _obj_pixel_pre + shader_source
+        shader_dir = path.join(path.dirname(__file__), "Render", "Shaders")
+        include_dirs.append(shader_dir)
+        
+        vertex = shader_preprocessor(_obj_vertex_default, include_dirs)
+        pixel = shader_preprocessor(_obj_pixel_pre + shader_source, include_dirs)
         shader = Shader(vertex, pixel)
         return {
             'MAIN_PASS' : shader,
         }
+
+    def compile_shader(self, shader_path):
+        from os import path
+
+        file_dir = path.dirname(shader_path)
+        source = '#include "{}"'.format(shader_path)
+        
+        return self.compile_shader_from_source(source, [file_dir])
     
     def resize_render_targets(self, resolution):
         self.resolution = resolution
         w,h = self.resolution
 
         self.t_color = Texture((w,h), GL_RGB32F)
-        self.t_color_b = Texture((w,h))
         self.t_depth = Texture((w,h), GL_DEPTH24_STENCIL8, GL_UNSIGNED_INT_24_8)
-        self.fbo = RenderTarget([self.t_color, self.t_color_b], self.t_depth)
+        self.fbo = RenderTarget([self.t_color], self.t_depth)
     
     def render(self, resolution, scene):
         if self.resolution != resolution:
@@ -198,48 +111,40 @@ class PipelineTest(Pipeline):
 
         self.fbo.bind()
 
+        glClearColor(*scene.world_parameters['Background Color'])
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT)
-        self.shader.bind()
-        self.shader.uniforms['color'].set_value([0.5,0.5,0.5,1.0])
-        self.shader.uniforms['color'].bind()
-        self.quad.draw()
 
         glEnable(GL_DEPTH_TEST)
         glEnable(GL_CULL_FACE)
         glCullFace(GL_BACK)
 
-        for i, sun_light in enumerate(scene.sun_lights):
-            self.light_data.sun_lights[i].color = sun_light.color
-            self.light_data.sun_lights[i].direction = sun_light.direction
-        self.light_data.sun_lights_count = len(scene.sun_lights)
-        
-        for i, point_light in enumerate(scene.point_lights):
-            self.light_data.point_lights[i].color = point_light.color
-            self.light_data.point_lights[i].position = point_light.position
-            self.light_data.point_lights[i].radius = point_light.radius
-        self.light_data.point_lights_count = len(scene.point_lights)
-
-        for i, spot_light in enumerate(scene.spot_lights):
-            self.light_data.spot_lights[i].color = spot_light.color
-            self.light_data.spot_lights[i].position = spot_light.position
-            self.light_data.spot_lights[i].direction = spot_light.direction
-            self.light_data.spot_lights[i].angle = spot_light.angle
-            self.light_data.spot_lights[i].angle_blend = spot_light.angle_blend
-            self.light_data.spot_lights[i].radius = spot_light.radius
-        self.light_data.spot_lights_count = len(scene.spot_lights)
+        for i, light in enumerate(scene.lights):
+            self.light_data.lights[i].color = light.color
+            self.light_data.lights[i].type = light.type
+            self.light_data.lights[i].position = light.position
+            self.light_data.lights[i].radius = light.radius
+            self.light_data.lights[i].direction = light.direction
+            self.light_data.lights[i].spot_angle = light.spot_angle
+            self.light_data.lights[i].spot_blend = light.spot_blend
+        self.light_data.lights_count = len(scene.lights)
         
         self.light_UBO.load_data(self.light_data)
+
+        self.common_data.CAMERA = tuple(scene.camera.camera_matrix)
+        self.common_data.PROJECTION = tuple(scene.camera.projection_matrix)
+
+        self.common_UBO.load_data(self.common_data)
         
         for obj in scene.objects:
-            shader = self.obj_shader
+            shader = self.default_shader['MAIN_PASS']
             if obj.material and obj.material.shader['MAIN_PASS']:
                 shader = obj.material.shader['MAIN_PASS']
-            shader.uniforms['_projection'].set_value(scene.camera.projection_matrix)
-            shader.uniforms['_camera'].set_value(scene.camera.camera_matrix)
-            shader.uniforms['_model'].set_value(obj.matrix)
+            shader.uniforms['MODEL'].set_value(obj.matrix)
+            #shader.uniforms['CAMERA'].set_value(scene.camera.camera_matrix)
+            #shader.uniforms['PROJECTION'].set_value(scene.camera.projection_matrix)
             shader.bind()
-            if 'scene_lights_block' in shader.uniform_blocks.keys():
-                self.light_UBO.bind(shader.uniform_blocks['scene_lights_block'])
+            self.common_UBO.bind(shader.uniform_blocks['COMMON_UNIFORMS'])
+            self.light_UBO.bind(shader.uniform_blocks['SCENE_LIGHTS'])
             obj.mesh.draw()
 
         return self.t_color

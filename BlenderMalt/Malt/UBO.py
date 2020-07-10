@@ -18,7 +18,7 @@ class UBO(object):
         glBindBuffer(GL_UNIFORM_BUFFER, 0)
 
     def bind(self, location):
-        glBindBufferRange(GL_UNIFORM_BUFFER, 0, self.buffer[0], 0, self.size)
+        glBindBufferRange(GL_UNIFORM_BUFFER, location, self.buffer[0], 0, self.size)
     
     def __del__(self):
         glDeleteBuffers(1, self.buffer[0])

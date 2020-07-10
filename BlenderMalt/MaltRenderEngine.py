@@ -41,6 +41,8 @@ class MaltRenderEngine(bpy.types.RenderEngine):
             return list(chain.from_iterable(matrix.transposed()))
 
         scene = Scene.Scene()
+        scene.parameters = context.scene.malt_parameters.get_parameters()
+        scene.world_parameters = context.scene.world.malt_parameters.get_parameters()
         
         #Camera
         view_3d = context.region_data 
@@ -73,26 +75,24 @@ class MaltRenderEngine(bpy.types.RenderEngine):
            
             elif obj.type == 'LIGHT':
                 malt_light = obj.data.malt
-                color = malt_light.color[:]
-                position = obj.matrix_world.translation[:]
-                direction = (obj.matrix_world.to_quaternion() @ Vector((0.0,0.0,-1.0)))[:]
-                parameters = obj.malt_parameters.get_parameters()
+
+                light = Scene.Light()
+                light.color = tuple(malt_light.color)
+                light.position = tuple(obj.matrix_world.translation)
+                light.direction = tuple(obj.matrix_world.to_quaternion() @ Vector((0.0,0.0,-1.0)))
+                light.radius = malt_light.radius
+                light.spot_angle = malt_light.spot_angle
+                light.spot_blend = malt_light.spot_blend_angle
+                light.parameters = obj.malt_parameters.get_parameters()
                 
-                if obj.data.type == 'SUN':
-                    scene.sun_lights.append(
-                        Scene.SunLight(direction,color,parameters)
-                    )
-                
-                elif obj.data.type == 'POINT':
-                    scene.point_lights.append(
-                        Scene.PointLight(position, malt_light.radius, color, parameters)
-                    )
-                
-                elif obj.data.type == 'SPOT':
-                    scene.spot_lights.append(
-                        Scene.SpotLight(position, direction, malt_light.spot_angle, malt_light.spot_blend_angle, 
-                        malt_light.radius, color, parameters)
-                    )
+                types = {
+                    'SUN' : 1,
+                    'POINT' : 2,
+                    'SPOT' : 3,
+                }
+                light.type = types[obj.data.type]
+
+                scene.lights.append(light)
 
         for obj in depsgraph.objects:
                 add_object(obj, obj.matrix_world)

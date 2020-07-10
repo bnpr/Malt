@@ -7,6 +7,7 @@ class Camera(object):
     def __init__(self, camera_matrix, projection_matrix, parameters={}):
         self.camera_matrix = camera_matrix
         self.projection_matrix = projection_matrix
+        self.parameters = parameters
 
 class Material(object):
 
@@ -20,35 +21,26 @@ class Object(object):
         self.matrix = matrix
         self.mesh = mesh
         self.material = material
+        self.parameters = parameters
 
-class SunLight(object):
+class Light(object):
 
-    def __init__(self, direction, color=(1,1,1), parameters={}):
-        self.direction = direction
-        self.color = color
-
-class SpotLight(object):
-
-    def __init__(self, position, direction, angle, angle_blend, radius, color=(1,1,1), parameters={}):
-        self.position = position
-        self.direction = direction
-        self.angle = angle
-        self.angle_blend = angle_blend
-        self.radius = radius
-        self.color = color
-        
-class PointLight(object):
-
-    def __init__(self, position, radius, color=(1,1,1), parameters={}):
-        self.position = position
-        self.radius = radius
-        self.color = color     
+    def __init__(self):
+        self.type = 0
+        self.color = (0,0,0)
+        self.parameters = {}
+        self.position = (0,0,0)
+        self.direction = (0,0,0)
+        self.spot_angle = 0
+        self.spot_blend = 0
+        self.radius = 0
 
 class Scene(object):
 
     def __init__(self):
         self.camera = None
         self.objects = []
-        self.sun_lights = []
-        self.spot_lights = []
-        self.point_lights = []
+        self.lights = []
+        self.parameters = {}
+        self.world_parameters = {}
+
