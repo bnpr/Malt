@@ -89,13 +89,14 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                     self.textures.add().name = name
                 if name in self.keys():
                     self.pop(name)
+                rna[name]['type'] = uniform.type            
                 continue
 
             if uniform.type == GL.GL_SAMPLER_1D:
                 get_color_ramp(self.id_data, name)
             
-            is_default = 'default' in rna[name].keys() and rna[name]['default'][:] == self[name][:]
-            type_changed = 'type' in rna[name].keys() and rna[name]['type'] != uniform.type
+            is_default = name in self.keys() and 'default' in rna[name].keys() and rna[name]['default'][:] == self[name][:]
+            type_changed = name in self.keys() and 'type' in rna[name].keys() and rna[name]['type'] != uniform.type
 
             if name not in self.keys() or is_default or type_changed:
                 self[name] = uniform.value
