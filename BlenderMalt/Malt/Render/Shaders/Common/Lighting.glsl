@@ -57,7 +57,14 @@ LitSurface lit_surface(vec3 position, vec3 normal, Light light)
         S.L = normalize(light.position - position);
     }
 
-    S.V = normalize(camera_position() - position);
+    if (is_ortho(PROJECTION))
+    {
+        S.V = transform_normal(inverse(CAMERA), vec3(0,0,1));
+    }
+    else
+    {
+        S.V = normalize(camera_position() - position);
+    }
     S.R = reflect(-S.L, S.N);
     S.H = normalize(S.L + S.V);
     S.NoL = dot(S.N,S.L);

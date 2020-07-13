@@ -36,5 +36,10 @@ vec3 model_position()
     return transform_point(MODEL, vec3(0,0,0));
 }
 
+bool is_ortho(mat4 matrix)
+{
+    return matrix[3][3] == 1.0;
+}
+
 #endif //COMMON_TRANSFORM_GLSL
 
