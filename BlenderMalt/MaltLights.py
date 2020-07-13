@@ -1,6 +1,7 @@
 # Copyright (c) 2020 BlenderNPR and contributors. MIT license. 
 
 import bpy
+import math
 
 class MaltLight(bpy.types.PropertyGroup):
 
@@ -9,9 +10,10 @@ class MaltLight(bpy.types.PropertyGroup):
         #light.type = self.type
         light.color = self.color
         light.shadow_soft_size = self.radius
-        light.cutoff_distance = self.radius
-        light.spot_size = self.spot_angle
-        light.spot_blend = self.spot_angle / self.spot_blend_angle
+        if light.type == 'SPOT':
+            light.cutoff_distance = self.radius
+            light.spot_size = self.spot_angle
+            light.spot_blend = self.spot_blend_angle / self.spot_angle
 
     type : bpy.props.EnumProperty(
         name='Type',
@@ -33,12 +35,16 @@ class MaltLight(bpy.types.PropertyGroup):
         name='Angle',
         default=1,
         subtype='ANGLE',
+        min=0,
+        max=math.pi,
         update=sync_data,
     )
     spot_blend_angle : bpy.props.FloatProperty(
         name='Blend',
         default=0.1,
         subtype='ANGLE',
+        min=0,
+        max=math.pi,
         update=sync_data,
     )
 
