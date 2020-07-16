@@ -7,16 +7,16 @@ import bpy
 from .Malt.Mesh import Mesh
 from .Malt import GL
 
-__MESHES = {}
+MESHES = {}
 
 def get_mesh(object):
     key = object.name_full
-    if key not in __MESHES.keys() or __MESHES[key] is None:
-        __MESHES[key] = __load_mesh(object)
+    if key not in MESHES.keys() or MESHES[key] is None:
+        MESHES[key] = load_mesh(object)
         
-    return __MESHES[key]
+    return MESHES[key]
 
-def __load_mesh(object):
+def load_mesh(object):
     m = object.to_mesh()
     m.calc_loop_triangles()
     m.calc_normals_split()
@@ -61,16 +61,9 @@ def __load_mesh(object):
         return Mesh(positions, indices, normals, uvs, colors)
         
 
-@bpy.app.handlers.persistent
-def depsgraph_update(scene, depsgraph):
-    for update in depsgraph.updates:
-        if update.is_updated_geometry:
-            __MESHES[update.id.name_full] = None
-
 def register():
-    bpy.app.handlers.depsgraph_update_post.append(depsgraph_update)
-
+    pass
 
 def unregister():
-    bpy.app.handlers.depsgraph_update_post.remove(depsgraph_update)
+    pass
 

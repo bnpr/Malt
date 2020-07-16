@@ -39,6 +39,16 @@ MAIN_PASS
 }
 '''
 
+_obj_pixel_composite_depth= '''
+
+layout (location = 1) out float OUT_DEPTH;
+
+MAIN_PASS
+{
+    OUT_DEPTH = -transform_point(CAMERA, POSITION).z;
+}
+'''
+
 
 class PipelineTest(Pipeline):
 
@@ -46,16 +56,11 @@ class PipelineTest(Pipeline):
         super().__init__()
 
         self.parameters.world["Background Color"] = GLUniform(-1, GL_FLOAT_VEC4, (0.5,0.5,0.5,1))
-        '''
-        self.parameters.scene["test"] = GLUniform(-1, GL_FLOAT_VEC4, (1,1,0,1))
-        self.parameters.world["test"] = GLUniform(-1, GL_FLOAT_VEC4, (1,1,0,1))
-        self.parameters.object["test"] = GLUniform(-1, GL_FLOAT_VEC4, (1,1,0,1))
-        self.parameters.light["test"] = GLUniform(-1, GL_FLOAT_VEC4, (1,1,0,1))
-        '''
 
         self.resolution = None
 
         self.default_shader = self.compile_shader_from_source(_obj_pixel_default)
+        self.composite_depth_shader = self.compile_shader_from_source(_obj_pixel_composite_depth)
 
         positions=[
             1.0,  1.0, 0.0,
@@ -102,10 +107,12 @@ class PipelineTest(Pipeline):
         w,h = self.resolution
 
         self.t_color = Texture((w,h), GL_RGB32F)
-        self.t_depth = Texture((w,h), GL_DEPTH24_STENCIL8, GL_UNSIGNED_INT_24_8)
+        self.t_depth = Texture((w,h), GL_DEPTH_COMPONENT32F)
+        self.t_composite_depth = Texture((w,h), GL_R32F)
         self.fbo = RenderTarget([self.t_color], self.t_depth)
+        self.fbo_composite_depth = RenderTarget([None, self.t_composite_depth], self.t_depth)
     
-    def render(self, resolution, scene):
+    def render(self, resolution, scene, is_final_render):
         if self.resolution != resolution:
             self.resize_render_targets(resolution)
 
@@ -140,11 +147,29 @@ class PipelineTest(Pipeline):
             if obj.material and obj.material.shader['MAIN_PASS']:
                 shader = obj.material.shader['MAIN_PASS']
             shader.uniforms['MODEL'].set_value(obj.matrix)
-            #shader.uniforms['CAMERA'].set_value(scene.camera.camera_matrix)
-            #shader.uniforms['PROJECTION'].set_value(scene.camera.projection_matrix)
             shader.bind()
             self.common_UBO.bind(shader.uniform_blocks['COMMON_UNIFORMS'])
             self.light_UBO.bind(shader.uniform_blocks['SCENE_LIGHTS'])
             obj.mesh.draw()
 
-        return self.t_color
+        if is_final_render:
+
+            glDisable(GL_DEPTH_TEST)
+
+            self.fbo_composite_depth.bind()
+            
+            glClearColor(10.0e+32,1.0,1.0,1.0)
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+            
+            shader = self.composite_depth_shader['MAIN_PASS']
+            self.common_UBO.bind(shader.uniform_blocks['COMMON_UNIFORMS'])
+            
+            for obj in scene.objects:
+                shader.uniforms['MODEL'].set_value(obj.matrix)
+                shader.bind()
+                obj.mesh.draw()
+
+        return {
+            'COLOR' : self.t_color,
+            'DEPTH' : self.t_composite_depth,
+        }

@@ -35,7 +35,7 @@ class RenderTarget(object):
             assert(depth_stencil.resolution == self.resolution)    
             attachment = {
                 GL_DEPTH_STENCIL : GL_DEPTH_STENCIL_ATTACHMENT,
-                GL_DEPTH : GL_DEPTH_ATTACHMENT,
+                GL_DEPTH_COMPONENT : GL_DEPTH_ATTACHMENT,
                 GL_STENCIL : GL_STENCIL_ATTACHMENT,
             }
             glFramebufferTexture2D(GL_FRAMEBUFFER, attachment[depth_stencil.format], GL_TEXTURE_2D, depth_stencil.texture[0], 0)

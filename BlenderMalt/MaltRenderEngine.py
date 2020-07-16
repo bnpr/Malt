@@ -20,20 +20,23 @@ class MaltRenderEngine(bpy.types.RenderEngine):
     bl_idname = "MALT"
     bl_label = "Malt"
     bl_use_preview = False
+    bl_use_postprocess = True
+    bl_use_gpu_context = True
+    bl_use_eevee_freestyle = True
 
     # Init is called whenever a new render engine instance is created. Multiple
     # instances may exist at the same time, for example for a viewport and final
     # render.
     def __init__(self):
-        self.first_update = True
         self.display_draw = None
         self.meshes = {}
+        self.pipeline = MaltPipeline.get_pipeline().__class__()
 
     def __del__(self):
         pass
 
     def get_pipeline(self):
-        return MaltPipeline.get_pipeline()
+        return self.pipeline
     
     def load_scene(self, context, depsgraph):
 
@@ -41,17 +44,29 @@ class MaltRenderEngine(bpy.types.RenderEngine):
             return list(chain.from_iterable(matrix.transposed()))
 
         scene = Scene.Scene()
-        scene.parameters = context.scene.malt_parameters.get_parameters()
-        scene.world_parameters = context.scene.world.malt_parameters.get_parameters()
+        scene.parameters = depsgraph.scene.malt_parameters.get_parameters()
+        scene.world_parameters = depsgraph.scene.world.malt_parameters.get_parameters()
         
         #Camera
-        view_3d = context.region_data 
-        camera_matrix = flatten_matrix(view_3d.view_matrix)
-        projection_matrix = flatten_matrix(view_3d.window_matrix)
-        scene.camera = Scene.Camera(camera_matrix, projection_matrix)
+        if depsgraph.mode == 'VIEWPORT':
+            view_3d = context.region_data 
+            camera_matrix = flatten_matrix(view_3d.view_matrix)
+            projection_matrix = flatten_matrix(view_3d.window_matrix)
+            scene.camera = Scene.Camera(camera_matrix, projection_matrix)
+        else:
+            camera = depsgraph.scene.camera
+            camera_matrix = flatten_matrix(camera.matrix_world.inverted())
+            projection_matrix = flatten_matrix(
+                camera.calc_matrix_camera( depsgraph, 
+                    x=depsgraph.scene.render.resolution_x, 
+                    y=depsgraph.scene.render.resolution_y
+            ))
+            scene.camera = Scene.Camera(camera_matrix, projection_matrix)
 
         #Objects
         materials = {}
+        meshes = {}
+
         def add_object(obj, matrix):
             if obj.type in ('MESH','CURVE','SURFACE','FONT'):
                 material = None
@@ -69,7 +84,13 @@ class MaltRenderEngine(bpy.types.RenderEngine):
                             materials[material_name] = None
                     material = materials[material_name]
 
-                mesh = MaltMeshes.get_mesh(obj)
+                if obj.name_full not in meshes:
+                    if depsgraph.mode == 'VIEWPORT':
+                        meshes[obj.name_full] = MaltMeshes.get_mesh(obj)
+                    else: #always load the mesh for final renders
+                        meshes[obj.name_full] = MaltMeshes.load_mesh(obj)
+
+                mesh = meshes[obj.name_full]
                 matrix = flatten_matrix(matrix)
                 scene.objects.append(Scene.Object(matrix, mesh, material, obj.malt_parameters.get_parameters()))
            
@@ -109,45 +130,48 @@ class MaltRenderEngine(bpy.types.RenderEngine):
     def render(self, depsgraph):
         scene = depsgraph.scene
         scale = scene.render.resolution_percentage / 100.0
+
         self.size_x = int(scene.render.resolution_x * scale)
         self.size_y = int(scene.render.resolution_y * scale)
+        resolution = (self.size_x, self.size_y)
 
-        # Fill the render result with a flat color. The framebuffer is
-        # defined as a list of pixels, each pixel itself being a list of
-        # R,G,B,A values.
-        if self.is_preview:
-            color = [0.1, 0.2, 0.1, 1.0]
-        else:
-            color = [0.2, 0.1, 0.1, 1.0]
-
-        pixel_count = self.size_x * self.size_y
-        rect = [color] * pixel_count
-
-        # Here we write the pixel values to the RenderResult
+        scene = self.load_scene(None, depsgraph)
+        render_textures = self.get_pipeline().render(resolution, scene, True)
+        render_textures['COLOR'].bind()
+        
         result = self.begin_result(0, 0, self.size_x, self.size_y)
+
+        render_textures['COLOR'].bind()
+        gl_pixels = GL.gl_buffer(GL.GL_FLOAT, resolution[0]*resolution[1]*4)
+        GL. glGetTexImage(GL.GL_TEXTURE_2D, 0, GL.GL_RGBA, GL.GL_FLOAT, gl_pixels)
+        it = iter(gl_pixels)
+        pixels = list(zip(it,it,it,it)) #convert from 1D list to list of tuples
+
         layer = result.layers[0].passes["Combined"]
-        layer.rect = rect
+        layer.rect = pixels
+
+        render_textures['DEPTH'].bind()
+        gl_pixels = GL.gl_buffer(GL.GL_FLOAT, resolution[0]*resolution[1])
+        GL. glGetTexImage(GL.GL_TEXTURE_2D, 0, GL.GL_RED, GL.GL_FLOAT, gl_pixels)
+
+        layer = result.layers[0].passes["Depth"]
+        layer.rect.foreach_set(list(gl_pixels))
+
         self.end_result(result)
+
+        #Delete the pipeline while we are in the correct OpenGL context
+        del self.pipeline
+
 
     # For viewport renders, this method gets called once at the start and
     # whenever the scene or 3D viewport changes. This method is where data
     # should be read from Blender in the same thread. Typically a render
     # thread will be started to do the work while keeping Blender responsive.
     def view_update(self, context, depsgraph):
-        #MAKE SURE WE LOAD MESHES FROM HERE SINCE THEY ARE ALREADY EVALUATED
-        #TODO: Optionally update only in object mode
-        if self.first_update:
-            # First time initialization
-            self.first_update = False
-            # Loop over all datablocks used in the scene.
-            for datablock in depsgraph.ids:
-                if datablock.__class__  is bpy.types.Object and datablock.type == 'MESH':
-                    MaltMeshes.get_mesh(datablock)
-        else:
-            # Test which datablocks changed
-            for update in depsgraph.updates:
-                if update.id.__class__  is bpy.types.Object and update.id.type == 'MESH':
-                    MaltMeshes.get_mesh(update.id)
+        # Test which datablocks changed
+        for update in depsgraph.updates:
+            if update.is_updated_geometry:
+                MaltMeshes.MESHES[update.id.name_full] = None
 
     # For viewport renders, this method is called whenever Blender redraws
     # the 3D viewport. The renderer is expected to quickly draw the render
@@ -170,7 +194,7 @@ class MaltRenderEngine(bpy.types.RenderEngine):
         
         #render
         scene = self.load_scene(context, depsgraph)
-        render_texture = self.get_pipeline().render(resolution, scene)
+        render_texture = self.get_pipeline().render(resolution, scene, False)['COLOR']
 
         #Render to viewport
         self.display_draw.draw(bind_display_shader, fbo, render_texture)
