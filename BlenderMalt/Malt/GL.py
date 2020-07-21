@@ -57,12 +57,23 @@ def buffer_to_string(buffer):
 def compile_gl_program(vertex, fragment):
     status = gl_buffer(GL_INT,1)
     length = gl_buffer(GL_INT,1)
-    info_log = gl_buffer(GL_BYTE, 1024)    
+    info_log = gl_buffer(GL_BYTE, 1024)
+
+    error = ""
 
     def compile_shader (source, shader_type):
         shader = glCreateShader(shader_type)
         glShaderSource(shader, source)
         glCompileShader(shader)
+
+        glGetShaderiv(shader, GL_COMPILE_STATUS, status)
+        if status[0] == GL_FALSE:
+            try: #BGL
+                glGetShaderInfoLog(shader, 1024, length, info_log)
+            except: #PYOPENGL
+                info_log = glGetShaderInfoLog(shader)
+            nonlocal error
+            error += '\nSHADER COMPILER ERROR :\n\n' + buffer_to_string(info_log)
         
         return shader
 
@@ -77,15 +88,18 @@ def compile_gl_program(vertex, fragment):
     glDeleteShader(vertex_shader)
     glDeleteShader(fragment_shader)
     
-    error = None
-
     glGetProgramiv(program, GL_LINK_STATUS, status)
     if status[0] == GL_FALSE:
         try: #BGL
             glGetProgramInfoLog(program, 1024, length, info_log)
         except: #PYOPENGL
             info_log = glGetProgramInfoLog(program)
-        error = buffer_to_string(info_log)
+        error += '\nSHADER LINKER ERROR :\n\n' + buffer_to_string(info_log)
+
+    if error == '':
+        error = None
+    else:
+        print(error)
 
     return (program, error)
 
