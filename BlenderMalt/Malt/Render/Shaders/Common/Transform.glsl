@@ -41,5 +41,26 @@ bool is_ortho(mat4 matrix)
     return matrix[3][3] == 1.0;
 }
 
+vec3 view_direction()
+{
+    if (is_ortho(PROJECTION))
+    {
+        return transform_normal(inverse(CAMERA), vec3(0,0,1));
+    }
+    else
+    {
+        return normalize(camera_position() - POSITION);
+    }
+}
+
+#ifdef PIXEL_SHADER
+
+vec2 screen_uv()
+{
+    return vec2(gl_FragCoord) / vec2(RESOLUTION);
+}
+
+#endif //PIXEL_SHADER
+
 #endif //COMMON_TRANSFORM_GLSL
 

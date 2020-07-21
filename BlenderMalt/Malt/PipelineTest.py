@@ -139,6 +139,7 @@ class PipelineTest(Pipeline):
 
         self.common_data.CAMERA = tuple(scene.camera.camera_matrix)
         self.common_data.PROJECTION = tuple(scene.camera.projection_matrix)
+        self.common_data.RESOLUTION = resolution
 
         self.common_UBO.load_data(self.common_data)
         

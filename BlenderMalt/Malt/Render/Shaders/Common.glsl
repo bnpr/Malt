@@ -3,25 +3,6 @@
 #ifndef COMMON_GLSL
 #define COMMON_GLSL
 
-uniform mat4 MODEL;
-
-layout(std140) uniform COMMON_UNIFORMS
-{
-    uniform mat4 CAMERA;
-    uniform mat4 PROJECTION;
-    uniform float TIME;
-    uniform int FRAME;
-    uniform int SAMPLE;
-};
-
-#include "Common/Transform.glsl"
-#include "Common/Lighting.glsl"
-
-layout(std140) uniform SCENE_LIGHTS
-{
-    SceneLights LIGHTS;
-};
-
 #ifdef VERTEX_SHADER
 
 layout (location = 0) in vec3 in_position;
@@ -47,6 +28,39 @@ out vec3 POSITION;
 out vec3 NORMAL;
 out vec2 UV[8];
 out vec4 COLOR[8];
+
+#endif //VERTEX_SHADER
+
+#ifdef PIXEL_SHADER
+
+in vec3 POSITION;
+in vec3 NORMAL;
+in vec2 UV[8];
+in vec4 COLOR[8];
+
+#endif //PIXEL_SHADER
+
+uniform mat4 MODEL;
+
+layout(std140) uniform COMMON_UNIFORMS
+{
+    uniform mat4 CAMERA;
+    uniform mat4 PROJECTION;
+    uniform ivec2 RESOLUTION;
+    uniform float TIME;
+    uniform int FRAME;
+    uniform int SAMPLE;
+};
+
+#include "Common/Transform.glsl"
+#include "Common/Lighting.glsl"
+
+layout(std140) uniform SCENE_LIGHTS
+{
+    SceneLights LIGHTS;
+};
+
+#ifdef VERTEX_SHADER
 
 void main()
 {
@@ -75,15 +89,6 @@ void main()
 }
 
 #endif //VERTEX_SHADER
-
-#ifdef PIXEL_SHADER
-
-in vec3 POSITION;
-in vec3 NORMAL;
-in vec2 UV[8];
-in vec4 COLOR[8];
-
-#endif //PIXEL_SHADER
 
 #endif //COMMON_GLSL
 
