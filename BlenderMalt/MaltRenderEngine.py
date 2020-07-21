@@ -143,7 +143,7 @@ class MaltRenderEngine(bpy.types.RenderEngine):
 
         render_textures['COLOR'].bind()
         gl_pixels = GL.gl_buffer(GL.GL_FLOAT, resolution[0]*resolution[1]*4)
-        GL. glGetTexImage(GL.GL_TEXTURE_2D, 0, GL.GL_RGBA, GL.GL_FLOAT, gl_pixels)
+        GL.glGetTexImage(GL.GL_TEXTURE_2D, 0, GL.GL_RGBA, GL.GL_FLOAT, gl_pixels)
         it = iter(gl_pixels)
         pixels = list(zip(it,it,it,it)) #convert from 1D list to list of tuples
 
@@ -152,7 +152,7 @@ class MaltRenderEngine(bpy.types.RenderEngine):
 
         render_textures['DEPTH'].bind()
         gl_pixels = GL.gl_buffer(GL.GL_FLOAT, resolution[0]*resolution[1])
-        GL. glGetTexImage(GL.GL_TEXTURE_2D, 0, GL.GL_RED, GL.GL_FLOAT, gl_pixels)
+        GL.glGetTexImage(GL.GL_TEXTURE_2D, 0, GL.GL_RED, GL.GL_FLOAT, gl_pixels)
 
         layer = result.layers[0].passes["Depth"]
         layer.rect.foreach_set(list(gl_pixels))
