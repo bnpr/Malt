@@ -107,22 +107,18 @@ class MALT_PT_Material(bpy.types.Panel):
 
     def draw(self, context):
         layout = self.layout
-        material = context.material
         ob = context.object
-        slot = context.material_slot
-        space = context.space_data
-
-        if ob:
-            layout.template_ID(ob, "active_material", new="material.new")
+        material = None
+        #Use always slot 0 since we don't support multi-material objects yet
+        if ob and len(ob.material_slots) > 0:
+            slot = ob.material_slots[0]
+            material = slot.material
             row = layout.row()
-
-            if slot:
-                row.prop(slot, "link", text="")
-            else:
-                row.label()
-        elif material:
-            layout.template_ID(space, "pin_id")
-            layout.separator()
+            row.template_ID(slot, "material", new="material.new")
+            icon_link = 'MESH_DATA' if slot.link == 'DATA' else 'OBJECT_DATA'
+            row.prop(slot, "link", icon=icon_link, icon_only=True)
+        else:
+            layout.operator("object.material_slot_add", icon='ADD')
 
         layout.separator()
         layout.label(text="Material Settings:")
