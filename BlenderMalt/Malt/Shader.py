@@ -6,6 +6,8 @@ class Shader(object):
 
     def __init__(self, vertex_source, pixel_source):
         if vertex_source and pixel_source:
+            self.vertex_source = vertex_source
+            self.pixel_source = pixel_source
             self.program, self.error = compile_gl_program(vertex_source, pixel_source)
         else:
             self.program = None
