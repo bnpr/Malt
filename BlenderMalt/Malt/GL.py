@@ -245,7 +245,10 @@ def internal_format_to_format(internal_format):
     }
     for key, value in table.items():
         if key in name:
-            return value
+            if name.endswith('I'):
+                return GL_NAMES[GL_ENUMS[value] + '_INTEGER']
+            else:
+                return value
     
     raise Exception(name, ' Texture format not supported')
 
