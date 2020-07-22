@@ -180,7 +180,7 @@ class PipelineTest(Pipeline):
 
         for i, obj in enumerate(scene.objects):
             shader.uniforms['MODEL'].set_value(obj.matrix)
-            shader.uniforms['ID'].set_value(i)
+            shader.uniforms['ID'].set_value(i+1)
             shader.bind()
             self.common_UBO.bind(shader.uniform_blocks['COMMON_UNIFORMS'])
             obj.mesh.draw()
