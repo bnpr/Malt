@@ -266,31 +266,6 @@ def internal_format_to_format(internal_format):
     
     raise Exception(name, ' Texture format not supported')
 
-def load_preprocessed_file(file_path, include_directories=[], definitions=[]):
-    import pcpp
-    from io import StringIO
-    from os import path
-
-    class Preprocessor(pcpp.Preprocessor):
-        def on_comment(self,token):
-            #Don't remove comments
-            return True
-
-    output = StringIO()
-    preprocessor = Preprocessor()
-    file_dir = path.dirname(file_path)
-    preprocessor.add_path(file_dir)
-    for directory in include_directories:
-        preprocessor.add_path(directory)
-    for definition in definitions:
-        preprocessor.define(definition)
-    preprocessor.parse(open(file_path, 'r').read())
-    preprocessor.write(output)
-    processed = output.getvalue()
-    #fix LINE directive paths (C:\Path -> C:\\Path) to avoid compiler warnings
-    processed = processed.replace('\\','\\\\')
-    return processed
-
 
 def shader_preprocessor(shader_source, include_directories=[], definitions=[]):
     import pcpp
