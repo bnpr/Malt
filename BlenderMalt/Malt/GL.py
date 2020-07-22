@@ -286,6 +286,6 @@ def shader_preprocessor(shader_source, include_directories=[], definitions=[]):
     preprocessor.parse(shader_source)
     preprocessor.write(output)
     processed = output.getvalue()
-    #fix LINE directive paths (C:\Path -> C:\\Path) to avoid compiler warnings
-    processed = processed.replace('\\','\\\\')
+    #fix LINE directive paths (C:\Path -> C:/Path) to avoid compiler errors/warnings
+    processed = processed.replace('\\','/')
     return processed

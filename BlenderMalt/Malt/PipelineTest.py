@@ -14,6 +14,7 @@ from .Render import Common
 
 _obj_vertex_default='''
 #version 410 core
+#extension GL_ARB_shading_language_include : require
 
 #define VERTEX_SHADER
 
@@ -22,6 +23,7 @@ _obj_vertex_default='''
 
 _obj_pixel_prepass='''
 #version 410 core
+#extension GL_ARB_shading_language_include : require
 
 #define PIXEL_SHADER
 
@@ -43,6 +45,7 @@ void main()
 
 _obj_pixel_pre='''
 #version 410 core
+#extension GL_ARB_shading_language_include : require
 
 #define PIXEL_SHADER
 
