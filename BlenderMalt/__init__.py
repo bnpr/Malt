@@ -1,7 +1,7 @@
 # Copyright (c) 2020 BlenderNPR and contributors. MIT license. 
 
 bl_info = {
-    "name": "Malt",
+    "name": "BlenderMalt",
     "author" : "Miguel Pozo",
     "description" : "Extensible Python Render Engine",
     "blender" : (2, 80, 0),
