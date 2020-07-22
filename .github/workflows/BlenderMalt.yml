@@ -19,11 +19,19 @@ jobs:
     # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
     - uses: actions/checkout@v2
         
-    - name: Upload a Build Artifact
+    - name: Package BlenderMalt addon
       uses: actions/upload-artifact@v2
       with:
         # Artifact name
         name: BlenderMalt
         # A file, directory or wildcard pattern that describes what to upload
         path: ${{ github.workspace }}/BlenderMalt
+      
+    - name: Package Shader Examples
+      uses: actions/upload-artifact@v2
+      with:
+        # Artifact name
+        name: Shader Examples
+        # A file, directory or wildcard pattern that describes what to upload
+        path: ${{ github.workspace }}/Shader Examples
 
