@@ -88,7 +88,6 @@ class PipelineTest(Pipeline):
         self.composite_depth_shader = self.compile_shader_from_source(_obj_pixel_composite_depth)
 
         self.prepass_shader = self.compile_shader_from_source(_obj_pixel_prepass)
-        print(self.prepass_shader.uniforms)
         
         positions=[
             1.0,  1.0, 0.0,
@@ -178,8 +177,7 @@ class PipelineTest(Pipeline):
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT)
 
         shader = self.prepass_shader
-        print(shader.vertex_source)
-        print(shader.error)
+
         for i, obj in enumerate(scene.objects):
             shader.uniforms['MODEL'].set_value(obj.matrix)
             shader.uniforms['ID'].set_value(i)
@@ -228,4 +226,4 @@ class PipelineTest(Pipeline):
             'COLOR' : self.t_color,
             'DEPTH' : self.t_composite_depth,
         }
-        
+
