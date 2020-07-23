@@ -12,7 +12,7 @@ float phong_light(LitSurface surface, float shininess)
     NoH = clamp(NoH, 0, 1);
     return pow(NoH, shininess) * surface.P;
     
-    return 0;
+    return 0.0;
 }
 
 vec3 phong_bsdf(vec3 position, vec3 normal, float shininess)

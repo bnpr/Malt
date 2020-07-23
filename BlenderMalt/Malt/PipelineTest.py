@@ -31,9 +31,9 @@ _obj_pixel_prepass='''
 
 layout (location = 0) out vec4 OUT_NORMAL_DEPTH;
 //layout (location = 1) out float OUT_DEPTH;
-layout (location = 1) out unsigned int OUT_ID;
+layout (location = 1) out uint OUT_ID;
 
-uniform unsigned int ID;
+uniform uint ID;
 
 void main()
 {
@@ -53,7 +53,7 @@ _obj_pixel_pre='''
 
 layout (location = 0) out vec4 OUT_COLOR;
 
-uniform unsigned int ID;
+uniform uint ID;
 uniform sampler2D IN_NORMAL_DEPTH;
 uniform usampler2D IN_ID;
 
