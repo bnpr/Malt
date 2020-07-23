@@ -25,7 +25,7 @@ jobs:
         # Artifact name
         name: BlenderMalt
         # A file, directory or wildcard pattern that describes what to upload
-        path: ${{ github.workspace }}/BlenderMalt
+        path: ${{ github.workspace }}/BlenderMalt*
       
     - name: Package Shader Examples
       uses: actions/upload-artifact@v2
