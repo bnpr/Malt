@@ -2,6 +2,22 @@
 
 from .GL import *
 
+def glslang_validator(source, stage):
+    import subprocess
+    import tempfile
+    import os
+    tmp = tempfile.NamedTemporaryFile(delete=False)
+    tmp.write(source.replace('GL_ARB_shading_language_include', 'GL_GOOGLE_include_directive').encode('utf-8'))
+    tmp.close()
+    try:
+        out = subprocess.check_output(['glslangValidator','-S',stage,tmp.name])
+        if out != b'':
+            print('GLSLANG VALIDATOR {}:'.format(stage))
+            print(out.decode('utf-8'))
+    except:
+        pass
+    os.unlink(tmp.name)
+
 class Shader(object):
 
     def __init__(self, vertex_source, pixel_source):
@@ -9,6 +25,8 @@ class Shader(object):
             self.vertex_source = vertex_source
             self.pixel_source = pixel_source
             self.program, self.error = compile_gl_program(vertex_source, pixel_source)
+            glslang_validator(vertex_source,'vert')
+            glslang_validator(pixel_source,'frag')
         else:
             self.program = None
             self.error = 'NO SOURCE'
