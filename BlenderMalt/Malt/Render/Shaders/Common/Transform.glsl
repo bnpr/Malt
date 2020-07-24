@@ -62,5 +62,28 @@ vec2 screen_uv()
 
 #endif //PIXEL_SHADER
 
+vec3 screen_to_camera(vec2 uv, float depth)
+{
+    vec3 clip_position = vec3(uv, depth) * 2.0 - 1.0;
+    vec4 camera_position = inverse(PROJECTION) * vec4(clip_position, 1.0);
+    camera_position /= camera_position.w;
+
+    return camera_position.xyz;
+}
+
+float depth_to_z(float depth)
+{
+    return screen_to_camera(vec2(0,0), depth).z;
+}
+
+float ray_plane_intersection(vec3 ray_origin, vec3 ray_direction, vec3 plane_position, vec3 plane_normal)
+{
+    float r_direction = dot(ray_direction, plane_normal);
+    float r_origin = dot(ray_origin, plane_normal);
+    float p_position = dot(plane_position, plane_normal);
+
+    return (p_position - r_origin) / r_direction;
+}
+
 #endif //COMMON_TRANSFORM_GLSL
 

@@ -38,7 +38,7 @@ uniform uint ID;
 void main()
 {
     OUT_NORMAL_DEPTH.rgb = normalize(NORMAL);
-    OUT_NORMAL_DEPTH.a = -transform_point(CAMERA, POSITION).z;
+    OUT_NORMAL_DEPTH.a = gl_FragCoord.z; //-transform_point(CAMERA, POSITION).z;
     OUT_ID = ID;
 }
 '''
@@ -136,16 +136,16 @@ class PipelineTest(Pipeline):
         self.resolution = resolution
         w,h = self.resolution
 
-        self.t_depth = Texture((w,h), GL_DEPTH_COMPONENT32F)
+        self.t_depth = Texture((w,h), GL_DEPTH_COMPONENT32F, wrap=GL_CLAMP)
         
-        self.t_prepass_normal_depth = Texture((w,h), GL_RGBA32F)
-        self.t_prepass_id = Texture((w,h), GL_R32UI, GL_INT)
+        self.t_prepass_normal_depth = Texture((w,h), GL_RGBA32F, wrap=GL_CLAMP)
+        self.t_prepass_id = Texture((w,h), GL_R32UI, GL_INT, wrap=GL_CLAMP)
         self.fbo_prepass = RenderTarget([self.t_prepass_normal_depth, self.t_prepass_id], self.t_depth)
         
-        self.t_color = Texture((w,h), GL_RGB32F)
+        self.t_color = Texture((w,h), GL_RGB32F, wrap=GL_CLAMP)
         self.fbo = RenderTarget([self.t_color], self.t_depth)
         
-        self.t_composite_depth = Texture((w,h), GL_R32F)
+        self.t_composite_depth = Texture((w,h), GL_R32F, wrap=GL_CLAMP)
         self.fbo_composite_depth = RenderTarget([None, self.t_composite_depth], self.t_depth)
     
     def render(self, resolution, scene, is_final_render):
@@ -176,7 +176,7 @@ class PipelineTest(Pipeline):
         self.common_UBO.load_data(self.common_data)
 
         self.fbo_prepass.bind()
-        glClearColor(0,0,0,0)
+        glClearColor(0,0,1,1)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT)
 
         shader = self.prepass_shader
