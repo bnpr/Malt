@@ -9,14 +9,27 @@ def glslang_validator(source, stage):
     tmp = tempfile.NamedTemporaryFile(delete=False)
     tmp.write(source.replace('GL_ARB_shading_language_include', 'GL_GOOGLE_include_directive').encode('utf-8'))
     tmp.close()
+    out = None
     try:
         out = subprocess.check_output(['glslangValidator','-S',stage,tmp.name])
         if out != b'':
-            print('GLSLANG VALIDATOR {}:'.format(stage))
-            print(out.decode('utf-8'))
+            out = out
+    except subprocess.CalledProcessError as error:
+        out = error.output
     except:
         pass
     os.unlink(tmp.name)
+    if out:
+        out = out.decode('utf-8')
+        #Remove the first line since it's the path to a temp file
+        out = out.split('\n')[1]
+        stages = {
+            'vert' : 'VERTEX',
+            'frag' : 'PIXEL',
+        }
+        return '{} SHADER VALIDATION :\n{}'.format(stages[stage], out)
+    else:
+        return ''
 
 class Shader(object):
 
@@ -25,15 +38,21 @@ class Shader(object):
             self.vertex_source = vertex_source
             self.pixel_source = pixel_source
             self.program, self.error = compile_gl_program(vertex_source, pixel_source)
-            glslang_validator(vertex_source,'vert')
-            glslang_validator(pixel_source,'frag')
+            self.validator = glslang_validator(vertex_source,'vert')
+            self.validator += glslang_validator(pixel_source,'frag')
+            if self.validator == '':
+                self.validator = None
         else:
+            self.vertex_source = vertex_source
+            self.pixel_source = pixel_source
             self.program = None
             self.error = 'NO SOURCE'
+            self.validator = None
         self.uniforms = {}
         self.textures = {}
         self.uniform_blocks = {}
-        if self.error is None:
+        if self.error == '':
+            self.error = None
             self.uniforms = reflect_program_uniforms(self.program)
             texture_index = 0
             for name, uniform in self.uniforms.items():
@@ -70,4 +89,8 @@ class Shader(object):
             new.uniform_blocks[name] = block
         
         return new
+    
+    def __del__(self):
+        #TODO: Programs are shared between Shaders. Should refcount them
+        pass
 

@@ -73,7 +73,7 @@ def compile_gl_program(vertex, fragment):
             except: #PYOPENGL
                 info_log = glGetShaderInfoLog(shader)
             nonlocal error
-            error += '\nSHADER COMPILER ERROR :\n\n' + buffer_to_string(info_log)
+            error += 'SHADER COMPILER ERROR :\n' + buffer_to_string(info_log)
         
         return shader
 
@@ -94,12 +94,7 @@ def compile_gl_program(vertex, fragment):
             glGetProgramInfoLog(program, 1024, length, info_log)
         except: #PYOPENGL
             info_log = glGetProgramInfoLog(program)
-        error += '\nSHADER LINKER ERROR :\n\n' + buffer_to_string(info_log)
-
-    if error == '':
-        error = None
-    else:
-        print(error)
+        error += 'SHADER LINKER ERROR :\n' + buffer_to_string(info_log)
 
     return (program, error)
 

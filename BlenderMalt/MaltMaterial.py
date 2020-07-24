@@ -35,7 +35,9 @@ class MaltMaterial(bpy.types.PropertyGroup):
                         for uniform_name, uniform in shader.uniforms.items():
                             uniforms[uniform_name] = uniform
                         if shader.error:
-                            self.compiler_error += pipeline_name + " : " + pass_name + " ERROR : \n" + shader.error
+                            self.compiler_error += pipeline_name + " : " + pass_name + " : " + shader.error
+                        if shader.validator:
+                            self.compiler_error += pipeline_name + " : " + pass_name + " : " + shader.validator
             else:
                 self.compiler_error = 'Invalid file path'
 
