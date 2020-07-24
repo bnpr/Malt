@@ -46,5 +46,9 @@ class RenderTarget(object):
         glBindFramebuffer(GL_FRAMEBUFFER, self.FBO[0])
     
     def __del__(self):
-        glDeleteFramebuffers(1, self.FBO)
+        try:
+            glDeleteFramebuffers(1, self.FBO)
+        except:
+            #TODO: Make sure GL objects are deleted in the correct context
+            pass
 

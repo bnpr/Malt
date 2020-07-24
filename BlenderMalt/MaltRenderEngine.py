@@ -241,9 +241,13 @@ class DisplayDraw(object):
         GL.glBindVertexArray(0)
 
     def __del__(self):
-        GL.glDeleteBuffers(2, self.vertex_buffer)
-        GL.glDeleteVertexArrays(1, self.vertex_array)
-        GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
+        try:
+            GL.glDeleteBuffers(2, self.vertex_buffer)
+            GL.glDeleteVertexArrays(1, self.vertex_array)
+            GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
+        except:
+            #TODO: Make sure GL objects are deleted in the correct context
+            pass
 
     def draw(self, bind_display_shader, fbo, texture):
         GL.glDisable(GL.GL_DEPTH_TEST)

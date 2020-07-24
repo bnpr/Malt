@@ -28,7 +28,11 @@ class Texture(object):
         glBindTexture(GL_TEXTURE_2D, self.texture[0])
     
     def __del__(self):
-        glDeleteTextures(1, self.texture)
+        try:
+            glDeleteTextures(1, self.texture)
+        except:
+            #TODO: Make sure GL objects are deleted in the correct context
+            pass
 
 
 class Gradient(object):
@@ -55,4 +59,8 @@ class Gradient(object):
         glBindTexture(GL_TEXTURE_1D, self.texture[0])
     
     def __del__(self):
-        glDeleteTextures(1, self.texture)
+        try:
+            glDeleteTextures(1, self.texture)
+        except:
+            #TODO: Make sure GL objects are deleted in the correct context
+            pass

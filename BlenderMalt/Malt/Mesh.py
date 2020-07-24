@@ -83,18 +83,21 @@ class Mesh(object):
         glBindVertexArray(0)
     
     def __del__(self):
-        #WARNING: There's no warranty this wil be deleted in the correct OGL context ???
-        def delete_buffer(buffer):
-            if buffer:
-                glDeleteBuffers(1, buffer)
+        try:
+            def delete_buffer(buffer):
+                if buffer:
+                    glDeleteBuffers(1, buffer)
 
-        delete_buffer(self.EBO)
-        delete_buffer(self.position)
-        delete_buffer(self.normal)
-        for uv in self.uvs:
-            delete_buffer(uv)
-        for color in self.colors:
-            delete_buffer(color)
-        if self.VAO:
-            glDeleteVertexArrays(1, self.VAO)
+            delete_buffer(self.EBO)
+            delete_buffer(self.position)
+            delete_buffer(self.normal)
+            for uv in self.uvs:
+                delete_buffer(uv)
+            for color in self.colors:
+                delete_buffer(color)
+            if self.VAO:
+                glDeleteVertexArrays(1, self.VAO)
+        except:
+            #TODO: Make sure GL objects are deleted in the correct context
+            pass
             

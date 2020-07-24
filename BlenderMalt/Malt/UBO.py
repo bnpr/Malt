@@ -21,5 +21,9 @@ class UBO(object):
         glBindBufferRange(GL_UNIFORM_BUFFER, location, self.buffer[0], 0, self.size)
     
     def __del__(self):
-        glDeleteBuffers(1, self.buffer[0])
+        try:
+            glDeleteBuffers(1, self.buffer[0])
+        except:
+            #TODO: Make sure GL objects are deleted in the correct context
+            pass
 
