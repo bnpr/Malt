@@ -10,3 +10,6 @@ https://blendernpr.org/beer/
 
 ## Shader List:
 https://docs.google.com/spreadsheets/d/1PzEgDB8d6vHqGSSmOa-_IF8u5USBEzD0ycEW-LztSOc/edit?usp=sharing
+
+## Installation:
+https://github.com/BlenderNPR/BEER/blob/master/BlenderMalt/readme.md
