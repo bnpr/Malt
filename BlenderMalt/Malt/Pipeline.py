@@ -22,13 +22,16 @@ class Pipeline(object):
     def get_parameters(self):
         return self.parameters
     
+    def needs_more_samples(self):
+        return False
+    
     def compile_shader(self, shader_path):
         return {
             'uniforms':{}, 
             'error':None,
         }
 
-    def render(self, resolution, scene):
+    def render(self, resolution, scene, is_final_render, is_new_frame):
         #return texture
         pass
 

@@ -31,6 +31,8 @@ class MaltRenderEngine(bpy.types.RenderEngine):
         self.display_draw = None
         self.meshes = {}
         self.pipeline = MaltPipeline.get_pipeline().__class__()
+        self.view_matrix = None
+        self.request_new_frame = False
 
     def __del__(self):
         pass
@@ -52,6 +54,9 @@ class MaltRenderEngine(bpy.types.RenderEngine):
             view_3d = context.region_data 
             camera_matrix = flatten_matrix(view_3d.view_matrix)
             projection_matrix = flatten_matrix(view_3d.window_matrix)
+            if view_3d.perspective_matrix != self.view_matrix:
+                self.view_matrix = view_3d.perspective_matrix.copy()
+                self.request_new_frame = True
             scene.camera = Scene.Camera(camera_matrix, projection_matrix)
         else:
             camera = depsgraph.scene.camera
@@ -136,7 +141,11 @@ class MaltRenderEngine(bpy.types.RenderEngine):
         resolution = (self.size_x, self.size_y)
 
         scene = self.load_scene(None, depsgraph)
-        render_textures = self.get_pipeline().render(resolution, scene, True)
+        render_textures = None
+        while True:
+            render_textures = self.get_pipeline().render(resolution, scene, True, False)
+            if self.get_pipeline().needs_more_samples() == False:
+                break
         render_textures['COLOR'].bind()
         
         result = self.begin_result(0, 0, self.size_x, self.size_y)
@@ -168,6 +177,7 @@ class MaltRenderEngine(bpy.types.RenderEngine):
     # should be read from Blender in the same thread. Typically a render
     # thread will be started to do the work while keeping Blender responsive.
     def view_update(self, context, depsgraph):
+        self.request_new_frame = True
         # Test which datablocks changed
         for update in depsgraph.updates:
             if update.is_updated_geometry:
@@ -194,10 +204,14 @@ class MaltRenderEngine(bpy.types.RenderEngine):
         
         #render
         scene = self.load_scene(context, depsgraph)
-        render_texture = self.get_pipeline().render(resolution, scene, False)['COLOR']
+        render_texture = self.get_pipeline().render(resolution, scene, False, self.request_new_frame)['COLOR']
+        self.request_new_frame = False
 
         #Render to viewport
         self.display_draw.draw(bind_display_shader, fbo, render_texture)
+
+        if self.get_pipeline().needs_more_samples():
+            self.tag_redraw()
 
 
 #Boilerplate code to draw an OpenGL texture to the viewport using Blender color management

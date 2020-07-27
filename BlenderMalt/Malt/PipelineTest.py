@@ -83,9 +83,13 @@ class PipelineTest(Pipeline):
     def __init__(self):
         super().__init__()
 
+        self.parameters.scene["Preview Samples"] = GLUniform(-1, GL.GL_INT, 8)
+        self.parameters.scene["Render Samples"] = GLUniform(-1, GL.GL_INT, 32)
         self.parameters.world["Background Color"] = GLUniform(-1, GL_FLOAT_VEC4, (0.5,0.5,0.5,1))
 
         self.resolution = None
+        self.sample_count = 0
+        self.total_samples = 1
 
         self.default_shader = self.compile_shader_from_source(_obj_pixel_default)
         self.composite_depth_shader = self.compile_shader_from_source(_obj_pixel_composite_depth)
@@ -110,6 +114,9 @@ class PipelineTest(Pipeline):
         
         self.light_data = Lighting.LightsBuffer()
         self.light_UBO = UBO()
+    
+    def needs_more_samples(self):
+        return self.sample_count < self.total_samples
 
     def compile_shader_from_source(self, shader_source, include_dirs=[]):
         from os import path
@@ -148,9 +155,20 @@ class PipelineTest(Pipeline):
         self.t_composite_depth = Texture((w,h), GL_R32F, wrap=GL_CLAMP)
         self.fbo_composite_depth = RenderTarget([None, self.t_composite_depth], self.t_depth)
     
-    def render(self, resolution, scene, is_final_render):
+    def render(self, resolution, scene, is_final_render, is_new_frame):
         if self.resolution != resolution:
             self.resize_render_targets(resolution)
+            self.sample_count = 0
+        
+        if is_new_frame:
+            self.sample_count = 0
+        
+        if is_final_render:
+            self.total_samples = scene.parameters['Render Samples'][0]
+        else:
+            self.total_samples = scene.parameters['Preview Samples'][0]
+        
+        self.sample_count += 1
 
         glEnable(GL_DEPTH_TEST)
         glDepthFunc(GL_LEQUAL)
