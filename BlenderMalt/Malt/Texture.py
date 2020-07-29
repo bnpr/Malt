@@ -37,7 +37,7 @@ class Texture(object):
 
 class Gradient(object):
 
-    def __init__(self, data, resolution, internal_format=GL_RGBA32F, data_format = GL_FLOAT):
+    def __init__(self, data, resolution, internal_format=GL_RGBA32F, data_format = GL_FLOAT, nearest_interpolation = False):
         self.resolution = resolution
         self.internal_format = internal_format
         self.format = internal_format_to_format(internal_format)
@@ -50,8 +50,9 @@ class Gradient(object):
         #glGenerateMipmap(GL_TEXTURE_2D)
 
         glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
-        glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
-        glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+        interpolation = GL_NEAREST if nearest_interpolation else GL_LINEAR
+        glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, interpolation)
+        glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, interpolation)
 
         glBindTexture(GL_TEXTURE_1D, 0)
     

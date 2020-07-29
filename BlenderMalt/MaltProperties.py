@@ -40,7 +40,8 @@ def get_color_ramp_texture(material, name):
         for i in range(0, __GRADIENT_RESOLUTION):
             pixel = node.color_ramp.evaluate( i*(1.0 / __GRADIENT_RESOLUTION))
             pixels.extend(pixel)
-        gradients[name] = Texture.Gradient(pixels, __GRADIENT_RESOLUTION)
+        nearest = node.color_ramp.interpolation == 'CONSTANT'
+        gradients[name] = Texture.Gradient(pixels, __GRADIENT_RESOLUTION, nearest_interpolation=nearest)
     
     return gradients[name]
 
