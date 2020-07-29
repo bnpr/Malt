@@ -48,6 +48,12 @@ class MaltRenderEngine(bpy.types.RenderEngine):
         scene = Scene.Scene()
         scene.parameters = depsgraph.scene.malt_parameters.get_parameters()
         scene.world_parameters = depsgraph.scene.world.malt_parameters.get_parameters()
+
+        scene.frame = depsgraph.scene.frame_current
+        r = depsgraph.scene.render
+        fps = r.fps / r.fps_base
+        remap = r.frame_map_new / r.frame_map_old
+        scene.time = (scene.frame / fps) * remap
         
         #Camera
         if depsgraph.mode == 'VIEWPORT':

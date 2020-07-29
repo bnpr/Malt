@@ -47,9 +47,10 @@ layout(std140) uniform COMMON_UNIFORMS
     uniform mat4 CAMERA;
     uniform mat4 PROJECTION;
     uniform ivec2 RESOLUTION;
-    uniform float TIME;
+    uniform vec2 SAMPLE_OFFSET;
+    uniform int SAMPLE_COUNT;
     uniform int FRAME;
-    uniform int SAMPLE;
+    uniform float TIME;
 };
 
 #include "Common/Transform.glsl"
@@ -60,7 +61,7 @@ layout(std140) uniform SCENE_LIGHTS
     SceneLights LIGHTS;
 };
 
-#ifdef VERTEX_SHADER
+#ifdef DEFAULT_VERTEX_SHADER
 
 void main()
 {
@@ -88,7 +89,7 @@ void main()
     gl_Position = PROJECTION * CAMERA * vec4(POSITION, 1);
 }
 
-#endif //VERTEX_SHADER
+#endif //DEFAULT_VERTEX_SHADER
 
 #endif //COMMON_GLSL
 

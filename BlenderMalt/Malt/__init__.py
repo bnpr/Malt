@@ -13,6 +13,7 @@ from . import UBO
 
 from .Render import Common
 from .Render import Lighting
+from .Render import Sampling
 
 modules = [
     GL,
@@ -27,4 +28,5 @@ modules = [
     UBO,
     Common,
     Lighting,
+    Sampling,
 ]

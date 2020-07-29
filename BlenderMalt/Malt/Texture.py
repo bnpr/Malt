@@ -4,7 +4,7 @@ from .GL import *
 
 class Texture(object):
 
-    def __init__(self, resolution, internal_format=GL_RGB32F, data_format = GL_FLOAT, data = NULL, wrap=GL_REPEAT, min_filter=GL_LINEAR, mag_filter=GL_LINEAR):
+    def __init__(self, resolution, internal_format=GL_RGB32F, data_format = GL_FLOAT, data = NULL, wrap=GL_CLAMP, min_filter=GL_LINEAR, mag_filter=GL_LINEAR):
         self.resolution = resolution
         self.internal_format = internal_format
         self.format = internal_format_to_format(internal_format)

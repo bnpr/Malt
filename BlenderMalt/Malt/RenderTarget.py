@@ -45,6 +45,20 @@ class RenderTarget(object):
     def bind(self):
         glBindFramebuffer(GL_FRAMEBUFFER, self.FBO[0])
     
+    def clear(self, color=None, depth=None, stencil=None):
+        flags = 0
+        if color:
+            glClearColor(*color)
+            flags |= GL_COLOR_BUFFER_BIT
+        if depth:
+            glClearDepth(depth)
+            flags |= GL_DEPTH_BUFFER_BIT
+        if stencil:
+            glClearStencil(stencil)
+            flags |= GL_STENCIL_BUFFER_BIT
+        self.bind()
+        glClear(flags)
+    
     def __del__(self):
         try:
             glDeleteFramebuffers(1, self.FBO)

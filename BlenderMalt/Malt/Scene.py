@@ -43,4 +43,6 @@ class Scene(object):
         self.lights = []
         self.parameters = {}
         self.world_parameters = {}
+        self.frame = 0
+        self.time = 0
 
