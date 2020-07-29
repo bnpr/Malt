@@ -137,7 +137,9 @@ classes = (
 import time
 __TIMESTAMP = time.time()
 
+INITIALIZED = False
 def track_shader_changes():
+    global INITIALIZED
     global __TIMESTAMP
     global SHADERS
     try:
@@ -153,6 +155,7 @@ def track_shader_changes():
                     material.malt.update_source(bpy.context)
         
         __TIMESTAMP = start_time
+        INITIALIZED = True
 
         if redraw:
             for screen in bpy.data.screens:

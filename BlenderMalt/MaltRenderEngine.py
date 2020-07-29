@@ -6,6 +6,7 @@ import bpy
 
 from mathutils import Vector,Matrix,Quaternion
 
+from . import MaltMaterial
 from .Malt.PipelineTest import PipelineTest
 from .Malt.Mesh import Mesh
 from .Malt import GL
@@ -212,6 +213,8 @@ class MaltRenderEngine(bpy.types.RenderEngine):
         scene = self.load_scene(context, depsgraph)
         render_texture = self.get_pipeline().render(resolution, scene, False, self.request_new_frame)['COLOR']
         self.request_new_frame = False
+        if MaltMaterial.INITIALIZED == False: #First viewport render can happen before initialization
+            self.request_new_frame = True
 
         #Render to viewport
         self.display_draw.draw(bind_display_shader, fbo, render_texture)
