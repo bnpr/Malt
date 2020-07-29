@@ -169,7 +169,7 @@ def track_shader_changes():
 def register():
     for _class in classes: bpy.utils.register_class(_class)
     bpy.types.Material.malt = bpy.props.PointerProperty(type=MaltMaterial)
-    track_shader_changes()
+    
     bpy.app.timers.register(track_shader_changes, persistent=True)
 
 def unregister():
