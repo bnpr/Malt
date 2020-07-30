@@ -62,11 +62,15 @@ def load_mesh(object):
             positions[i*3+2] = m.vertices[position_indices[i]].co[2]
         
         return Mesh(positions, indices, normals, uvs, colors)
-        
+
+@bpy.app.handlers.persistent
+def reset_meshes(dummy):
+    global MESHES
+    MESHES = {}    
 
 def register():
-    pass
+    bpy.app.handlers.load_post.append(reset_meshes)
 
 def unregister():
-    pass
+    bpy.app.handlers.load_post.remove(reset_meshes)
 
