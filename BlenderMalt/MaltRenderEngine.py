@@ -109,6 +109,9 @@ class MaltRenderEngine(bpy.types.RenderEngine):
                 scene.objects.append(Scene.Object(matrix, mesh, material, obj.malt_parameters.get_parameters()))
            
             elif obj.type == 'LIGHT':
+                if obj.data.type == 'AREA':
+                    return #Not supported
+
                 malt_light = obj.data.malt
 
                 light = Scene.Light()
