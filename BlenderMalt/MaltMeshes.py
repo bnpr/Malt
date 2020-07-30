@@ -18,6 +18,9 @@ def get_mesh(object):
 
 def load_mesh(object):
     m = object.to_mesh()
+    if m is None:
+        return None
+
     m.calc_loop_triangles()
     m.calc_normals_split()
 

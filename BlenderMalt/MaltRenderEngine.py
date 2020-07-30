@@ -103,6 +103,8 @@ class MaltRenderEngine(bpy.types.RenderEngine):
                         meshes[obj.name_full] = MaltMeshes.load_mesh(obj)
 
                 mesh = meshes[obj.name_full]
+                if mesh is None:
+                    return
                 matrix = flatten_matrix(matrix)
                 scene.objects.append(Scene.Object(matrix, mesh, material, obj.malt_parameters.get_parameters()))
            
