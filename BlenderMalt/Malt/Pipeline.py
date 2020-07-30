@@ -93,11 +93,15 @@ class Pipeline(object):
         glEnable(GL_DEPTH_TEST)
         glDepthFunc(GL_LEQUAL)
         glEnable(GL_CULL_FACE)
-        glCullFace(GL_BACK)
 
         render_target.bind()
 
         for obj in objects:
+            if obj.negative_scale:
+                glCullFace(GL_FRONT)
+            else:
+                glCullFace(GL_BACK)
+
             shader = default_shader
             if obj.material and pass_name in obj.material.shader:
                 shader = obj.material.shader[pass_name]

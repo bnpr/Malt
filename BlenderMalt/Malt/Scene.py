@@ -22,6 +22,7 @@ class Object(object):
         self.mesh = mesh
         self.material = material
         self.parameters = parameters
+        self.negative_scale = False
 
 class Light(object):
 

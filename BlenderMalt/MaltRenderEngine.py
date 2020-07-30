@@ -105,8 +105,12 @@ class MaltRenderEngine(bpy.types.RenderEngine):
                 mesh = meshes[obj.name_full]
                 if mesh is None:
                     return
+                scale = matrix.to_scale()
                 matrix = flatten_matrix(matrix)
-                scene.objects.append(Scene.Object(matrix, mesh, material, obj.malt_parameters.get_parameters()))
+                result = Scene.Object(matrix, mesh, material, obj.malt_parameters.get_parameters())
+                if scale[0]*scale[1]*scale[2] < 0.0:
+                    result.negative_scale = True
+                scene.objects.append(result)
            
             elif obj.type == 'LIGHT':
                 if obj.data.type == 'AREA':
