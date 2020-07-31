@@ -14,9 +14,12 @@ def get_subclasses(cls):
 
 #TODO: We need to store more than 1 pipeline since it's possible to have more than
 # one scene open at the same time with different worlds and render pipelines
-__PIPELINE__ = PipelineTest()
+__PIPELINE__ = None
 
 def get_pipeline():
+    global __PIPELINE__
+    if __PIPELINE__ is None:
+        __PIPELINE__ = PipelineTest()
     return __PIPELINE__
 
 class MaltPipeline(bpy.types.PropertyGroup):
