@@ -28,5 +28,5 @@ vec3 specular_gradient_bsdf(vec3 position, vec3 normal, float shininess, sampler
     return result;
 }
 
-#endif SHADING_SPECULAR_GRADIENT_GLSL
+#endif //SHADING_SPECULAR_GRADIENT_GLSL
 

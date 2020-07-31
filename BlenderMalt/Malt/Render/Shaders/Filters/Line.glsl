@@ -202,4 +202,5 @@ LineOutput line_ex(
     return result;
 }
 
-#endif LINE_GLSL
+#endif //LINE_GLSL
+

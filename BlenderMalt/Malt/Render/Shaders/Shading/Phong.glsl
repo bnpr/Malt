@@ -29,5 +29,5 @@ vec3 phong_bsdf(vec3 position, vec3 normal, float shininess)
     return result;
 }
 
-#endif SHADING_PHONG_GLSL
+#endif //SHADING_PHONG_GLSL
 

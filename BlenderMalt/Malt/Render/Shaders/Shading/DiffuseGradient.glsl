@@ -24,5 +24,5 @@ vec3 diffuse_gradient_bsdf(vec3 position, vec3 normal, sampler1D gradient)
     return result;
 }
 
-#endif SHADING_DIFFUSE_GRADIENT_GLSL
+#endif //SHADING_DIFFUSE_GRADIENT_GLSL
 

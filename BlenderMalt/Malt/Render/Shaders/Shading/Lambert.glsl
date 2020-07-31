@@ -43,5 +43,5 @@ vec3 half_lambert_bsdf(vec3 position, vec3 normal)
     return result;
 }
 
-#endif SHADING_LAMBERT_GLSL
+#endif //SHADING_LAMBERT_GLSL
 
