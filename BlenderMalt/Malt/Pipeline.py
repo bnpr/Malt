@@ -103,7 +103,7 @@ class Pipeline(object):
                 glCullFace(GL_BACK)
 
             shader = default_shader
-            if obj.material and pass_name in obj.material.shader:
+            if obj.material and pass_name in obj.material.shader and obj.material.shader[pass_name]:
                 shader = obj.material.shader[pass_name]
             
             for name, uniform in uniforms.items():
