@@ -7,6 +7,7 @@ import OpenGL
 #OpenGL.FULL_LOGGING = False
 #OpenGL.ERROR_ON_COPY = False
 from OpenGL.GL import *
+from OpenGL.extensions import hasGLExtension
 
 if True: 
     #For some reason PyOpenGL doesnt support the most common depth/stencil buffer by default ???
@@ -58,6 +59,10 @@ def compile_gl_program(vertex, fragment):
     status = gl_buffer(GL_INT,1)
     length = gl_buffer(GL_INT,1)
     info_log = gl_buffer(GL_BYTE, 1024)
+
+    if hasGLExtension('GL_ARB_shading_language_include') == False:
+        vertex = remove_line_directive_paths(vertex)
+        fragment = remove_line_directive_paths(fragment)
 
     error = ""
 
@@ -284,3 +289,23 @@ def shader_preprocessor(shader_source, include_directories=[], definitions=[]):
     #fix LINE directive paths (C:\Path -> C:/Path) to avoid compiler errors/warnings
     processed = processed.replace('\\','/')
     return processed
+
+
+def remove_line_directive_paths(source):
+    #Paths in line directives are not supported in some drivers, so we replace paths with numbers
+    include_paths = []
+
+    result = ''
+    for line in source.splitlines(keepends=True):
+        if line.startswith("#line"):
+            if '"' in line:
+                start = line.index('"')
+                end = line.index('"', start + 1)
+                include_path = line[start:end+1]
+                if include_path not in include_paths:
+                    include_paths.append(include_path)
+                line = line.replace(include_path, str(include_paths.index(include_path)))
+        result += line
+    
+    return result
+

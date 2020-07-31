@@ -16,7 +16,7 @@ from .Render import Sampling
 
 _obj_vertex_default='''
 #version 410 core
-#extension GL_ARB_shading_language_include : require
+#extension GL_ARB_shading_language_include : enable
 
 #define VERTEX_SHADER
 #define DEFAULT_VERTEX_SHADER
@@ -26,7 +26,7 @@ _obj_vertex_default='''
 
 _obj_pixel_prepass='''
 #version 410 core
-#extension GL_ARB_shading_language_include : require
+#extension GL_ARB_shading_language_include : enable
 
 #define PIXEL_SHADER
 
@@ -47,7 +47,7 @@ void main()
 
 _obj_pixel_pre='''
 #version 410 core
-#extension GL_ARB_shading_language_include : require
+#extension GL_ARB_shading_language_include : enable
 
 #define PIXEL_SHADER
 #include "Common.glsl"
@@ -70,7 +70,7 @@ MAIN_PASS
 
 _obj_pixel_composite_depth='''
 #version 410 core
-#extension GL_ARB_shading_language_include : require
+#extension GL_ARB_shading_language_include : enable
 
 #define PIXEL_SHADER
 #include "Common.glsl"
