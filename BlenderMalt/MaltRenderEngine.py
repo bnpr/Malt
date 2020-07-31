@@ -22,6 +22,7 @@ class MaltRenderEngine(bpy.types.RenderEngine):
     bl_label = "Malt"
     bl_use_preview = False
     bl_use_postprocess = True
+    bl_use_shading_nodes_custom = False
     bl_use_gpu_context = True
     bl_use_eevee_freestyle = True
 
