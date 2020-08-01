@@ -28,12 +28,12 @@ class CommonBuffer(object):
 
         if scene.camera.projection_matrix[-1] == 1.0:
             #Orthographic camera
-            scene.camera.projection_matrix[12] = offset_x
-            scene.camera.projection_matrix[13] = offset_y
+            scene.camera.projection_matrix[12] += offset_x
+            scene.camera.projection_matrix[13] += offset_y
         else:
             #Perspective camera
-            scene.camera.projection_matrix[8] = offset_x
-            scene.camera.projection_matrix[9] = offset_y
+            scene.camera.projection_matrix[8] += offset_x
+            scene.camera.projection_matrix[9] += offset_y
 
         self.data.CAMERA = tuple(scene.camera.camera_matrix)
         self.data.PROJECTION = tuple(scene.camera.projection_matrix)
