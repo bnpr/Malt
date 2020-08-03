@@ -27,19 +27,19 @@ void sampling_pattern(out vec2 samples[4])
     );
 }
 
-bool line_id_ex(sampler2D depth_texture, int depth_channel, usampler2D id_texture, int id_channel, vec2 uv, float pixel_width, int LINE_DEPTH_MODE)
+bool line_id_ex(sampler2D depth_texture, int depth_channel, sampler2D id_texture, int id_channel, vec2 uv, float pixel_width, int LINE_DEPTH_MODE)
 {
     vec2 offsets[4];
     sampling_pattern(offsets);
 
     vec2 offset = vec2(pixel_width) / vec2(textureSize(id_texture, 0));
-    uint id = texture(id_texture, uv)[id_channel];
+    float id = texture(id_texture, uv)[id_channel];
     float depth = texture(depth_texture, uv)[depth_channel];
     bool line = false;
 
     for(int i = 0; i < offsets.length(); i++)
     {   
-        uint sampled_id = texture(id_texture, uv + offsets[i]*offset)[id_channel];
+        float sampled_id = texture(id_texture, uv + offsets[i]*offset)[id_channel];
         float sampled_depth = texture(depth_texture, uv + offsets[i]*offset)[depth_channel];
 
         if(sampled_id != id)
@@ -132,7 +132,7 @@ LineOutput line_ex(
     sampler2D depth_texture,
     int depth_channel,
     sampler2D normal_texture,
-    usampler2D id_texture,
+    sampler2D id_texture,
     int id_channel
 )
 {
@@ -149,7 +149,7 @@ LineOutput line_ex(
     vec3 normal_camera = transform_normal(CAMERA, normal);
     float depth = texture(depth_texture, uv)[depth_channel];
     vec3 position = screen_to_camera(uv, depth);
-    uint id = texture(id_texture, uv)[id_channel];
+    float id = texture(id_texture, uv)[id_channel];
 
     for(int i = 0; i < offsets.length(); i++)
     {   
@@ -160,7 +160,7 @@ LineOutput line_ex(
             vec3 sampled_normal = texture(normal_texture, sample_uv).xyz;
             float sampled_depth = texture(depth_texture, sample_uv)[depth_channel];
             vec3 sampled_position = screen_to_camera(sample_uv, sampled_depth);
-            uint sampled_id = texture(id_texture, sample_uv)[id_channel];
+            float sampled_id = texture(id_texture, sample_uv)[id_channel];
 
             float delta_distance = 0;
 

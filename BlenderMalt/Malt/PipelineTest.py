@@ -33,9 +33,9 @@ _obj_pixel_prepass='''
 #include "Common.glsl"
 
 layout (location = 0) out vec4 OUT_NORMAL_DEPTH;
-layout (location = 1) out uint OUT_ID;
+layout (location = 1) out float OUT_ID;
 
-uniform uint ID;
+uniform float ID;
 
 void main()
 {
@@ -54,9 +54,9 @@ _obj_pixel_pre='''
 
 layout (location = 0) out vec4 OUT_COLOR;
 
-uniform uint ID;
+uniform float ID;
 uniform sampler2D IN_NORMAL_DEPTH;
-uniform usampler2D IN_ID;
+uniform sampler2D IN_ID;
 
 #define MAIN_PASS void main()
 '''
@@ -126,7 +126,7 @@ class PipelineTest(Pipeline):
         self.t_depth = Texture(resolution, GL_DEPTH_COMPONENT32F)
         
         self.t_prepass_normal_depth = Texture(resolution, GL_RGBA32F)
-        self.t_prepass_id = Texture(resolution, GL_R32UI, GL_INT)
+        self.t_prepass_id = Texture(resolution, GL_R32F)
         self.fbo_prepass = RenderTarget([self.t_prepass_normal_depth, self.t_prepass_id], self.t_depth)
         
         self.t_color = Texture(resolution, GL_RGB32F)
