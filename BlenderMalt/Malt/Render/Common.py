@@ -22,19 +22,6 @@ class CommonBuffer(object):
         self.UBO = UBO()
     
     def load(self, scene, resolution, sample_offset, sample_count):
-        #Setup camera jitter
-        offset_x = sample_offset[0] / resolution[0]
-        offset_y = sample_offset[1] / resolution[1]
-
-        if scene.camera.projection_matrix[-1] == 1.0:
-            #Orthographic camera
-            scene.camera.projection_matrix[12] += offset_x
-            scene.camera.projection_matrix[13] += offset_y
-        else:
-            #Perspective camera
-            scene.camera.projection_matrix[8] += offset_x
-            scene.camera.projection_matrix[9] += offset_y
-
         self.data.CAMERA = tuple(scene.camera.camera_matrix)
         self.data.PROJECTION = tuple(scene.camera.projection_matrix)
         self.data.RESOLUTION = resolution

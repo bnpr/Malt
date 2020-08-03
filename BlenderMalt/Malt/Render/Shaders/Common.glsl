@@ -87,6 +87,8 @@ void main()
     COLOR[7]=in_color3;
 
     gl_Position = PROJECTION * CAMERA * vec4(POSITION, 1);
+    //Screen-Space offset for Temporal Super-Sampling 
+    gl_Position.xy += (SAMPLE_OFFSET / vec2(RESOLUTION)) * gl_Position.w;
 }
 
 #endif //DEFAULT_VERTEX_SHADER
