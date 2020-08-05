@@ -123,12 +123,37 @@ def depsgraph_update(scene, depsgraph):
                         ids.append(data[update.id.name])
     setup_parameters(ids)
  
+import sys
+from pathlib import Path
+import importlib
+import traceback
+def load_malt_lib(path):
+    p = Path(path)
+    if str(p) not in sys.path:
+        sys.path.append(str(p))
+    for e in p.iterdir():
+        try:
+            if e.name == '__pycache__':
+                continue
+            name = e.name
+            if e.is_file():
+                name = name.split('.')[0]
+            module = __import__(name)
+            importlib.reload(module)
+        except Exception:
+            traceback.print_exc()
 
 def register():
     for _class in classes: bpy.utils.register_class(_class)
     bpy.types.World.malt = bpy.props.PointerProperty(type=MaltPipeline)
     bpy.app.handlers.depsgraph_update_post.append(depsgraph_update)
 
+    malt_lib_path = bpy.context.preferences.addons['BlenderMalt'].preferences.malt_library_path
+
+    if malt_lib_path != '':
+        load_malt_lib(malt_lib_path)
+        if malt_lib_path not in Pipeline.SHADER_INCLUDE_PATHS:
+            Pipeline.SHADER_INCLUDE_PATHS.append(malt_lib_path)
 
 def unregister():
     for _class in classes: bpy.utils.unregister_class(_class)

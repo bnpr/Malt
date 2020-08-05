@@ -1,8 +1,11 @@
 # Copyright (c) 2020 BlenderNPR and contributors. MIT license. 
 
+from os import path
+
 from .Mesh import Mesh
 from .Shader import Shader
 from .GL import *
+
 
 class PipelineParameters(object):
 
@@ -48,6 +51,8 @@ void main()
 '''
 
 class Pipeline(object):
+
+    SHADER_INCLUDE_PATHS = []
 
     def __init__(self):
         self.parameters = PipelineParameters()
@@ -135,6 +140,18 @@ class Pipeline(object):
     
     def needs_more_samples(self):
         return self.sample_count < len(self.get_samples())
+    
+    def compile_shader_from_source(self, shader_source, include_dirs=[], defines=[]):
+        shader_dir = path.join(path.dirname(__file__), 'Render', 'Shaders')
+        if shader_dir not in Pipeline.SHADER_INCLUDE_PATHS:
+            Pipeline.SHADER_INCLUDE_PATHS.append(shader_dir)
+        
+        include_dirs.extend(Pipeline.SHADER_INCLUDE_PATHS)
+        
+        vertex = shader_preprocessor(shader_source, include_dirs, ['VERTEX_SHADER'] + defines)
+        pixel = shader_preprocessor(shader_source, include_dirs, ['PIXEL_SHADER'] + defines)
+        shader = Shader(vertex, pixel)
+        return shader
     
     def compile_shader(self, shader_path):
         return {

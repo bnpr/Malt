@@ -21,6 +21,7 @@ except:
     for dependency in dependencies:
         subprocess.check_call([bpy.app.binary_path_python, '-m', 'pip', 'install', dependency])
 
+from . import Malt
 
 from . import MaltLights
 from . import MaltMaterial
@@ -38,8 +39,6 @@ modules = [
     MaltRenderEngine,
 ]
 
-from . import Malt
-
 if "bpy" in locals():
     #TODO: Module dependency order is important for reloading
     # Maybe reload twice ?
@@ -54,11 +53,11 @@ class Preferences(bpy.types.AddonPreferences):
     # this must match the addon name
     bl_idname = __package__
 
-    shader_library_path : bpy.props.StringProperty(name="Shader Library Path", subtype='DIR_PATH')
+    malt_library_path : bpy.props.StringProperty(name="Malt Library Path", subtype='DIR_PATH')
 
     def draw(self, context):
         layout = self.layout
-        layout.prop(self, "shader_library_path")
+        layout.prop(self, "malt_library_path")
 
 
 class OT_MaltPrintError(bpy.types.Operator):
