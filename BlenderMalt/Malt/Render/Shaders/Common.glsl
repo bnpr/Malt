@@ -63,6 +63,13 @@ layout(std140) uniform SCENE_LIGHTS
 
 #ifdef VERTEX_SHADER
 
+void VERTEX_SETUP_OUTPUT()
+{
+    gl_Position = PROJECTION * CAMERA * vec4(POSITION, 1);
+    //Screen-Space offset for Temporal Super-Sampling 
+    gl_Position.xy += (SAMPLE_OFFSET / vec2(RESOLUTION)) * gl_Position.w;
+}
+
 void DEFAULT_VERTEX_SHADER()
 {
     POSITION = transform_point(MODEL, in_position);
@@ -86,9 +93,7 @@ void DEFAULT_VERTEX_SHADER()
     COLOR[6]=in_color3;
     COLOR[7]=in_color3;
 
-    gl_Position = PROJECTION * CAMERA * vec4(POSITION, 1);
-    //Screen-Space offset for Temporal Super-Sampling 
-    gl_Position.xy += (SAMPLE_OFFSET / vec2(RESOLUTION)) * gl_Position.w;
+    VERTEX_SETUP_OUTPUT();
 }
 
 #endif //VERTEX_SHADER
