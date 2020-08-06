@@ -61,9 +61,9 @@ layout(std140) uniform SCENE_LIGHTS
     SceneLights LIGHTS;
 };
 
-#ifdef DEFAULT_VERTEX_SHADER
+#ifdef VERTEX_SHADER
 
-void main()
+void DEFAULT_VERTEX_SHADER()
 {
     POSITION = transform_point(MODEL, in_position);
     NORMAL = transform_normal(MODEL, in_normal);
@@ -91,7 +91,7 @@ void main()
     gl_Position.xy += (SAMPLE_OFFSET / vec2(RESOLUTION)) * gl_Position.w;
 }
 
-#endif //DEFAULT_VERTEX_SHADER
+#endif //VERTEX_SHADER
 
 #endif //COMMON_GLSL
 

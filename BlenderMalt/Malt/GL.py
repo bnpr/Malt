@@ -60,10 +60,6 @@ def compile_gl_program(vertex, fragment):
     length = gl_buffer(GL_INT,1)
     info_log = gl_buffer(GL_BYTE, 1024)
 
-    if hasGLExtension('GL_ARB_shading_language_include') == False:
-        vertex = remove_line_directive_paths(vertex)
-        fragment = remove_line_directive_paths(fragment)
-
     error = ""
 
     def compile_shader (source, shader_type):
@@ -267,7 +263,7 @@ def internal_format_to_format(internal_format):
     raise Exception(name, ' Texture format not supported')
 
 
-def shader_preprocessor(shader_source, include_directories=[], definitions=[]):
+def shader_preprocessor(shader_source, include_directories=[], definitions=[], pass_name = None):
     import pcpp
     from io import StringIO
     from os import path
@@ -288,8 +284,34 @@ def shader_preprocessor(shader_source, include_directories=[], definitions=[]):
     processed = output.getvalue()
     #fix LINE directive paths (C:\Path -> C:/Path) to avoid compiler errors/warnings
     processed = processed.replace('\\','/')
+
+    if pass_name:
+        processed = setup_pass(processed, pass_name)
+    
+    if hasGLExtension('GL_ARB_shading_language_include') == False:
+        processed = remove_line_directive_paths(processed)
+
     return processed
 
+def setup_pass(source, name, identifier='@'):
+    if identifier+name not in source:
+        #A default fallback should be always defined for each pipeline pass
+        source= source.replace('DEFAULT_'+name, 'main')
+    else:
+        source = source.replace(identifier+name, 'void main()')
+
+    result = ''
+    unused_pass = False
+    for line in source.splitlines(keepends=True):
+        if line.startswith(identifier):
+            unused_pass = True
+        if unused_pass:
+            if line.startswith('}'): # TODO: Very flacky. Should find matching braces
+                unused_pass = False
+            line = '//' + line
+        result+= line
+
+    return result
 
 def remove_line_directive_paths(source):
     #Paths in line directives are not supported in some drivers, so we replace paths with numbers
@@ -309,3 +331,17 @@ def remove_line_directive_paths(source):
     
     return result
 
+# UNUSED FOR NOW :
+def str_insert(string, index, insert):
+    return (string[:index]+insert+string[index:], index+len(insert))
+
+def find_matching_curly_brace(string, start_index):
+    depth = 0
+    for i, char in enumerate(string[start_index:]):
+        if char == '{':
+            depth+=1
+        if char == '}':
+            depth-=1
+            if depth == 0:
+                return start_index+i
+    raise Error('PASS PARSING ERROR')

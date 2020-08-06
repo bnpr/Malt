@@ -57,6 +57,10 @@ class Pipeline(object):
     def __init__(self):
         self.parameters = PipelineParameters()
 
+        shader_dir = path.join(path.dirname(__file__), 'Render', 'Shaders')
+        if shader_dir not in Pipeline.SHADER_INCLUDE_PATHS:
+            Pipeline.SHADER_INCLUDE_PATHS.append(shader_dir)
+
         self.resolution = None
         self.sample_count = 0
 
@@ -141,23 +145,21 @@ class Pipeline(object):
     def needs_more_samples(self):
         return self.sample_count < len(self.get_samples())
     
-    def compile_shader_from_source(self, shader_source, include_dirs=[], defines=[]):
-        shader_dir = path.join(path.dirname(__file__), 'Render', 'Shaders')
-        if shader_dir not in Pipeline.SHADER_INCLUDE_PATHS:
-            Pipeline.SHADER_INCLUDE_PATHS.append(shader_dir)
+    def compile_shader_from_source(self, shader_source, vertex_pass=None, pixel_pass=None, include_paths=[], defines=[]):
+        include_paths.extend(Pipeline.SHADER_INCLUDE_PATHS)
         
-        include_dirs.extend(Pipeline.SHADER_INCLUDE_PATHS)
-        
-        vertex = shader_preprocessor(shader_source, include_dirs, ['VERTEX_SHADER'] + defines)
-        pixel = shader_preprocessor(shader_source, include_dirs, ['PIXEL_SHADER'] + defines)
-        shader = Shader(vertex, pixel)
-        return shader
+        vertex = shader_preprocessor(shader_source, include_paths, ['VERTEX_SHADER'] + defines, vertex_pass)
+        pixel = shader_preprocessor(shader_source, include_paths, ['PIXEL_SHADER'] + defines, pixel_pass)
+
+        return Shader(vertex, pixel)
     
-    def compile_shader(self, shader_path):
-        return {
-            'uniforms':{}, 
-            'error':None,
-        }
+    def compile_material_from_source(self, source, include_paths):
+        return {}
+    
+    def compile_material(self, shader_path):
+        file_dir = path.dirname(shader_path)
+        source = '#include "{}"'.format(shader_path)
+        return self.compile_material_from_source(source, [file_dir])
 
     def render(self, resolution, scene, is_final_render, is_new_frame):
         if self.resolution != resolution:
@@ -176,7 +178,6 @@ class Pipeline(object):
         self.sample_count += 1
 
         return self.result
-
 
     def do_render(self, resolution, scene, is_final_render, is_new_frame):
         return {}

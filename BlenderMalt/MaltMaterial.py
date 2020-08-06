@@ -23,15 +23,15 @@ class MaltMaterial(bpy.types.PropertyGroup):
         if self.shader_source != '':
             path = bpy.path.abspath(self.shader_source)
             if os.path.exists(path):
-                shader_dic = {}
-                SHADERS[self.shader_source] = shader_dic
+                pipeline_material = {}
+                SHADERS[self.shader_source] = pipeline_material
 
                 pipelines = [MaltPipeline.get_pipeline()]#TODO: get all active pipelines
                 for pipeline in pipelines:
                     pipeline_name = pipeline.__class__.__name__
-                    shader_dic[pipeline_name] = pipeline.compile_shader(path)
+                    pipeline_material[pipeline_name] = pipeline.compile_material(path)
 
-                    for pass_name, shader in shader_dic[pipeline_name].items():
+                    for pass_name, shader in pipeline_material[pipeline_name].items():
                         for uniform_name, uniform in shader.uniforms.items():
                             uniforms[uniform_name] = uniform
                         if shader.error:

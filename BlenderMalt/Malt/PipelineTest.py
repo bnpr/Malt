@@ -1,5 +1,7 @@
 # Copyright (c) 2020 BlenderNPR and contributors. MIT license.
 
+from os import path
+
 from .GL import *
 from .Pipeline import Pipeline
 from .Mesh import Mesh
@@ -14,73 +16,33 @@ from .Render import Common
 from .Render import Sampling
 
 
-_obj_vertex_default='''
+_NPR_Pipeline_Common='''
 #version 410 core
 #extension GL_ARB_shading_language_include : enable
 
-#define VERTEX_SHADER
-#define DEFAULT_VERTEX_SHADER
-
-#include "Common.glsl"
+#include "Pipelines/NPR_Pipeline.glsl"
 '''
 
-_obj_pixel_prepass='''
+_obj_composite_depth='''
 #version 410 core
 #extension GL_ARB_shading_language_include : enable
-
-#define PIXEL_SHADER
-
 #include "Common.glsl"
 
-layout (location = 0) out vec4 OUT_NORMAL_DEPTH;
-layout (location = 1) out float OUT_ID;
-
-uniform float ID;
-
+#ifdef VERTEX_SHADER
 void main()
 {
-    OUT_NORMAL_DEPTH.rgb = normalize(NORMAL);
-    OUT_NORMAL_DEPTH.a = gl_FragCoord.z;
-    OUT_ID = ID;
+    DEFAULT_VERTEX_SHADER();
 }
-'''
+#endif
 
-_obj_pixel_pre='''
-#version 410 core
-#extension GL_ARB_shading_language_include : enable
-
-#define PIXEL_SHADER
-#include "Common.glsl"
-
-layout (location = 0) out vec4 OUT_COLOR;
-
-uniform float ID;
-uniform sampler2D IN_NORMAL_DEPTH;
-uniform sampler2D IN_ID;
-
-#define MAIN_PASS void main()
-'''
-
-_obj_pixel_default= _obj_pixel_pre + '''
-MAIN_PASS
-{
-    OUT_COLOR = vec4(1,1,0,1);
-}
-'''
-
-_obj_pixel_composite_depth='''
-#version 410 core
-#extension GL_ARB_shading_language_include : enable
-
-#define PIXEL_SHADER
-#include "Common.glsl"
-
+#ifdef PIXEL_SHADER
 layout (location = 0) out float OUT_DEPTH;
 
 void main()
 {
     OUT_DEPTH = -transform_point(CAMERA, POSITION).z;
 }
+#endif
 '''
 
 class PipelineTest(Pipeline):
@@ -94,32 +56,22 @@ class PipelineTest(Pipeline):
         self.parameters.scene['Render Samples'] = GLUniform(-1, GL.GL_INT, 8)
         self.parameters.world['Background Color'] = GLUniform(-1, GL_FLOAT_VEC4, (0.5,0.5,0.5,1))
 
-        self.default_shader = self.compile_shader_from_source(_obj_pixel_default)
-        self.composite_depth_shader = self.compile_shader_from_source(_obj_pixel_composite_depth)
-        self.prepass_shader = self.compile_shader_from_source(_obj_pixel_prepass)
+        self.default_shader = self.compile_material_from_source('') #Empty source will force defaults
+
+        self.composite_depth_shader = self.compile_shader_from_source(_obj_composite_depth)
 
         self.common_buffer = Common.CommonBuffer()
         self.lights_buffer = Lighting.LightsBuffer()
 
-    def compile_shader_from_source(self, shader_source, include_dirs=[]):
-        from os import path
-
-        shader_dir = path.join(path.dirname(__file__), 'Render', 'Shaders')
-        include_dirs.append(shader_dir)
-        
-        vertex = shader_preprocessor(_obj_vertex_default, include_dirs)
-        pixel = shader_preprocessor(shader_source, include_dirs)
-        shader = Shader(vertex, pixel)
-        return shader
-
-    def compile_shader(self, shader_path):
-        from os import path
-
-        file_dir = path.dirname(shader_path)
-        source = _obj_pixel_pre + '#include "{}"'.format(shader_path)
-        
+    def compile_material_from_source(self, source, include_paths=[]):
+        source = _NPR_Pipeline_Common + source
         return {
-            'MAIN_PASS' : self.compile_shader_from_source(source, [file_dir])
+            'PRE_PASS' : self.compile_shader_from_source(
+                source, 'COMMON_VERTEX_SHADER', 'PRE_PASS_PIXEL_SHADER', include_paths, ['PRE_PASS']
+            ),
+            'MAIN_PASS' : self.compile_shader_from_source(
+                source, 'COMMON_VERTEX_SHADER', 'MAIN_PASS_PIXEL_SHADER', include_paths, ['MAIN_PASS']
+            )
         }
     
     def setup_render_targets(self, resolution):
@@ -165,7 +117,7 @@ class PipelineTest(Pipeline):
 
         #PRE-PASS
         self.fbo_prepass.clear((0,0,1,1),1,0)
-        self.draw_scene_pass(self.fbo_prepass, scene.objects, None, self.prepass_shader, UBOS)
+        self.draw_scene_pass(self.fbo_prepass, scene.objects, 'PRE_PASS', self.default_shader['PRE_PASS'], UBOS)
 
         #MAIN-PASS
         textures = {
@@ -173,10 +125,10 @@ class PipelineTest(Pipeline):
             'IN_ID': self.t_prepass_id,
         }
         self.fbo.clear(scene.world_parameters['Background Color'])
-        self.draw_scene_pass(self.fbo, scene.objects, 'MAIN_PASS', self.default_shader, UBOS, {}, textures)        
+        self.draw_scene_pass(self.fbo, scene.objects, 'MAIN_PASS', self.default_shader['MAIN_PASS'], UBOS, {}, textures)        
         
         # TEMPORAL SUPER-SAMPLING ACCUMULATION
-        # TODO: Should accumulate in display space 
+        # TODO: Should accumulate in display space ???
         # https://therealmjp.github.io/posts/msaa-overview/#working-with-hdr-and-tone-mapping
         self.blend_texture(self.t_color, self.fbo_accumulate, 1.0 / (self.sample_count + 1))
 
