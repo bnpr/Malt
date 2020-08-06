@@ -4,10 +4,10 @@ import os
 
 import bpy
 
-from .Malt.Shader import Shader
-from .MaltProperties import MaltPropertyGroup
-from . import MaltProperties
-from . import MaltPipeline
+from Malt.Shader import Shader
+from BlenderMalt import MaltProperties
+from BlenderMalt.MaltProperties import MaltPropertyGroup
+from BlenderMalt import MaltPipeline
 
 #ShaderPath/PipelineName/PassName
 SHADERS = {}

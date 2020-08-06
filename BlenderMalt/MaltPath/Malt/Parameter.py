@@ -1,6 +1,6 @@
 # Copyright (c) 2020 BlenderNPR and contributors. MIT license. 
 
-from .GL import *
+from Malt.GL import *
 
 from enum import Enum
 

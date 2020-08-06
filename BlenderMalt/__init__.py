@@ -21,14 +21,21 @@ except:
     for dependency in dependencies:
         subprocess.check_call([bpy.app.binary_path_python, '-m', 'pip', 'install', dependency])
 
-from . import Malt
+#Add Malt to the import path
+import sys
+from os import path
+current_dir = path.join(path.dirname(path.realpath(__file__)), 'MaltPath')
+if current_dir not in sys.path:
+    sys.path.append(current_dir)
 
-from . import MaltLights
-from . import MaltMaterial
-from . import MaltProperties
-from . import MaltMeshes
-from . import MaltPipeline
-from . import MaltRenderEngine
+import Malt
+
+from BlenderMalt import MaltLights
+from BlenderMalt import MaltMaterial
+from BlenderMalt import MaltProperties
+from BlenderMalt import MaltMeshes
+from BlenderMalt import MaltPipeline
+from BlenderMalt import MaltRenderEngine
 
 modules = [
     MaltProperties,#MaltProperties must register before MaltMaterial

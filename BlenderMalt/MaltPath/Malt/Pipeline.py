@@ -2,9 +2,9 @@
 
 from os import path
 
-from .Mesh import Mesh
-from .Shader import Shader
-from .GL import *
+from Malt.Mesh import Mesh
+from Malt.Shader import Shader
+from Malt.GL import *
 
 
 class PipelineParameters(object):

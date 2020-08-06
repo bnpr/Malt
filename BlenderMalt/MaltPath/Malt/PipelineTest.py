@@ -2,18 +2,18 @@
 
 from os import path
 
-from .GL import *
-from .Pipeline import Pipeline
-from .Mesh import Mesh
-from .Shader import Shader
-from .Texture import Texture
-from .RenderTarget import RenderTarget
-from .Parameter import Parameter
-from .UBO import UBO
+from Malt.GL import *
+from Malt.Pipeline import Pipeline
+from Malt.Mesh import Mesh
+from Malt.Shader import Shader
+from Malt.Texture import Texture
+from Malt.RenderTarget import RenderTarget
+from Malt.Parameter import Parameter
+from Malt.UBO import UBO
 
-from .Render import Lighting
-from .Render import Common
-from .Render import Sampling
+from Malt.Render import Lighting
+from Malt.Render import Common
+from Malt.Render import Sampling
 
 
 _NPR_Pipeline_Common='''

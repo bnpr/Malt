@@ -2,8 +2,8 @@
 
 import bpy
 
-from .Malt.Pipeline import Pipeline
-from .Malt.PipelineTest import PipelineTest
+from Malt.Pipeline import Pipeline
+from Malt.PipelineTest import PipelineTest
 
 def get_subclasses(cls):
     subclasses = []
@@ -124,6 +124,7 @@ def depsgraph_update(scene, depsgraph):
     setup_parameters(ids)
  
 import sys
+import os
 from pathlib import Path
 import importlib
 import traceback

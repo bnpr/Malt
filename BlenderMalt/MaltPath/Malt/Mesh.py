@@ -2,7 +2,7 @@
 
 import ctypes
 
-from .GL import *
+from Malt.GL import *
 
 class Mesh(object):
 

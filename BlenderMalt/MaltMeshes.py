@@ -4,8 +4,8 @@ import ctypes
 
 import bpy
 
-from .Malt.Mesh import Mesh
-from .Malt import GL
+from Malt.Mesh import Mesh
+from Malt import GL
 
 MESHES = {}
 

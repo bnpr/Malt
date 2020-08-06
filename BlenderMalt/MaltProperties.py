@@ -2,8 +2,8 @@
 
 import bpy
 
-from .Malt import GL
-from .Malt import Texture
+from Malt import GL
+from Malt import Texture
 
 __GRADIENTS = {}
 __GRADIENT_RESOLUTION = 256

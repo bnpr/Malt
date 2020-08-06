@@ -1,7 +1,7 @@
 # Copyright (c) 2020 BlenderNPR and contributors. MIT license.
 
 import ctypes
-from ..UBO import UBO
+from Malt.UBO import UBO
 
 class C_CommonBuffer(ctypes.Structure):
     _fields_ = [

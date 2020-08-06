@@ -6,14 +6,14 @@ import bpy
 
 from mathutils import Vector,Matrix,Quaternion
 
-from . import MaltMaterial
-from .Malt.PipelineTest import PipelineTest
-from .Malt.Mesh import Mesh
-from .Malt import GL
-from .Malt import Scene
+from BlenderMalt import MaltMaterial
+from Malt.PipelineTest import PipelineTest
+from Malt.Mesh import Mesh
+from Malt import GL
+from Malt import Scene
 
-from . import MaltPipeline
-from . import MaltMeshes
+from BlenderMalt import MaltPipeline
+from BlenderMalt import MaltMeshes
 
 class MaltRenderEngine(bpy.types.RenderEngine):
     # These three members are used by blender to set up the

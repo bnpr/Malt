@@ -1,7 +1,7 @@
 # Copyright (c) 2020 BlenderNPR and contributors. MIT license.
 
 import ctypes
-from ..UBO import UBO
+from Malt.UBO import UBO
 
 LIGHT_SUN = 1
 LIGHT_POINT = 2
