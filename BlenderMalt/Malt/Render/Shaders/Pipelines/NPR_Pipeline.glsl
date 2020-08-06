@@ -38,3 +38,71 @@ void DEFAULT_MAIN_PASS_PIXEL_SHADER()
 #endif //MAIN_PASS
 
 #endif //PIXEL_SHADER
+
+//NPR PIPELINE SIMPLIFIED API
+
+#ifdef PIXEL_SHADER
+
+#ifdef MAIN_PASS
+
+#include "Shading/Lambert.glsl"
+#include "Shading/Phong.glsl"
+#include "Shading/DiffuseGradient.glsl"
+#include "Shading/SpecularGradient.glsl"
+#include "Filters/Line.glsl"
+
+vec3 get_normal()
+{
+    return texture(IN_NORMAL_DEPTH, screen_uv()).xyz;
+}
+
+vec3 get_diffuse()
+{
+    return lambert_bsdf(POSITION, get_normal());
+}
+
+vec3 get_diffuse_half()
+{
+    return half_lambert_bsdf(POSITION, get_normal());
+}
+
+vec3 get_specular(float shininess)
+{
+    return phong_bsdf(POSITION, get_normal(), shininess);
+}
+
+vec3 get_diffuse_gradient(sampler1D gradient_texture)
+{
+    return diffuse_gradient_bsdf(POSITION, get_normal(), gradient_texture);
+}
+
+vec3 get_specular_gradient(sampler1D gradient_texture, float shininess)
+{
+    return specular_gradient_bsdf(POSITION, get_normal(), shininess, gradient_texture);
+}
+
+float get_line_simple(float width, float depth_threshold, float normal_threshold)
+{
+    LineOutput lo = line_ex(
+        width,
+        1,
+        LINE_DEPTH_MODE_NEAR,
+        screen_uv(),
+        IN_NORMAL_DEPTH,
+        3,
+        IN_NORMAL_DEPTH,
+        IN_ID,
+        0
+    );
+
+    bool line = lo.id_boundary || 
+                lo.delta_distance > depth_threshold ||
+                lo.delta_angle > normal_threshold;
+    
+    return float(line);
+}
+
+#endif //MAIN_PASS
+
+#endif //PIXEL_SHADER
+
