@@ -6,9 +6,10 @@ from Malt.GL import *
 
 class Mesh(object):
 
-    def __init__(self, position, index, normal=None, uvs=[], colors=[]):
+    def __init__(self, position, index, normal=None, tangents=[], uvs=[], colors=[]):
         self.position = None
         self.normal = None
+        self.tangents = []
         self.uvs = []
         self.colors = []
 
@@ -39,6 +40,8 @@ class Mesh(object):
         self.position = load_VBO(position)
         if normal:
             self.normal = load_VBO(normal)
+        for tangent in tangents:
+            self.tangents.append(load_VBO(tangent))
         for uv in uvs:
             self.uvs.append(load_VBO(uv))
         for color in colors:
@@ -62,10 +65,15 @@ class Mesh(object):
         if(self.normal):
             bind_VBO(self.normal, 1, 3)
         
-        uv0_index = 2
-        color0_index = 10
+        max_uv = 4
+        tangent0_index = 2
+        uv0_index = tangent0_index + max_uv
+        color0_index = uv0_index + max_uv
+        for i, tangent in enumerate(self.tangents):
+            assert(i < max_uv)
+            bind_VBO(tangent, tangent0_index + i, 3)
         for i, uv in enumerate(self.uvs):
-            assert(uv0_index + i < color0_index)
+            assert(i < max_uv)
             bind_VBO(uv, uv0_index + i, 2)
         for i, color in enumerate(self.colors):
             bind_VBO(color, color0_index + i, 4)

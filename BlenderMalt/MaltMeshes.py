@@ -38,21 +38,30 @@ def load_mesh(object):
         return Mesh(positions, indices, normals)
     else:    
         count = len(m.loops)
+
         indices = GL.gl_buffer(GL.GL_UNSIGNED_INT, len(m.loop_triangles)*3)
+        m.loop_triangles.foreach_get("loops",indices)
+
         normals = GL.gl_buffer(GL.GL_FLOAT, count*3)
-        uvs = [GL.gl_buffer(GL.GL_FLOAT, count*2)] * len(m.uv_layers) if len(m.uv_layers) > 0 else []
-        colors = [GL.gl_buffer(GL.GL_FLOAT, count*4)] * len(m.vertex_colors) if len(m.vertex_colors) > 0 else []
+        m.loops.foreach_get("normal",normals)
+
+        uvs = []
+        tangents = []
+        for i, uv_layer in enumerate(m.uv_layers):
+            uvs.append(GL.gl_buffer(GL.GL_FLOAT, count*2))
+            uv_layer.data.foreach_get("uv", uvs[i])
+            m.calc_tangents(uvmap=uv_layer.name)
+            #TODO: Bitangent signs
+            tangents.append(GL.gl_buffer(GL.GL_FLOAT, count*3))
+            m.loops.foreach_get("tangent", tangents[i])
+
+        colors = []
+        for i, vertex_color in enumerate(m.vertex_colors):
+            colors.append(GL.gl_buffer(GL.GL_FLOAT, count*4))
+            vertex_color.data.foreach_get("color", colors[i])
         
         position_indices = GL.gl_buffer(GL.GL_UNSIGNED_INT, count)
         positions = GL.gl_buffer(GL.GL_FLOAT, count*3)
-
-        m.loop_triangles.foreach_get("loops",indices)
-        m.loops.foreach_get("normal",normals)
-        for i, uv_layer in enumerate(m.uv_layers):
-            uv_layer.data.foreach_get("uv", uvs[i])
-        for i, vertex_color in enumerate(m.vertex_colors):
-            vertex_color.data.foreach_get("color", colors[i])
-        
         m.loops.foreach_get("vertex_index",position_indices)
 
         #TODO: Use something faster
@@ -61,7 +70,7 @@ def load_mesh(object):
             positions[i*3+1] = m.vertices[position_indices[i]].co[1]
             positions[i*3+2] = m.vertices[position_indices[i]].co[2]
         
-        return Mesh(positions, indices, normals, uvs, colors)
+        return Mesh(positions, indices, normals, tangents, uvs, colors)
 
 @bpy.app.handlers.persistent
 def reset_meshes(dummy):

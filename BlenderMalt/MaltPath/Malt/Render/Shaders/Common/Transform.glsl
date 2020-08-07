@@ -26,6 +26,19 @@ vec3 transform_normal(mat4 matrix, vec3 normal)
     return normalize(transform_direction(matrix, normal));
 }
 
+vec3 sample_normal_map_ex(sampler2D normal_texture, int uv_index, vec2 uv)
+{
+    vec3 tangent = texture(normal_texture, uv).xyz;
+    tangent = tangent * 2.0 - 1.0;
+    mat3 TBN = mat3(TANGENT[uv_index], BITANGENT[uv_index], NORMAL);
+    return normalize(TBN * tangent);
+}
+
+vec3 sample_normal_map(sampler2D normal_texture, int uv_index)
+{
+    return sample_normal_map_ex(normal_texture, uv_index, UV[uv_index]);
+}
+
 vec3 camera_position()
 {
     return transform_point(inverse(CAMERA), vec3(0,0,0));
