@@ -67,17 +67,10 @@ def load_mesh(object):
         for i, vertex_color in enumerate(m.vertex_colors):
             colors.append(GL.gl_buffer(GL.GL_FLOAT, count*4))
             vertex_color.data.foreach_get("color", colors[i])
-        
-        position_indices = GL.gl_buffer(GL.GL_UNSIGNED_INT, count)
-        positions = GL.gl_buffer(GL.GL_FLOAT, count*3)
-        m.loops.foreach_get("vertex_index",position_indices)
 
-        #TODO: Use something faster
-        for i in range(0,count):
-            positions[i*3+0] = m.vertices[position_indices[i]].co[0]
-            positions[i*3+1] = m.vertices[position_indices[i]].co[1]
-            positions[i*3+2] = m.vertices[position_indices[i]].co[2]
-        
+        pos = [axis for l in m.loops for axis in m.vertices[l.vertex_index].co]
+        positions = GL.gl_buffer(GL.GL_FLOAT, count*3, pos)
+
         return Mesh(positions, indices, normals, tangents, uvs, colors)
 
 @bpy.app.handlers.persistent
