@@ -143,7 +143,10 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
             
             if rna[key]['type'] == GL.GL_SAMPLER_2D:
                 layout.label(text=key + " :")
-                layout.template_ID(self.textures[key], "texture", new="image.new", open="image.open")
+                row = layout.row()
+                row = row.split(factor=0.8)
+                row.template_ID(self.textures[key], "texture", new="image.new", open="image.open")
+                row.prop(self.textures[key].texture.colorspace_settings, 'name', text='')
             elif rna[key]['type'] == GL.GL_SAMPLER_1D:
                 layout.label(text=key + " :")
                 layout.template_color_ramp(get_color_ramp(self.id_data, key), 'color_ramp')
