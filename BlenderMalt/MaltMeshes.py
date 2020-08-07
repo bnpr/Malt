@@ -51,17 +51,10 @@ def load_mesh(object):
         for i, uv_layer in enumerate(m.uv_layers):
             uvs.append(GL.gl_buffer(GL.GL_FLOAT, count*2))
             uv_layer.data.foreach_get("uv", uvs[i])
+
             m.calc_tangents(uvmap=uv_layer.name)
-            tangent = GL.gl_buffer(GL.GL_FLOAT, count*3)
-            m.loops.foreach_get("tangent", tangent)
-            bitangent_sign = GL.gl_buffer(GL.GL_FLOAT, count)
-            m.loops.foreach_get("bitangent_sign", bitangent_sign)
-            combined = GL.gl_buffer(
-                GL.GL_FLOAT, 
-                count * 4,
-                itertools.chain.from_iterable(zip(*[iter(tangent)]*3, bitangent_sign))
-            )
-            tangents.append(combined)
+            packed_tangents = [e for l in m.loops for e in (*l.tangent, l.bitangent_sign)]
+            tangents.append(GL.gl_buffer(GL.GL_FLOAT, count*4, packed_tangents))
 
         colors = []
         for i, vertex_color in enumerate(m.vertex_colors):
