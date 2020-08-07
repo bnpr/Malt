@@ -7,10 +7,10 @@
 
 layout (location = 0) in vec3 in_position;
 layout (location = 1) in vec3 in_normal;
-layout (location = 2) in vec3 in_tangent0;
-layout (location = 3) in vec3 in_tangent1;
-layout (location = 4) in vec3 in_tangent2;
-layout (location = 5) in vec3 in_tangent3;
+layout (location = 2) in vec4 in_tangent0;
+layout (location = 3) in vec4 in_tangent1;
+layout (location = 4) in vec4 in_tangent2;
+layout (location = 5) in vec4 in_tangent3;
 layout (location = 6) in vec2 in_uv0;
 layout (location = 7) in vec2 in_uv1;
 layout (location = 8) in vec2 in_uv2;
@@ -75,16 +75,15 @@ void DEFAULT_VERTEX_SHADER()
     POSITION = transform_point(MODEL, in_position);
     NORMAL = transform_normal(MODEL, in_normal);
 
-    TANGENT[0]= transform_normal(MODEL, in_tangent0);
-    TANGENT[1]= transform_normal(MODEL, in_tangent1);
-    TANGENT[2]= transform_normal(MODEL, in_tangent2);
-    TANGENT[3]= transform_normal(MODEL, in_tangent3);
+    TANGENT[0]= transform_normal(MODEL, in_tangent0.xyz);
+    TANGENT[1]= transform_normal(MODEL, in_tangent1.xyz);
+    TANGENT[2]= transform_normal(MODEL, in_tangent2.xyz);
+    TANGENT[3]= transform_normal(MODEL, in_tangent3.xyz);
 
-    //TODO: Bitangent signs
-    BITANGENT[0]= cross(NORMAL, TANGENT[0]);
-    BITANGENT[1]= cross(NORMAL, TANGENT[1]);
-    BITANGENT[2]= cross(NORMAL, TANGENT[2]);
-    BITANGENT[3]= cross(NORMAL, TANGENT[3]);
+    BITANGENT[0]= cross(NORMAL, TANGENT[0]) * in_tangent0.w;
+    BITANGENT[1]= cross(NORMAL, TANGENT[1]) * in_tangent1.w;
+    BITANGENT[2]= cross(NORMAL, TANGENT[2]) * in_tangent2.w;
+    BITANGENT[3]= cross(NORMAL, TANGENT[3]) * in_tangent3.w;
     
     UV[0]=in_uv0;
     UV[1]=in_uv1;

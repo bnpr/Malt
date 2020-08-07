@@ -71,7 +71,7 @@ class Mesh(object):
         color0_index = uv0_index + max_uv
         for i, tangent in enumerate(self.tangents):
             assert(i < max_uv)
-            bind_VBO(tangent, tangent0_index + i, 3)
+            bind_VBO(tangent, tangent0_index + i, 4)
         for i, uv in enumerate(self.uvs):
             assert(i < max_uv)
             bind_VBO(uv, uv0_index + i, 2)
