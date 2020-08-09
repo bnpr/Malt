@@ -48,11 +48,11 @@ class MaltRenderEngine(bpy.types.RenderEngine):
             return list(chain.from_iterable(matrix.transposed()))
 
         scene = Scene.Scene()
-        scene.parameters = depsgraph.scene.malt_parameters.get_parameters()
-        scene.world_parameters = depsgraph.scene.world.malt_parameters.get_parameters()
+        scene.parameters = depsgraph.scene_eval.malt_parameters.get_parameters()
+        scene.world_parameters = depsgraph.scene_eval.world.malt_parameters.get_parameters()
 
-        scene.frame = depsgraph.scene.frame_current
-        r = depsgraph.scene.render
+        scene.frame = depsgraph.scene_eval.frame_current
+        r = depsgraph.scene_eval.render
         fps = r.fps / r.fps_base
         remap = r.frame_map_new / r.frame_map_old
         scene.time = (scene.frame / fps) * remap
@@ -67,12 +67,12 @@ class MaltRenderEngine(bpy.types.RenderEngine):
                 self.request_new_frame = True
             scene.camera = Scene.Camera(camera_matrix, projection_matrix)
         else:
-            camera = depsgraph.scene.camera
+            camera = depsgraph.scene_eval.camera
             camera_matrix = flatten_matrix(camera.matrix_world.inverted())
             projection_matrix = flatten_matrix(
                 camera.calc_matrix_camera( depsgraph, 
-                    x=depsgraph.scene.render.resolution_x, 
-                    y=depsgraph.scene.render.resolution_y
+                    x=depsgraph.scene_eval.render.resolution_x, 
+                    y=depsgraph.scene_eval.render.resolution_y
             ))
             scene.camera = Scene.Camera(camera_matrix, projection_matrix)
 
@@ -150,7 +150,7 @@ class MaltRenderEngine(bpy.types.RenderEngine):
     # small preview for materials, world and lights.
     #TODO
     def render(self, depsgraph):
-        scene = depsgraph.scene
+        scene = depsgraph.scene_eval
         scale = scene.render.resolution_percentage / 100.0
 
         self.size_x = int(scene.render.resolution_x * scale)
@@ -210,7 +210,7 @@ class MaltRenderEngine(bpy.types.RenderEngine):
         resolution = context.region.width, context.region.height
         
         def bind_display_shader():
-            self.bind_display_space_shader(depsgraph.scene)
+            self.bind_display_space_shader(depsgraph.scene_eval)
         
         if self.display_draw is None or self.display_draw.resolution != resolution:
             self.display_draw = DisplayDraw(bind_display_shader, resolution)
