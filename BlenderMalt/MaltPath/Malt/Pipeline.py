@@ -130,9 +130,10 @@ class Pipeline(object):
             
             shader.bind()
 
+            #TODO: Do the opposite. Set the shader uniform block location to the UBO location
             for name, block in uniform_blocks.items():
-                if name in default_shader.uniform_blocks:
-                    block.bind(default_shader.uniform_blocks[name])
+                if name in shader.uniform_blocks:
+                    block.bind(shader.uniform_blocks[name])
             
             obj.mesh.draw()
 
