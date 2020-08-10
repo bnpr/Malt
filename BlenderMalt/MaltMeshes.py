@@ -52,7 +52,12 @@ def load_mesh(object):
             uvs.append(GL.gl_buffer(GL.GL_FLOAT, count*2))
             uv_layer.data.foreach_get("uv", uvs[i])
 
-            m.calc_tangents(uvmap=uv_layer.name)
+            try:
+                m.calc_tangents(uvmap=uv_layer.name)
+            except Exception as ex:
+                # TODO:
+                print("WARNING : Object :", object.name)
+                print(ex)
             packed_tangents = [e for l in m.loops for e in (*l.tangent, l.bitangent_sign)]
             tangents.append(GL.gl_buffer(GL.GL_FLOAT, count*4, packed_tangents))
 
