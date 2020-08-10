@@ -208,11 +208,13 @@ def reflect_program_uniform_blocks(program):
         glUniformBlockBinding(program, i, i) # All Uniform Blocks are binded at 0 by default. :/
         glGetActiveUniformBlockiv(program, i, GL_UNIFORM_BLOCK_BINDING, block_bind)
         glGetActiveUniformBlockiv(program, i, GL_UNIFORM_BLOCK_DATA_SIZE, block_size)
-        blocks[name] = block_bind[0]
+        blocks[name] = {
+            'bind' : block_bind[0],
+            'size' : block_size[0],
+            'name' : name,
+        }
     
     return blocks
-
-
 
 def uniform_type_set_function(uniform_type):
     base_type, size = uniform_type_to_base_type_and_size(uniform_type)

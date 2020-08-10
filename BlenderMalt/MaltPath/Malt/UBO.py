@@ -17,8 +17,14 @@ class UBO(object):
         glBufferData(GL_UNIFORM_BUFFER, self.size, ctypes.pointer(structure), GL_STREAM_DRAW)
         glBindBuffer(GL_UNIFORM_BUFFER, 0)
 
-    def bind(self, location):
-        glBindBufferRange(GL_UNIFORM_BUFFER, location, self.buffer[0], 0, self.size)
+    def bind(self, uniform_block):
+        if self.size != uniform_block['size']:
+            print(" WARNING: non-matching size UBO bindind")
+            print("name : {} | bind : {} | UBO size : {} | uniform block size : {}".format(
+                uniform_block['name'], uniform_block['bind'], self.size, uniform_block['size']
+            ))
+
+        glBindBufferRange(GL_UNIFORM_BUFFER, uniform_block['bind'], self.buffer[0], 0, self.size)
     
     def __del__(self):
         try:
