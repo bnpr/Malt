@@ -147,7 +147,7 @@ def track_shader_changes():
         start_time = time.time()
 
         for material in bpy.data.materials:
-            shader_path = material.malt.shader_source
+            shader_path = bpy.path.abspath(material.malt.shader_source)
             if os.path.exists(shader_path):
                 stats = os.stat(shader_path)
                 if shader_path not in SHADERS.keys() or stats.st_mtime > __TIMESTAMP:
