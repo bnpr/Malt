@@ -116,6 +116,10 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
             else:
                 rna[name]['subtype'] = 'NONE'
                 rna[name]['use_soft_limits'] = False
+        
+        # Force a depsgraph update. 
+        # Otherwise these won't be available inside scene_eval
+        self.id_data.update_tag()
     
 
     def get_parameters(self):
