@@ -24,6 +24,7 @@ class C_LightsBuffer(ctypes.Structure):
     _fields_ = [
         ('lights', C_Light*128),
         ('lights_count', ctypes.c_int),
+        ('__padding', ctypes.c_int32*3),
     ]
 
 class LightsBuffer(object):
