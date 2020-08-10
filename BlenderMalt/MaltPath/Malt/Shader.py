@@ -79,6 +79,8 @@ class Shader(object):
     
     def copy(self):
         new = Shader(None, None)
+        new.vertex_source = self.vertex_source
+        new.pixel_source = self.pixel_source
         new.program = self.program
         new.error = self.error
         for name, uniform in self.uniforms.items():
