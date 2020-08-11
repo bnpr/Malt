@@ -49,6 +49,7 @@ void DEFAULT_MAIN_PASS_PIXEL_SHADER()
 #include "Shading/Phong.glsl"
 #include "Shading/DiffuseGradient.glsl"
 #include "Shading/SpecularGradient.glsl"
+#include "Filters/Curvature.glsl"
 #include "Filters/Line.glsl"
 
 vec3 get_normal()
@@ -80,6 +81,22 @@ vec3 get_specular_gradient(sampler1D gradient_texture, float shininess)
 {
     return specular_gradient_bsdf(POSITION, get_normal(), shininess, gradient_texture);
 }
+
+float get_curvature()
+{
+    vec3 x = transform_normal(inverse(CAMERA), vec3(1,0,0));
+    vec3 y = transform_normal(inverse(CAMERA), vec3(0,1,0));
+    return curvature(IN_NORMAL_DEPTH, screen_uv(), 1.0, x, y);
+}
+
+float get_surface_curvature(float depth_range /*0.05*/)
+{
+    vec3 x = transform_normal(inverse(CAMERA), vec3(1,0,0));
+    vec3 y = transform_normal(inverse(CAMERA), vec3(0,1,0));
+    return surface_curvature(IN_NORMAL_DEPTH, IN_NORMAL_DEPTH, 3, screen_uv(), 1.0, x, y, depth_range);
+}
+
+//TODO: World Space width for curvature
 
 float get_line_simple(float width, float depth_threshold, float normal_threshold)
 {

@@ -89,6 +89,22 @@ float depth_to_z(float depth)
     return screen_to_camera(vec2(0,0), depth).z;
 }
 
+#ifdef PIXEL_SHADER
+
+float pixel_world_size_at(float depth)
+{
+    vec2 uv = screen_uv();
+    vec2 offset = vec2(1.0 / RESOLUTION.x, 0);
+    return distance(screen_to_camera(uv, depth), screen_to_camera(uv + offset, depth));
+}
+
+float pixel_world_size()
+{
+    return pixel_world_size_at(gl_FragCoord.z);
+}
+
+#endif //PIXEL_SHADER
+
 float ray_plane_intersection(vec3 ray_origin, vec3 ray_direction, vec3 plane_position, vec3 plane_normal)
 {
     float r_direction = dot(ray_direction, plane_normal);

@@ -1,0 +1,39 @@
+//Copyright (c) 2020 BlenderNPR and contributors. MIT license.
+
+#ifndef CURVATURE_GLSL
+#define CURVATURE_GLSL
+
+// x and y must be the screen x and y axis in the same space coordinates as the texture normals
+float curvature(sampler2D normal_texture, vec2 uv, float width, vec3 x, vec3 y)
+{
+    vec2 offset = vec2(width) / vec2(textureSize(normal_texture, 0));
+
+    vec3 l = texture(normal_texture, uv + vec2(-offset.x,0)).xyz;
+    vec3 r = texture(normal_texture, uv + vec2( offset.x,0)).xyz;
+    vec3 d = texture(normal_texture, uv + vec2(0,-offset.y)).xyz;
+    vec3 u = texture(normal_texture, uv + vec2(0, offset.y)).xyz;
+    
+    float curvature = dot(cross(l,r), y) - dot(cross(d,u), x);
+    
+    //Map it from (-1|+1) to (0|1)
+    return curvature / 2.0 + 0.5;
+}
+
+#include "Filters/Line.glsl"
+
+// Like curvature, but discard depth discontinuities
+float surface_curvature(sampler2D normal_texture, sampler2D depth_texture, int depth_channel, 
+    vec2 uv, float width, vec3 x, vec3 y, float depth_range)
+{
+    float curvature = curvature(normal_texture, uv, width, x, y);
+
+    float delta_depth = line_depth_ex( depth_texture, depth_channel, uv, width, LINE_DEPTH_MODE_ANY);
+
+    delta_depth /= depth_range;
+    delta_depth = clamp(delta_depth, 0, 1);
+
+    return mix(curvature, 0.5, delta_depth);
+}
+
+#endif //CURVATURE_GLSL
+
