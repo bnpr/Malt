@@ -141,6 +141,9 @@ def load_malt_lib(path):
                 name = name.split('.')[0]
             module = __import__(name)
             importlib.reload(module)
+        except ModuleNotFoundError:
+            # Ignore it. The file or dir is not a python module (glsl files, for example)
+            pass
         except Exception:
             traceback.print_exc()
 
