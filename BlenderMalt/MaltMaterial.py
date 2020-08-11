@@ -135,6 +135,7 @@ classes = (
 )
 
 import time
+import traceback
 __TIMESTAMP = time.time()
 
 INITIALIZED = False
@@ -147,9 +148,10 @@ def track_shader_changes():
         start_time = time.time()
 
         for material in bpy.data.materials:
-            shader_path = bpy.path.abspath(material.malt.shader_source)
-            if os.path.exists(shader_path):
-                stats = os.stat(shader_path)
+            shader_path = material.malt.shader_source
+            abs_path = bpy.path.abspath(shader_path)
+            if os.path.exists(abs_path):
+                stats = os.stat(abs_path)
                 if shader_path not in SHADERS.keys() or stats.st_mtime > __TIMESTAMP:
                     redraw = True
                     material.malt.update_source(bpy.context)
@@ -162,6 +164,7 @@ def track_shader_changes():
                 for area in screen.areas:
                     area.tag_redraw()
     except:
+        traceback.print_exc()
         pass
     return 1 #Track again in 1 second
     
