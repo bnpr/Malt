@@ -3,7 +3,7 @@
 #ifndef CURVATURE_GLSL
 #define CURVATURE_GLSL
 
-// x and y must be the screen x and y axis in the same space coordinates as the texture normals
+// x and y must be the screen x and y axis in the same coordinate space as the texture normals
 float curvature(sampler2D normal_texture, vec2 uv, float width, vec3 x, vec3 y)
 {
     vec2 offset = vec2(width) / vec2(textureSize(normal_texture, 0));
@@ -12,6 +12,14 @@ float curvature(sampler2D normal_texture, vec2 uv, float width, vec3 x, vec3 y)
     vec3 r = texture(normal_texture, uv + vec2( offset.x,0)).xyz;
     vec3 d = texture(normal_texture, uv + vec2(0,-offset.y)).xyz;
     vec3 u = texture(normal_texture, uv + vec2(0, offset.y)).xyz;
+
+    if(width != 1.0)
+    {
+        l = normalize(l);
+        r = normalize(r);
+        d = normalize(d);
+        u = normalize(u);
+    }
     
     float curvature = dot(cross(l,r), y) - dot(cross(d,u), x);
     
