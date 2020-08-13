@@ -35,6 +35,7 @@ def gl_buffer(type, size, data=None):
         GL_UNSIGNED_INT : GLuint,
         GL_FLOAT : GLfloat,
         GL_DOUBLE : GLdouble,
+        GL_BOOL : GLboolean,
     }
     gl_type = (types[type] * size)
     if data:

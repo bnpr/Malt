@@ -53,18 +53,22 @@ class MaltTexturePropertyWrapper(bpy.types.PropertyGroup):
 
     texture : bpy.props.PointerProperty(type=bpy.types.Image)
 
+class MaltBoolPropertyWrapper(bpy.types.PropertyGroup):
+
+    boolean : bpy.props.BoolProperty()
+
 class MaltPropertyGroup(bpy.types.PropertyGroup):
 
     # Textures are not fully supported in Custom Properties,
     # so we store them here and its metadata in _RNA_UI.
     # Textures can be acessed by name, i.e. textures["image_name"]
     textures : bpy.props.CollectionProperty(type=MaltTexturePropertyWrapper)
+    bools : bpy.props.CollectionProperty(type=MaltBoolPropertyWrapper)
 
     def get_rna(self):
         if '_RNA_UI' not in self.keys():
             self['_RNA_UI'] = {}
         return self['_RNA_UI']
-
 
     def setup(self, properties):
         rna = self.get_rna()
@@ -95,6 +99,15 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
 
             if uniform.type == GL.GL_SAMPLER_1D:
                 get_color_ramp(self.id_data, name)
+
+            if uniform.type == GL.GL_BOOL:
+                if name not in self.bools:
+                    self.bools.add().name = name
+                if name in self.keys():
+                    self.pop(name)
+                rna[name]['default'] = uniform.value
+                rna[name]['type'] = uniform.type
+                continue
             
             is_default = name in self.keys() and 'default' in rna[name].keys() and rna[name]['default'][:] == self[name][:]
             type_changed = name in self.keys() and 'type' in rna[name].keys() and rna[name]['type'] != uniform.type
@@ -130,7 +143,10 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
         for key in rna.keys():
             if rna[key]['active'] == False:
                 continue
-            parameters[key] = self[key]
+            if rna[key]['type'] == GL.GL_BOOL:
+                parameters[key] = self.bools[key].boolean
+            else:
+                parameters[key] = self[key]
         return parameters
 
     
@@ -159,6 +175,8 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
             elif rna[key]['type'] == GL.GL_SAMPLER_1D:
                 layout.label(text=key + " :")
                 layout.template_color_ramp(get_color_ramp(self.id_data, key), 'color_ramp')
+            elif rna[key]['type'] == GL.GL_BOOL:
+                layout.prop(self.bools[key], 'boolean', text=key)
             else:
                 #TODO: add subtype toggle
                 layout.prop(self, '["'+key+'"]')
@@ -240,6 +258,7 @@ class MALT_PT_Light(MALT_PT_Base):
 
 classes = (
     MaltTexturePropertyWrapper,
+    MaltBoolPropertyWrapper,
     MaltPropertyGroup,
     MALT_PT_Base,
     MALT_PT_Scene,
