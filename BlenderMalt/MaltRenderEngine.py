@@ -218,6 +218,13 @@ class MaltRenderEngine(bpy.types.RenderEngine):
         #Save FBO for later use
         fbo = GL.gl_buffer(GL.GL_INT, 1)
         GL.glGetIntegerv(GL.GL_FRAMEBUFFER_BINDING, fbo)
+
+        # Generating a VAO before loading/rendering fixes an error where the viewport
+        # freezes in edit mode. Why ??? I have no idea. ¯\_(ツ)_/¯
+        # TODO: try to load meshes the normal way, without lazy VAO generation.
+        # (Would need a Pipeline refactor)
+        VAO = GL.gl_buffer(GL.GL_INT, 1)
+        GL.glGenVertexArrays(1, VAO)
         
         #render
         scene = self.load_scene(context, depsgraph)
@@ -231,6 +238,8 @@ class MaltRenderEngine(bpy.types.RenderEngine):
 
         if self.get_pipeline().needs_more_samples():
             self.tag_redraw()
+
+        GL.glDeleteVertexArrays(1, VAO)
 
 
 #Boilerplate code to draw an OpenGL texture to the viewport using Blender color management
