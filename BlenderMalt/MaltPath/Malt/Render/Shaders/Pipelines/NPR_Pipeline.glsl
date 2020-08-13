@@ -19,8 +19,12 @@ layout (location = 1) out float OUT_ID;
 
 void DEFAULT_PRE_PASS_PIXEL_SHADER()
 {
-    OUT_NORMAL_DEPTH.rgb = normalize(NORMAL);
-    OUT_NORMAL_DEPTH.a = gl_FragCoord.z;
+    OUT_NORMAL_DEPTH.xyz = normalize(NORMAL);
+    if(!gl_FrontFacing)
+    {
+        OUT_NORMAL_DEPTH.xyz *= -1.0;
+    }
+    OUT_NORMAL_DEPTH.w = gl_FragCoord.z;
     OUT_ID = ID;
 }
 #endif //PRE_PASS

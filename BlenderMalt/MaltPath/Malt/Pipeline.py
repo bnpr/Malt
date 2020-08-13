@@ -57,6 +57,7 @@ class Pipeline(object):
 
     def __init__(self):
         self.parameters = PipelineParameters()
+        self.parameters.mesh['double_sided'] = GLUniform(-1, GL_BOOL, False)
 
         shader_dir = path.join(path.dirname(__file__), 'Render', 'Shaders')
         if shader_dir not in Pipeline.SHADER_INCLUDE_PATHS:
@@ -102,11 +103,15 @@ class Pipeline(object):
         glDisable(GL_BLEND)
         glEnable(GL_DEPTH_TEST)
         glDepthFunc(GL_LEQUAL)
-        glEnable(GL_CULL_FACE)
 
         render_target.bind()
 
         for obj in objects:
+            if obj.mesh and obj.mesh.parameters['double_sided']:
+                glDisable(GL_CULL_FACE)
+            else:
+                glEnable(GL_CULL_FACE)
+
             if obj.negative_scale:
                 glCullFace(GL_FRONT)
             else:
