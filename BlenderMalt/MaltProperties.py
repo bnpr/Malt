@@ -140,8 +140,12 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
             return #Can't modify ID classes from here
         rna = self.get_rna()
         
-        #TODO: Order in a predictable way ?
-        for key in rna.keys():
+        # Most drivers sort the uniforms in alphabetical order anyway, 
+        # so there's no point in tracking the actual index since it doesn't follow
+        # the declaration order
+        keys = sorted(rna.keys()) 
+        
+        for key in keys:
             if rna[key]['active'] == False:
                 continue
             
