@@ -98,10 +98,13 @@ class MaltRenderEngine(bpy.types.RenderEngine):
                     material = materials[material_name]
 
                 if obj.name_full not in meshes:
+                    # (Uses obj.original) Malt Parameters are not present in the evaluated mesh
+                    parameters = obj.original.data.malt_parameters.get_parameters()
+                    meshes[obj.name_full] = Scene.Mesh(None, parameters)
                     if depsgraph.mode == 'VIEWPORT':
-                        meshes[obj.name_full] = MaltMeshes.get_mesh(obj)
+                        meshes[obj.name_full].mesh = MaltMeshes.get_mesh(obj)
                     else: #always load the mesh for final renders
-                        meshes[obj.name_full] = MaltMeshes.load_mesh(obj)
+                        meshes[obj.name_full].mesh = MaltMeshes.load_mesh(obj)
 
                 mesh = meshes[obj.name_full]
                 if mesh is None:

@@ -76,6 +76,8 @@ def setup_parameters(ids):
         bpy.types.Camera : pipeline_parameters.camera,
         bpy.types.Object : pipeline_parameters.object,
         bpy.types.Material : pipeline_parameters.material,
+        bpy.types.Mesh : pipeline_parameters.mesh,
+        bpy.types.Curve : pipeline_parameters.mesh,
         bpy.types.Light : pipeline_parameters.light,
     }
 
@@ -93,6 +95,8 @@ def setup_all_ids():
     setup_parameters(bpy.data.cameras)
     setup_parameters(bpy.data.objects)
     setup_parameters(bpy.data.materials)
+    setup_parameters(bpy.data.meshes)
+    setup_parameters(bpy.data.curves)
     setup_parameters(bpy.data.lights)
     global __INITIALIZED
     __INITIALIZED = True
@@ -111,6 +115,8 @@ def depsgraph_update(scene, depsgraph):
         bpy.types.Camera : bpy.data.cameras,
         bpy.types.Object : bpy.data.objects,
         bpy.types.Material : bpy.data.materials,
+        bpy.types.Mesh : bpy.data.meshes,
+        bpy.types.Curve : bpy.data.curves,
         bpy.types.Light : bpy.data.lights,
     }
     for update in depsgraph.updates:

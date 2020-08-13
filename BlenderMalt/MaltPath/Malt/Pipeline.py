@@ -9,12 +9,13 @@ from Malt.GL import *
 
 class PipelineParameters(object):
 
-    def __init__(self, scene={}, world={}, camera={}, object={}, material={}, light={}):
+    def __init__(self, scene={}, world={}, camera={}, object={}, material={}, mesh={}, light={}):
         self.scene = scene
         self.world = world
         self.camera = camera
         self.object = object
         self.material = material
+        self.mesh = mesh
         self.light = light
 
 _screen_vertex_default='''
@@ -135,7 +136,7 @@ class Pipeline(object):
                 if name in shader.uniform_blocks:
                     block.bind(shader.uniform_blocks[name])
             
-            obj.mesh.draw()
+            obj.mesh.mesh.draw()
 
     def get_parameters(self):
         return self.parameters

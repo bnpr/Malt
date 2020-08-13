@@ -232,6 +232,20 @@ class MALT_PT_Object(MALT_PT_Base):
     def get_malt_property_owner(cls, context):
         return context.object
 
+class MALT_PT_Material(MALT_PT_Base):
+    bl_context = "material"
+    @classmethod
+    def get_malt_property_owner(cls, context):
+        if context.object and len(context.object.material_slots) > 0:
+            return context.object.material_slots[0].material
+
+class MALT_PT_Mesh(MALT_PT_Base):
+    bl_context = "data"
+    @classmethod
+    def get_malt_property_owner(cls, context):
+        if context.object and context.object.data and context.object.type in ('MESH', 'CURVE', 'SURFACE','FONT'):
+            return context.object.data
+
 class MALT_PT_Light(MALT_PT_Base):
     bl_context = "data"
     @classmethod
@@ -265,6 +279,8 @@ classes = (
     MALT_PT_World,
     MALT_PT_Camera,
     MALT_PT_Object,
+    MALT_PT_Material,
+    MALT_PT_Mesh,
     MALT_PT_Light,
 )
 
@@ -287,6 +303,8 @@ def register():
     bpy.types.Camera.malt_parameters = bpy.props.PointerProperty(type=MaltPropertyGroup)
     bpy.types.Object.malt_parameters = bpy.props.PointerProperty(type=MaltPropertyGroup)
     bpy.types.Material.malt_parameters = bpy.props.PointerProperty(type=MaltPropertyGroup)
+    bpy.types.Mesh.malt_parameters = bpy.props.PointerProperty(type=MaltPropertyGroup)
+    bpy.types.Curve.malt_parameters = bpy.props.PointerProperty(type=MaltPropertyGroup)
     bpy.types.Light.malt_parameters = bpy.props.PointerProperty(type=MaltPropertyGroup)
 
     bpy.app.handlers.depsgraph_update_post.append(depsgraph_update)
@@ -300,6 +318,8 @@ def unregister():
     del bpy.types.Camera.malt_parameters
     del bpy.types.Object.malt_parameters
     del bpy.types.Material.malt_parameters
+    del bpy.types.Mesh.malt_parameters
+    del bpy.types.Font.malt_parameters
     del bpy.types.Light.malt_parameters
 
     bpy.app.handlers.depsgraph_update_post.append(depsgraph_update)

@@ -15,6 +15,12 @@ class Material(object):
         self.shader = shader
         self.parameters = parameters
 
+class Mesh(object):
+
+    def __init__(self, mesh, parameters={}):
+        self.mesh = mesh
+        self.parameters = parameters
+
 class Object(object):
 
     def __init__(self, matrix, mesh, material, parameters={}):

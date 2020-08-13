@@ -95,7 +95,7 @@ class MaltMaterial(bpy.types.PropertyGroup):
         self.parameters.draw_ui(layout)
 
 
-class MALT_PT_Material(bpy.types.Panel):
+class MALT_PT_MaterialSettings(bpy.types.Panel):
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
 
@@ -131,7 +131,7 @@ class MALT_PT_Material(bpy.types.Panel):
 
 classes = (
     MaltMaterial,
-    MALT_PT_Material
+    MALT_PT_MaterialSettings
 )
 
 import time
