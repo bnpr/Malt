@@ -53,6 +53,7 @@ layout(std140) uniform COMMON_UNIFORMS
     uniform float TIME;
 };
 
+#include "Common/Math.glsl"
 #include "Common/Transform.glsl"
 #include "Common/Lighting.glsl"
 
