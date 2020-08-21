@@ -9,6 +9,8 @@ Malt allows to write completely custom render pipelines while providing a flexib
 BlenderMalt is a Blender addon that integrates Malt into Blender, exposing a minimal user interface suitable for a code-centric workflow.<br>
 BlenderMalt takes care of exposing the UI for your rendering pipeline and manages all the render data loading and synchronization.
 
+You can find an up to date list of planned features and their current state in [this Google Sheet](https://docs.google.com/spreadsheets/d/1J6IaG7lsS1EI8kPeyJa9t_ycMSsHSYdyjfDTd953CAI/edit?usp=sharing).
+
 ## Installation
 
 *(Malt is still in early development state)*
