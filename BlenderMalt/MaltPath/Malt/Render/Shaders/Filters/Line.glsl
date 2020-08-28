@@ -173,6 +173,7 @@ LineOutput line_ex(
                 vec3 ray_origin = vec3(0);
                 vec3 ray_direction = normalize(sampled_position);
 
+                //TODO: Improve numerical stability
                 float expected_distance = ray_plane_intersection
                 (
                     ray_origin, ray_direction,
@@ -181,7 +182,6 @@ LineOutput line_ex(
 
                 delta_distance = abs(distance(sampled_position, ray_origin) - expected_distance);
             }
-
 
             if
             (

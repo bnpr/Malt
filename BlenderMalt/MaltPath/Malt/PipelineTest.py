@@ -11,8 +11,9 @@ from Malt.RenderTarget import RenderTarget
 from Malt.Parameter import Parameter
 from Malt.UBO import UBO
 
-from Malt.Render import Lighting
 from Malt.Render import Common
+from Malt.Render import Lighting
+from Malt.Render import Line
 from Malt.Render import Sampling
 
 
@@ -63,6 +64,8 @@ class PipelineTest(Pipeline):
         self.common_buffer = Common.CommonBuffer()
         self.lights_buffer = Lighting.LightsBuffer()
 
+        self.line_rendering = Line.LineRendering()
+
     def compile_material_from_source(self, source, include_paths=[]):
         source = _NPR_Pipeline_Common + source
         return {
@@ -81,8 +84,10 @@ class PipelineTest(Pipeline):
         self.t_prepass_id = Texture(resolution, GL_R32F)
         self.fbo_prepass = RenderTarget([self.t_prepass_normal_depth, self.t_prepass_id], self.t_depth)
         
-        self.t_color = Texture(resolution, GL_RGB32F)
-        self.fbo = RenderTarget([self.t_color], self.t_depth)
+        self.t_main_color = Texture(resolution, GL_RGB32F)
+        self.t_line_color = Texture(resolution, GL_RGB32F)
+        self.t_line_data = Texture(resolution, GL_RGB32F)
+        self.fbo_main = RenderTarget([self.t_main_color, self.t_line_color, self.t_line_data], self.t_depth)
 
         self.t_color_accumulate = Texture(resolution, GL_RGB32F)
         self.fbo_accumulate = RenderTarget([self.t_color_accumulate])
@@ -116,7 +121,7 @@ class PipelineTest(Pipeline):
             obj.parameters['ID'] = i+1
 
         #PRE-PASS
-        self.fbo_prepass.clear((0,0,1,1),1,0)
+        self.fbo_prepass.clear([(0,0,1,1), 0], 1, 0)
         self.draw_scene_pass(self.fbo_prepass, scene.objects, 'PRE_PASS', self.default_shader['PRE_PASS'], UBOS)
 
         #MAIN-PASS
@@ -124,13 +129,15 @@ class PipelineTest(Pipeline):
             'IN_NORMAL_DEPTH': self.t_prepass_normal_depth,
             'IN_ID': self.t_prepass_id,
         }
-        self.fbo.clear(scene.world_parameters['Background Color'])
-        self.draw_scene_pass(self.fbo, scene.objects, 'MAIN_PASS', self.default_shader['MAIN_PASS'], UBOS, {}, textures)        
+        self.fbo_main.clear([scene.world_parameters['Background Color'], (0,0,0,0), (-1,-1,-1,-1)])
+        self.draw_scene_pass(self.fbo_main, scene.objects, 'MAIN_PASS', self.default_shader['MAIN_PASS'], UBOS, {}, textures)        
         
+        composited_line = self.line_rendering.composite_line(self, self.common_buffer, self.t_main_color, self.t_depth, self.t_prepass_id, self.t_line_color, self.t_line_data)
+
         # TEMPORAL SUPER-SAMPLING ACCUMULATION
         # TODO: Should accumulate in display space ???
         # https://therealmjp.github.io/posts/msaa-overview/#working-with-hdr-and-tone-mapping
-        self.blend_texture(self.t_color, self.fbo_accumulate, 1.0 / (self.sample_count + 1))
+        self.blend_texture(composited_line, self.fbo_accumulate, 1.0 / (self.sample_count + 1))
 
         #COMPOSITE DEPTH
         if is_final_render:

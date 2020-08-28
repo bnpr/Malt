@@ -34,6 +34,8 @@ uniform sampler2D IN_NORMAL_DEPTH;
 uniform sampler2D IN_ID;
 
 layout (location = 0) out vec4 OUT_COLOR;
+layout (location = 1) out vec4 OUT_LINE_COLOR;
+layout (location = 2) out vec4 OUT_LINE_DATA;
 
 void DEFAULT_MAIN_PASS_PIXEL_SHADER()
 {
@@ -121,6 +123,30 @@ float get_line_simple(float width, float depth_threshold, float normal_threshold
                 lo.delta_angle > normal_threshold;
     
     return float(line);
+}
+
+float get_line_advanced(float width, bool use_boundary, float min_depth, float max_depth, float min_angle, float max_angle)
+{
+    LineOutput lo = line_ex(
+        width,
+        1,
+        LINE_DEPTH_MODE_NEAR,
+        screen_uv(),
+        IN_NORMAL_DEPTH,
+        3,
+        IN_NORMAL_DEPTH,
+        IN_ID,
+        0
+    );
+
+    float line = lo.id_boundary && use_boundary ? 1.0 : 0.0;
+    
+    float depth = map_range_clamped(lo.delta_distance, min_depth, max_depth, 0.0, 1.0);
+    float angle = map_range_clamped(lo.delta_angle, min_angle, max_angle, 0.0, 1.0);
+    line = max(line, depth);
+    line = max(line, angle);
+
+    return line;
 }
 
 #endif //MAIN_PASS
