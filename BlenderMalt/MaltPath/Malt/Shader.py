@@ -68,6 +68,9 @@ class Shader(object):
         for uniform in self.uniforms.values():
             uniform.bind()
         for name, texture in self.textures.items():
+            if name not in self.uniforms:
+                print("WARNING: Texture Uniform {} not found".format(name))
+                continue
             glActiveTexture(GL_TEXTURE0 + self.uniforms[name].value[0])
             if texture:
                 if hasattr(texture, 'bind'):
