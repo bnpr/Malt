@@ -1,6 +1,7 @@
 # Copyright (c) 2020 BlenderNPR and contributors. MIT license. 
 
 from Malt.GL import *
+import ctypes
 
 class RenderTarget(object):
 
@@ -45,18 +46,28 @@ class RenderTarget(object):
     def bind(self):
         glBindFramebuffer(GL_FRAMEBUFFER, self.FBO[0])
     
-    def clear(self, color=None, depth=None, stencil=None):
+    def clear(self, colors=[], depth=None, stencil=None):
+        self.bind()
         flags = 0
-        if color:
-            glClearColor(*color)
-            flags |= GL_COLOR_BUFFER_BIT
+        for i, target in enumerate(self.targets):
+            function_map = {
+                GL_INT : glClearBufferiv,
+                GL_UNSIGNED_INT : glClearBufferuiv,
+                GL_FLOAT : glClearBufferfv,
+            }
+            data = colors[i]
+            if isinstance(data, ctypes.Array) == False:
+                size = 1
+                try: size = len(data)
+                except: pass
+                data = gl_buffer(target.data_format, size, data)
+            function_map[target.data_format](GL_COLOR, i, data)
         if depth:
             glClearDepth(depth)
             flags |= GL_DEPTH_BUFFER_BIT
         if stencil:
             glClearStencil(stencil)
             flags |= GL_STENCIL_BUFFER_BIT
-        self.bind()
         glClear(flags)
     
     def __del__(self):
