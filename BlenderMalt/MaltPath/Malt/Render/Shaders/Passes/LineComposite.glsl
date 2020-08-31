@@ -28,6 +28,7 @@ layout (location = 0) out vec4 OUT_RESULT;
 #define ADVANCED_COMPOSITE 2
 #define BRUTE_FORCE 3
 
+//TODO: Use brute force on closer range and fallback to distance fields for wider lines
 #define LINE_MODE BRUTE_FORCE
 
 bool line_is_in_range(float depth_a, float depth_b, float width)
