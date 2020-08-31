@@ -69,6 +69,10 @@ class MaltMaterial(bpy.types.PropertyGroup):
                     
                     if name in pass_shader_copy.textures.keys():
                         pass_shader_copy.textures[name] = MaltProperties.get_color_ramp_texture(self.id_data, name)
+                
+                for name, parameter in self.parameters.bools.items():
+                    if name in pass_shader_copy.uniforms.keys():
+                        pass_shader_copy.uniforms[name].set_value(parameter.boolean)
 
                 for name, texture in self.parameters.textures.items():
                     if texture.texture and name in pass_shader_copy.textures.keys():
