@@ -125,10 +125,14 @@ float get_line_simple(float width, float depth_threshold, float normal_threshold
     return float(line);
 }
 
-float get_line_advanced(float width, bool use_boundary, float min_depth, float max_depth, float min_angle, float max_angle)
+float get_line_advanced(
+    float id_boundary_width,
+    float min_depth_threshold, float max_depth_threshold, float min_depth_width, float max_depth_width,
+    float min_angle_threshold, float max_angle_threshold, float min_angle_width, float max_angle_width
+)
 {
     LineOutput lo = line_ex(
-        width,
+        1.0,
         1,
         LINE_DEPTH_MODE_NEAR,
         screen_uv(),
@@ -139,12 +143,28 @@ float get_line_advanced(float width, bool use_boundary, float min_depth, float m
         0
     );
 
-    float line = lo.id_boundary && use_boundary ? 1.0 : 0.0;
+    float line = lo.id_boundary ? id_boundary_width : 0.0;
     
-    float depth = map_range_clamped(lo.delta_distance, min_depth, max_depth, 0.0, 1.0);
-    float angle = map_range_clamped(lo.delta_angle, min_angle, max_angle, 0.0, 1.0);
-    line = max(line, depth);
-    line = max(line, angle);
+    if(lo.delta_distance > min_depth_threshold)
+    {
+        float depth = map_range_clamped(
+            lo.delta_distance, 
+            min_depth_threshold, max_depth_threshold,
+            min_depth_width, max_depth_width
+        );
+
+        line = max(line, depth);
+    }
+    if(lo.delta_angle > min_angle_threshold)
+    {
+        float angle = map_range_clamped(
+            lo.delta_angle, 
+            min_angle_threshold, max_angle_threshold,
+            min_angle_width, max_angle_width
+        );
+
+        line = max(line, angle);
+    }
 
     return line;
 }
