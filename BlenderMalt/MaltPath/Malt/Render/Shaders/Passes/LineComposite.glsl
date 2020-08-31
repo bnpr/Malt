@@ -24,9 +24,22 @@ uniform float aa_offset = 0.0;
 
 layout (location = 0) out vec4 OUT_RESULT;
 
-#define USE_BASIC_COMPOSITE 0
+#define BASIC_COMPOSITE 1
+#define ADVANCED_COMPOSITE 2
+#define BRUTE_FORCE 3
 
-#if USE_BASIC_COMPOSITE
+#define LINE_MODE BRUTE_FORCE
+
+bool line_is_in_range(float depth_a, float depth_b, float width)
+{
+    width = pixel_world_size_at(depth_a) * width;
+    depth_a = depth_to_z(depth_a);
+    depth_b = depth_to_z(depth_b);
+
+    return abs(depth_a - depth_b) <= width;
+}
+
+#if LINE_MODE == BASIC_COMPOSITE
 
 void main()
 {
@@ -46,16 +59,7 @@ void main()
     OUT_RESULT = mix(color, line_color, line_alpha);
 }
 
-#else //USE_BASIC_COMPOSITE
-
-bool line_is_in_range(float depth_a, float depth_b, float width)
-{
-    width = pixel_world_size_at(depth_a) * width;
-    depth_a = depth_to_z(depth_a);
-    depth_b = depth_to_z(depth_b);
-
-    return abs(depth_a - depth_b) <= width;
-}
+#elif LINE_MODE == ADVANCED_COMPOSITE
 
 void main()
 {
@@ -140,6 +144,72 @@ void main()
     OUT_RESULT = mix(color, line_color, line_alpha);
 }
 
-#endif //USE_BASIC_COMPOSITE
+#elif LINE_MODE == BRUTE_FORCE
+
+uniform int brute_force_range = 10;
+
+void main()
+{
+    vec2 uv = screen_uv();
+    vec2 resolution = vec2(textureSize(line_color_texture,0));
+
+    int max_half_width = brute_force_range;
+
+    vec4 color = texture(color_texture, uv);
+    float depth = texture(depth_texture, uv).x;
+    float id = texture(id_texture, uv).x;
+
+    vec4 line_color = vec4(0);
+    float line_depth = 1.0;
+
+    for(int x = -max_half_width; x <= max_half_width; x++)
+    {
+        for(int y = -max_half_width; y <= max_half_width; y++)
+        {
+            vec2 offset = vec2(x,y);
+            float offset_length = length(offset);
+            vec2 offset_uv = uv + offset / resolution;
+
+            vec4 offset_line_data = texture(line_data_texture, offset_uv);
+            float offset_width = offset_line_data.z;
+
+            if(offset_width > 0 && offset_length <= offset_width / 2.0)
+            {
+                vec4 offset_line_color = texture(line_color_texture, offset_uv);
+                float offset_line_depth = texture(depth_texture, offset_uv).x;
+                float offset_line_id = texture(id_texture, offset_uv).x;
+                
+                float alpha = clamp(offset_width / 2.0 - offset_length + aa_offset, 0.0, 1.0);
+
+                bool override = false;
+
+                if (alpha == 1.0 && offset_line_depth < line_depth)
+                {
+                    override = true;
+                }
+                else if(alpha > line_color.a)
+                {
+                    override = true;
+                }
+
+                if(offset_line_id != id && depth < offset_line_depth)
+                {
+                    override = false;
+                }
+
+                if(override)
+                {
+                    line_color = offset_line_color;
+                    line_color.a = alpha;
+                    line_depth = offset_line_depth;
+                }
+            }
+        }
+    }
+
+    OUT_RESULT = mix(color, line_color, line_color.a);
+}
+
+#endif //LINE_MODE
 
 #endif //PIXEL_SHADER

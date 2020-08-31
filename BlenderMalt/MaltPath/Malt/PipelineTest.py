@@ -55,6 +55,7 @@ class PipelineTest(Pipeline):
 
         self.parameters.scene['Preview Samples'] = GLUniform(-1, GL.GL_INT, 4)
         self.parameters.scene['Render Samples'] = GLUniform(-1, GL.GL_INT, 8)
+        self.parameters.scene['Line Width Max'] = GLUniform(-1, GL.GL_INT, 10)
         self.parameters.world['Background Color'] = GLUniform(-1, GL_FLOAT_VEC4, (0.5,0.5,0.5,1))
 
         self.default_shader = self.compile_material_from_source('') #Empty source will force defaults
@@ -132,7 +133,9 @@ class PipelineTest(Pipeline):
         self.fbo_main.clear([scene.world_parameters['Background Color'], (0,0,0,0), (-1,-1,-1,-1)])
         self.draw_scene_pass(self.fbo_main, scene.objects, 'MAIN_PASS', self.default_shader['MAIN_PASS'], UBOS, {}, textures)        
         
-        composited_line = self.line_rendering.composite_line(self, self.common_buffer, self.t_main_color, self.t_depth, self.t_prepass_id, self.t_line_color, self.t_line_data)
+        composited_line = self.line_rendering.composite_line(
+            scene.parameters['Line Width Max'], self, self.common_buffer, 
+            self.t_main_color, self.t_depth, self.t_prepass_id, self.t_line_color, self.t_line_data)
 
         # TEMPORAL SUPER-SAMPLING ACCUMULATION
         # TODO: Should accumulate in display space ???
