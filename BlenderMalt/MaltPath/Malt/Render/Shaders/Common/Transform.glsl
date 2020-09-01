@@ -31,6 +31,10 @@ vec3 sample_normal_map_ex(sampler2D normal_texture, int uv_index, vec2 uv)
     vec3 tangent = texture(normal_texture, uv).xyz;
     tangent = tangent * 2.0 - 1.0;
     mat3 TBN = mat3(TANGENT[uv_index], BITANGENT[uv_index], NORMAL);
+    if(_flip_normals)
+    {
+        TBN = mat3(TANGENT[uv_index], BITANGENT[uv_index] * -1, -NORMAL);
+    }
     return normalize(TBN * tangent);
 }
 

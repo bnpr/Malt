@@ -124,6 +124,8 @@ class Pipeline(object):
             if obj.material and pass_name in obj.material.shader and obj.material.shader[pass_name]:
                 shader = obj.material.shader[pass_name]
             
+            shader.uniforms['_flip_normals'].set_value(obj.negative_scale)
+            
             for name, uniform in uniforms.items():
                 if name in shader.uniforms:
                     shader.uniforms[name].set_value(uniform)
