@@ -319,7 +319,7 @@ def unregister():
     del bpy.types.Object.malt_parameters
     del bpy.types.Material.malt_parameters
     del bpy.types.Mesh.malt_parameters
-    del bpy.types.Font.malt_parameters
+    del bpy.types.Curve.malt_parameters
     del bpy.types.Light.malt_parameters
 
     bpy.app.handlers.depsgraph_update_post.append(depsgraph_update)
