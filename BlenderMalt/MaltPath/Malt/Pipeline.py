@@ -112,17 +112,20 @@ class Pipeline(object):
         for obj in objects:
             if obj.mesh and obj.mesh.parameters['double_sided']:
                 glDisable(GL_CULL_FACE)
+                glCullFace(GL_BACK)
             else:
                 glEnable(GL_CULL_FACE)
 
             if obj.negative_scale:
-                glCullFace(GL_FRONT)
+                glFrontFace(GL_CW)
             else:
-                glCullFace(GL_BACK)
+                glFrontFace(GL_CCW)
 
             shader = default_shader
             if obj.material and pass_name in obj.material.shader and obj.material.shader[pass_name]:
                 shader = obj.material.shader[pass_name]
+            
+            shader.uniforms['MIRROR_SCALE'].set_value(obj.negative_scale)
             
             for name, uniform in uniforms.items():
                 if name in shader.uniforms:

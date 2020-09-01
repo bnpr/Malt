@@ -41,6 +41,7 @@ in vec4 COLOR[4];
 #endif //PIXEL_SHADER
 
 uniform mat4 MODEL;
+uniform bool MIRROR_SCALE = false;
 
 layout(std140) uniform COMMON_UNIFORMS
 {
@@ -85,7 +86,15 @@ void DEFAULT_VERTEX_SHADER()
     BITANGENT[1]= cross(NORMAL, TANGENT[1]) * in_tangent1.w;
     BITANGENT[2]= cross(NORMAL, TANGENT[2]) * in_tangent2.w;
     BITANGENT[3]= cross(NORMAL, TANGENT[3]) * in_tangent3.w;
-    
+
+    if(MIRROR_SCALE)
+    {
+        for(int i = 0; i < 4; i++)
+        {
+            BITANGENT[i] *= -1;
+        }
+    }
+
     UV[0]=in_uv0;
     UV[1]=in_uv1;
     UV[2]=in_uv2;
