@@ -19,12 +19,12 @@ __PIPELINE__ = None
 def get_pipeline():
     global __PIPELINE__
     if __PIPELINE__ is None:
-        __PIPELINE__ = PipelineTest()
+        bpy.context.scene.world.malt.update_pipeline(bpy.context)
     return __PIPELINE__
 
 class MaltPipeline(bpy.types.PropertyGroup):
 
-    def __enum_pipelines(self, context):
+    def enum_pipelines(self, context):
         pipelines = []
         for _cls in get_subclasses(Pipeline):
             pipelines.append((_cls.__name__,_cls.__name__,""))
@@ -33,14 +33,14 @@ class MaltPipeline(bpy.types.PropertyGroup):
             pipelines.append(('---','---',''))
         return pipelines
 
-    def __update_pipeline(self, context):
+    def update_pipeline(self, context):
         for _cls in get_subclasses(Pipeline):
             if _cls.__name__ == self.pipeline_class:
                 global __PIPELINE__
                 __PIPELINE__ = _cls()
                 setup_all_ids()
     
-    pipeline_class : bpy.props.EnumProperty(items=__enum_pipelines, update=__update_pipeline)
+    pipeline_class : bpy.props.EnumProperty(items=enum_pipelines, update=update_pipeline)
 
     def draw_ui(self, layout):
         layout.label(text="Malt Pipeline")
@@ -98,6 +98,8 @@ def setup_all_ids():
     setup_parameters(bpy.data.meshes)
     setup_parameters(bpy.data.curves)
     setup_parameters(bpy.data.lights)
+    for material in bpy.data.materials:
+        material.malt.update_source(bpy.context)
     global __INITIALIZED
     __INITIALIZED = True
 

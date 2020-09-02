@@ -40,6 +40,8 @@ class MaltRenderEngine(bpy.types.RenderEngine):
         pass
 
     def get_pipeline(self):
+        if self.pipeline is None or self.pipeline.__class__ != MaltPipeline.get_pipeline().__class__:
+            self.pipeline = MaltPipeline.get_pipeline().__class__()
         return self.pipeline
     
     def load_scene(self, context, depsgraph):
