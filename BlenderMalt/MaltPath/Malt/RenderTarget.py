@@ -61,6 +61,8 @@ class RenderTarget(object):
     
     def bind(self):
         glBindFramebuffer(GL_FRAMEBUFFER, self.FBO[0])
+        glViewport(0, 0, self.resolution[0], self.resolution[1])
+        glDisable(GL_SCISSOR_TEST)
     
     def clear(self, colors=[], depth=None, stencil=None):
         self.bind()
