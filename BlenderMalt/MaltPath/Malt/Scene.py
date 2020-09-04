@@ -41,6 +41,7 @@ class Light(object):
         self.spot_angle = 0
         self.spot_blend = 0
         self.radius = 0
+        self.matrix = None
 
 class Scene(object):
 

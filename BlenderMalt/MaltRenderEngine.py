@@ -132,6 +132,8 @@ class MaltRenderEngine(bpy.types.RenderEngine):
                 light.spot_angle = malt_light.spot_angle
                 light.spot_blend = malt_light.spot_blend_angle
                 light.parameters = obj.malt_parameters.get_parameters()
+                #Scaling too ????
+                light.matrix = flatten_matrix(matrix.inverted())
                 
                 types = {
                     'SUN' : 1,
