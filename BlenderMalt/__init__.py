@@ -12,12 +12,12 @@ import bpy
 
 #ENSURE DEPENDENCIES ARE INSTALLED
 try:
-    import OpenGL, pcpp
+    import OpenGL, pcpp, glm
 except:
     import os, subprocess, ensurepip
     ensurepip.bootstrap()
     os.environ.pop("PIP_REQ_TRACKER", None) #https://developer.blender.org/T71856 :(
-    dependencies = ['PyOpenGL','pcpp']
+    dependencies = ['PyOpenGL','pcpp', 'PyGLM']
     for dependency in dependencies:
         subprocess.check_call([bpy.app.binary_path_python, '-m', 'pip', 'install', dependency])
 
