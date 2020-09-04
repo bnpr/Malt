@@ -67,19 +67,19 @@ class RenderTarget(object):
     def clear(self, colors=[], depth=None, stencil=None):
         self.bind()
         flags = 0
-        for i, target in enumerate(self.targets):
+        for i, color in enumerate(colors):
             function_map = {
                 GL_INT : glClearBufferiv,
                 GL_UNSIGNED_INT : glClearBufferuiv,
                 GL_FLOAT : glClearBufferfv,
             }
-            data = colors[i]
-            if isinstance(data, ctypes.Array) == False:
+            target = self.targets[i]
+            if isinstance(color, ctypes.Array) == False:
                 size = 1
-                try: size = len(data)
+                try: size = len(color)
                 except: pass
-                data = gl_buffer(target.data_format, size, data)
-            function_map[target.data_format](GL_COLOR, i, data)
+                color = gl_buffer(target.data_format, size, color)
+            function_map[target.data_format](GL_COLOR, i, color)
         if depth:
             glClearDepth(depth)
             flags |= GL_DEPTH_BUFFER_BIT

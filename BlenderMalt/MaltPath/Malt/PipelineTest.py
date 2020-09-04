@@ -122,7 +122,7 @@ class PipelineTest(Pipeline):
             obj.parameters['ID'] = i+1
 
         #PRE-PASS
-        self.fbo_prepass.clear([(0,0,1,1), 0], 1, 0)
+        self.fbo_prepass.clear([(0,0,1,1), (0,0,0,0)], 1, 0)
         self.draw_scene_pass(self.fbo_prepass, scene.objects, 'PRE_PASS', self.default_shader['PRE_PASS'], UBOS)
 
         #MAIN-PASS
@@ -144,7 +144,7 @@ class PipelineTest(Pipeline):
 
         #COMPOSITE DEPTH
         if is_final_render:
-            self.fbo_composite_depth.clear((10.0e+32,1.0,1.0,1.0))
+            self.fbo_composite_depth.clear([(10.0e+32,1.0,1.0,1.0)])
             self.draw_scene_pass(self.fbo_composite_depth, scene.objects, None, self.composite_depth_shader, UBOS)
 
         return {

@@ -60,7 +60,7 @@ class LineRendering(object):
         #(Try to workaround numerical stability issues, disabled for now)
         cleanup = False
         if cleanup:
-            self.fbo_composite.clear((0,0,0,0))
+            self.fbo_composite.clear([(0,0,0,0)])
             self.cleanup_shader.textures['line_data_texture'] = line_data
             self.cleanup_shader.bind()
             common_buffer.bind(self.cleanup_shader.uniform_blocks['COMMON_UNIFORMS'])
@@ -78,8 +78,8 @@ class LineRendering(object):
         
         steps.reverse()
         
-        self.fbo_a.clear((-1,-1,-1,-1))
-        self.fbo_b.clear((-1,-1,-1,-1))
+        self.fbo_a.clear([(-1,-1,-1,-1)])
+        self.fbo_b.clear([(-1,-1,-1,-1)])
         read = line_data
         write = self.fbo_b
 
@@ -99,7 +99,7 @@ class LineRendering(object):
             pipeline.draw_screen_pass(self.shader, write)
 
         #LINE COMPOSITE
-        self.fbo_composite.clear((0,0,0,0))
+        self.fbo_composite.clear([(0,0,0,0)])
         self.composite_shader.uniforms['brute_force_range'].set_value(math.ceil(max_width[0] / 2))
         self.composite_shader.textures['color_texture'] = color
         self.composite_shader.textures['depth_texture'] = depth
