@@ -147,6 +147,9 @@ class Pipeline(object):
                 if name in shader.textures:
                     shader.textures[name] = texture
             
+            for callback in shader_callbacks:
+                callback(shader)
+            
             shader.bind()
 
             #TODO: Do the opposite. Set the shader uniform block location to the UBO location
