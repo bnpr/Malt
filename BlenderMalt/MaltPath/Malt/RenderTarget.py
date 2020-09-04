@@ -3,9 +3,23 @@
 from Malt.GL import *
 import ctypes
 
+class TargetBase(object):
+    def attach(self, index):
+        pass
+
+class ArrayLayerTarget(TargetBase):
+    def __init__(self, texture_array, layer):
+        self.texture_array = texture_array.texture[0]
+        self.layer = layer
+        self.resolution = texture_array.resolution
+        self.format = texture_array.format
+    
+    def attach(self, attachment):
+        glFramebufferTextureLayer(GL_FRAMEBUFFER, attachment, self.texture_array, 0, self.layer)
+
 class RenderTarget(object):
 
-    def __init__(self, targets=[None], depth_stencil=None):
+    def __init__(self, targets=[], depth_stencil=None):
         self.FBO = gl_buffer(GL_INT, 1)
         glGenFramebuffers(1, self.FBO)
 
@@ -13,22 +27,21 @@ class RenderTarget(object):
         self.depth_stencil = depth_stencil
 
         self.resolution = (0,0)
-        if targets[0]:
+        if len(targets) > 0:
             self.resolution = targets[0].resolution
         else:
             self.resolution = depth_stencil.resolution
 
         glBindFramebuffer(GL_FRAMEBUFFER, self.FBO[0])
-        glViewport(0, 0, self.resolution[0], self.resolution[1])
 
         attachments = gl_buffer(GL_INT, len(targets))
         for i, target in enumerate(targets):
-            if target:
-                assert(target.resolution == self.resolution)    
-                glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0+i, GL_TEXTURE_2D, target.texture[0], 0)
-                attachments[i] = GL_COLOR_ATTACHMENT0+i
+            assert(target.resolution == self.resolution)
+            if hasattr(target, 'attach'):
+                target.attach(GL_COLOR_ATTACHMENT0+i)
             else:
-                attachments[i] = GL_NONE
+                glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0+i, GL_TEXTURE_2D, target.texture[0], 0)
+            attachments[i] = GL_COLOR_ATTACHMENT0+i
         
         glDrawBuffers(len(attachments), attachments)
         
@@ -39,7 +52,10 @@ class RenderTarget(object):
                 GL_DEPTH_COMPONENT : GL_DEPTH_ATTACHMENT,
                 GL_STENCIL : GL_STENCIL_ATTACHMENT,
             }
-            glFramebufferTexture2D(GL_FRAMEBUFFER, attachment[depth_stencil.format], GL_TEXTURE_2D, depth_stencil.texture[0], 0)
+            if hasattr(depth_stencil, 'attach'):
+                depth_stencil.attach(attachment[depth_stencil.format])
+            else:
+                glFramebufferTexture2D(GL_FRAMEBUFFER, attachment[depth_stencil.format], GL_TEXTURE_2D, depth_stencil.texture[0], 0)
         
         glBindFramebuffer(GL_FRAMEBUFFER, 0)
     
