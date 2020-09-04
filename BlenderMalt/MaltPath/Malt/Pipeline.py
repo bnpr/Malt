@@ -47,7 +47,10 @@ layout (location = 0) out vec4 OUT_COLOR;
 
 void main()
 {
-    OUT_COLOR = texture(blend_texture, UV) * opacity;
+    vec4 color = texture(blend_texture, UV);
+    OUT_COLOR = vec4(color.xyz, opacity);
+    //TODO: This should be :
+    //OUT_COLOR = vec4(color.xyz, color.a * opacity);
 }
 '''
 
@@ -99,7 +102,7 @@ class Pipeline(object):
     def blend_texture(self, blend_texture, target, opacity):
         self.blend_shader.textures['blend_texture'] = blend_texture
         self.blend_shader.uniforms['opacity'].set_value(opacity)
-        glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA)
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
         self.draw_screen_pass(self.blend_shader, target, True)
     
     def draw_scene_pass(self, render_target, objects, pass_name=None, default_shader=None, uniform_blocks={}, uniforms={}, textures={}):
