@@ -105,7 +105,7 @@ class Pipeline(object):
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
         self.draw_screen_pass(self.blend_shader, target, True)
     
-    def draw_scene_pass(self, render_target, objects, pass_name=None, default_shader=None, uniform_blocks={}, uniforms={}, textures={}):
+    def draw_scene_pass(self, render_target, objects, pass_name=None, default_shader=None, uniform_blocks={}, uniforms={}, textures={}, shader_callbacks=[], depth_pass = False):
         glDisable(GL_BLEND)
         glEnable(GL_DEPTH_TEST)
         glDepthFunc(GL_LEQUAL)
@@ -113,11 +113,15 @@ class Pipeline(object):
         render_target.bind()
 
         for obj in objects:
-            if obj.mesh and obj.mesh.parameters['double_sided']:
-                glDisable(GL_CULL_FACE)
-                glCullFace(GL_BACK)
-            else:
+            if depth_pass:
                 glEnable(GL_CULL_FACE)
+                glCullFace(GL_FRONT)
+            else:
+                if obj.mesh and obj.mesh.parameters['double_sided']:
+                    glDisable(GL_CULL_FACE)
+                else:
+                    glEnable(GL_CULL_FACE)
+                    glCullFace(GL_BACK)
 
             if obj.negative_scale:
                 glFrontFace(GL_CW)

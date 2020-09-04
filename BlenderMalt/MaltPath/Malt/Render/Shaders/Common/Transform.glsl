@@ -13,7 +13,7 @@ vec3 transform_point(mat4 matrix, vec3 point)
 vec3 project_point(mat4 matrix, vec3 point)
 {
     vec4 result = matrix * vec4(point, 1.0);
-    return result.xyz / result.w;
+    return (result.xyz / result.w) * sign(result.w);
 }
 
 vec3 transform_direction(mat4 matrix, vec3 direction)
