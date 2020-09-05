@@ -32,6 +32,8 @@ To download and install BlenderMalt:
 
 To test the renderer go to *Scene Settings* and *change the renderer to Malt*. Create a *Sunlight* and add a new object with a *new material*. Inside the material settings *set the Shader Path* to one of the files from the *Shader Examples*.
 
+## Bug Reports
+
 If you need help or find a bug you can [open a new issue](https://github.com/BlenderNPR/BEER/issues).
 
 **For bug reports include**:
