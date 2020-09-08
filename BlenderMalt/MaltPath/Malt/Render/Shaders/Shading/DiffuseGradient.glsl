@@ -4,10 +4,11 @@
 #define SHADING_DIFFUSE_GRADIENT_GLSL
 
 #include "Common/Lighting.glsl"
+#include "Shading/Lambert.glsl"
 
 vec3 diffuse_gradient_light(LitSurface surface, sampler1D gradient)
 {
-    return texture(gradient, ((surface.NoL + 1.0) / 2.0)).rgb * surface.P;
+    return texture(gradient, half_lambert_light(surface)).rgb;
 }
 
 vec3 diffuse_gradient_bsdf(vec3 position, vec3 normal, sampler1D gradient)

@@ -4,14 +4,11 @@
 #define SHADING_SPECULAR_GRADIENT_GLSL
 
 #include "Common/Lighting.glsl"
+#include "Shading/Phong.glsl"
 
 vec3 specular_gradient_light(LitSurface surface, float shininess, sampler1D gradient)
 {
-    float NoH = dot(surface.V, surface.R);
-    NoH *= 1.0 - pow(1.0 - clamp(surface.NoL, 0, 1), 20.0);
-    NoH = clamp(NoH, 0, 1);
-
-    return texture(gradient, pow(NoH, shininess)).rgb * surface.P;
+    return texture(gradient, phong_light(surface, shininess)).rgb;
 }
 
 vec3 specular_gradient_bsdf(vec3 position, vec3 normal, float shininess, sampler1D gradient)
