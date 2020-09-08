@@ -16,6 +16,7 @@
 
 struct Light
 {
+    mat4 matrix;
     vec3 color;
     int type;
     vec3 position;
@@ -23,6 +24,7 @@ struct Light
     vec3 direction;
     float spot_angle;
     float spot_blend;
+    int type_index;
 };
 
 struct SceneLights
@@ -30,6 +32,10 @@ struct SceneLights
     Light lights[MAX_LIGHTS];
     int lights_count;
 };
+
+uniform sampler2DArray SPOT_SHADOWMAPS;
+uniform sampler2DArray SUN_SHADOWMAPS;
+uniform samplerCubeArray POINT_SHADOWMAPS;
 
 struct LitSurface
 {
@@ -40,6 +46,7 @@ struct LitSurface
     vec3 H;// Halfway vector
     float NoL;// Dot product between N and L
     float P;// Power Scalar (Inverse attenuation)
+    bool shadow;
 };
 
 LitSurface lit_surface(vec3 position, vec3 normal, Light light)
@@ -84,6 +91,31 @@ LitSurface lit_surface(vec3 position, vec3 normal, Light light)
         float spot_scalar = clamp((spot_angle - start_angle) / delta_angle, 0, 1);
 
         S.P *= 1.0 - spot_scalar;
+    }
+
+    S.shadow = false;
+
+    //SHADOWS
+    //TODO: Return shadow depth instead of bool ?
+    bool shadowmaps = true;
+
+    if(shadowmaps && light.type_index >= 0)
+    {
+        if(light.type == LIGHT_SPOT)
+        {
+            vec3 light_space = project_point(light.matrix, position);
+            vec2 shadowmap_size = vec2(textureSize(SPOT_SHADOWMAPS, 0));
+            light_space.xy += (SAMPLE_OFFSET / shadowmap_size);
+            light_space = light_space * 0.5 + 0.5;
+            vec2 light_uv = clamp(light_space.xy, vec2(0), vec2(1));
+            
+            float spot_space_depth = texture(SPOT_SHADOWMAPS, vec3(light_uv, light.type_index)).x;
+            bool inside = abs(light_space.x) < 1 && abs(light_space.y) < 1 && light_space.z > 0 && light_space.z < 1;
+
+            float bias = 1e-5;
+
+            S.shadow = spot_space_depth < light_space.z - bias;
+        }
     }
 
     return S;

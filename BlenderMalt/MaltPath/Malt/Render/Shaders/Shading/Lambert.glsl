@@ -7,12 +7,12 @@
 
 float lambert_light(LitSurface surface)
 {
-    return clamp(surface.NoL, 0, 1) * surface.P;
+    return surface.shadow ? 0 : clamp(surface.NoL, 0, 1) * surface.P;
 }
 
 float half_lambert_light(LitSurface surface)
 {
-    return ((surface.NoL + 1.0) / 2.0) * surface.P;
+    return min(surface.shadow ? 0.5 : 1.0 ,((surface.NoL + 1.0) / 2.0)) * surface.P;
 }
 
 vec3 lambert_bsdf(vec3 position, vec3 normal)

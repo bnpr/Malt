@@ -58,8 +58,6 @@ class PipelineTest(Pipeline):
         self.parameters.scene['Line Width Max'] = GLUniform(-1, GL.GL_INT, 10)
         self.parameters.world['Background Color'] = GLUniform(-1, GL_FLOAT_VEC4, (0.5,0.5,0.5,1))
 
-        self.default_shader = self.compile_material_from_source('') #Empty source will force defaults
-
         self.composite_depth_shader = self.compile_shader_from_source(_obj_composite_depth)
 
         self.common_buffer = Common.CommonBuffer()
@@ -108,18 +106,19 @@ class PipelineTest(Pipeline):
 
         sample_offset = self.get_samples()[self.sample_count]
 
-        #SETUP UNIFORM BLOCKS
-        self.common_buffer.load(scene, resolution, sample_offset, self.sample_count)
-        self.lights_buffer.load(scene)
-        UBOS = {
-            'COMMON_UNIFORMS' : self.common_buffer,
-            'SCENE_LIGHTS' : self.lights_buffer
-        }
-        
         #SETUP PER-OBJECT PARAMETERS
         for i, obj in enumerate(scene.objects):
             obj.parameters['MODEL'] = obj.matrix
             obj.parameters['ID'] = i+1
+        
+        #SETUP UNIFORM BLOCKS
+        self.common_buffer.load(scene, resolution, sample_offset, self.sample_count)
+        self.lights_buffer.load(scene, self, 'PRE_PASS')
+
+        UBOS = {
+            'COMMON_UNIFORMS' : self.common_buffer,
+            'SCENE_LIGHTS' : self.lights_buffer
+        }
 
         #PRE-PASS
         self.fbo_prepass.clear([(0,0,1,1), (0,0,0,0)], 1, 0)
@@ -130,8 +129,11 @@ class PipelineTest(Pipeline):
             'IN_NORMAL_DEPTH': self.t_prepass_normal_depth,
             'IN_ID': self.t_prepass_id,
         }
+        callbacks = [
+            lambda shader : self.lights_buffer.shader_callback(shader)
+        ]
         self.fbo_main.clear([scene.world_parameters['Background Color'], (0,0,0,0), (-1,-1,-1,-1)])
-        self.draw_scene_pass(self.fbo_main, scene.objects, 'MAIN_PASS', self.default_shader['MAIN_PASS'], UBOS, {}, textures)        
+        self.draw_scene_pass(self.fbo_main, scene.objects, 'MAIN_PASS', self.default_shader['MAIN_PASS'], UBOS, {}, textures, callbacks)        
         
         composited_line = self.line_rendering.composite_line(
             scene.parameters['Line Width Max'], self, self.common_buffer, 
