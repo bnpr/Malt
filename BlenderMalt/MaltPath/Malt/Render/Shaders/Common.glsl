@@ -58,11 +58,6 @@ layout(std140) uniform COMMON_UNIFORMS
 #include "Common/Transform.glsl"
 #include "Common/Lighting.glsl"
 
-layout(std140) uniform SCENE_LIGHTS
-{
-    SceneLights LIGHTS;
-};
-
 #ifdef VERTEX_SHADER
 
 void VERTEX_SETUP_OUTPUT()

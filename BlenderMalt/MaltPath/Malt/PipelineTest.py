@@ -56,6 +56,7 @@ class PipelineTest(Pipeline):
         self.parameters.scene['Preview Samples'] = GLUniform(-1, GL.GL_INT, 4)
         self.parameters.scene['Render Samples'] = GLUniform(-1, GL.GL_INT, 8)
         self.parameters.scene['Line Width Max'] = GLUniform(-1, GL.GL_INT, 10)
+        self.parameters.scene['Shadow Cascades Distribution Exponent'] = GLUniform(-1, GL.GL_INT, 21)
         self.parameters.world['Background Color'] = GLUniform(-1, GL_FLOAT_VEC4, (0.5,0.5,0.5,1))
 
         self.composite_depth_shader = self.compile_shader_from_source(_obj_composite_depth)
@@ -113,7 +114,7 @@ class PipelineTest(Pipeline):
         
         #SETUP UNIFORM BLOCKS
         self.common_buffer.load(scene, resolution, sample_offset, self.sample_count)
-        self.lights_buffer.load(scene, self, 'PRE_PASS')
+        self.lights_buffer.load(scene, self, 'PRE_PASS', scene.parameters['Shadow Cascades Distribution Exponent'][0])
 
         UBOS = {
             'COMMON_UNIFORMS' : self.common_buffer,

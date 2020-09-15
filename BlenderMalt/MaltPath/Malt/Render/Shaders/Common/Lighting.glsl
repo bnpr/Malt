@@ -16,7 +16,6 @@
 
 struct Light
 {
-    mat4 matrix;
     vec3 color;
     int type;
     vec3 position;
@@ -27,10 +26,21 @@ struct Light
     int type_index;
 };
 
+#define MAX_SPOTS 8
+#define MAX_SUNS 8
+#define SUN_CASCADES 6
+
 struct SceneLights
 {
     Light lights[MAX_LIGHTS];
     int lights_count;
+    mat4 spot_matrices[MAX_SPOTS];
+    mat4 sun_matrices[MAX_SUNS * SUN_CASCADES];
+};
+
+layout(std140) uniform SCENE_LIGHTS
+{
+    SceneLights LIGHTS;
 };
 
 uniform sampler2DArray SPOT_SHADOWMAPS;
@@ -103,7 +113,7 @@ LitSurface lit_surface(vec3 position, vec3 normal, Light light)
     {
         if(light.type == LIGHT_SPOT)
         {
-            vec3 light_space = project_point(light.matrix, position);
+            vec3 light_space = project_point(LIGHTS.spot_matrices[light.type_index], position);
             vec2 shadowmap_size = vec2(textureSize(SPOT_SHADOWMAPS, 0));
             light_space.xy += (SAMPLE_OFFSET / shadowmap_size);
             light_space = light_space * 0.5 + 0.5;
@@ -115,6 +125,29 @@ LitSurface lit_surface(vec3 position, vec3 normal, Light light)
             float bias = 1e-5;
 
             S.shadow = spot_space_depth < light_space.z - bias;
+        }
+        if(light.type == LIGHT_SUN)
+        {
+            vec2 shadowmap_size = vec2(textureSize(SUN_SHADOWMAPS, 0));
+
+            for(int c = 0; c < SUN_CASCADES; c++)
+            {
+                int index = light.type_index * SUN_CASCADES + c;
+                vec3 light_space = project_point(LIGHTS.sun_matrices[index], POSITION);
+                light_space.xy += (SAMPLE_OFFSET / shadowmap_size);
+                vec3 light_uv = light_space * 0.5 + 0.5;
+
+                vec3 clamped = clamp(light_space, vec3(-1,-1,-1), vec3(1,1,1));
+
+                if(light_space == clamped)
+                {
+                    float depth = texture(SUN_SHADOWMAPS, vec3(light_uv.xy, index)).x;
+                    float delta = light_uv.z - depth;
+                    float bias = 1e-3;
+                    S.shadow = delta > 1e-3;
+                    break;
+                }
+            }
         }
     }
 
