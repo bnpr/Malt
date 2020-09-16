@@ -188,9 +188,10 @@ class LightsBuffer(object):
 def get_sun_cascades(sun_from_world_matrix, projection_matrix, view_from_world_matrix, cascades_count, cascades_distribution_exponent):
     cascades = []
     
-    #TODO: hard-coded for now
-    clip_end = 1000
-
+    clip_end = glm.inverse(projection_matrix) * glm.vec4(0,0,1,1)
+    clip_end /= clip_end.w
+    clip_end = -clip_end.z
+    
     splits = []
     step_size = clip_end / cascades_count
     for i in range(cascades_count):
