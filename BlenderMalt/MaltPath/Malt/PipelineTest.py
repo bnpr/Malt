@@ -53,11 +53,12 @@ class PipelineTest(Pipeline):
 
         self.sampling_grid_size = 2
 
-        self.parameters.scene['Preview Samples'] = GLUniform(-1, GL.GL_INT, 4)
-        self.parameters.scene['Render Samples'] = GLUniform(-1, GL.GL_INT, 8)
-        self.parameters.scene['Line Width Max'] = GLUniform(-1, GL.GL_INT, 10)
-        self.parameters.scene['Shadow Cascades Distribution Exponent'] = GLUniform(-1, GL.GL_INT, 21)
         self.parameters.world['Background Color'] = GLUniform(-1, GL_FLOAT_VEC4, (0.5,0.5,0.5,1))
+        self.parameters.scene['Line Width Max'] = GLUniform(-1, GL.GL_INT, 10)
+        self.parameters.scene['Samples Grid Size Preview'] = GLUniform(-1, GL.GL_INT, 4)
+        self.parameters.scene['Samples Grid Size Render'] = GLUniform(-1, GL.GL_INT, 8)
+        self.parameters.scene['Samples Width'] = GLUniform(-1, GL.GL_FLOAT, 1.5)
+        self.parameters.scene['Shadow Cascades Distribution Exponent'] = GLUniform(-1, GL.GL_INT, 21)
 
         self.composite_depth_shader = self.compile_shader_from_source(_obj_composite_depth)
 
@@ -95,17 +96,17 @@ class PipelineTest(Pipeline):
         self.t_composite_depth = Texture(resolution, GL_R32F)
         self.fbo_composite_depth = RenderTarget([self.t_composite_depth], self.t_depth)
     
-    def get_samples(self):
-        return Sampling.get_RGSS_samples(self.sampling_grid_size)
+    def get_samples(self, width=1.0):
+        return Sampling.get_RGSS_samples(self.sampling_grid_size, width)
     
     def do_render(self, resolution, scene, is_final_render, is_new_frame):
         #SETUP SAMPLING
         if is_final_render:
-            self.sampling_grid_size = scene.parameters['Render Samples'][0]
+            self.sampling_grid_size = scene.parameters['Samples Grid Size Render'][0]
         else:
-            self.sampling_grid_size = scene.parameters['Preview Samples'][0]
+            self.sampling_grid_size = scene.parameters['Samples Grid Size Preview'][0]
 
-        sample_offset = self.get_samples()[self.sample_count]
+        sample_offset = self.get_samples(scene.parameters['Samples Width'][0])[self.sample_count]
 
         #SETUP PER-OBJECT PARAMETERS
         for i, obj in enumerate(scene.objects):
