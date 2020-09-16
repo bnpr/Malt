@@ -83,7 +83,7 @@ class MaltRenderEngine(bpy.types.RenderEngine):
         meshes = {}
 
         def add_object(obj, matrix):
-            if obj.display_type == 'TEXTURED' and obj.type in ('MESH','CURVE','SURFACE','FONT'):
+            if obj.display_type in ['TEXTURED','SOLID'] and obj.type in ('MESH','CURVE','SURFACE','FONT'):
                 material = None
                 if len(obj.material_slots) > 0 and obj.material_slots[0].material:
                     blend_material = obj.material_slots[0].material
