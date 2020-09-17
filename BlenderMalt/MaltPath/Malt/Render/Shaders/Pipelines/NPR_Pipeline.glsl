@@ -120,9 +120,9 @@ vec4 get_matcap(sampler2D matcap_texture)
     return texture(matcap_texture, matcap_uv(get_normal()));
 }
 
-float get_rim_light(float angle, float angle_smooth_start, float angle_smooth_end, float facing_smooth_start, float facing_smooth_end)
+float get_rim_light(float angle, float rim_length, float thickness, float thickness_falloff)
 {
-    return rim_light(get_normal(), angle * DEGREES_TO_RADIANS, angle_smooth_start, angle_smooth_end, facing_smooth_start, facing_smooth_end);
+    return rim_light(get_normal(), angle * DEGREES_TO_RADIANS, rim_length, rim_length, thickness, thickness_falloff);
 }
 
 //TODO: World Space width for curvature

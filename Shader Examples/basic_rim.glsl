@@ -1,16 +1,15 @@
 //Copyright (c) 2020 BlenderNPR and contributors. MIT license.
 
-uniform float angle = 360;
+uniform float rim_angle = 360;
 
-uniform float angle_smooth_start = 1.0;
-uniform float angle_smooth_end = -1.0;
+uniform float rim_length = 2.0;
+uniform float rim_thickness = 0.4;
+uniform float rim_thickness_falloff = 0.1;
 
-uniform float facing_smooth_start = 0.6;
-uniform float facing_smooth_end = 0.55;
 
 @MAIN_PASS_PIXEL_SHADER
 {
-    float rim = get_rim_light(angle, angle_smooth_start, angle_smooth_end, facing_smooth_start, facing_smooth_end);
+    float rim = get_rim_light(rim_angle, rim_length, rim_thickness, rim_thickness_falloff);
 
     OUT_COLOR = vec4(rim);
     OUT_COLOR.a = 1.0;
