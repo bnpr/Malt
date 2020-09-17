@@ -26,12 +26,12 @@
 
 //These are defined as macros to make them work across different types. (Poor Man's Generics)
 
-#define degrees_to_radians(angle) (angle * DEGREES_TO_RADIANS)
-#define radians_to_degrees(angle) (angle * RADIANS_TO_DEGREES)
+#define degrees_to_radians(angle) ((angle) * DEGREES_TO_RADIANS)
+#define radians_to_degrees(angle) ((angle) * RADIANS_TO_DEGREES)
 
-#define map_range(value, from_min, from_max, to_min, to_max) (mix(to_min, to_max, (value - from_min) / (from_max - from_min)))
+#define map_range(value, from_min, from_max, to_min, to_max) (mix((to_min), (to_max), ((value) - (from_min)) / ((from_max) - (from_min))))
 #define map_range_clamped(value, from_min, from_max, to_min, to_max) clamp(map_range(value, from_min, from_max, to_min, to_max), to_min, to_max)
 
-#define snap(value, range) (round(value / range) * range)
+#define snap(value, range) (round((value) / (range)) * (range))
 
 #endif // COMMON_CONSTANTS_GLSL
