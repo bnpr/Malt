@@ -1,17 +1,17 @@
 # Copyright (c) 2020 BlenderNPR and contributors. MIT license.
 
+import math
 import ctypes
 import copy
 
-from Malt.GL import *
+import pyrr
 
+from Malt.GL import *
 from Malt.UBO import UBO
 from Malt.Texture import TextureArray
 from Malt.RenderTarget import ArrayLayerTarget, RenderTarget
-
 from Malt.Render import Common
 
-import glm
 
 LIGHT_SUN = 1
 LIGHT_POINT = 2
@@ -40,6 +40,17 @@ sun_resolution = 2048
 
 max_points = 8
 point_resolution = 2048
+
+#TODO: Hard-coded for Blender conventions for now
+def make_projection_matrix(fov, aspect_ratio, near, far):
+    x_scale = 1.0 / math.tan(fov / 2.0)
+    y_scale = x_scale * aspect_ratio
+    return pyrr.Matrix44([
+        x_scale, 0, 0, 0,
+        0, y_scale, 0, 0,
+        0, 0, (-(far + near)) / (far - near), -1,
+        0, 0, (-2.0 * far * near) / (far - near), 0
+    ])
 
 
 class C_LightsBuffer(ctypes.Structure):
@@ -118,9 +129,9 @@ class LightsBuffer(object):
             if light.type == LIGHT_SPOT:
                 self.data.lights[i].type_index = spot_count
 
-                camera_matrix = glm.mat4(*light.matrix)
-                #TODO: Hard-coded for Blender conventions for now
-                projection_matrix = glm.perspectiveFovRH_NO(light.spot_angle, 1, 1, 0.01, light.radius)
+                camera_matrix = pyrr.Matrix44(light.matrix)
+                
+                projection_matrix = make_projection_matrix(light.spot_angle,1,0.01,light.radius)
                 spot_matrix = projection_matrix * camera_matrix
                 
                 self.data.spot_matrices[spot_count] = tuple([e for vector in spot_matrix for e in vector])
@@ -140,9 +151,9 @@ class LightsBuffer(object):
             if light.type == LIGHT_SUN:
                 self.data.lights[i].type_index = sun_count
 
-                sun_matrix = glm.mat4(*light.matrix)
-                projection_matrix = glm.mat4(*real_scene_camera.projection_matrix)
-                view_matrix = projection_matrix * glm.mat4(*real_scene_camera.camera_matrix)
+                sun_matrix = pyrr.Matrix44(light.matrix)
+                projection_matrix = pyrr.Matrix44(real_scene_camera.projection_matrix)
+                view_matrix = projection_matrix * pyrr.Matrix44(real_scene_camera.camera_matrix)
 
                 cascades_matrices = None
                 is_ortho = projection_matrix[3][3] == 1.0
@@ -157,7 +168,7 @@ class LightsBuffer(object):
                     cascade = tuple([e for vector in cascade for e in vector])
                     
                     scene.camera.camera_matrix = cascade
-                    scene.camera.projection_matrix = tuple([e for vector in glm.mat4(1) for e in vector])
+                    scene.camera.projection_matrix = tuple([e for vector in pyrr.Matrix44.identity() for e in vector])
 
                     self.data.sun_matrices[sun_count * sun_cascades + i] = cascade
                 
@@ -188,7 +199,7 @@ class LightsBuffer(object):
 def get_sun_cascades(sun_from_world_matrix, projection_matrix, view_from_world_matrix, cascades_count, cascades_distribution_exponent):
     cascades = []
     
-    clip_end = glm.inverse(projection_matrix) * glm.vec4(0,0,1,1)
+    clip_end = projection_matrix.inverse * pyrr.Vector4([0,0,1,1])
     clip_end /= clip_end.w
     clip_end = -clip_end.z
     
@@ -196,7 +207,7 @@ def get_sun_cascades(sun_from_world_matrix, projection_matrix, view_from_world_m
     step_size = clip_end / cascades_count
     for i in range(cascades_count):
         split = (i+1) * step_size
-        projected = projection_matrix * glm.vec4(0,0,-split,1)
+        projected = projection_matrix * pyrr.Vector4([0,0,-split,1])
         projected /= projected.w
         depth = projected.z
         #normalize depth (0,1)
@@ -218,13 +229,13 @@ def get_sun_cascades(sun_from_world_matrix, projection_matrix, view_from_world_m
 
 
 def frustum_corners(view_from_world_matrix, near, far):
-    m = glm.inverse(view_from_world_matrix)
+    m = view_from_world_matrix.inverse
     corners = []
 
     for x in (-1, 1):
         for y in (-1, 1):
             for z in (near, far):
-                v = glm.vec4(x, y, z, 1)
+                v = pyrr.Vector4([x, y, z, 1])
                 v = m * v
                 v /= v.w
                 corners.append(v)
@@ -234,8 +245,8 @@ def frustum_corners(view_from_world_matrix, near, far):
 def sun_shadowmap_matrix(sun_from_world_matrix, view_from_world_matrix, near, far):
     INFINITY = float('inf')
     aabb = {
-        'min': glm.vec3( INFINITY,  INFINITY,  INFINITY),
-        'max': glm.vec3(-INFINITY, -INFINITY, -INFINITY)
+        'min': pyrr.Vector3([ INFINITY,  INFINITY,  INFINITY]),
+        'max': pyrr.Vector3([-INFINITY, -INFINITY, -INFINITY])
     }
     
     for corner in frustum_corners(view_from_world_matrix, near, far):
@@ -247,25 +258,25 @@ def sun_shadowmap_matrix(sun_from_world_matrix, view_from_world_matrix, near, fa
         aabb['max'].y = max(aabb['max'].y, corner.y)
         aabb['max'].z = max(aabb['max'].z, corner.z)
 
-    world_from_light_space = glm.inverse(sun_from_world_matrix)
+    world_from_light_space = sun_from_world_matrix.inverse
 
     size = aabb['max'] - aabb['min']
-    aabb['min'] = world_from_light_space * glm.vec4(*aabb['min'].to_list(), 1.0)
-    aabb['max'] = world_from_light_space * glm.vec4(*aabb['max'].to_list(), 1.0)
+    aabb['min'] = world_from_light_space * pyrr.Vector4([*aabb['min'].tolist(), 1.0])
+    aabb['max'] = world_from_light_space * pyrr.Vector4([*aabb['max'].tolist(), 1.0])
     center = (aabb['min'] + aabb['max']) / 2.0
-    center = glm.vec3(center.to_list()[:3])
+    center = pyrr.Vector3(center.tolist()[:3])
 
-    scale = glm.scale(glm.mat4(1), size)
-    translate = glm.translate(glm.mat4(1), center)
+    scale = pyrr.Matrix44.from_scale(size)
+    translate = pyrr.Matrix44.from_translation(center)
     
     matrix = translate * world_from_light_space * scale
 
-    screen = glm.mat4(
+    screen = pyrr.Matrix44([
         1, 0, 0, 0,
         0, 1, 0, 0,
         0, 0,-1, 0,
-        0, 0, 0, 1 
-    )
+        0, 0, 0, 1
+    ])
 
-    return screen * glm.inverse(matrix)
+    return screen * matrix.inverse
 
