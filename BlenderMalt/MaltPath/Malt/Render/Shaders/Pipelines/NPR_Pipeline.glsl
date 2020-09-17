@@ -103,6 +103,17 @@ float get_surface_curvature(float depth_range /*0.05*/)
     return surface_curvature(IN_NORMAL_DEPTH, IN_NORMAL_DEPTH, 3, screen_uv(), 1.0, x, y, depth_range);
 }
 
+float get_facing()
+{
+    float d = dot(get_normal(), view_direction());
+    return clamp(d, 0.0, 1.0);
+}
+
+float get_fresnel()
+{
+    return 1.0 - get_facing();
+}
+
 float get_rim_light(float angle, float angle_smooth_start, float angle_smooth_end, float facing_smooth_start, float facing_smooth_end)
 {
     return rim_light(get_normal(), angle * DEGREES_TO_RADIANS, angle_smooth_start, angle_smooth_end, facing_smooth_start, facing_smooth_end);
