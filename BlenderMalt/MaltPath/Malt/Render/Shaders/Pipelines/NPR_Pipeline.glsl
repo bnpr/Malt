@@ -54,6 +54,7 @@ void DEFAULT_MAIN_PASS_PIXEL_SHADER()
 #include "Shading/Lambert.glsl"
 #include "Shading/Phong.glsl"
 #include "Shading/DiffuseGradient.glsl"
+#include "Shading/Rim.glsl"
 #include "Shading/SpecularGradient.glsl"
 #include "Filters/Curvature.glsl"
 #include "Filters/Line.glsl"
@@ -100,6 +101,11 @@ float get_surface_curvature(float depth_range /*0.05*/)
     vec3 x = transform_normal(inverse(CAMERA), vec3(1,0,0));
     vec3 y = transform_normal(inverse(CAMERA), vec3(0,1,0));
     return surface_curvature(IN_NORMAL_DEPTH, IN_NORMAL_DEPTH, 3, screen_uv(), 1.0, x, y, depth_range);
+}
+
+float get_rim_light(float angle, float angle_smooth_start, float angle_smooth_end, float facing_smooth_start, float facing_smooth_end)
+{
+    return rim_light(get_normal(), angle * DEGREES_TO_RADIANS, angle_smooth_start, angle_smooth_end, facing_smooth_start, facing_smooth_end);
 }
 
 //TODO: World Space width for curvature
