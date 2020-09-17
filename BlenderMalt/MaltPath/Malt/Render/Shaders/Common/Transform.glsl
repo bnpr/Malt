@@ -113,6 +113,16 @@ float pixel_world_size()
 
 #endif //PIXEL_SHADER
 
+vec2 matcap_uv(vec3 normal)
+{
+    vec3 r = cross(transform_normal(CAMERA, view_direction()), transform_normal(CAMERA, normal));
+    vec2 uv = r.xy * 0.5 + 0.5;
+    uv.xy = uv.yx;
+    uv.y = 1.0 - uv.y;
+
+    return uv;
+}
+
 float ray_plane_intersection(vec3 ray_origin, vec3 ray_direction, vec3 plane_position, vec3 plane_normal)
 {
     float r_direction = dot(ray_direction, plane_normal);

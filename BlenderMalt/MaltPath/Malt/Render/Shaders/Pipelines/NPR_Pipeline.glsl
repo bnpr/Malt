@@ -61,6 +61,7 @@ void DEFAULT_MAIN_PASS_PIXEL_SHADER()
 
 vec3 get_normal()
 {
+    //TODO: This returns lower quality normals than NORMAL
     return texture(IN_NORMAL_DEPTH, screen_uv()).xyz;
 }
 
@@ -112,6 +113,11 @@ float get_facing()
 float get_fresnel()
 {
     return 1.0 - get_facing();
+}
+
+vec4 get_matcap(sampler2D matcap_texture)
+{
+    return texture(matcap_texture, matcap_uv(get_normal()));
 }
 
 float get_rim_light(float angle, float angle_smooth_start, float angle_smooth_end, float facing_smooth_start, float facing_smooth_end)
