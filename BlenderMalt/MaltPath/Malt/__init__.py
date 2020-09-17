@@ -10,6 +10,7 @@ from Malt import Scene
 from Malt import Shader
 from Malt import Texture
 from Malt import UBO
+from Malt import Utils
 
 from Malt.Render import Common
 from Malt.Render import Lighting
@@ -27,6 +28,7 @@ modules = [
     Shader,
     Texture,
     UBO,
+    Utils,
     Common,
     Lighting,
     Line,

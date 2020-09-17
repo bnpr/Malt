@@ -1,6 +1,7 @@
 # Copyright (c) 2020 BlenderNPR and contributors. MIT license.
 
 from Malt.GL import *
+from Malt.Utils import log
 
 def glslang_validator(source, stage):
     import subprocess
@@ -69,7 +70,7 @@ class Shader(object):
             uniform.bind()
         for name, texture in self.textures.items():
             if name not in self.uniforms:
-                print("WARNING: Texture Uniform {} not found".format(name))
+                log('DEBUG', "Texture Uniform {} not found".format(name))
                 continue
             glActiveTexture(GL_TEXTURE0 + self.uniforms[name].value[0])
             if texture:

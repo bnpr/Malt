@@ -7,6 +7,7 @@ import bpy
 
 from Malt.Mesh import Mesh
 from Malt import GL
+from Malt.Utils import log
 
 MESHES = {}
 
@@ -56,8 +57,8 @@ def load_mesh(object):
                 m.calc_tangents(uvmap=uv_layer.name)
             except Exception as ex:
                 # TODO:
-                print("WARNING : Object :", object.name)
-                print(ex)
+                log('DEBUG', "Object :", object.name)
+                log('DEBUG', ex)
             packed_tangents = [e for l in m.loops for e in (*l.tangent, l.bitangent_sign)]
             tangents.append(GL.gl_buffer(GL.GL_FLOAT, count*4, packed_tangents))
 

@@ -1,6 +1,7 @@
 # Copyright (c) 2020 BlenderNPR and contributors. MIT license. 
 
 from Malt.GL import *
+from Malt.Utils import log
 
 import ctypes
 
@@ -19,8 +20,8 @@ class UBO(object):
 
     def bind(self, uniform_block):
         if self.size != uniform_block['size']:
-            print(" WARNING: non-matching size UBO bindind")
-            print("name : {} | bind : {} | UBO size : {} | uniform block size : {}".format(
+            log('DEBUG', "non-matching size UBO bindind")
+            log('DEBUG', "name : {} | bind : {} | UBO size : {} | uniform block size : {}".format(
                 uniform_block['name'], uniform_block['bind'], self.size, uniform_block['size']
             ))
 
