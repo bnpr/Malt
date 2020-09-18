@@ -68,35 +68,38 @@ class LineRendering(object):
             line_data = self.fbo_composite.targets[0]
         
         #JUMP FLOOD
-        jump_flood_max_width = max(line_data.resolution[0], line_data.resolution[1])
-        
-        steps = []
-        width = 1
-        while width < jump_flood_max_width:
-            steps.append(width)
-            width*=2
-        
-        steps.reverse()
-        
-        self.fbo_a.clear([(-1,-1,-1,-1)])
-        self.fbo_b.clear([(-1,-1,-1,-1)])
-        read = line_data
-        write = self.fbo_b
-
-        for i, step in enumerate(steps):
-            if i > 0:
-                if i % 2 == 0:
-                    read = self.t_a
-                    write = self.fbo_b
-                else:
-                    read = self.t_b
-                    write = self.fbo_a
+        #Disabled since we moved back to brute-force line rendering
+        jump_flood = False
+        if jump_flood:
+            jump_flood_max_width = max(line_data.resolution[0], line_data.resolution[1])
             
-            self.shader.textures['input_texture'] = read
-            self.shader.uniforms['width'].set_value(step)
-            self.shader.bind()
-            common_buffer.bind(self.shader.uniform_blocks['COMMON_UNIFORMS'])
-            pipeline.draw_screen_pass(self.shader, write)
+            steps = []
+            width = 1
+            while width < jump_flood_max_width:
+                steps.append(width)
+                width*=2
+            
+            steps.reverse()
+            
+            self.fbo_a.clear([(-1,-1,-1,-1)])
+            self.fbo_b.clear([(-1,-1,-1,-1)])
+            read = line_data
+            write = self.fbo_b
+
+            for i, step in enumerate(steps):
+                if i > 0:
+                    if i % 2 == 0:
+                        read = self.t_a
+                        write = self.fbo_b
+                    else:
+                        read = self.t_b
+                        write = self.fbo_a
+                
+                self.shader.textures['input_texture'] = read
+                self.shader.uniforms['width'].set_value(step)
+                self.shader.bind()
+                common_buffer.bind(self.shader.uniform_blocks['COMMON_UNIFORMS'])
+                pipeline.draw_screen_pass(self.shader, write)
 
         #LINE COMPOSITE
         self.fbo_composite.clear([(0,0,0,0)])
@@ -106,7 +109,7 @@ class LineRendering(object):
         self.composite_shader.textures['id_texture'] = id_texture
         self.composite_shader.textures['line_color_texture'] = line_color
         self.composite_shader.textures['line_data_texture'] = line_data
-        self.composite_shader.textures['line_distance_field_texture'] = write.targets[0]
+        #self.composite_shader.textures['line_distance_field_texture'] = write.targets[0]
         self.composite_shader.bind()
         common_buffer.bind(self.composite_shader.uniform_blocks['COMMON_UNIFORMS'])
         pipeline.draw_screen_pass(self.composite_shader, self.fbo_composite)
