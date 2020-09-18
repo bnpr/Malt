@@ -1,6 +1,9 @@
 # Copyright (c) 2020 BlenderNPR and contributors. MIT license. 
 
 from itertools import chain
+import io
+import cProfile
+import pstats
 
 import bpy
 
@@ -14,6 +17,9 @@ from Malt import Scene
 
 from BlenderMalt import MaltPipeline
 from BlenderMalt import MaltMeshes
+
+PROFILE = False
+REPORT_PATH = ''
 
 class MaltRenderEngine(bpy.types.RenderEngine):
     # These three members are used by blender to set up the
@@ -35,6 +41,7 @@ class MaltRenderEngine(bpy.types.RenderEngine):
         self.pipeline = MaltPipeline.get_pipeline().__class__()
         self.view_matrix = None
         self.request_new_frame = False
+        self.profiling_data = io.StringIO()
 
     def __del__(self):
         pass
@@ -217,6 +224,13 @@ class MaltRenderEngine(bpy.types.RenderEngine):
     # Blender will draw overlays for selection and editing on top of the
     # rendered image automatically.
     def view_draw(self, context, depsgraph):
+        profiler = cProfile.Profile()
+        global PROFILE
+        if PROFILE:
+            profiler.enable()
+            if self.request_new_frame:
+                self.profiling_data = io.StringIO()
+
         # Get viewport resolution
         resolution = context.region.width, context.region.height
         
@@ -249,8 +263,20 @@ class MaltRenderEngine(bpy.types.RenderEngine):
 
         if self.get_pipeline().needs_more_samples():
             self.tag_redraw()
-
+        
         GL.glDeleteVertexArrays(1, VAO)
+
+        if PROFILE:
+            profiler.disable()
+            stats = pstats.Stats(profiler, stream=self.profiling_data)
+            stats.strip_dirs()
+            stats.sort_stats(pstats.SortKey.CUMULATIVE)
+            stats.print_stats()
+
+            if self.get_pipeline().needs_more_samples() == False:
+                PROFILE = False
+                with open(REPORT_PATH, 'w') as file:
+                    file.write(self.profiling_data.getvalue())
 
 
 #Boilerplate code to draw an OpenGL texture to the viewport using Blender color management
@@ -314,6 +340,35 @@ class DisplayDraw(object):
         GL.glBindVertexArray(0)
         GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
 
+
+import bpy_extras
+
+class OT_MaltProfileFrameReport(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
+    bl_idname = "wm.malt_profile_frame_report"
+    bl_label = "Malt Profile Frame Report"
+
+    filename_ext = ".txt"  # ExportHelper mixin class uses this
+
+    filter_glob : bpy.props.StringProperty(
+        default="*.txt",
+        options={'HIDDEN'},
+        maxlen=255,  # Max internal buffer length, longer would be clamped.
+    )
+
+    def execute(self, context):
+        global REPORT_PATH
+        REPORT_PATH = self.filepath
+        global PROFILE
+        PROFILE = True
+        context.space_data.shading.type = 'SOLID'
+        context.space_data.shading.type = 'RENDERED'
+        return{'FINISHED'}
+
+classes = [
+    MaltRenderEngine,
+    OT_MaltProfileFrameReport,
+]
+
 # RenderEngines also need to tell UI Panels that they are compatible with.
 # We recommend to enable all panels marked as BLENDER_RENDER, and then
 # exclude any panels that are replaced by Malt panels registered by the
@@ -334,13 +389,15 @@ def get_panels():
     return panels
 
 def register():
-    bpy.utils.register_class(MaltRenderEngine)
+    for cls in classes:
+        bpy.utils.register_class(cls)
 
     for panel in get_panels():
         panel.COMPAT_ENGINES.add('MALT')
 
 def unregister():
-    bpy.utils.unregister_class(MaltRenderEngine)
+    for cls in classes:
+        bpy.utils.unregister_class(cls)
 
     for panel in get_panels():
         if 'MALT' in panel.COMPAT_ENGINES:
