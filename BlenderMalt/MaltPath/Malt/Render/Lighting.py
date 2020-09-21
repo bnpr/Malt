@@ -155,15 +155,8 @@ class LightsBuffer(object):
                 projection_matrix = pyrr.Matrix44(real_scene_camera.projection_matrix)
                 view_matrix = projection_matrix * pyrr.Matrix44(real_scene_camera.camera_matrix)
 
-                cascades_matrices = None
-                is_ortho = projection_matrix[3][3] == 1.0
-
-                if is_ortho:
-                    #TODO: Render 1 higher-res cascade
-                    cascades_matrices = [sun_shadowmap_matrix(sun_matrix, view_matrix, -1, 1)]
-                else:
-                    cascades_matrices = get_sun_cascades(sun_matrix, projection_matrix, view_matrix, sun_cascades, cascades_distribution_exponent)
-
+                cascades_matrices = get_sun_cascades(sun_matrix, projection_matrix, view_matrix, sun_cascades, cascades_distribution_exponent)
+                
                 for i, cascade in enumerate(cascades_matrices):
                     cascade = tuple([e for vector in cascade for e in vector])
                     
@@ -198,26 +191,33 @@ class LightsBuffer(object):
 
 def get_sun_cascades(sun_from_world_matrix, projection_matrix, view_from_world_matrix, cascades_count, cascades_distribution_exponent):
     cascades = []
-    
-    clip_end = projection_matrix.inverse * pyrr.Vector4([0,0,1,1])
-    clip_end /= clip_end.w
-    clip_end = -clip_end.z
-    
     splits = []
-    step_size = clip_end / cascades_count
-    for i in range(cascades_count):
-        split = (i+1) * step_size
-        projected = projection_matrix * pyrr.Vector4([0,0,-split,1])
-        projected /= projected.w
-        depth = projected.z
-        #normalize depth (0,1)
-        depth = depth * 0.5 + 0.5
-        #make steps less linear
-        depth = depth ** cascades_distribution_exponent
-        #back to (-1,+1) range
-        depth = depth * 2.0 - 1.0
-        splits.append(depth)
     
+    #if is ortho
+    if projection_matrix[3][3] == 1.0:
+        for i in range(cascades_count):
+            split = -1.0 + (2.0 / cascades_count) * (i+1)
+            splits.append(split)
+    #is perspective
+    else:
+        clip_end = projection_matrix.inverse * pyrr.Vector4([0,0,1,1])
+        clip_end /= clip_end.w
+        clip_end = -clip_end.z
+        
+        step_size = clip_end / cascades_count
+        for i in range(cascades_count):
+            split = (i+1) * step_size
+            projected = projection_matrix * pyrr.Vector4([0,0,-split,1])
+            projected = (projected / projected.w) * (1.0 if projected.w >= 0 else -1.0)
+            depth = projected.z
+            #normalize depth (0,1)
+            depth = depth * 0.5 + 0.5
+            #make steps less linear
+            depth = depth ** cascades_distribution_exponent
+            #back to (-1,+1) range
+            depth = depth * 2.0 - 1.0
+            splits.append(depth)
+        
     for i in range(len(splits)):
         near = -1
         if i > 0:
