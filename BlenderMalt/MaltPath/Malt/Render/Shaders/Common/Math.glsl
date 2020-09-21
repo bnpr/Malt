@@ -1,7 +1,7 @@
 //Copyright (c) 2020 BlenderNPR and contributors. MIT license.
 
-#ifndef COMMON_CONSTANTS_GLSL
-#define COMMON_CONSTANTS_GLSL
+#ifndef COMMON_MATH_GLSL
+#define COMMON_MATH_GLSL
 
 //C Standard constants
 
@@ -34,4 +34,4 @@
 
 #define snap(value, range) (round((value) / (range)) * (range))
 
-#endif // COMMON_CONSTANTS_GLSL
+#endif // COMMON_MATH_GLSL
