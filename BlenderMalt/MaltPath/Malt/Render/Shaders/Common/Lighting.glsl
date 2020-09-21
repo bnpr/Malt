@@ -57,6 +57,7 @@ struct LitSurface
     float NoL;// Dot product between N and L
     float P;// Power Scalar (Inverse attenuation)
     bool shadow;
+    int cascade;
 };
 
 LitSurface lit_surface(vec3 position, vec3 normal, Light light)
@@ -104,6 +105,7 @@ LitSurface lit_surface(vec3 position, vec3 normal, Light light)
     }
 
     S.shadow = false;
+    S.cascade = -1;
 
     //SHADOWS
     //TODO: Return shadow depth instead of bool ?
@@ -145,6 +147,7 @@ LitSurface lit_surface(vec3 position, vec3 normal, Light light)
                     float delta = light_uv.z - depth;
                     float bias = 1e-3;
                     S.shadow = delta > 1e-3;
+                    S.cascade = c;
                     break;
                 }
             }
