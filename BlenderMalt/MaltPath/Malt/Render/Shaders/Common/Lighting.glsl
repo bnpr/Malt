@@ -51,7 +51,7 @@ struct LitSurface
 {
     vec3 N;// Surface normal
     vec3 L;// Surface to light direction (normalized)
-    vec3 V;// Camera position to surface direction (normalized)
+    vec3 V;// Surface to camera (view) direction (normalized)
     vec3 R;// -L reflected on N
     vec3 H;// Halfway vector
     float NoL;// Dot product between N and L
