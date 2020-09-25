@@ -1,5 +1,8 @@
 //Copyright (c) 2020 BlenderNPR and contributors. MIT license.
 
+#ifndef SHADING_MODELS_GLSL
+#define SHADING_MODELS_GLSL
+
 // The following formulas follow the naming conventions explained in the LitSurface struct declaration (Lighing.glsl)
 // (a) parameter stands for roughness factor (0..1)
 // Dot products should be clamped to (MIN_DOT..1)
@@ -132,4 +135,6 @@ float F_cook_torrance(float VoH, float F0)
 
     return 0.5 * A*A * (1.0 + B*B);
 }
+
+#endif //SHADING_MODELS_GLSL
 
