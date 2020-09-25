@@ -2,10 +2,12 @@
 
 // The following formulas follow the naming conventions explained in the LitSurface struct declaration (Lighing.glsl)
 // (a) parameter stands for roughness factor (0..1)
-// Dot products should be clamped to (0..1)
+// Dot products should be clamped to (MIN_DOT..1)
 
 //Division by PI has been factored out for a more intuitive artistic workflow
 //https://seblagarde.wordpress.com/2012/01/08/pi-or-not-to-pi-in-game-lighting-equation/
+
+#define MIN_DOT 1e-10
 
 // DIFFUSE BRDFs
 
@@ -35,7 +37,7 @@ float BRDF_oren_nayar(float NoL, float NoV, float LoV, float a)
     return NoL * (A + B * (s / t));
 }
 
-// SPECULLAR BRDFs
+// SPECULAR BRDFs
 //http://graphicrants.blogspot.com/2013/08/specular-brdf-reference.html
 
 float BRDF_specular_cook_torrance(float D, float F, float G, float NoL, float NoV)
