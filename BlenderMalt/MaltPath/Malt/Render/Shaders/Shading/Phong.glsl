@@ -4,17 +4,18 @@
 #define SHADING_PHONG_GLSL
 
 #include "Common/Lighting.glsl"
+#include "Shading/ShadingModels.glsl"
 
-float phong_light(LitSurface surface, float shininess)
+float phong_light(LitSurface surface, float roughness)
 {
-    float NoH = dot(surface.V, surface.R);
-    NoH *= 1.0 - pow(1.0 - clamp(surface.NoL, 0, 1), 20.0);
-    NoH = clamp(NoH, 0, 1);
+    float VoR = dot(surface.V, surface.R);
+    VoR *= 1.0 - pow(1.0 - clamp(surface.NoL, 0, 1), 20.0);
+    VoR = clamp(VoR, 0, 1);
     
-    return surface.shadow ? 0 : pow(NoH, shininess) * surface.P;
+    return surface.shadow ? 0 : pow(VoR, roughness_to_shininess(roughness)) * surface.P;
 }
 
-vec3 phong_bsdf(vec3 position, vec3 normal, float shininess)
+vec3 phong_bsdf(vec3 position, vec3 normal, float roughness)
 {
     vec3 result = vec3(0,0,0);
 
@@ -22,7 +23,7 @@ vec3 phong_bsdf(vec3 position, vec3 normal, float shininess)
     {
         Light light = LIGHTS.lights[i];
         LitSurface surface = lit_surface(position, normal, light);
-        result += light.color * phong_light(surface, shininess);
+        result += light.color * phong_light(surface, roughness);
     }
 
     return result;

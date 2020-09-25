@@ -75,9 +75,9 @@ vec3 get_diffuse_half()
     return half_lambert_bsdf(POSITION, get_normal());
 }
 
-vec3 get_specular(float shininess)
+vec3 get_specular(float roughness)
 {
-    return phong_bsdf(POSITION, get_normal(), shininess);
+    return phong_bsdf(POSITION, get_normal(), roughness);
 }
 
 vec3 get_diffuse_gradient(sampler1D gradient_texture)
@@ -85,9 +85,9 @@ vec3 get_diffuse_gradient(sampler1D gradient_texture)
     return diffuse_gradient_bsdf(POSITION, get_normal(), gradient_texture);
 }
 
-vec3 get_specular_gradient(sampler1D gradient_texture, float shininess)
+vec3 get_specular_gradient(sampler1D gradient_texture, float roughness)
 {
-    return specular_gradient_bsdf(POSITION, get_normal(), shininess, gradient_texture);
+    return specular_gradient_bsdf(POSITION, get_normal(), roughness, gradient_texture);
 }
 
 float get_curvature()

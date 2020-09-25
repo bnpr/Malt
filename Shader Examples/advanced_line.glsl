@@ -3,7 +3,7 @@
 uniform vec3 ambient_color = vec3(0.1,0.1,0.1);
 uniform vec3 diffuse_color = vec3(1.0,0.1,0.1);
 uniform vec3 specular_color = vec3(1.0,1.0,1.0);
-uniform float shininess = 32;
+uniform float roughness = 0.5;
 
 uniform bool line_world_space = false;
 
@@ -25,7 +25,7 @@ uniform float line_angle_width_max = 2.0;
 @MAIN_PASS_PIXEL_SHADER
 {
     vec3 diffuse = diffuse_color * get_diffuse_half();
-    vec3 specular = specular_color * get_specular(shininess);
+    vec3 specular = specular_color * get_specular(roughness);
     vec3 color = ambient_color + diffuse + specular;
 
     float line = get_line_advanced(

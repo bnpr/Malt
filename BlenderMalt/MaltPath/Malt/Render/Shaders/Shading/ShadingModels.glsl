@@ -10,7 +10,14 @@
 //Division by PI has been factored out for a more intuitive artistic workflow
 //https://seblagarde.wordpress.com/2012/01/08/pi-or-not-to-pi-in-game-lighting-equation/
 
+//UTILS
+
 #define MIN_DOT 1e-10
+
+float roughness_to_shininess(float roughness)
+{
+    return 2.0 / pow(max(0.1, roughness), 3);
+}
 
 // DIFFUSE BRDFs
 
@@ -50,9 +57,14 @@ float BRDF_specular_cook_torrance(float D, float F, float G, float NoL, float No
 
 // Specular Normal Distribution Functions
 
+float D_phong(float VoR, float a)
+{
+    return pow(VoR, roughness_to_shininess(a));
+}
+
 float D_blinn_phong(float NoH, float a)
 {
-    return (1.0 / (PI * a*a)) * pow(NoH, (2.0 / (a*a)) - 2.0);
+    return pow(NoH, roughness_to_shininess(a));
 }
 
 float D_beckmann(float NoH, float a)
