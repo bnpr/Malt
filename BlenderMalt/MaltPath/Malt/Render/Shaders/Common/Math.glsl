@@ -34,4 +34,25 @@
 
 #define snap(value, range) (round((value) / (range)) * (range))
 
+float random_base(vec2 seed)
+{
+    return fract(sin(dot(vec2(seed), vec2(12.9898,78.233))) * 43758.5453123);
+}
+
+float random_per_sample(float seed)
+{
+    return random_base(vec2(seed, SAMPLE_COUNT + 1));
+}
+
+#ifdef PIXEL_SHADER
+vec2 screen_uv(); //FORWARD DECLARATION
+
+float random_per_pixel(float seed) 
+{
+    return random_base(seed + screen_uv() * (SAMPLE_COUNT + 1));
+}
+#endif
+
+#define random_vector(function, seed) vec4(function(seed),function(0.22222+(seed)),function(0.33333+(seed)),function(0.44444+(seed)))
+
 #endif // COMMON_MATH_GLSL

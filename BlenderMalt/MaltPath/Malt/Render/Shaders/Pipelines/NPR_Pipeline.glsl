@@ -196,3 +196,18 @@ float get_line_advanced(
 
 #endif //PIXEL_SHADER
 
+vec4 get_random_vector(float seed)
+{
+    #ifdef PIXEL_SHADER
+        return random_vector(random_per_pixel, seed);
+    #else
+        return random_vector(random_per_sample, seed);
+    #endif
+}
+
+float get_random(float seed)
+{
+    return get_random_vector(seed).x;
+}
+
+
