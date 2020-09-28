@@ -2,15 +2,22 @@
 
 #include "Shading/ShadingModels.glsl"
 
+uniform vec3 ao_color = vec3(0.0);
+uniform float ao_radius = 0.75;
+uniform int ao_samples = 16;
+uniform vec3 ambient_color = vec3(0.15);
 uniform vec3 color = vec3(0.5);
 uniform float roughness = 0.5;
 uniform float metalness = 0.0;
 
+#if defined(PIXEL_SHADER) && defined(MAIN_PASS)
+
 vec3 BRDF(LitSurface S)
 {
+    vec3 shadow_color = color * ambient_color * mix(ao_color, vec3(1.0), get_ao(ao_samples, ao_radius));
     if(S.shadow)
     {
-        return vec3(0);
+        return shadow_color;
     }
 
     float NoL = S.NoL;
@@ -57,8 +64,10 @@ vec3 BRDF(LitSurface S)
     float specular = BRDF_specular_cook_torrance(d_ggx, f_schlick, g_ggx, NoL, NoV);
     vec3 specular_color = mix(vec3(specular), color * specular, metalness);
 
-    return diffuse_color + specular_color;
+    return mix(shadow_color, diffuse_color + specular_color, NoL);
 }
+
+#endif
 
 @MAIN_PASS_PIXEL_SHADER
 {
