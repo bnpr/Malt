@@ -13,6 +13,7 @@ from Malt import UBO
 from Malt import Utils
 
 from Malt.Render import Common
+from Malt.Render import DepthToCompositeDepth
 from Malt.Render import Lighting
 from Malt.Render import Line
 from Malt.Render import Sampling
@@ -30,6 +31,7 @@ modules = [
     UBO,
     Utils,
     Common,
+    DepthToCompositeDepth,
     Lighting,
     Line,
     Sampling,
