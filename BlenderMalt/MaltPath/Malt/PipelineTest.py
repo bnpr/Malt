@@ -12,6 +12,7 @@ from Malt.Parameter import Parameter
 from Malt.UBO import UBO
 
 from Malt.Render import Common
+from Malt.Render import DepthToCompositeDepth
 from Malt.Render import Lighting
 from Malt.Render import Line
 from Malt.Render import Sampling
@@ -22,28 +23,6 @@ _NPR_Pipeline_Common='''
 #extension GL_ARB_shading_language_include : enable
 
 #include "Pipelines/NPR_Pipeline.glsl"
-'''
-
-_obj_composite_depth='''
-#version 410 core
-#extension GL_ARB_shading_language_include : enable
-#include "Common.glsl"
-
-#ifdef VERTEX_SHADER
-void main()
-{
-    DEFAULT_VERTEX_SHADER();
-}
-#endif
-
-#ifdef PIXEL_SHADER
-layout (location = 0) out float OUT_DEPTH;
-
-void main()
-{
-    OUT_DEPTH = -transform_point(CAMERA, POSITION).z;
-}
-#endif
 '''
 
 class PipelineTest(Pipeline):
@@ -60,12 +39,12 @@ class PipelineTest(Pipeline):
         self.parameters.scene['Samples Width'] = GLUniform(-1, GL.GL_FLOAT, 1.5)
         self.parameters.scene['Shadow Cascades Distribution Exponent'] = GLUniform(-1, GL.GL_INT, 21)
 
-        self.composite_depth_shader = self.compile_shader_from_source(_obj_composite_depth)
-
         self.common_buffer = Common.CommonBuffer()
         self.lights_buffer = Lighting.LightsBuffer()
 
         self.line_rendering = Line.LineRendering()
+
+        self.composite_depth = DepthToCompositeDepth.CompositeDepth()
 
     def compile_material_from_source(self, source, include_paths=[]):
         source = _NPR_Pipeline_Common + source
@@ -92,9 +71,6 @@ class PipelineTest(Pipeline):
 
         self.t_color_accumulate = Texture(resolution, GL_RGB32F)
         self.fbo_accumulate = RenderTarget([self.t_color_accumulate])
-        
-        self.t_composite_depth = Texture(resolution, GL_R32F)
-        self.fbo_composite_depth = RenderTarget([self.t_composite_depth], self.t_depth)
     
     def get_samples(self, width=1.0):
         return Sampling.get_RGSS_samples(self.sampling_grid_size, width)
@@ -137,22 +113,21 @@ class PipelineTest(Pipeline):
         self.fbo_main.clear([scene.world_parameters['Background Color'], (0,0,0,0), (-1,-1,-1,-1)])
         self.draw_scene_pass(self.fbo_main, scene.objects, 'MAIN_PASS', self.default_shader['MAIN_PASS'], UBOS, {}, textures, callbacks)        
         
+        #COMPOSITE LINE
         composited_line = self.line_rendering.composite_line(
             scene.parameters['Line Width Max'], self, self.common_buffer, 
             self.t_main_color, self.t_depth, self.t_prepass_id, self.t_line_color, self.t_line_data)
 
         # TEMPORAL SUPER-SAMPLING ACCUMULATION
-        # TODO: Should accumulate in display space ???
-        # https://therealmjp.github.io/posts/msaa-overview/#working-with-hdr-and-tone-mapping
         self.blend_texture(composited_line, self.fbo_accumulate, 1.0 / (self.sample_count + 1))
 
         #COMPOSITE DEPTH
+        composite_depth = None
         if is_final_render:
-            self.fbo_composite_depth.clear([(10.0e+32,1.0,1.0,1.0)])
-            self.draw_scene_pass(self.fbo_composite_depth, scene.objects, None, self.composite_depth_shader, UBOS)
+            composite_depth = self.composite_depth.render(self, self.common_buffer, self.t_depth)
 
         return {
             'COLOR' : self.t_color_accumulate,
-            'DEPTH' : self.t_composite_depth,
+            'DEPTH' : composite_depth,
         }
 
