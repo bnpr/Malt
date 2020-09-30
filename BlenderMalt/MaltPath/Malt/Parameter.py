@@ -2,6 +2,9 @@
 
 from Malt.GL import *
 
+#TODO:
+#This file is just an API sketch, is currently not in use.
+
 from enum import Enum
 
 class Type(Enum):

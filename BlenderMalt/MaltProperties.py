@@ -5,6 +5,8 @@ import bpy
 from Malt import GL
 from Malt import Texture
 
+from BlenderMalt import MaltPipeline
+
 __GRADIENTS = {}
 __GRADIENT_RESOLUTION = 256
 
@@ -64,6 +66,9 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
     # Textures can be acessed by name, i.e. textures["image_name"]
     textures : bpy.props.CollectionProperty(type=MaltTexturePropertyWrapper)
     bools : bpy.props.CollectionProperty(type=MaltBoolPropertyWrapper)
+    
+    #Declaration must me moved to MaltMaterial.register() to avoid cross dependencies issues
+    #shaders : bpy.props.CollectionProperty(type=MaltMaterialPropertyWrapper)
 
     def get_rna(self):
         if '_RNA_UI' not in self.keys():
@@ -88,6 +93,24 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                 rna[name] = {}
             
             rna[name]['active'] = True
+
+            #For now strings are reserved for shaders
+            if isinstance(uniform, str):
+                shader_path = uniform
+                if name not in self.shaders:
+                    self.shaders.add().name = name
+                    self.shaders[name].shader_type = 'SHADER'
+                if name in self.keys():
+                    self.pop(name)
+                if('type' not in rna[name] or 
+                rna[name]['type'] != 'SHADER' or 
+                'default' not in rna[name] or 
+                rna[name]['default'] == self.shaders[name].shader_source):
+                    self.shaders[name].shader_source = shader_path    
+                rna[name]['type'] = 'SHADER'
+                rna[name]['default'] = shader_path
+                self.shaders[name].update_source(bpy.context)
+                continue
             
             if uniform.type == GL.GL_SAMPLER_2D:
                 if name not in self.textures:
@@ -143,7 +166,12 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
         for key in rna.keys():
             if rna[key]['active'] == False:
                 continue
-            if rna[key]['type'] == GL.GL_BOOL:
+            if rna[key]['type'] == 'SHADER':
+                shader = self.shaders[key].get_shader()
+                if shader:
+                    shader = shader[MaltPipeline.get_pipeline().__class__.__name__]['SHADER']
+                parameters[key] = shader
+            elif rna[key]['type'] == GL.GL_BOOL:
                 parameters[key] = self.bools[key].boolean
             else:
                 parameters[key] = self[key]
@@ -164,8 +192,10 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
         for key in keys:
             if rna[key]['active'] == False:
                 continue
-            
-            if rna[key]['type'] == GL.GL_SAMPLER_2D:
+            if rna[key]['type'] == 'SHADER':
+                layout.label(text=key + " :")
+                self.shaders[key].draw_ui(layout)
+            elif rna[key]['type'] == GL.GL_SAMPLER_2D:
                 layout.label(text=key + " :")
                 row = layout.row()
                 row = row.split(factor=0.8)

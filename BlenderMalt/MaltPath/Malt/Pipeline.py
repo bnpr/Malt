@@ -175,6 +175,11 @@ class Pipeline(object):
 
         return Shader(vertex, pixel)
     
+    def compile_shader(self, shader_path):
+        file_dir = path.dirname(shader_path)
+        source = open(shader_path).read()
+        return self.compile_shader_from_source(source, include_paths=[file_dir])
+    
     def compile_material_from_source(self, source, include_paths):
         return {}
     

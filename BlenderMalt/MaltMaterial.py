@@ -29,7 +29,10 @@ class MaltMaterial(bpy.types.PropertyGroup):
                 pipelines = [MaltPipeline.get_pipeline()]#TODO: get all active pipelines
                 for pipeline in pipelines:
                     pipeline_name = pipeline.__class__.__name__
-                    pipeline_material[pipeline_name] = pipeline.compile_material(path)
+                    if self.shader_type == 'MATERIAL':
+                        pipeline_material[pipeline_name] = pipeline.compile_material(path)
+                    elif self.shader_type == 'SHADER':
+                        pipeline_material[pipeline_name] = {'SHADER' : pipeline.compile_shader(path)}
 
                     for pass_name, shader in pipeline_material[pipeline_name].items():
                         for uniform_name, uniform in shader.uniforms.items():
@@ -81,7 +84,12 @@ class MaltMaterial(bpy.types.PropertyGroup):
 
         return new_shader
 
+    shader_types = [
+        ('MATERIAL', "Material", ""),
+        ('SHADER', "Shader", ""),
+    ]
         
+    shader_type : bpy.props.EnumProperty(name="Shader Type", items=shader_types, update=update_source)
     shader_source : bpy.props.StringProperty(name="Shader Source", subtype='FILE_PATH', update=update_source)
     compiler_error : bpy.props.StringProperty(name="Compiler Error")
 
@@ -151,6 +159,7 @@ def track_shader_changes():
         redraw = False
         start_time = time.time()
 
+        #TODO: This only tracks material shaders
         for material in bpy.data.materials:
             shader_path = material.malt.shader_source
             abs_path = bpy.path.abspath(shader_path)
@@ -176,11 +185,13 @@ def track_shader_changes():
 def register():
     for _class in classes: bpy.utils.register_class(_class)
     bpy.types.Material.malt = bpy.props.PointerProperty(type=MaltMaterial)
+    MaltPropertyGroup.shaders = bpy.props.CollectionProperty(type=MaltMaterial)
     
     bpy.app.timers.register(track_shader_changes, persistent=True)
 
 def unregister():
     for _class in classes: bpy.utils.unregister_class(_class)
     del bpy.types.Material.malt
+    del MaltPropertyGroup.shaders
     
     bpy.app.timers.unregister(track_shader_changes)
