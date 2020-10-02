@@ -10,23 +10,25 @@ bl_info = {
 
 import bpy
 
-import sys
-import site
-#ALLOW PYTHON TO LOAD USER PACKAGES
-sys.path.append(site.USER_SITE)
-
 #ENSURE DEPENDENCIES ARE INSTALLED
 try:
     import OpenGL, pcpp, pyrr
 except:
-    import os, subprocess, ensurepip
-    ensurepip.bootstrap()
-    os.environ.pop("PIP_REQ_TRACKER", None) #https://developer.blender.org/T71856 :(
-    dependencies = ['PyOpenGL','pcpp', 'Pyrr']
-    for dependency in dependencies:
-        subprocess.check_call([bpy.app.binary_path_python, '-m', 'pip', 'install', '--user', dependency])
+    import subprocess
+    def install_dependencies():
+        dependencies = ['PyOpenGL','pcpp', 'Pyrr']
+        for dependency in dependencies:
+            subprocess.check_call([bpy.app.binary_path_python, '-m', 'pip', 'install', '--ignore-installed' , dependency])
+    try:
+        install_dependencies()
+    except:
+        import os, ensurepip
+        ensurepip.bootstrap()
+        os.environ.pop("PIP_REQ_TRACKER", None) #https://developer.blender.org/T71856 :(
+        install_dependencies()        
 
 #Add Malt to the import path
+import sys
 from os import path
 current_dir = path.join(path.dirname(path.realpath(__file__)), 'MaltPath')
 if current_dir not in sys.path:
