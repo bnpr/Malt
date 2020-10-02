@@ -5,12 +5,23 @@ import os
 import bpy
 
 from Malt.Shader import Shader
+from Malt.Pipeline import Pipeline
 from BlenderMalt import MaltProperties
 from BlenderMalt.MaltProperties import MaltPropertyGroup
 from BlenderMalt import MaltPipeline
 
 #ShaderPath/PipelineName/PassName
 SHADERS = {}
+
+def find_shader_path(path):
+    full_path = bpy.path.abspath(path)
+    if os.path.exists(full_path):
+        return full_path
+    for shader_path in Pipeline.SHADER_INCLUDE_PATHS:
+        full_path = os.path.join(shader_path, path)
+        if os.path.exists(full_path):
+            return full_path
+    return None
 
 class MaltMaterial(bpy.types.PropertyGroup):
 
@@ -21,8 +32,8 @@ class MaltMaterial(bpy.types.PropertyGroup):
         uniforms = {}
 
         if self.shader_source != '':
-            path = bpy.path.abspath(self.shader_source)
-            if os.path.exists(path):
+            path = find_shader_path(self.shader_source)
+            if path:
                 pipeline_material = {}
                 SHADERS[self.shader_source] = pipeline_material
 
