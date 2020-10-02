@@ -69,8 +69,7 @@ float D_blinn_phong(float NoH, float a)
 
 float D_beckmann(float NoH, float a)
 {
-    float exponent = (NoH*NoH - 1.0) / (a*a * NoH*NoH);
-    return pow(1.0 / (PI * a*a * pow(NoH, 4.0)), exponent);
+    return (1.0 / (PI * a*a * pow(NoH, 4.0))) * exp((NoH*NoH - 1.0) / (a*a * NoH*NoH));
 }
 
 float D_GGX(float NoH, float a)
