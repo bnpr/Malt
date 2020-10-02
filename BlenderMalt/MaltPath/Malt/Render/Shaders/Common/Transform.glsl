@@ -123,12 +123,11 @@ vec2 matcap_uv(vec3 normal)
     return uv;
 }
 
-vec3 hdri_uv(vec3 normal)
+vec2 hdri_uv(vec3 normal)
 {
     vec2 uv = vec2(atan(normal.y, normal.x), asin(normal.z));
     vec2 inverse_atan = vec2(0.1591, 0.3183);
-    uv *= inverse_atan;
-    uv += 0.5;
+    return uv * inverse_atan + 0.5;
 }
 
 float ray_plane_intersection(vec3 ray_origin, vec3 ray_direction, vec3 plane_position, vec3 plane_normal)
