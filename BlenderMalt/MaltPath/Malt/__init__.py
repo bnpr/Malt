@@ -12,6 +12,7 @@ from Malt import Texture
 from Malt import UBO
 from Malt import Utils
 
+from Malt.Render import AO
 from Malt.Render import Common
 from Malt.Render import DepthToCompositeDepth
 from Malt.Render import Lighting
@@ -30,6 +31,7 @@ modules = [
     Texture,
     UBO,
     Utils,
+    AO,
     Common,
     DepthToCompositeDepth,
     Lighting,

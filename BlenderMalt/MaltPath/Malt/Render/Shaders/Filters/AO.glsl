@@ -7,7 +7,7 @@
 #include "Common/Transform.glsl"
 
 //Loosely based on https://learnopengl.com/Advanced-Lighting/SSAO
-float ao_ex(sampler2D depth_texture, int depth_channel, vec3 position, int samples, float radius, float distribution_exponent, float bias)
+float ao_ex(sampler2D depth_texture, int depth_channel, vec3 position, vec3 normal, int samples, float radius, float distribution_exponent, float bias)
 {
     float occlusion = 0;
 
@@ -17,7 +17,7 @@ float ao_ex(sampler2D depth_texture, int depth_channel, vec3 position, int sampl
         vec3 random_vec = random_vector(random_per_pixel, i).xyz;
         random_vec.xyz = random_vec.xyz * 2.0 - 1.0;
 
-        vec3 normal = transform_normal(CAMERA, normalize(NORMAL));
+        vec3 normal = transform_normal(CAMERA, normal);
         vec3 tangent = normalize(random_vec - normal * dot(random_vec, normal));
         vec3 bitangent = cross(normal, tangent);
         mat3 TBN = mat3(tangent, bitangent, normal);

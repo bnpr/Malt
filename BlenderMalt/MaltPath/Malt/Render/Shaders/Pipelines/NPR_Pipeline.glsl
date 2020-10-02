@@ -93,7 +93,7 @@ vec3 get_specular_gradient(sampler1D gradient_texture, float roughness)
 
 float get_ao(int samples, float radius)
 {
-    float ao = ao_ex(IN_NORMAL_DEPTH, 3, POSITION, samples, radius, 5.0, 0);
+    float ao = ao_ex(IN_NORMAL_DEPTH, 3, POSITION, normalize(NORMAL), samples, radius, 5.0, 0);
     ao = pow(ao, 5.0); //Pow for more contrast
     //TODO: For some reason, using pow causes some values to go below 0 ?!?!?!?
     ao = max(0, ao);
