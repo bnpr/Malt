@@ -1,4 +1,4 @@
-import urllib.request, shutil, os, platform, zipfile, tarfile, subprocess
+import urllib.request, shutil, os, platform, zipfile, tarfile, subprocess, shutil
 
 dependencies = ['PyOpenGL','pcpp', 'Pyrr']
 
@@ -43,4 +43,6 @@ addons_folder = os.path.join(blender_folder, version, 'scripts', 'addons', 'Blen
 from distutils.dir_util import copy_tree
 copy_tree(blender_malt_folder, addons_folder)
 
-print("::set-env name=_BLENDER_DIR::{}".format(blender_folder))
+shutil.make_archive(blender_folder, 'zip', '.', blender_folder)
+
+print("::set-env name=_BLENDER_FILE::{}.zip".format(blender_folder))

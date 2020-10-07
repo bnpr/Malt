@@ -56,7 +56,7 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         # Artifact name
-        name: ${{ env._BLENDER_DIR }}
+        name: ${{ env._BLENDER_FILE }}
         # A file, directory or wildcard pattern that describes what to upload
-        path: ${{ github.workspace }}/.github/workflows/${{ env._BLENDER_DIR }}*
+        path: ${{ github.workspace }}/.github/workflows/${{ env._BLENDER_FILE }}
 
