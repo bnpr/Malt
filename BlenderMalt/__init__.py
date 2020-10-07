@@ -9,16 +9,24 @@ bl_info = {
 }
 
 import bpy
+import sys
+from os import path
 
 #ENSURE DEPENDENCIES ARE INSTALLED
 try:
     import OpenGL, pcpp, pyrr
 except:
-    import subprocess
+    import subprocess, site
     def install_dependencies():
         dependencies = ['PyOpenGL','pcpp', 'Pyrr']
+        def get_target():
+            for p in site.getsitepackages():
+                if path.basename(p) in ('site-packages', 'dist-packages'):
+                    return p
+        target = get_target()
+        assert target
         for dependency in dependencies:
-            subprocess.check_call([bpy.app.binary_path_python, '-m', 'pip', 'install', '--ignore-installed' , dependency])
+            subprocess.check_call([bpy.app.binary_path_python, '-m', 'pip', 'install', dependency, '--target', target])
     try:
         install_dependencies()
     except:
@@ -28,8 +36,6 @@ except:
         install_dependencies()        
 
 #Add Malt to the import path
-import sys
-from os import path
 current_dir = path.join(path.dirname(path.realpath(__file__)), 'MaltPath')
 if current_dir not in sys.path:
     sys.path.append(current_dir)
