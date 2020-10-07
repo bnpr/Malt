@@ -34,4 +34,29 @@ jobs:
         name: Shader Examples
         # A file, directory or wildcard pattern that describes what to upload
         path: ${{ github.workspace }}/Shader Examples
+  
+  package-blender:
+    # The type of runner that the job will run on
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-20.04]
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+    - uses: actions/checkout@v2
+
+    - name: package_blender.py
+      run: python package_blender.py
+      working-directory: ${{ github.workspace }}/.github/workflows
+        
+    - name: Package Blender
+      uses: actions/upload-artifact@v2
+      with:
+        # Artifact name
+        name: ${{ env._BLENDER_DIR }}
+        # A file, directory or wildcard pattern that describes what to upload
+        path: ${{ github.workspace }}/.github/workflows/${{ env._BLENDER_DIR }}*
 
