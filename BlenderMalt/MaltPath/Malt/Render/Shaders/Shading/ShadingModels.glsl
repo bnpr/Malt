@@ -4,6 +4,7 @@
 #define SHADING_MODELS_GLSL
 
 // The following formulas follow the naming conventions explained in the LitSurface struct declaration (Lighing.glsl)
+// X is for tangent and Y for bitangent. (ie. XoH means dot(tangent, halfway_vector))
 // (a) parameter stands for roughness factor (0..1)
 // Dot products should be clamped to (MIN_DOT..1)
 
@@ -65,6 +66,12 @@ float D_phong(float VoR, float a)
 float D_blinn_phong(float NoH, float a)
 {
     return pow(NoH, roughness_to_shininess(a));
+}
+
+float D_ward(float NoL, float NoV, float NoH, float XoH, float YoH, float aX, float aY)
+{
+    float e = -2.0 * ((pow(XoH / aX, 2) + pow(YoH / aY, 2)) / (1.0 + NoH));
+    return (1.0 / sqrt(NoL * NoV)) * (NoL / (4.0 * PI * aX * aY)) * exp(e);
 }
 
 float D_beckmann(float NoH, float a)
