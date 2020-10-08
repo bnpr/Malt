@@ -144,5 +144,17 @@ float ray_plane_intersection(vec3 ray_origin, vec3 ray_direction, vec3 plane_pos
     return (p_position - r_origin) / r_direction;
 }
 
+vec2 rotate_2d(vec2 p, float angle)
+{
+    float c = cos(angle);
+    float s = sin(angle);
+
+    return vec2
+    (
+        p.x * c - p.y * s, 
+        p.x * s + p.y * c
+    );
+}
+
 #endif //COMMON_TRANSFORM_GLSL
 
