@@ -113,6 +113,11 @@ float pixel_world_size()
 
 #endif //PIXEL_SHADER
 
+vec3 radial_tangent(vec3 normal, vec3 axis)
+{
+    return normalize(cross(normal, axis));
+}
+
 vec2 matcap_uv(vec3 normal)
 {
     vec3 r = cross(transform_normal(CAMERA, view_direction()), transform_normal(CAMERA, normal));
