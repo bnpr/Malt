@@ -51,11 +51,8 @@ void DEFAULT_MAIN_PASS_PIXEL_SHADER()
 
 #ifdef MAIN_PASS
 
-#include "Shading/Lambert.glsl"
-#include "Shading/Phong.glsl"
-#include "Shading/DiffuseGradient.glsl"
+#include "Shading/NPR.glsl"
 #include "Shading/Rim.glsl"
-#include "Shading/SpecularGradient.glsl"
 #include "Filters/AO.glsl"
 #include "Filters/Curvature.glsl"
 #include "Filters/Line.glsl"
@@ -68,27 +65,47 @@ vec3 get_normal()
 
 vec3 get_diffuse()
 {
-    return lambert_bsdf(POSITION, get_normal());
+    return scene_diffuse(POSITION, get_normal());
 }
 
 vec3 get_diffuse_half()
 {
-    return half_lambert_bsdf(POSITION, get_normal());
-}
-
-vec3 get_specular(float roughness)
-{
-    return phong_bsdf(POSITION, get_normal(), roughness);
+    return scene_half_diffuse(POSITION, get_normal());
 }
 
 vec3 get_diffuse_gradient(sampler1D gradient_texture)
 {
-    return diffuse_gradient_bsdf(POSITION, get_normal(), gradient_texture);
+    return scene_diffuse_gradient(POSITION, get_normal(), gradient_texture);
+}
+
+vec3 get_specular(float roughness)
+{
+    return scene_specular(POSITION, get_normal(), roughness);
 }
 
 vec3 get_specular_gradient(sampler1D gradient_texture, float roughness)
 {
-    return specular_gradient_bsdf(POSITION, get_normal(), roughness, gradient_texture);
+    return scene_specular_gradient(POSITION, get_normal(), roughness, gradient_texture);
+}
+
+vec3 get_specular_anisotropic(float roughness, float anisotropy, vec3 tangent)
+{
+    return scene_specular_anisotropic(POSITION, get_normal(), tangent, anisotropy, roughness);
+}
+
+vec3 get_specular_anisotropic_gradient(sampler1D gradient_texture, float roughness, float anisotropy, vec3 tangent)
+{
+    return scene_specular_anisotropic_gradient(POSITION, get_normal(), tangent, anisotropy, roughness, gradient_texture);
+}
+
+vec3 get_toon(float size, float gradient_size, float specularity, float offset)
+{
+    return scene_toon(POSITION, get_normal(), size, gradient_size, specularity, offset);
+}
+
+vec3 get_toon_gradient(sampler1D gradient_texture, float size, float gradient_size, float specularity, float offset)
+{
+    return scene_toon_gradient(POSITION, get_normal(), size, gradient_size, specularity, offset, gradient_texture);
 }
 
 float get_ao(int samples, float radius)
