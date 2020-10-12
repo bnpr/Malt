@@ -8,7 +8,7 @@ import pyrr
 
 from Malt.GL import *
 from Malt.UBO import UBO
-from Malt.Texture import TextureArray
+from Malt.Texture import TextureArray, CubeMapArray
 from Malt.RenderTarget import ArrayLayerTarget, RenderTarget
 from Malt.Render import Common
 
@@ -39,7 +39,7 @@ max_suns = 8 * sun_cascades
 sun_resolution = 2048
 
 max_points = 8
-point_resolution = 2048
+point_resolution = 512
 
 #TODO: Hard-coded for Blender conventions for now
 def make_projection_matrix(fov, aspect_ratio, near, far):
@@ -73,10 +73,15 @@ class ShadowMaps(object):
         self.sun_t = None
         self.sun_fbos = []
 
+        self.point_t = None
+        self.point_fbos = []
+
+        self.point_test = None
+        self.point_fbos_test = []
+
         self.initialized = False
 
     def setup(self):
-        
         self.spot_t = TextureArray((spot_resolution, spot_resolution), max_spots, GL_DEPTH_COMPONENT32F)
         for i in range(self.spot_t.length):
             self.spot_fbos.append(RenderTarget(depth_stencil=ArrayLayerTarget(self.spot_t, i)))
@@ -84,9 +89,11 @@ class ShadowMaps(object):
         self.sun_t = TextureArray((sun_resolution, sun_resolution), max_suns, GL_DEPTH_COMPONENT32F)
         for i in range(self.sun_t.length):
             self.sun_fbos.append(RenderTarget(depth_stencil=ArrayLayerTarget(self.sun_t, i)))
-
-        #self.point = TextureArray(spot_resolution, max_points, GL_DEPTH_COMPONENT32F)
-
+        
+        self.point_t = CubeMapArray((point_resolution, point_resolution), max_points, GL_DEPTH_COMPONENT32F)
+        for i in range(self.point_t.length*6):
+            self.point_fbos.append(RenderTarget(depth_stencil=ArrayLayerTarget(self.point_t, i)))
+        
         self.initialized = True
 
     def load(self, scene):
@@ -176,6 +183,40 @@ class LightsBuffer(object):
 
                 sun_count+=1
             
+            if light.type == LIGHT_POINT:
+                self.data.lights[i].type_index = point_count
+
+                cube_map_axes = [
+                    (( 1, 0, 0),( 0,-1, 0)),
+                    ((-1, 0, 0),( 0,-1, 0)),
+                    (( 0, 1, 0),( 0, 0, 1)),
+                    (( 0,-1, 0),( 0, 0,-1)),
+                    (( 0, 0, 1),( 0,-1, 0)),
+                    (( 0, 0,-1),( 0,-1, 0))
+                ]
+                matrices = []
+                for axes in cube_map_axes:
+                    position = pyrr.Vector3(light.position)
+                    front = pyrr.Vector3(axes[0])
+                    up = pyrr.Vector3(axes[1])
+                    matrices.append(pyrr.Matrix44.look_at(position, position + front, up))
+
+                projection_matrix = make_projection_matrix(math.pi / 2.0, 1.0, 0.01, light.radius)
+
+                for i in range(6):
+                    scene.camera.camera_matrix = tuple([e for vector in matrices[i] for e in vector])
+                    scene.camera.projection_matrix = tuple([e for vector in projection_matrix for e in vector])
+
+                    offset = pipeline.get_samples()[pipeline.sample_count]
+                    offset = (0,0)
+                    self.common_buffer.load(scene, (point_resolution, point_resolution), offset, pipeline.sample_count)
+                    
+                    fbo = self.shadowmaps.point_fbos[point_count * 6 + i]
+                    fbo.clear(depth=1)
+                    pipeline.draw_scene_pass(fbo, scene.objects, pass_name, pipeline.default_shader[pass_name], UBOS)
+                
+                point_count+=1
+            
             
         self.data.lights_count = len(scene.lights)
         
@@ -187,6 +228,7 @@ class LightsBuffer(object):
     def shader_callback(self, shader):
         shader.textures['SPOT_SHADOWMAPS'] = self.shadowmaps.spot_t
         shader.textures['SUN_SHADOWMAPS'] = self.shadowmaps.sun_t
+        shader.textures['POINT_SHADOWMAPS'] = self.shadowmaps.point_t
 
 
 def get_sun_cascades(sun_from_world_matrix, projection_matrix, view_from_world_matrix, cascades_count, cascades_distribution_exponent):

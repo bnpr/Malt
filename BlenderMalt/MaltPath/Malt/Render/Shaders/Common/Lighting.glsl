@@ -46,6 +46,7 @@ layout(std140) uniform SCENE_LIGHTS
 uniform sampler2DArray SPOT_SHADOWMAPS;
 uniform sampler2DArray SUN_SHADOWMAPS;
 uniform samplerCubeArray POINT_SHADOWMAPS;
+uniform samplerCube POINT_SHADOWMAP;
 
 struct LitSurface
 {
@@ -151,6 +152,22 @@ LitSurface lit_surface(vec3 position, vec3 normal, Light light)
                     break;
                 }
             }
+        }
+        if(light.type == LIGHT_POINT)
+        {
+            vec3 light_space = position - light.position;
+            float cubemap_side_depth = max(abs(light_space.x), max(abs(light_space.y), abs(light_space.z)));
+
+            float n = 0.01; //Near is hard-coded for point lights
+            float f = light.radius;
+
+            float buffer_depth = (f+n) / (f-n) - (2*f*n)/(f-n) / cubemap_side_depth;
+            buffer_depth = (buffer_depth + 1.0) * 0.5;
+
+            float sampled_depth = texture(POINT_SHADOWMAPS, vec4(-S.L, light.type_index)).x;
+
+            float bias = 1e-6;
+            S.shadow = buffer_depth > sampled_depth + bias;
         }
     }
 
