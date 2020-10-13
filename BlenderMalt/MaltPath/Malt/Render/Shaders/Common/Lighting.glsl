@@ -26,7 +26,7 @@ struct Light
     int type_index;
 };
 
-#define MAX_SPOTS 8
+#define MAX_SPOTS 64
 #define MAX_SUNS 8
 #define SUN_CASCADES 6
 

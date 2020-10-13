@@ -38,6 +38,9 @@ class PipelineTest(Pipeline):
         self.parameters.scene['Samples Grid Size Render'] = GLUniform(-1, GL.GL_INT, 8)
         self.parameters.scene['Samples Width'] = GLUniform(-1, GL.GL_FLOAT, 1.5)
         self.parameters.scene['Shadow Cascades Distribution Exponent'] = GLUniform(-1, GL.GL_INT, 21)
+        self.parameters.scene['ShadowMaps Spot Resolution'] = GLUniform(-1, GL.GL_INT, 2048)
+        self.parameters.scene['ShadowMaps Sun Resolution'] = GLUniform(-1, GL.GL_INT, 2048)
+        self.parameters.scene['ShadowMaps Point Resolution'] = GLUniform(-1, GL.GL_INT, 2048)
 
         self.common_buffer = Common.CommonBuffer()
         self.lights_buffer = Lighting.LightsBuffer()
@@ -91,7 +94,11 @@ class PipelineTest(Pipeline):
         
         #SETUP UNIFORM BLOCKS
         self.common_buffer.load(scene, resolution, sample_offset, self.sample_count)
-        self.lights_buffer.load(scene, self, 'PRE_PASS', scene.parameters['Shadow Cascades Distribution Exponent'][0])
+        self.lights_buffer.load(scene, self, 'PRE_PASS', 
+            scene.parameters['Shadow Cascades Distribution Exponent'][0],
+            scene.parameters['ShadowMaps Spot Resolution'][0],
+            scene.parameters['ShadowMaps Sun Resolution'][0],
+            scene.parameters['ShadowMaps Point Resolution'][0])
 
         UBOS = {
             'COMMON_UNIFORMS' : self.common_buffer,

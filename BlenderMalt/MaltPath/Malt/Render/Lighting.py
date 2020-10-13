@@ -30,16 +30,6 @@ class C_Light(ctypes.Structure):
         ('__padding', ctypes.c_int32*2),
     ]
 
-#TODO: This values should be dynamic and configurable
-max_spots = 8
-spot_resolution = 2048
-
-sun_cascades = 6
-max_suns = 8 * sun_cascades
-sun_resolution = 2048
-
-max_points = 8
-point_resolution = 512
 
 #TODO: Hard-coded for Blender conventions for now
 def make_projection_matrix(fov, aspect_ratio, near, far):
@@ -52,6 +42,9 @@ def make_projection_matrix(fov, aspect_ratio, near, far):
         0, 0, (-2.0 * far * near) / (far - near), 0
     ])
 
+MAX_SPOTS = 64
+MAX_SUNS = 8
+SUN_CASCADES = 6
 
 class C_LightsBuffer(ctypes.Structure):
     
@@ -59,45 +52,81 @@ class C_LightsBuffer(ctypes.Structure):
         ('lights', C_Light*128),
         ('lights_count', ctypes.c_int),
         ('__padding', ctypes.c_int32*3),
-        ('spot_matrices', ctypes.c_float*16*max_spots),
-        ('sun_matrices', ctypes.c_float*16*max_suns),
+        ('spot_matrices', ctypes.c_float*16*MAX_SPOTS),
+        ('sun_matrices', ctypes.c_float*16*(MAX_SUNS*SUN_CASCADES)),
     ]
 
 
 class ShadowMaps(object):
 
     def __init__(self):
+        self.max_spots = 1
+        self.spot_resolution = 2048
+
         self.spot_t = None
         self.spot_fbos = []
 
+        self.sun_cascades = SUN_CASCADES
+        self.max_suns = 1
+        self.sun_resolution = 2048
+        
         self.sun_t = None
         self.sun_fbos = []
+
+        self.max_points = 1
+        self.point_resolution = 512
 
         self.point_t = None
         self.point_fbos = []
 
-        self.point_test = None
-        self.point_fbos_test = []
-
         self.initialized = False
 
     def setup(self):
-        self.spot_t = TextureArray((spot_resolution, spot_resolution), max_spots, GL_DEPTH_COMPONENT32F)
+        print('SETUP : ', self.spot_resolution, self.sun_resolution, self.point_resolution)
+        self.spot_t = TextureArray((self.spot_resolution, self.spot_resolution), self.max_spots, GL_DEPTH_COMPONENT32F)
+        self.spot_fbos = []
         for i in range(self.spot_t.length):
             self.spot_fbos.append(RenderTarget(depth_stencil=ArrayLayerTarget(self.spot_t, i)))
 
-        self.sun_t = TextureArray((sun_resolution, sun_resolution), max_suns, GL_DEPTH_COMPONENT32F)
+        self.sun_t = TextureArray((self.sun_resolution, self.sun_resolution), self.max_suns * self.sun_cascades, GL_DEPTH_COMPONENT32F)
+        self.sun_fbos = []
         for i in range(self.sun_t.length):
             self.sun_fbos.append(RenderTarget(depth_stencil=ArrayLayerTarget(self.sun_t, i)))
         
-        self.point_t = CubeMapArray((point_resolution, point_resolution), max_points, GL_DEPTH_COMPONENT32F)
+        self.point_t = CubeMapArray((self.point_resolution, self.point_resolution), self.max_points, GL_DEPTH_COMPONENT32F)
+        self.point_fbos = []
         for i in range(self.point_t.length*6):
             self.point_fbos.append(RenderTarget(depth_stencil=ArrayLayerTarget(self.point_t, i)))
         
         self.initialized = True
 
-    def load(self, scene):
-        if self.initialized is False:
+    def load(self, scene, spot_resolution, sun_resolution, point_resolution):
+        needs_setup = self.initialized is False
+        
+        new_settings = (spot_resolution, sun_resolution, point_resolution)
+        current_settings = (self.spot_resolution, self.sun_resolution, self.point_resolution)
+        if new_settings != current_settings:
+            self.spot_resolution = spot_resolution
+            self.sun_resolution = sun_resolution
+            self.point_resolution = point_resolution
+            needs_setup = True
+        
+        spot_lights = len([l for l in scene.lights if l.type == LIGHT_SPOT])
+        if spot_lights > self.max_spots:
+            self.max_spots = spot_lights
+            needs_setup = True
+        
+        sun_lights = len([l for l in scene.lights if l.type == LIGHT_SUN])
+        if sun_lights > self.max_suns:
+            self.max_suns = sun_lights
+            needs_setup = True 
+
+        point_lights = len([l for l in scene.lights if l.type == LIGHT_POINT])
+        if point_lights > self.max_points:
+            self.max_points = point_lights
+            needs_setup = True
+        
+        if needs_setup:
             self.setup()
 
 
@@ -109,14 +138,14 @@ class LightsBuffer(object):
         self.shadowmaps = ShadowMaps()
         self.common_buffer = Common.CommonBuffer()
     
-    def load(self, scene, pipeline, pass_name, cascades_distribution_exponent):
+    def load(self, scene, pipeline, pass_name, cascades_distribution_exponent, 
+        spot_resolution = 2048, sun_resolution = 2048, point_resolution = 512):
         #TODO: Automatic distribution exponent based on FOV
-        #TODO: Configurable cascades number ???
 
         scene = copy.copy(scene)
         real_scene_camera = scene.camera
         scene.camera = copy.deepcopy(scene.camera)
-        self.shadowmaps.load(scene)
+        self.shadowmaps.load(scene, spot_resolution, sun_resolution, point_resolution)
         UBOS = {
             'COMMON_UNIFORMS' : self.common_buffer
         }
@@ -147,6 +176,7 @@ class LightsBuffer(object):
                 scene.camera.projection_matrix = tuple([e for vector in projection_matrix for e in vector])
                 
                 offset = pipeline.get_samples()[pipeline.sample_count]
+                spot_resolution = self.shadowmaps.spot_resolution
                 self.common_buffer.load(scene, (spot_resolution, spot_resolution), offset, pipeline.sample_count)
 
                 self.shadowmaps.spot_fbos[spot_count].clear(depth=1)
@@ -162,6 +192,8 @@ class LightsBuffer(object):
                 projection_matrix = pyrr.Matrix44(real_scene_camera.projection_matrix)
                 view_matrix = projection_matrix * pyrr.Matrix44(real_scene_camera.camera_matrix)
 
+                sun_cascades = self.shadowmaps.sun_cascades
+                sun_resolution = self.shadowmaps.sun_resolution
                 cascades_matrices = get_sun_cascades(sun_matrix, projection_matrix, view_matrix, sun_cascades, cascades_distribution_exponent)
                 
                 for i, cascade in enumerate(cascades_matrices):
@@ -209,6 +241,7 @@ class LightsBuffer(object):
 
                     offset = pipeline.get_samples()[pipeline.sample_count]
                     offset = (0,0)
+                    point_resolution = self.shadowmaps.point_resolution
                     self.common_buffer.load(scene, (point_resolution, point_resolution), offset, pipeline.sample_count)
                     
                     fbo = self.shadowmaps.point_fbos[point_count * 6 + i]
