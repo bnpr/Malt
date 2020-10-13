@@ -41,6 +41,7 @@ in vec4 COLOR[4];
 #endif //PIXEL_SHADER
 
 uniform mat4 MODEL;
+uniform float ID = 0;
 uniform bool MIRROR_SCALE = false;
 
 layout(std140) uniform COMMON_UNIFORMS

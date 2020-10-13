@@ -63,40 +63,53 @@ class ShadowMaps(object):
         self.max_spots = 1
         self.spot_resolution = 2048
 
-        self.spot_t = None
+        self.spot_depth_t = None
+        self.spot_id_t = None
         self.spot_fbos = []
 
         self.sun_cascades = SUN_CASCADES
         self.max_suns = 1
         self.sun_resolution = 2048
         
-        self.sun_t = None
+        self.sun_depth_t = None
+        self.sun_id_t = None
         self.sun_fbos = []
 
         self.max_points = 1
         self.point_resolution = 512
 
-        self.point_t = None
+        self.point_depth_t = None
+        self.point_id_t = None
         self.point_fbos = []
+
+        self.draw_ids = True
 
         self.initialized = False
 
     def setup(self):
-        print('SETUP : ', self.spot_resolution, self.sun_resolution, self.point_resolution)
-        self.spot_t = TextureArray((self.spot_resolution, self.spot_resolution), self.max_spots, GL_DEPTH_COMPONENT32F)
+        self.spot_depth_t = TextureArray((self.spot_resolution, self.spot_resolution), self.max_spots, GL_DEPTH_COMPONENT32F)
+        if self.draw_ids:
+            self.spot_id_t = TextureArray((self.spot_resolution, self.spot_resolution), self.max_spots, GL_R32F)
         self.spot_fbos = []
-        for i in range(self.spot_t.length):
-            self.spot_fbos.append(RenderTarget(depth_stencil=ArrayLayerTarget(self.spot_t, i)))
+        for i in range(self.spot_depth_t.length):
+            targets = [None, ArrayLayerTarget(self.spot_id_t, i)] if self.draw_ids else [None, None] 
+            self.spot_fbos.append(RenderTarget(targets, ArrayLayerTarget(self.spot_depth_t, i)))
 
-        self.sun_t = TextureArray((self.sun_resolution, self.sun_resolution), self.max_suns * self.sun_cascades, GL_DEPTH_COMPONENT32F)
+        self.sun_depth_t = TextureArray((self.sun_resolution, self.sun_resolution), self.max_suns * self.sun_cascades, GL_DEPTH_COMPONENT32F)
+        if self.draw_ids:
+            self.sun_id_t = TextureArray((self.sun_resolution, self.sun_resolution), self.max_suns * self.sun_cascades, GL_R32F)
         self.sun_fbos = []
-        for i in range(self.sun_t.length):
-            self.sun_fbos.append(RenderTarget(depth_stencil=ArrayLayerTarget(self.sun_t, i)))
+        for i in range(self.sun_depth_t.length):
+            targets = [None, ArrayLayerTarget(self.sun_id_t, i)] if self.draw_ids else [None, None]
+            self.sun_fbos.append(RenderTarget(targets, ArrayLayerTarget(self.sun_depth_t, i)))
         
-        self.point_t = CubeMapArray((self.point_resolution, self.point_resolution), self.max_points, GL_DEPTH_COMPONENT32F)
+        self.point_depth_t = CubeMapArray((self.point_resolution, self.point_resolution), self.max_points, GL_DEPTH_COMPONENT32F)
+        if self.draw_ids:
+            self.point_id_t = CubeMapArray((self.point_resolution, self.point_resolution), self.max_points, GL_R32F)
         self.point_fbos = []
-        for i in range(self.point_t.length*6):
-            self.point_fbos.append(RenderTarget(depth_stencil=ArrayLayerTarget(self.point_t, i)))
+        for i in range(self.point_depth_t.length*6):
+            targets = [None, ArrayLayerTarget(self.point_id_t, i)] if self.draw_ids else [None, None]
+            self.point_fbos.append(RenderTarget(targets, ArrayLayerTarget(self.point_depth_t, i)))
         
         self.initialized = True
 
@@ -259,9 +272,12 @@ class LightsBuffer(object):
         self.UBO.bind(location)
 
     def shader_callback(self, shader):
-        shader.textures['SPOT_SHADOWMAPS'] = self.shadowmaps.spot_t
-        shader.textures['SUN_SHADOWMAPS'] = self.shadowmaps.sun_t
-        shader.textures['POINT_SHADOWMAPS'] = self.shadowmaps.point_t
+        shader.textures['SPOT_SHADOWMAPS'] = self.shadowmaps.spot_depth_t
+        shader.textures['SUN_SHADOWMAPS'] = self.shadowmaps.sun_depth_t
+        shader.textures['POINT_SHADOWMAPS'] = self.shadowmaps.point_depth_t
+        shader.textures['SPOT_ID_MAPS'] = self.shadowmaps.spot_id_t
+        shader.textures['SUN_ID_MAPS'] = self.shadowmaps.sun_id_t
+        shader.textures['POINT_ID_MAPS'] = self.shadowmaps.point_id_t
 
 
 def get_sun_cascades(sun_from_world_matrix, projection_matrix, view_from_world_matrix, cascades_count, cascades_distribution_exponent):

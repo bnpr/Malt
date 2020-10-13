@@ -11,8 +11,6 @@ void DEFAULT_COMMON_VERTEX_SHADER()
 
 #ifdef PIXEL_SHADER
 
-uniform float ID;
-
 #ifdef PRE_PASS
 layout (location = 0) out vec4 OUT_NORMAL_DEPTH;
 layout (location = 1) out float OUT_ID;

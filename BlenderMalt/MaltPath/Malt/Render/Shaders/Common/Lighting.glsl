@@ -46,7 +46,9 @@ layout(std140) uniform SCENE_LIGHTS
 uniform sampler2DArray SPOT_SHADOWMAPS;
 uniform sampler2DArray SUN_SHADOWMAPS;
 uniform samplerCubeArray POINT_SHADOWMAPS;
-uniform samplerCube POINT_SHADOWMAP;
+uniform sampler2DArray SPOT_ID_MAPS;
+uniform sampler2DArray SUN_ID_MAPS;
+uniform samplerCubeArray POINT_ID_MAPS;
 
 struct LitSurface
 {
@@ -56,8 +58,9 @@ struct LitSurface
     vec3 R;// -L reflected on N
     vec3 H;// Halfway vector
     float NoL;// Dot product between N and L
-    float P;// Power Scalar (Inverse attenuation)
+    float P;// Power Scalar
     bool shadow;
+    bool self_shadow;
     int cascade;
 };
 
@@ -106,6 +109,7 @@ LitSurface lit_surface(vec3 position, vec3 normal, Light light)
     }
 
     S.shadow = false;
+    S.self_shadow = false;
     S.cascade = -1;
 
     //SHADOWS
@@ -128,6 +132,12 @@ LitSurface lit_surface(vec3 position, vec3 normal, Light light)
             float bias = 1e-5;
 
             S.shadow = spot_space_depth < light_space.z - bias;
+
+            if(S.shadow)
+            {
+                float id = texture(SPOT_ID_MAPS, vec3(light_uv, light.type_index)).x;
+                S.self_shadow = id == ID;
+            }
         }
         if(light.type == LIGHT_SUN)
         {
@@ -149,6 +159,11 @@ LitSurface lit_surface(vec3 position, vec3 normal, Light light)
                     float bias = 1e-3;
                     S.shadow = delta > 1e-3;
                     S.cascade = c;
+                    if(S.shadow)
+                    {
+                        float id = texture(SUN_ID_MAPS, vec3(light_uv.xy, index)).x;
+                        S.self_shadow = id == ID;
+                    }
                     break;
                 }
             }
@@ -168,6 +183,11 @@ LitSurface lit_surface(vec3 position, vec3 normal, Light light)
 
             float bias = 1e-6;
             S.shadow = buffer_depth > sampled_depth + bias;
+            if(S.shadow)
+            {
+                float id = texture(POINT_ID_MAPS, vec4(-S.L, light.type_index)).x;
+                S.self_shadow = id == ID;
+            }
         }
     }
 
