@@ -15,6 +15,11 @@
 
 #define MIN_DOT 1e-10
 
+float safe_dot(vec3 a, vec3 b)
+{
+    return clamp(dot(a,b), MIN_DOT, 1.0);
+}
+
 float roughness_to_shininess(float roughness)
 {
     return 2.0 / pow(max(0.1, roughness), 3);
