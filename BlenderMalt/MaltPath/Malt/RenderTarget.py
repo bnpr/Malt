@@ -26,27 +26,28 @@ class RenderTarget(object):
         self.targets = targets
         self.depth_stencil = depth_stencil
 
-        self.resolution = (0,0)
-        if len(targets) > 0:
-            self.resolution = targets[0].resolution
-        else:
-            self.resolution = depth_stencil.resolution
+        self.resolution = None
 
         glBindFramebuffer(GL_FRAMEBUFFER, self.FBO[0])
 
         attachments = gl_buffer(GL_INT, len(targets))
         for i, target in enumerate(targets):
-            assert(target.resolution == self.resolution)
-            if hasattr(target, 'attach'):
-                target.attach(GL_COLOR_ATTACHMENT0+i)
+            if target:
+                if self.resolution is None : self.resolution = target.resolution
+                assert(target.resolution == self.resolution)
+                if hasattr(target, 'attach'):
+                    target.attach(GL_COLOR_ATTACHMENT0+i)
+                else:
+                    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0+i, GL_TEXTURE_2D, target.texture[0], 0)
+                attachments[i] = GL_COLOR_ATTACHMENT0+i
             else:
-                glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0+i, GL_TEXTURE_2D, target.texture[0], 0)
-            attachments[i] = GL_COLOR_ATTACHMENT0+i
+                attachments[i] = GL_NONE
         
         glDrawBuffers(len(attachments), attachments)
         
         if depth_stencil:
-            assert(depth_stencil.resolution == self.resolution)    
+            if self.resolution is None : self.resolution = depth_stencil.resolution
+            assert(depth_stencil.resolution == self.resolution)
             attachment = {
                 GL_DEPTH_STENCIL : GL_DEPTH_STENCIL_ATTACHMENT,
                 GL_DEPTH_COMPONENT : GL_DEPTH_ATTACHMENT,
