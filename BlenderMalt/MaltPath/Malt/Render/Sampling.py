@@ -3,6 +3,8 @@
 import math
 
 import random
+#Don't share state
+random = random.Random()
 
 #Rotated Grid Super Sampling pattern
 #https://en.wikipedia.org/wiki/Supersampling#Rotated_grid
