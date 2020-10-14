@@ -146,7 +146,7 @@ LitSurface lit_surface(vec3 position, vec3 normal, Light light)
             for(int c = 0; c < SUN_CASCADES; c++)
             {
                 int index = light.type_index * SUN_CASCADES + c;
-                vec3 light_space = project_point(LIGHTS.sun_matrices[index], POSITION);
+                vec3 light_space = project_point(LIGHTS.sun_matrices[index], position);
                 light_space.xy += (SAMPLE_OFFSET / shadowmap_size);
                 vec3 light_uv = light_space * 0.5 + 0.5;
 
@@ -181,7 +181,7 @@ LitSurface lit_surface(vec3 position, vec3 normal, Light light)
 
             float sampled_depth = texture(POINT_SHADOWMAPS, vec4(-S.L, light.type_index)).x;
 
-            float bias = 1e-6;
+            float bias = 1e-5;
             S.shadow = buffer_depth > sampled_depth + bias;
             if(S.shadow)
             {
