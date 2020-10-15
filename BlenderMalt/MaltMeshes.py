@@ -49,6 +49,10 @@ def load_mesh(object):
 
         uvs = []
         tangents = []
+
+        if len(m.uv_layers) == 0:
+            m.uv_layers.new() #At least 1 UV layer is needed for tangents calculation
+
         for i, uv_layer in enumerate(m.uv_layers):
             uvs.append(GL.gl_buffer(GL.GL_FLOAT, count*2))
             uv_layer.data.foreach_get("uv", uvs[i])

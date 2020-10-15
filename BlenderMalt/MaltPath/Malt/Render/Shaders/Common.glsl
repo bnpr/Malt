@@ -104,6 +104,20 @@ void DEFAULT_VERTEX_SHADER()
     VERTEX_SETUP_OUTPUT();
 }
 
+#define VERTEX_DISPLACEMENT(displacement_function, tangent_offset)\
+{\
+    vec3 displaced_position = displacement_function(POSITION);\
+    for(int i = 0; i < TANGENT.length(); i++)\
+    {\
+        vec3 displaced_tangent = displacement_function(POSITION + TANGENT[i] * (tangent_offset));\
+        vec3 displaced_bitangent = displacement_function(POSITION + BITANGENT[i] * (tangent_offset));\
+        TANGENT[i] = normalize(displaced_tangent - displaced_position);\
+        BITANGENT[i] = normalize(displaced_bitangent - displaced_position);\
+    }\
+    POSITION = displaced_position;\
+    NORMAL = normalize(cross(TANGENT[0], BITANGENT[0]));\
+}\
+
 #endif //VERTEX_SHADER
 
 #endif //COMMON_GLSL
