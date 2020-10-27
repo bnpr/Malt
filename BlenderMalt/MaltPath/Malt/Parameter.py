@@ -2,12 +2,20 @@
 
 from Malt.GL import *
 
-#TODO:
-#This file is just an API sketch, is currently not in use.
+class PipelineParameters(object):
+
+    def __init__(self, scene={}, world={}, camera={}, object={}, material={}, mesh={}, light={}):
+        self.scene = scene
+        self.world = world
+        self.camera = camera
+        self.object = object
+        self.material = material
+        self.mesh = mesh
+        self.light = light
 
 from enum import Enum
 
-class Type(Enum):
+class Type(object):
     BOOL=0
     INT=1
     FLOAT=2
@@ -15,22 +23,19 @@ class Type(Enum):
     ENUM=5
     TEXTURE=6
     GRADIENT=7
-    SHADER=8
+    MATERIAL=8
     RENDER_TARGET=9
 
 class Parameter(object):
-    def __init__(self, value, type, size=1, getters={'BLENDER':None}):
-        self.value = value
+    def __init__(self, default_value, type, size=1):
+        self.default_value = default_value
         self.type = type
         self.size = size
-        self.getters = getters
 
     @classmethod
     def from_uniform(cls, uniform):
         type, size = gl_type_to_malt_type(uniform.type)
-        
         return Parameter(uniform.value, type, size)
-
 
 def gl_type_to_malt_type(gl_type):
     types = {
@@ -38,6 +43,7 @@ def gl_type_to_malt_type(gl_type):
         'DOUBLE' : Type.FLOAT,
         'INT' : Type.INT,
         'BOOL' : Type.BOOL,
+        'SAMPLER_1D' : Type.GRADIENT,
         'SAMPLER' : Type.TEXTURE,
     }
     sizes = {

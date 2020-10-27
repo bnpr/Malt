@@ -5,18 +5,7 @@ from os import path
 from Malt.Mesh import Mesh
 from Malt.Shader import Shader
 from Malt.GL import *
-
-
-class PipelineParameters(object):
-
-    def __init__(self, scene={}, world={}, camera={}, object={}, material={}, mesh={}, light={}):
-        self.scene = scene
-        self.world = world
-        self.camera = camera
-        self.object = object
-        self.material = material
-        self.mesh = mesh
-        self.light = light
+from Malt.Parameter import *
 
 _screen_vertex_default='''
 #version 410 core
@@ -60,7 +49,7 @@ class Pipeline(object):
 
     def __init__(self):
         self.parameters = PipelineParameters()
-        self.parameters.mesh['double_sided'] = GLUniform(-1, GL_BOOL, False)
+        self.parameters.mesh['double_sided'] = Parameter(False, Type.BOOL)
 
         shader_dir = path.join(path.dirname(__file__), 'Render', 'Shaders')
         if shader_dir not in Pipeline.SHADER_INCLUDE_PATHS:
@@ -84,7 +73,7 @@ class Pipeline(object):
         
         self.quad = Mesh(positions, indices)
         self.blend_shader = Shader(_screen_vertex_default, _screen_pixel_blend)
-        self.default_shader = self.compile_material_from_source('') #Empty source will force defaults
+        self.default_shader = self.compile_material_from_source('mesh','') #Empty source will force defaults
     
     def setup_render_targets(self, resolution):
         pass
@@ -180,13 +169,14 @@ class Pipeline(object):
         source = open(shader_path).read()
         return self.compile_shader_from_source(source, include_paths=[file_dir])
     
-    def compile_material_from_source(self, source, include_paths):
+    def compile_material_from_source(self, material_type, source, include_paths=[]):
         return {}
     
     def compile_material(self, shader_path):
         file_dir = path.dirname(shader_path)
+        material_type = shader_path.split('.')[-2]
         source = '#include "{}"'.format(shader_path)
-        return self.compile_material_from_source(source, [file_dir])
+        return self.compile_material_from_source(material_type, source, [file_dir])
 
     def render(self, resolution, scene, is_final_render, is_new_frame):
         if self.resolution != resolution:

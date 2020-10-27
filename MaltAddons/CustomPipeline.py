@@ -3,7 +3,7 @@
 from os import path
 
 from Malt.GL import *
-from Malt.Pipeline import *
+from Malt.Pipeline import Pipeline
 from Malt.Mesh import Mesh
 from Malt.Shader import Shader
 from Malt.Texture import Texture
@@ -11,6 +11,7 @@ from Malt.RenderTarget import RenderTarget
 from Malt.Parameter import Parameter
 from Malt.UBO import UBO
 
+from Malt.Render import AO
 from Malt.Render import Common
 from Malt.Render import DepthToCompositeDepth
 from Malt.Render import Lighting
@@ -23,47 +24,41 @@ _NPR_Pipeline_Common='''
 #extension GL_ARB_shading_language_include : enable
 
 #include "Pipelines/NPR_Pipeline.glsl"
+
 '''
 
-class PipelineTest(Pipeline):
+class CustomPipeline(Pipeline):
 
     def __init__(self):
         super().__init__()
 
         self.sampling_grid_size = 2
 
-        self.parameters.world['Background Color'] = Parameter((0.5,0.5,0.5,1), Type.FLOAT, 4)
-        self.parameters.scene['Line Width Max'] = Parameter(10, Type.INT)
-        self.parameters.scene['Samples Grid Size Preview'] = Parameter(4, Type.INT)
-        self.parameters.scene['Samples Grid Size Render'] = Parameter(8, Type.INT)
-        self.parameters.scene['Samples Width'] = Parameter(1.5, Type.FLOAT)
-        self.parameters.scene['Shadow Cascades Distribution Exponent'] = Parameter(21, Type.INT)
-        self.parameters.scene['ShadowMaps Spot Resolution'] = Parameter(2048, Type.INT)
-        self.parameters.scene['ShadowMaps Sun Resolution'] = Parameter(2048, Type.INT)
-        self.parameters.scene['ShadowMaps Point Resolution'] = Parameter(2048, Type.INT)
+        self.parameters.world['Background Color'] = GLUniform(-1, GL_FLOAT_VEC4, (0.5,0.5,0.5,1))
+        self.parameters.scene['Line Width Max'] = GLUniform(-1, GL.GL_INT, 10)
+        self.parameters.scene['Samples Grid Size Preview'] = GLUniform(-1, GL.GL_INT, 4)
+        self.parameters.scene['Samples Grid Size Render'] = GLUniform(-1, GL.GL_INT, 8)
+        self.parameters.scene['Samples Width'] = GLUniform(-1, GL.GL_FLOAT, 1.5)
+        self.parameters.scene['Shadow Cascades Distribution Exponent'] = GLUniform(-1, GL.GL_INT, 21)
+        
+        self.parameters.world['Post Process'] = 'CustomPostprocess.glsl'
 
         self.common_buffer = Common.CommonBuffer()
         self.lights_buffer = Lighting.LightsBuffer()
 
+        self.composite_depth = DepthToCompositeDepth.CompositeDepth()
         self.line_rendering = Line.LineRendering()
 
-        self.composite_depth = DepthToCompositeDepth.CompositeDepth()
-
     def compile_material_from_source(self, material_type, source, include_paths=[]):
-        if material_type == 'mesh':
-            source = _NPR_Pipeline_Common + source
-            return {
-                'PRE_PASS' : self.compile_shader_from_source(
-                    source, 'COMMON_VERTEX_SHADER', 'PRE_PASS_PIXEL_SHADER', include_paths, ['PRE_PASS']
-                ),
-                'MAIN_PASS' : self.compile_shader_from_source(
-                    source, 'COMMON_VERTEX_SHADER', 'MAIN_PASS_PIXEL_SHADER', include_paths, ['MAIN_PASS']
-                )
-            }
-        elif material_type == 'screen':
-            return {
-                'SHADER' : self.compile_shader_from_source(source, None, None, include_paths)
-            }
+        source = _NPR_Pipeline_Common + source
+        return {
+            'PRE_PASS' : self.compile_shader_from_source(
+                source, 'COMMON_VERTEX_SHADER', 'PRE_PASS_PIXEL_SHADER', include_paths, ['PRE_PASS']
+            ),
+            'MAIN_PASS' : self.compile_shader_from_source(
+                source, 'COMMON_VERTEX_SHADER', 'MAIN_PASS_PIXEL_SHADER', include_paths, ['MAIN_PASS']
+            )
+        }
     
     def setup_render_targets(self, resolution):
         self.t_depth = Texture(resolution, GL_DEPTH_COMPONENT32F)
@@ -79,6 +74,9 @@ class PipelineTest(Pipeline):
 
         self.t_color_accumulate = Texture(resolution, GL_RGB32F)
         self.fbo_accumulate = RenderTarget([self.t_color_accumulate])
+
+        self.t_postpro = Texture(resolution, GL_RGB32F)
+        self.fbo_postpro = RenderTarget([self.t_postpro])
     
     def get_samples(self, width=1.0):
         return Sampling.get_RGSS_samples(self.sampling_grid_size, width)
@@ -86,11 +84,11 @@ class PipelineTest(Pipeline):
     def do_render(self, resolution, scene, is_final_render, is_new_frame):
         #SETUP SAMPLING
         if is_final_render:
-            self.sampling_grid_size = scene.parameters['Samples Grid Size Render']
+            self.sampling_grid_size = scene.parameters['Samples Grid Size Render'][0]
         else:
-            self.sampling_grid_size = scene.parameters['Samples Grid Size Preview']
+            self.sampling_grid_size = scene.parameters['Samples Grid Size Preview'][0]
 
-        sample_offset = self.get_samples(scene.parameters['Samples Width'])[self.sample_count]
+        sample_offset = self.get_samples(scene.parameters['Samples Width'][0])[self.sample_count]
 
         #SETUP PER-OBJECT PARAMETERS
         for i, obj in enumerate(scene.objects):
@@ -99,11 +97,7 @@ class PipelineTest(Pipeline):
         
         #SETUP UNIFORM BLOCKS
         self.common_buffer.load(scene, resolution, sample_offset, self.sample_count)
-        self.lights_buffer.load(scene, self, 'PRE_PASS', 
-            scene.parameters['Shadow Cascades Distribution Exponent'],
-            scene.parameters['ShadowMaps Spot Resolution'],
-            scene.parameters['ShadowMaps Sun Resolution'],
-            scene.parameters['ShadowMaps Point Resolution'])
+        self.lights_buffer.load(scene, self, 'PRE_PASS', scene.parameters['Shadow Cascades Distribution Exponent'][0])
 
         UBOS = {
             'COMMON_UNIFORMS' : self.common_buffer,
@@ -133,13 +127,21 @@ class PipelineTest(Pipeline):
         # TEMPORAL SUPER-SAMPLING ACCUMULATION
         self.blend_texture(composited_line, self.fbo_accumulate, 1.0 / (self.sample_count + 1))
 
+        result = self.t_color_accumulate
+
+        postpro_shader = scene.world_parameters['Post Process']
+        if postpro_shader:
+            postpro_shader.textures['IN_RENDER'] = self.t_color_accumulate
+            self.draw_screen_pass(postpro_shader, self.fbo_postpro)
+            result = self.t_postpro
+
         #COMPOSITE DEPTH
         composite_depth = None
         if is_final_render:
             composite_depth = self.composite_depth.render(self, self.common_buffer, self.t_depth)
 
         return {
-            'COLOR' : self.t_color_accumulate,
+            'COLOR' : result,
             'DEPTH' : composite_depth,
         }
 

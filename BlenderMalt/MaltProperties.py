@@ -2,8 +2,8 @@
 
 import bpy
 
-from Malt import GL
 from Malt import Texture
+from Malt.Parameter import *
 
 from BlenderMalt import MaltPipeline
 
@@ -14,12 +14,7 @@ __GRADIENT_RESOLUTION = 256
 # so we store them as nodes inside a material
 def get_color_ramp(material, name):
     #TODO: Create a node tree for each ID with Malt Properties to store ramps ??? (Node Trees are ID types)
-    '''
-    if '__MALT_COLOR_RAMPS_INTERNAL__' not in bpy.data.materials:
-        material = bpy.data.materials.new('__MALT_COLOR_RAMPS_INTERNAL__')
-        material.use_nodes = True
-        material.use_fake_user = True
-    '''
+    
     if material.use_nodes == False:
         material.use_nodes = True
     nodes = material.node_tree.nodes
@@ -48,12 +43,13 @@ def get_color_ramp_texture(material, name):
     return gradients[name]
 
 
-
-# WORKAROUND: For some reason bpy.types.Image can't be used directly in CollectionProperty, 
-# although it's an ID type, so we wrap it inside a PropertyGroup
 class MaltTexturePropertyWrapper(bpy.types.PropertyGroup):
 
     texture : bpy.props.PointerProperty(type=bpy.types.Image)
+
+class MaltMaterialPropertyWrapper(bpy.types.PropertyGroup):
+
+    material : bpy.props.PointerProperty(type=bpy.types.Material)
 
 class MaltBoolPropertyWrapper(bpy.types.PropertyGroup):
 
@@ -61,21 +57,16 @@ class MaltBoolPropertyWrapper(bpy.types.PropertyGroup):
 
 class MaltPropertyGroup(bpy.types.PropertyGroup):
 
-    # Textures are not fully supported in Custom Properties,
-    # so we store them here and its metadata in _RNA_UI.
-    # Textures can be acessed by name, i.e. textures["image_name"]
-    textures : bpy.props.CollectionProperty(type=MaltTexturePropertyWrapper)
     bools : bpy.props.CollectionProperty(type=MaltBoolPropertyWrapper)
-    
-    #Declaration must me moved to MaltMaterial.register() to avoid cross dependencies issues
-    #shaders : bpy.props.CollectionProperty(type=MaltMaterialPropertyWrapper)
+    textures : bpy.props.CollectionProperty(type=MaltTexturePropertyWrapper)    
+    materials : bpy.props.CollectionProperty(type=MaltMaterialPropertyWrapper)
 
     def get_rna(self):
         if '_RNA_UI' not in self.keys():
             self['_RNA_UI'] = {}
         return self['_RNA_UI']
 
-    def setup(self, properties):
+    def setup(self, parameters):
         rna = self.get_rna()
 
         #TODO: We should purge non active properties (specially textures)
@@ -84,67 +75,57 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
         for key, value in rna.items():
             rna[key]['active'] = False
         
-        for name, uniform in properties.items():
+        for name, parameter in parameters.items():
             if name.isupper() or name.startswith('_'):
                 # We treat underscored and all caps uniforms as "private"
                 continue
 
             if name not in rna.keys():
                 rna[name] = {}
-            
-            rna[name]['active'] = True
 
-            #For now strings are reserved for shaders
-            if isinstance(uniform, str):
-                shader_path = uniform
-                if name not in self.shaders:
-                    self.shaders.add().name = name
-                    self.shaders[name].shader_type = 'SHADER'
-                if name in self.keys():
-                    self.pop(name)
-                if('type' not in rna[name] or 
-                rna[name]['type'] != 'SHADER' or 
-                'default' not in rna[name] or 
-                rna[name]['default'] == self.shaders[name].shader_source):
-                    self.shaders[name].shader_source = shader_path    
-                rna[name]['type'] = 'SHADER'
-                rna[name]['default'] = shader_path
-                self.shaders[name].update_source(bpy.context)
-                continue
-            
-            if uniform.type == GL.GL_SAMPLER_2D:
-                if name not in self.textures:
-                    self.textures.add().name = name
-                if name in self.keys():
-                    self.pop(name)
-                rna[name]['type'] = uniform.type            
-                continue
+            type_changed = 'type' not in rna[name].keys() or rna[name]['type'] != parameter.type
 
-            if uniform.type == GL.GL_SAMPLER_1D:
-                get_color_ramp(self.id_data, name)
+            if parameter.type in (Type.INT, Type.FLOAT):
+                if type_changed or rna[name]['default'] == self[name]:
+                    self[name] = parameter.default_value
 
-            if uniform.type == GL.GL_BOOL:
+            if parameter.type == Type.BOOL:
                 if name not in self.bools:
                     self.bools.add().name = name
-                if name in self.keys():
-                    self.pop(name)
-                rna[name]['default'] = uniform.value
-                rna[name]['type'] = uniform.type
-                continue
+                if type_changed or rna[name]['default'] == self.bools[name].boolean:
+                    self.bools[name].boolean = parameter.default_value
             
-            is_default = name in self.keys() and 'default' in rna[name].keys() and rna[name]['default'][:] == self[name][:]
-            type_changed = name in self.keys() and 'type' in rna[name].keys() and rna[name]['type'] != uniform.type
+            if parameter.type == Type.TEXTURE:
+                if name not in self.textures:
+                    self.textures.add().name = name
 
-            if name not in self.keys() or is_default or type_changed:
-                self[name] = uniform.value
-            
-            rna[name]["default"] = uniform.value
-            rna[name]['type'] = uniform.type
+            if parameter.type == Type.GRADIENT:
+                get_color_ramp(self.id_data, name)
+
+            if parameter.type == Type.MATERIAL:
+                if name not in self.materials:
+                    self.materials.add().name = name
+                
+                shader_path = parameter.default_value
+                if shader_path and shader_path != '':
+                    if shader_path not in bpy.data.materials:
+                        bpy.data.materials.new(shader_path)
+                        material = bpy.data.materials[shader_path]
+                        material.malt.shader_source = shader_path    
+                        material.malt.update_source(bpy.context)
+                
+                    material = self.materials[name].material
+                    if type_changed or (material and rna[name]['default'] == material.malt.shader_source):
+                        self.materials[name].material = bpy.data.materials[shader_path]
+
+            rna[name]['active'] = True
+            rna[name]["default"] = parameter.default_value
+            rna[name]['type'] = parameter.type
 
             #TODO: for now we assume we want floats as colors
             # ideally it should be opt-in in the UI,
             # so we can give them propper min/max values
-            if uniform.base_type in (GL.GL_FLOAT, GL.GL_DOUBLE):
+            if parameter.type == Type.FLOAT and parameter.size >= 3:
                 rna[name]['subtype'] = 'COLOR'
                 rna[name]['use_soft_limits'] = True
                 rna[name]['soft_min'] = 0.0
@@ -156,7 +137,6 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
         # Force a depsgraph update. 
         # Otherwise these won't be available inside scene_eval
         self.id_data.update_tag()
-    
 
     def get_parameters(self):
         if '_RNA_UI' not in self.keys():
@@ -166,15 +146,28 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
         for key in rna.keys():
             if rna[key]['active'] == False:
                 continue
-            if rna[key]['type'] == 'SHADER':
-                shader = self.shaders[key].get_shader()
-                if shader:
-                    shader = shader[MaltPipeline.get_pipeline().__class__.__name__]['SHADER']
-                parameters[key] = shader
-            elif rna[key]['type'] == GL.GL_BOOL:
-                parameters[key] = self.bools[key].boolean
-            else:
+            if rna[key]['type'] in (Type.INT, Type.FLOAT):
                 parameters[key] = self[key]
+            elif rna[key]['type'] == Type.BOOL:
+                parameters[key] = self.bools[key].boolean
+            elif rna[key]['type'] == Type.TEXTURE:
+                texture = self.textures[key].texture
+                if texture:
+                    texture.gl_load()
+                    parameters[key] = texture.bindcode
+                else:
+                    parameters[key] = None
+            elif rna[key]['type'] == Type.GRADIENT:
+                #TODO: Only works for materials
+                parameters[key] = get_color_ramp_texture(self.id_data, key)
+            elif rna[key]['type'] == Type.MATERIAL:
+                material = self.materials[key].material
+                if material:
+                    shader = material.malt.get_shader()
+                    if shader:
+                        parameters[key] = shader[MaltPipeline.get_pipeline().__class__.__name__]
+                else:
+                    parameters[key] = None
         return parameters
 
     
@@ -192,25 +185,26 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
         for key in keys:
             if rna[key]['active'] == False:
                 continue
-            if rna[key]['type'] == 'SHADER':
-                layout.label(text=key + " :")
-                self.shaders[key].draw_ui(layout)
-            elif rna[key]['type'] == GL.GL_SAMPLER_2D:
+            if rna[key]['type'] in (Type.INT, Type.FLOAT):
+                #TODO: add subtype toggle
+                layout.prop(self, '["'+key+'"]')
+            elif rna[key]['type'] == Type.BOOL:
+                layout.prop(self.bools[key], 'boolean', text=key)
+            elif rna[key]['type'] == Type.TEXTURE:
                 layout.label(text=key + " :")
                 row = layout.row()
                 row = row.split(factor=0.8)
                 row.template_ID(self.textures[key], "texture", new="image.new", open="image.open")
                 if self.textures[key].texture:
                     row.prop(self.textures[key].texture.colorspace_settings, 'name', text='')
-            elif rna[key]['type'] == GL.GL_SAMPLER_1D:
+            elif rna[key]['type'] == Type.GRADIENT:
                 layout.label(text=key + " :")
                 layout.template_color_ramp(get_color_ramp(self.id_data, key), 'color_ramp')
-            elif rna[key]['type'] == GL.GL_BOOL:
-                layout.prop(self.bools[key], 'boolean', text=key)
-            else:
-                #TODO: add subtype toggle
-                layout.prop(self, '["'+key+'"]')
-
+            elif rna[key]['type'] == Type.MATERIAL:
+                layout.label(text=key + " :")
+                layout.template_ID(self.materials[key], "material", new="material.new")
+                if self.materials[key].material:
+                    self.materials[key].material.malt.draw_ui(layout)
 
 
 class MALT_PT_Base(bpy.types.Panel):
@@ -302,6 +296,7 @@ class MALT_PT_Light(MALT_PT_Base):
 
 classes = (
     MaltTexturePropertyWrapper,
+    MaltMaterialPropertyWrapper,
     MaltBoolPropertyWrapper,
     MaltPropertyGroup,
     MALT_PT_Base,

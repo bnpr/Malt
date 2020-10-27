@@ -4,6 +4,7 @@ import os
 
 import bpy
 
+from Malt.Parameter import *
 from Malt.Shader import Shader
 from Malt.Pipeline import Pipeline
 from BlenderMalt import MaltProperties
@@ -29,7 +30,7 @@ class MaltMaterial(bpy.types.PropertyGroup):
         #TODO: Store source locally (for linked data and deleted files)
         global SHADERS
         self.compiler_error = ''
-        uniforms = {}
+        parameters = {}
 
         if self.shader_source != '':
             path = find_shader_path(self.shader_source)
@@ -40,14 +41,11 @@ class MaltMaterial(bpy.types.PropertyGroup):
                 pipelines = [MaltPipeline.get_pipeline()]#TODO: get all active pipelines
                 for pipeline in pipelines:
                     pipeline_name = pipeline.__class__.__name__
-                    if self.shader_type == 'MATERIAL':
-                        pipeline_material[pipeline_name] = pipeline.compile_material(path)
-                    elif self.shader_type == 'SHADER':
-                        pipeline_material[pipeline_name] = {'SHADER' : pipeline.compile_shader(path)}
+                    pipeline_material[pipeline_name] = pipeline.compile_material(path)
 
                     for pass_name, shader in pipeline_material[pipeline_name].items():
                         for uniform_name, uniform in shader.uniforms.items():
-                            uniforms[uniform_name] = uniform
+                            parameters[uniform_name] = Parameter.from_uniform(uniform)
                         if shader.error:
                             self.compiler_error += pipeline_name + " : " + pass_name + " : " + shader.error
                         if shader.validator:
@@ -55,7 +53,7 @@ class MaltMaterial(bpy.types.PropertyGroup):
             else:
                 self.compiler_error = 'Invalid file path'
 
-        self.parameters.setup(uniforms)
+        self.parameters.setup(parameters)
     
     def get_shader(self):
         global SHADERS
@@ -69,7 +67,6 @@ class MaltMaterial(bpy.types.PropertyGroup):
             new_shader[pipeline_name] = {}
 
             for pass_name, pass_shader in pipeline.items():
-
                 if pass_shader.error:
                     new_shader[pipeline_name][pass_name] = None
                     continue
@@ -77,30 +74,14 @@ class MaltMaterial(bpy.types.PropertyGroup):
                 pass_shader_copy = pass_shader.copy()
                 new_shader[pipeline_name][pass_name] = pass_shader_copy
 
-                for name, parameter in self.parameters.items():
-                    if name in pass_shader_copy.uniforms.keys():
-                        pass_shader_copy.uniforms[name].set_value(parameter)
-                    
+                for name, parameter in self.parameters.get_parameters().items():
                     if name in pass_shader_copy.textures.keys():
-                        pass_shader_copy.textures[name] = MaltProperties.get_color_ramp_texture(self.id_data, name)
-                
-                for name, parameter in self.parameters.bools.items():
-                    if name in pass_shader_copy.uniforms.keys():
-                        pass_shader_copy.uniforms[name].set_value(parameter.boolean)
-
-                for name, texture in self.parameters.textures.items():
-                    if texture.texture and name in pass_shader_copy.textures.keys():
-                        texture.texture.gl_load()
-                        pass_shader_copy.textures[name] = texture.texture.bindcode
+                        pass_shader_copy.textures[name] = parameter
+                    elif name in pass_shader_copy.uniforms.keys():
+                        pass_shader_copy.uniforms[name].set_value(parameter)
 
         return new_shader
-
-    shader_types = [
-        ('MATERIAL', "Material", ""),
-        ('SHADER', "Shader", ""),
-    ]
         
-    shader_type : bpy.props.EnumProperty(name="Shader Type", items=shader_types, update=update_source)
     shader_source : bpy.props.StringProperty(name="Shader Source", subtype='FILE_PATH', update=update_source)
     compiler_error : bpy.props.StringProperty(name="Compiler Error")
 
@@ -170,7 +151,6 @@ def track_shader_changes():
         redraw = False
         start_time = time.time()
 
-        #TODO: This only tracks material shaders
         for material in bpy.data.materials:
             shader_path = material.malt.shader_source
             abs_path = bpy.path.abspath(shader_path)
@@ -196,13 +176,11 @@ def track_shader_changes():
 def register():
     for _class in classes: bpy.utils.register_class(_class)
     bpy.types.Material.malt = bpy.props.PointerProperty(type=MaltMaterial)
-    MaltPropertyGroup.shaders = bpy.props.CollectionProperty(type=MaltMaterial)
     
     bpy.app.timers.register(track_shader_changes, persistent=True)
 
 def unregister():
     for _class in classes: bpy.utils.unregister_class(_class)
     del bpy.types.Material.malt
-    del MaltPropertyGroup.shaders
     
     bpy.app.timers.unregister(track_shader_changes)

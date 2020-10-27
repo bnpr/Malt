@@ -103,7 +103,7 @@ class LineRendering(object):
 
         #LINE COMPOSITE
         self.fbo_composite.clear([(0,0,0,0)])
-        self.composite_shader.uniforms['brute_force_range'].set_value(math.ceil(max_width[0] / 2))
+        self.composite_shader.uniforms['brute_force_range'].set_value(math.ceil(max_width / 2))
         self.composite_shader.textures['color_texture'] = color
         self.composite_shader.textures['depth_texture'] = depth
         self.composite_shader.textures['id_texture'] = id_texture
