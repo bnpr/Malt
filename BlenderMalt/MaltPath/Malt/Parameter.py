@@ -35,7 +35,14 @@ class Parameter(object):
     @classmethod
     def from_uniform(cls, uniform):
         type, size = gl_type_to_malt_type(uniform.type)
-        return Parameter(uniform.value, type, size)
+        value = uniform.value
+        if type in (Type.INT, Type.FLOAT, Type.BOOL):
+            if size > 1:
+                value = tuple(value)
+            else:
+                value = value[0]
+        #TODO: uniform length ??? (Arrays)
+        return Parameter(value, type, size)
 
 def gl_type_to_malt_type(gl_type):
     types = {

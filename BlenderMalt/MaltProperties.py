@@ -85,14 +85,20 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
 
             type_changed = 'type' not in rna[name].keys() or rna[name]['type'] != parameter.type
 
+            def to_basic_type(value):
+                try: return tuple(value)
+                except: return value
+            def equals(a, b):
+                return to_basic_type(a) == to_basic_type(b)
+
             if parameter.type in (Type.INT, Type.FLOAT):
-                if type_changed or rna[name]['default'] == self[name]:
+                if type_changed or equals(rna[name]['default'], self[name]):
                     self[name] = parameter.default_value
 
             if parameter.type == Type.BOOL:
                 if name not in self.bools:
                     self.bools.add().name = name
-                if type_changed or rna[name]['default'] == self.bools[name].boolean:
+                if type_changed or equals(rna[name]['default'], self.bools[name].boolean):
                     self.bools[name].boolean = parameter.default_value
             
             if parameter.type == Type.TEXTURE:
