@@ -353,6 +353,6 @@ def unregister():
     del bpy.types.Curve.malt_parameters
     del bpy.types.Light.malt_parameters
 
-    bpy.app.handlers.depsgraph_update_post.append(depsgraph_update)
+    bpy.app.handlers.depsgraph_update_post.remove(depsgraph_update)
 
 
