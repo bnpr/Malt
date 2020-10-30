@@ -81,9 +81,17 @@ def reset_meshes(dummy):
     global MESHES
     MESHES = {}    
 
+@bpy.app.handlers.persistent
+def depsgraph_update(scene, depsgraph):
+    for update in depsgraph.updates:
+        if update.is_updated_geometry:
+            MESHES[update.id.name_full] = None
+
 def register():
+    bpy.app.handlers.depsgraph_update_post.append(depsgraph_update)
     bpy.app.handlers.load_post.append(reset_meshes)
 
 def unregister():
+    bpy.app.handlers.depsgraph_update_post.remove(depsgraph_update)
     bpy.app.handlers.load_post.remove(reset_meshes)
 
