@@ -37,7 +37,6 @@ class MaltRenderEngine(bpy.types.RenderEngine):
     # render.
     def __init__(self):
         self.display_draw = None
-        self.meshes = {}
         self.pipeline = MaltPipeline.get_pipeline().__class__()
         self.view_matrix = None
         self.request_new_frame = False
@@ -91,39 +90,46 @@ class MaltRenderEngine(bpy.types.RenderEngine):
 
         def add_object(obj, matrix):
             if obj.display_type in ['TEXTURED','SOLID'] and obj.type in ('MESH','CURVE','SURFACE','FONT'):
-                material = None
-                if len(obj.material_slots) > 0 and obj.material_slots[0].material:
-                    blend_material = obj.material_slots[0].material
-                    material_name = blend_material.name_full
-                    if material_name not in materials.keys():
-                        #load material
-                        shader = blend_material.malt.get_shader()
-                        if shader:
-                            pipeline_shaders = shader[self.get_pipeline().__class__.__name__]
-                            parameters = blend_material.malt_parameters.get_parameters()
-                            materials[material_name] = Scene.Material(pipeline_shaders, parameters)
-                        else:
-                            materials[material_name] = None
-                    material = materials[material_name]
-
                 if obj.name_full not in meshes:
                     # (Uses obj.original) Malt Parameters are not present in the evaluated mesh
                     parameters = obj.original.data.malt_parameters.get_parameters()
-                    meshes[obj.name_full] = Scene.Mesh(None, parameters)
+                    malt_mesh = None
                     if depsgraph.mode == 'VIEWPORT':
-                        meshes[obj.name_full].mesh = MaltMeshes.get_mesh(obj)
+                        malt_mesh = MaltMeshes.get_mesh(obj)
                     else: #always load the mesh for final renders
-                        meshes[obj.name_full].mesh = MaltMeshes.load_mesh(obj)
+                        malt_mesh = MaltMeshes.load_mesh(obj)
+                    meshes[obj.name_full] = [Scene.Mesh(submesh, parameters) for submesh in malt_mesh]
 
                 mesh = meshes[obj.name_full]
                 if mesh is None:
                     return
+                
                 scale = matrix.to_scale()
+                negative_scale = scale[0]*scale[1]*scale[2] < 0.0
                 matrix = flatten_matrix(matrix)
-                result = Scene.Object(matrix, mesh, material, obj.malt_parameters.get_parameters())
-                if scale[0]*scale[1]*scale[2] < 0.0:
-                    result.negative_scale = True
-                scene.objects.append(result)
+
+                obj_parameters = obj.malt_parameters.get_parameters()
+                
+                if len(obj.material_slots) > 0:
+                    for i, slot in enumerate(obj.material_slots):
+                        material = None
+                        if slot.material:
+                            material_name = slot.material.name_full
+                            if material_name not in materials.keys():
+                                #load material
+                                shader = slot.material.malt.get_shader()
+                                if shader:
+                                    pipeline_shaders = shader[self.get_pipeline().__class__.__name__]
+                                    parameters = slot.material.malt_parameters.get_parameters()
+                                    materials[material_name] = Scene.Material(pipeline_shaders, parameters)
+                                else:
+                                    materials[material_name] = None
+                            material = materials[material_name]
+                        result = Scene.Object(matrix, mesh[i], material, obj_parameters, negative_scale)
+                        scene.objects.append(result)
+                else:
+                    result = Scene.Object(matrix, mesh[0], None, obj_parameters, negative_scale)
+                    scene.objects.append(result)
            
             elif obj.type == 'LIGHT':
                 if obj.data.type == 'AREA':
@@ -252,7 +258,10 @@ class MaltRenderEngine(bpy.types.RenderEngine):
         GL.glGenVertexArrays(1, VAO)
         
         #render
+        import time
+        t = time.perf_counter()
         scene = self.load_scene(context, depsgraph)
+        print('load time', time.perf_counter() - t)
         render_texture = self.get_pipeline().render(resolution, scene, False, self.request_new_frame)['COLOR']
         self.request_new_frame = False
         if MaltMaterial.INITIALIZED == False: #First viewport render can happen before initialization
