@@ -258,10 +258,7 @@ class MaltRenderEngine(bpy.types.RenderEngine):
         GL.glGenVertexArrays(1, VAO)
         
         #render
-        import time
-        t = time.perf_counter()
         scene = self.load_scene(context, depsgraph)
-        print('load time', time.perf_counter() - t)
         render_texture = self.get_pipeline().render(resolution, scene, False, self.request_new_frame)['COLOR']
         self.request_new_frame = False
         if MaltMaterial.INITIALIZED == False: #First viewport render can happen before initialization

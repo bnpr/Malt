@@ -1,6 +1,10 @@
 // Copyright (c) 2020 BlenderNPR and contributors. MIT license.
 
+#ifdef _WIN32
 #define EXPORT extern "C" __declspec( dllexport )
+#else
+#define EXPORT extern "C" __attribute__ ((visibility ("default")))
+#endif
 
 //Blender Data Structures
 

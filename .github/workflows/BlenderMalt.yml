@@ -5,7 +5,7 @@ name: BLENDERMALT_ADDON_PACKAGE
 # events but only for the master branch
 on:
   push:
-    branches: [ master ]
+    #branches: [ master ]
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -18,14 +18,6 @@ jobs:
     steps:
     # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
     - uses: actions/checkout@v2
-        
-    - name: Package BlenderMalt addon
-      uses: actions/upload-artifact@v2
-      with:
-        # Artifact name
-        name: BlenderMalt
-        # A file, directory or wildcard pattern that describes what to upload
-        path: ${{ github.workspace }}/BlenderMalt*
       
     - name: Package Shader Examples
       uses: actions/upload-artifact@v2
@@ -41,17 +33,29 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest, ubuntu-20.04]
+        os: [windows-latest, ubuntu-latest, macos-latest]
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
     # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
     - uses: actions/checkout@v2
 
+    - uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+
     - name: package_blender.py
       run: python package_blender.py
       working-directory: ${{ github.workspace }}/.github/workflows
-        
+    
+    - name: Package Addon
+      uses: actions/upload-artifact@v2
+      with:
+        # Artifact name
+        name: BlenderMalt-${{ runner.os }}
+        # A file, directory or wildcard pattern that describes what to upload
+        path: ${{ github.workspace }}/BlenderMalt*
+
     - name: Package Blender
       uses: actions/upload-artifact@v2
       with:
