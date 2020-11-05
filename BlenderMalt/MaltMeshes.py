@@ -24,7 +24,6 @@ def get_mesh(object):
     return MESHES[key]
 
 def load_mesh(object):
-    precomputed_tangents = False
     use_split_faces = False #Use split_faces instead of calc_normals_split (Slightly faster)
 
     m = object.data
@@ -101,12 +100,14 @@ def load_mesh(object):
         CMalt.retrieve_mesh_uv(uv_ptr, loop_count, uv)
         uvs.append(load_VBO(uv))
 
-        if(precomputed_tangents):
+        #if(object.type == 'MESH' and object.original.data.malt_precomputed_tangents):
+        if(object.original.data.malt_parameters.bools['precomputed_tangents'].boolean):
             m.calc_tangents(uvmap=uv_layer.name)
             #calc_tangents is so slow there's no point in optimizing this
             packed_tangents = [e for l in m.loops for e in (*l.tangent, l.bitangent_sign)]
-            packed_tangents = (ctypes.c_float * (4*len(packed_tangents)))(packed_tangents)
+            packed_tangents = (ctypes.c_float * (4*len(packed_tangents)))(*packed_tangents)
             tangents.append(load_VBO(packed_tangents))
+
 
     colors = []
     for i, vertex_color in enumerate(m.vertex_colors):
