@@ -12,7 +12,7 @@ from Malt.Mesh import MeshCustomLoad
 from Malt.GL import *
 from Malt.Utils import log
 
-import CMalt
+from . import CBlenderMalt
 
 MESHES = {}
 
@@ -36,7 +36,7 @@ def load_mesh(object):
     m.calc_loop_triangles()
 
     polys_ptr = ctypes.c_void_p(m.polygons[0].as_pointer())
-    has_flat_polys = CMalt.has_flat_polys(polys_ptr, len(m.polygons))
+    has_flat_polys = CBlenderMalt.has_flat_polys(polys_ptr, len(m.polygons))
 
     needs_split_normals = m.use_auto_smooth or m.has_custom_normals or has_flat_polys
     if needs_split_normals:
@@ -64,7 +64,7 @@ def load_mesh(object):
     #Create a new one each time so we don't have to care about zeroing the previous results
     indices_lengths = (ctypes.c_uint32 * material_count)()
 
-    CMalt.retrieve_mesh_data(verts_ptr, loops_ptr, loop_count, loop_tris_ptr, loop_tri_count, polys_ptr,
+    CBlenderMalt.retrieve_mesh_data(verts_ptr, loops_ptr, loop_count, loop_tris_ptr, loop_tri_count, polys_ptr,
         positions, normals, indices_ptrs, indices_lengths)
     
     def load_VBO(data):
@@ -97,7 +97,7 @@ def load_mesh(object):
     for i, uv_layer in enumerate(m.uv_layers):
         uv_ptr = ctypes.c_void_p(uv_layer.data[0].as_pointer())
         uv = get_load_buffer('uv'+str(i), ctypes.c_float, loop_count * 2)
-        CMalt.retrieve_mesh_uv(uv_ptr, loop_count, uv)
+        CBlenderMalt.retrieve_mesh_uv(uv_ptr, loop_count, uv)
         uvs.append(load_VBO(uv))
 
         #if(object.type == 'MESH' and object.original.data.malt_precomputed_tangents):
