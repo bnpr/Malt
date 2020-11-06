@@ -62,4 +62,6 @@ copy_tree(blender_malt_folder, addons_folder)
 
 shutil.make_archive(blender_folder, 'zip', '.', blender_folder)
 
-print("::set-env name=_BLENDER_FILE::{}.zip".format(blender_folder))
+with open(os.environ["GITHUB_ENV"], 'a') as file:
+    file.write('_BLENDER_FILE={}.zip'.format(blender_folder))
+
