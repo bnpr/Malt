@@ -2,9 +2,15 @@ import subprocess
 import os
 import ctypes
 
+import platform
+
 src_dir = os.path.abspath(os.path.dirname(__file__))
 
-CMalt = ctypes.CDLL(os.path.join(src_dir, 'CMalt'))
+extension = '.so'
+if platform.system() == 'Windows': extension = '.dll'
+if platform.system() == 'Darwin': extension = '.dylib'
+
+CMalt = ctypes.CDLL(os.path.join(src_dir, 'CMalt'+extension))
 
 retrieve_mesh_data = CMalt['retrieve_mesh_data']
 retrieve_mesh_data.argtypes = [
