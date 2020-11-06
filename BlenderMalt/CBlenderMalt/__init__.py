@@ -6,11 +6,11 @@ import platform
 
 src_dir = os.path.abspath(os.path.dirname(__file__))
 
-extension = '.so'
-if platform.system() == 'Windows': extension = '.dll'
-if platform.system() == 'Darwin': extension = '.dylib'
+library = 'libCMalt.so'
+if platform.system() == 'Windows': library = 'CMalt.dll'
+if platform.system() == 'Darwin': extension = 'libCMalt.dylib'
 
-CMalt = ctypes.CDLL(os.path.join(src_dir, 'CMalt'+extension))
+CMalt = ctypes.CDLL(os.path.join(src_dir, library))
 
 retrieve_mesh_data = CMalt['retrieve_mesh_data']
 retrieve_mesh_data.argtypes = [
