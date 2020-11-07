@@ -8,7 +8,7 @@ src_dir = os.path.abspath(os.path.dirname(__file__))
 
 library = 'libCMalt.so'
 if platform.system() == 'Windows': library = 'CMalt.dll'
-if platform.system() == 'Darwin': extension = 'libCMalt.dylib'
+if platform.system() == 'Darwin': library = 'libCMalt.dylib'
 
 CMalt = ctypes.CDLL(os.path.join(src_dir, library))
 
