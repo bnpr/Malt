@@ -30,7 +30,7 @@ def load_mesh(object):
     if object.type != 'MESH' or bpy.context.mode == 'EDIT_MESH':
         m = object.to_mesh()
     
-    if m is None:
+    if m is None or len(m.polygons) == 0:
         return None
     
     m.calc_loop_triangles()

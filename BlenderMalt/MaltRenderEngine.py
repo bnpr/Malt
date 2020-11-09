@@ -94,11 +94,16 @@ class MaltRenderEngine(bpy.types.RenderEngine):
                     # (Uses obj.original) Malt Parameters are not present in the evaluated mesh
                     parameters = obj.original.data.malt_parameters.get_parameters()
                     malt_mesh = None
+                    
                     if depsgraph.mode == 'VIEWPORT':
                         malt_mesh = MaltMeshes.get_mesh(obj)
                     else: #always load the mesh for final renders
                         malt_mesh = MaltMeshes.load_mesh(obj)
-                    meshes[obj.name_full] = [Scene.Mesh(submesh, parameters) for submesh in malt_mesh]
+                    
+                    if malt_mesh:
+                        meshes[obj.name_full] = [Scene.Mesh(submesh, parameters) for submesh in malt_mesh]
+                    else:
+                        meshes[obj.name_full] = None
 
                 mesh = meshes[obj.name_full]
                 if mesh is None:
