@@ -17,8 +17,8 @@ You can find an up to date list of planned features and their current state in [
 
 BlenderMalt is a normal Blender addon and runs on any recent Blender version, but for simplicity it's distributed preinstalled with Blender.
  
-- Go to [the repository Actions page](https://github.com/blendernpr/BEER/actions) and **click on the latest event** *(the one at the top)*.
-- Download the *Blender* version that matches your OS. **(You have to be logged in Github to download it)**
+- Go to [the latest *Release* page](https://github.com/blendernpr/BEER/releases/tag/v1-beta).
+- Download the *Blender* version that matches your OS.
   - *(Optional)* Download the *Shader Examples* too.
 - Unzip the folder and open Blender. Go to *Preferences > Addons*, search for *BlenderMalt* on the addons list and *enable it*.
 
@@ -36,13 +36,13 @@ If you need help or find a bug you can [open a new issue](https://github.com/Ble
 ## Manual Installation
 
 To install BlenderMalt manually: 
-- Go to [the repository Actions page](https://github.com/blendernpr/BEER/actions) and **click on the latest event** *(the one at the top)*.
-- Download the *BlenderMalt* artifact. **(You have to be logged in Github to download it)**
+- Go to [the latest Release page](https://github.com/blendernpr/BEER/releases/tag/v1-beta).
+- Download the *BlenderMalt* version that matches your OS.
   - *(Optional)* Download the *Shader Examples* too.
 - Open Blender. Go to *Preferences > Addons*, click on the *Install...* button and select *BlenderMalt.zip* from your downloads.
 - Search for *BlenderMalt* on the addons list and *enable it*.<br>
-  - **For a correct installation you have to run Blender with administrator privileges**, unless you use a portable (ZIP version) of Blender.
-  - BlenderMalt needs to download a few dependencies the first time when it is enabled, so **Blender will freeze for a few seconds**.
+  - Unless you use a portable (ZIP version) of Blender, **you will have to run Blender with administrator privileges for a correct installation**.
+  - **Blender will freeze for a few seconds** while it downloads the addon dependencies.
   - If you want to see the installation process you can click on *Window > Toggle System Console* before enabling the addon.
 - **Restart Blender**. (!!!)(This step is not optional)
 
