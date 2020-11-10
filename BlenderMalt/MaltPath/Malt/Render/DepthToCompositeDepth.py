@@ -12,6 +12,8 @@ _shader_src='''
 #include "Passes/DepthToBlenderDepth.glsl"
 '''
 
+_SHADER = None
+
 class CompositeDepth(object):
     
     def __init__(self):
@@ -26,7 +28,9 @@ class CompositeDepth(object):
             self.fbo = RenderTarget([self.t])
         
         if self.shader == None:
-            self.shader = pipeline.compile_shader_from_source(_shader_src)
+            global _SHADER
+            if _SHADER is None: _SHADER = pipeline.compile_shader_from_source(_shader_src)
+            self.shader = _SHADER
         
         self.shader.textures['DEPTH_TEXTURE'] = depth_texture
         self.shader.bind()

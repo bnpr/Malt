@@ -12,6 +12,8 @@ _shader_src='''
 #include "Passes/AO.glsl"
 '''
 
+_SHADER = None
+
 class AmbientOcclusion(object):
     
     def __init__(self):
@@ -25,7 +27,9 @@ class AmbientOcclusion(object):
             self.fbo = RenderTarget([self.t])
 
         if self.shader == None:
-            self.shader = pipeline.compile_shader_from_source(_shader_src)
+            global _SHADER
+            if _SHADER is None: _SHADER = pipeline.compile_shader_from_source(_shader_src)
+            self.shader = _SHADER
 
         self.shader.textures['IN_NORMAL_DEPTH'] = normal_depth_texture
         self.shader.uniforms['samples'].set_value(samples)

@@ -37,7 +37,7 @@ class MaltRenderEngine(bpy.types.RenderEngine):
     # render.
     def __init__(self):
         self.display_draw = None
-        self.pipeline = MaltPipeline.get_pipeline().__class__()
+        self.pipeline = None
         self.view_matrix = None
         self.request_new_frame = False
         self.profiling_data = io.StringIO()

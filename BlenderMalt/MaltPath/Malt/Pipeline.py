@@ -43,6 +43,8 @@ void main()
 }
 '''
 
+_BLEND_SHADER = None
+
 class Pipeline(object):
 
     SHADER_INCLUDE_PATHS = []
@@ -73,8 +75,11 @@ class Pipeline(object):
         ]
         
         self.quad = Mesh(positions, indices)
-        self.blend_shader = Shader(_screen_vertex_default, _screen_pixel_blend)
-        self.default_shader = self.compile_material_from_source('mesh','') #Empty source will force defaults
+        global _BLEND_SHADER
+        if _BLEND_SHADER is None: _BLEND_SHADER = Shader(_screen_vertex_default, _screen_pixel_blend)
+        self.blend_shader = _BLEND_SHADER
+        
+        self.default_shader = None
     
     def setup_render_targets(self, resolution):
         pass

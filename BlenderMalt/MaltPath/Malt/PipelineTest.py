@@ -25,6 +25,8 @@ _NPR_Pipeline_Common='''
 #include "Pipelines/NPR_Pipeline.glsl"
 '''
 
+_DEFAULT_SHADER = None
+
 class PipelineTest(Pipeline):
 
     def __init__(self):
@@ -42,8 +44,12 @@ class PipelineTest(Pipeline):
         self.parameters.scene['ShadowMaps Sun Resolution'] = Parameter(2048, Type.INT)
         self.parameters.scene['ShadowMaps Point Resolution'] = Parameter(2048, Type.INT)
 
+        global _DEFAULT_SHADER
+        if _DEFAULT_SHADER is None: _DEFAULT_SHADER = self.compile_material_from_source('mesh','')
+        self.default_shader = _DEFAULT_SHADER
+
         self.common_buffer = Common.CommonBuffer()
-        self.lights_buffer = Lighting.LightsBuffer()
+        self.lights_buffer = Lighting.get_lights_buffer()
 
         self.line_rendering = Line.LineRendering()
 
