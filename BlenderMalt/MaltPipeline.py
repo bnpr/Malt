@@ -19,6 +19,7 @@ __PIPELINE__ = None
 def get_pipeline():
     global __PIPELINE__
     if __PIPELINE__ is None:
+        #TODO: update pipeline on file loading
         bpy.context.scene.world.malt.update_pipeline(bpy.context)
     return __PIPELINE__
 

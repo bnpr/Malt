@@ -109,3 +109,21 @@ class Mesh(object):
             #TODO: Make sure GL objects are deleted in the correct context
             pass
             
+
+#Class for custom mesh loading
+#See BlenderMalt/MaltMeshes.py
+class MeshCustomLoad(Mesh):
+
+    def __init__(self):
+        self.position = None
+        self.normal = None
+        self.tangents = []
+        self.uvs = []
+        self.colors = []
+
+        self.index_count = 0
+
+        self.VAO = None
+        self.EBO = None
+    
+

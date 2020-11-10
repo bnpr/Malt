@@ -56,6 +56,12 @@ class C_LightsBuffer(ctypes.Structure):
         ('sun_matrices', ctypes.c_float*16*(MAX_SUNS*SUN_CASCADES)),
     ]
 
+_LIGHTS_BUFFER = None
+
+def get_lights_buffer():
+    global _LIGHTS_BUFFER
+    if _LIGHTS_BUFFER is None: _LIGHTS_BUFFER = LightsBuffer()
+    return _LIGHTS_BUFFER
 
 class ShadowMaps(object):
 

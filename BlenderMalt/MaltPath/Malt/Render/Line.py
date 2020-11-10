@@ -29,32 +29,33 @@ _line_composite_src = '''
 #include "Passes/LineComposite.glsl"
 '''
 
+_LINE_COMPOSITE_SHADER = None
+
 class LineRendering(object):
 
     def __init__(self):
+        '''
         self.t_a = None
         self.t_b = None
         self.fbo_a = None
         self.fbo_b = None
-        self.t_composite = None
-        self.fbo_composite = None
         self.shader = None
         self.cleanup_shader = None
+        '''
+        self.t_composite = None
+        self.fbo_composite = None
         self.composite_shader = None
 
     def composite_line(self, max_width, pipeline, common_buffer, color, depth, id_texture, line_color, line_data):
+        '''
         if self.t_a is None or self.t_a.resolution != color.resolution:
             self.t_a = Texture(color.resolution, GL_RGBA32F)
             self.fbo_a = RenderTarget([self.t_a])
             self.t_b = Texture(color.resolution, GL_RGBA32F)
             self.fbo_b = RenderTarget([self.t_b])
-            self.t_composite = Texture(color.resolution, GL_RGBA32F)
-            self.fbo_composite = RenderTarget([self.t_composite])
-        
-        if self.shader == None:
+        if self.shader is None:
             self.shader = pipeline.compile_shader_from_source(_shader_src)
             self.cleanup_shader = pipeline.compile_shader_from_source(_line_cleanup_src)
-            self.composite_shader = pipeline.compile_shader_from_source(_line_composite_src)
         
         #CLEANUP LINE
         #(Try to workaround numerical stability issues, disabled for now)
@@ -100,10 +101,20 @@ class LineRendering(object):
                 self.shader.bind()
                 common_buffer.bind(self.shader.uniform_blocks['COMMON_UNIFORMS'])
                 pipeline.draw_screen_pass(self.shader, write)
+        '''
+
+        if self.t_composite is None or self.t_composite.resolution != color.resolution:
+            self.t_composite = Texture(color.resolution, GL_RGBA32F)
+            self.fbo_composite = RenderTarget([self.t_composite])
+        
+        if self.composite_shader is None:
+            global _LINE_COMPOSITE_SHADER
+            if _LINE_COMPOSITE_SHADER is None: _LINE_COMPOSITE_SHADER = pipeline.compile_shader_from_source(_line_composite_src)
+            self.composite_shader = _LINE_COMPOSITE_SHADER
 
         #LINE COMPOSITE
         self.fbo_composite.clear([(0,0,0,0)])
-        self.composite_shader.uniforms['brute_force_range'].set_value(math.ceil(max_width[0] / 2))
+        self.composite_shader.uniforms['brute_force_range'].set_value(math.ceil(max_width / 2))
         self.composite_shader.textures['color_texture'] = color
         self.composite_shader.textures['depth_texture'] = depth
         self.composite_shader.textures['id_texture'] = id_texture
