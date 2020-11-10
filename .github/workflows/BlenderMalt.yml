@@ -35,7 +35,7 @@ jobs:
       shell: python
       run: |
         import shutil
-        shutil.make_archive('Shader-Examples', 'zip', 'Shader Examples')
+        shutil.make_archive('Shader Examples', 'zip', 'Shader Examples')
     
     - name: Release Shader Examples
       uses: actions/upload-release-asset@v1
@@ -44,7 +44,7 @@ jobs:
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
         asset_path: ${{ github.workspace }}/Shader Examples.zip
-        asset_name: Shader Examples.zip
+        asset_name: Shader-Examples.zip
         asset_content_type: application/zip
     
     outputs:
