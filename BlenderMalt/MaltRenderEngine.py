@@ -90,7 +90,8 @@ class MaltRenderEngine(bpy.types.RenderEngine):
 
         def add_object(obj, matrix):
             if obj.display_type in ['TEXTURED','SOLID'] and obj.type in ('MESH','CURVE','SURFACE','FONT'):
-                if obj.name_full not in meshes:
+                name = MaltMeshes.get_mesh_name(obj)
+                if name not in meshes:
                     # (Uses obj.original) Malt Parameters are not present in the evaluated mesh
                     parameters = obj.original.data.malt_parameters.get_parameters()
                     malt_mesh = None
@@ -101,11 +102,11 @@ class MaltRenderEngine(bpy.types.RenderEngine):
                         malt_mesh = MaltMeshes.load_mesh(obj)
                     
                     if malt_mesh:
-                        meshes[obj.name_full] = [Scene.Mesh(submesh, parameters) for submesh in malt_mesh]
+                        meshes[name] = [Scene.Mesh(submesh, parameters) for submesh in malt_mesh]
                     else:
-                        meshes[obj.name_full] = None
+                        meshes[name] = None
 
-                mesh = meshes[obj.name_full]
+                mesh = meshes[name]
                 if mesh is None:
                     return
                 

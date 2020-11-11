@@ -16,8 +16,16 @@ from . import CBlenderMalt
 
 MESHES = {}
 
+def get_mesh_name(object):
+    name = object.name_full
+    if len(object.modifiers) == 0:
+        name = object.type + '_' + object.data.name_full
+    return name
+
 def get_mesh(object):
-    key = object.name_full
+    key = get_mesh_name(object)
+    if len(object.modifiers) == 0:
+        key = object.data.name_full
     if key not in MESHES.keys() or MESHES[key] is None:
         MESHES[key] = load_mesh(object)
         
