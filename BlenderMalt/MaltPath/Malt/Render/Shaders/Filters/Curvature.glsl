@@ -3,6 +3,8 @@
 #ifndef CURVATURE_GLSL
 #define CURVATURE_GLSL
 
+#include "Common/Math.glsl"
+
 // x and y must be the screen x and y axis in the same coordinate space as the texture normals
 float curvature(sampler2D normal_texture, vec2 uv, float width, vec3 x, vec3 y)
 {
@@ -20,11 +22,10 @@ float curvature(sampler2D normal_texture, vec2 uv, float width, vec3 x, vec3 y)
         d = normalize(d);
         u = normalize(u);
     }
-    
-    float curvature = dot(cross(l,r), y) - dot(cross(d,u), x);
-    
-    //Map it from (-1|+1) to (0|1)
-    return curvature / 2.0 + 0.5;
+
+    float curvature = (dot(u,y) - dot(d,y)) + (dot(r,x) - dot(l,x));
+
+    return map_range_clamped(curvature, -1, 1, 0, 1);
 }
 
 #include "Filters/Line.glsl"

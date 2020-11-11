@@ -122,7 +122,7 @@ float get_curvature()
     return curvature(IN_NORMAL_DEPTH, screen_uv(), 1.0, x, y);
 }
 
-float get_surface_curvature(float depth_range /*0.05*/)
+float get_surface_curvature(float depth_range /*0.5*/)
 {
     vec3 x = transform_normal(inverse(CAMERA), vec3(1,0,0));
     vec3 y = transform_normal(inverse(CAMERA), vec3(0,1,0));
