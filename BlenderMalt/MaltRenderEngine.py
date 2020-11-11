@@ -4,6 +4,7 @@ from itertools import chain
 import io
 import cProfile
 import pstats
+import ctypes
 
 import bpy
 
@@ -53,7 +54,7 @@ class MaltRenderEngine(bpy.types.RenderEngine):
     def load_scene(self, context, depsgraph):
 
         def flatten_matrix(matrix):
-            return list(chain.from_iterable(matrix.transposed()))
+            return (ctypes.c_float * 16)(*[e for v in matrix.transposed() for e in v])
 
         scene = Scene.Scene()
         scene.parameters = depsgraph.scene_eval.malt_parameters.get_parameters()
@@ -168,8 +169,8 @@ class MaltRenderEngine(bpy.types.RenderEngine):
                 scene.lights.append(light)
 
         for obj in depsgraph.objects:
-                add_object(obj, obj.matrix_world)
-        
+            add_object(obj, obj.matrix_world)
+
         for instance in depsgraph.object_instances:
             if instance.instance_object:
                 add_object(instance.instance_object, instance.matrix_world)
