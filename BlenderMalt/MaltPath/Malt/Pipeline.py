@@ -108,49 +108,67 @@ class Pipeline(object):
 
         render_target.bind()
 
+        last_double_sided = None
+        last_neg_scale = None
+        last_shader = None
+        last_mesh = None
+
         for obj in objects:
-
-            if obj.mesh and obj.mesh.parameters['double_sided']:
-                glDisable(GL_CULL_FACE)
-            else:
-                glEnable(GL_CULL_FACE)
-                glCullFace(GL_BACK)
-
-            if obj.negative_scale:
-                glFrontFace(GL_CW)
-            else:
-                glFrontFace(GL_CCW)
+            
+            double_sided = obj.mesh.parameters['double_sided']
+            if double_sided != last_double_sided:
+                if obj.mesh.parameters['double_sided']:
+                    glDisable(GL_CULL_FACE)
+                else:
+                    glEnable(GL_CULL_FACE)
+                    glCullFace(GL_BACK)
+            
+            if obj.negative_scale != last_neg_scale:
+                if obj.negative_scale:
+                    glFrontFace(GL_CW)
+                else:
+                    glFrontFace(GL_CCW)
 
             shader = default_shader
             if obj.material and pass_name in obj.material.shader and obj.material.shader[pass_name]:
                 shader = obj.material.shader[pass_name]
             
-            shader.uniforms['MIRROR_SCALE'].set_value(obj.negative_scale)
-            
-            for name, uniform in uniforms.items():
-                if name in shader.uniforms:
-                    shader.uniforms[name].set_value(uniform)
-            
-            #per object parameters and overrides
-            for name, param in obj.parameters.items():
-                if name in shader.uniforms:
-                    shader.uniforms[name].set_value(param)
-            
-            for name, texture in textures.items():
-                if name in shader.textures:
-                    shader.textures[name] = texture
-            
-            for callback in shader_callbacks:
-                callback(shader)
-            
-            shader.bind()
+            if shader != last_shader:
+                for name, uniform in uniforms.items():
+                    if name in shader.uniforms:
+                        shader.uniforms[name].set_value(uniform)
+                
+                for name, texture in textures.items():
+                    if name in shader.textures:
+                        shader.textures[name] = texture
+                
+                for callback in shader_callbacks:
+                    callback(shader)
+                
+                shader.bind()
 
-            #TODO: Do the opposite. Set the shader uniform block location to the UBO location
-            for name, block in uniform_blocks.items():
-                if name in shader.uniform_blocks:
-                    block.bind(shader.uniform_blocks[name])
+                #TODO: Do the opposite. Set the shader uniform block location to the UBO location
+                for name, block in uniform_blocks.items():
+                    if name in shader.uniform_blocks:
+                        block.bind(shader.uniform_blocks[name])
             
-            obj.mesh.mesh.draw()
+            shader.uniforms['MODEL'].bind(obj.matrix)
+            if shader != last_shader or obj.negative_scale != last_neg_scale:
+                shader.uniforms['MIRROR_SCALE'].bind(obj.negative_scale)
+            
+            for key, value in obj.parameters:
+                if key in shader.uniforms:
+                    shader.uniforms[key].bind(value)
+            
+            if obj.mesh is not last_mesh:
+                obj.mesh.mesh.bind()
+            obj.mesh.mesh.draw(False)
+
+            last_double_sided = double_sided
+            last_neg_scale = obj.negative_scale
+            last_shader = shader
+            last_mesh = obj.mesh
+
 
     def get_parameters(self):
         return self.parameters
@@ -195,6 +213,8 @@ class Pipeline(object):
         
         if self.needs_more_samples() == False:
             return self.result
+        
+        scene.objects.sort(key = lambda e: (id(e.material), id(e.mesh)))
         
         self.result = self.do_render(resolution, scene, is_final_render, is_new_frame)
         

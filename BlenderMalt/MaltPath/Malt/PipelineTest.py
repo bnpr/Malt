@@ -100,7 +100,6 @@ class PipelineTest(Pipeline):
 
         #SETUP PER-OBJECT PARAMETERS
         for i, obj in enumerate(scene.objects):
-            obj.parameters['MODEL'] = obj.matrix
             obj.parameters['ID'] = i+1
         
         #SETUP UNIFORM BLOCKS

@@ -85,10 +85,12 @@ class Mesh(object):
             self.__load_VAO()
         glBindVertexArray(self.VAO[0])
     
-    def draw(self):
-        self.bind()
+    def draw(self, bind=True):
+        if bind:
+            self.bind()
         glDrawElements(GL_TRIANGLES, self.index_count, GL_UNSIGNED_INT, NULL)
-        glBindVertexArray(0)
+        if bind:
+            glBindVertexArray(0)
     
     def __del__(self):
         try:

@@ -116,8 +116,13 @@ class GLUniform(object):
     def set_value(self, value):
         self.value = gl_buffer(self.base_type, self.base_size * self.array_length, value)
     
-    def bind(self):
-        self.set_function(self.index, self.array_length, self.value)
+    def set_buffer(self, buffer):
+        self.value = buffer
+    
+    def bind(self, buffer=None):
+        if buffer is None:
+            buffer = self.value
+        self.set_function(self.index, self.array_length, buffer)
     
     def copy(self):
         return GLUniform(
