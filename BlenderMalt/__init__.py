@@ -14,11 +14,11 @@ from os import path
 
 #ENSURE DEPENDENCIES ARE INSTALLED
 try:
-    import OpenGL, pcpp, pyrr
+    import OpenGL, OpenGL_accelerate, pcpp, pyrr
 except:
     import subprocess, site
     def install_dependencies():
-        dependencies = ['PyOpenGL','pcpp', 'Pyrr']
+        dependencies = ['PyOpenGL', 'PyOpenGL_accelerate', 'pcpp', 'Pyrr']
         def get_target():
             for p in site.getsitepackages():
                 if path.basename(p) in ('site-packages', 'dist-packages'):
