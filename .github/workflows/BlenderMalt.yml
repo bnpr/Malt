@@ -63,29 +63,23 @@ jobs:
 
     - uses: actions/setup-python@v2
       with:
-        python-version: '3.x'
+        python-version: '3.7'
 
     - name: package_blender.py
       run: python package_blender.py
       working-directory: ${{ github.workspace }}/.github/workflows
-    
-    - name: Package Addon
-      uses: actions/upload-artifact@v2
-      with:
-        name: BlenderMalt-${{ runner.os }}
-        path: ${{ github.workspace }}/BlenderMalt*
-
-    - name: Package Blender
-      uses: actions/upload-artifact@v2
-      with:
-        name: ${{ env._BLENDER_FILE }}
-        path: ${{ github.workspace }}/.github/workflows/${{ env._BLENDER_FILE }}
     
     - name: Zip Addon
       shell: python
       run: |
         import shutil
         shutil.make_archive('BlenderMalt', 'zip', '.', 'BlenderMalt')
+    
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: BlenderMalt-${{ runner.os }}
+        path: ${{ github.workspace }}/BlenderMalt.zip
     
     - name: Release Addon
       uses: actions/upload-release-asset@v1
@@ -95,15 +89,5 @@ jobs:
         upload_url: ${{ needs.release.outputs.upload_url }}
         asset_path: ${{ github.workspace }}/BlenderMalt.zip
         asset_name: BlenderMalt-${{ runner.os }}.zip
-        asset_content_type: application/zip
-    
-    - name: Release Blender
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ needs.release.outputs.upload_url }}
-        asset_path: ${{ github.workspace }}/.github/workflows/${{ env._BLENDER_FILE }}
-        asset_name: ${{ env._BLENDER_FILE }}
         asset_content_type: application/zip
 

@@ -12,6 +12,13 @@ import bpy
 import sys
 from os import path
 
+#Add Malt and dependencies to the import path
+current_dir = path.dirname(path.realpath(__file__))
+malt_path = path.join(current_dir, 'MaltPath')
+malt_dependencies_path = path.join(current_dir, 'MaltDependencies')
+if malt_path not in sys.path: sys.path.append(malt_path)
+if malt_dependencies_path not in sys.path: sys.path.append(malt_dependencies_path)
+
 #ENSURE DEPENDENCIES ARE INSTALLED
 try:
     import OpenGL, OpenGL_accelerate, pcpp, pyrr
@@ -19,26 +26,14 @@ except:
     import subprocess, site
     def install_dependencies():
         dependencies = ['PyOpenGL', 'PyOpenGL_accelerate', 'pcpp', 'Pyrr']
-        def get_target():
-            for p in site.getsitepackages():
-                if path.basename(p) in ('site-packages', 'dist-packages'):
-                    return p
-        target = get_target()
-        assert target
-        for dependency in dependencies:
-            subprocess.check_call([bpy.app.binary_path_python, '-m', 'pip', 'install', dependency, '--target', target])
+        subprocess.check_call([bpy.app.binary_path_python, '-m', 'pip', 'install', *dependencies, '--target', malt_dependencies_path])
     try:
         install_dependencies()
     except:
         import os, ensurepip
         ensurepip.bootstrap()
         os.environ.pop("PIP_REQ_TRACKER", None) #https://developer.blender.org/T71856 :(
-        install_dependencies()        
-
-#Add Malt to the import path
-current_dir = path.join(path.dirname(path.realpath(__file__)), 'MaltPath')
-if current_dir not in sys.path:
-    sys.path.append(current_dir)
+        install_dependencies()
 
 import Malt
 
