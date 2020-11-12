@@ -4,6 +4,7 @@ blender_malt_folder = os.path.join('..', '..', 'BlenderMalt')
 
 CBlenderMalt_folder = os.path.join(blender_malt_folder, 'CBlenderMalt')
 subprocess.check_call(['python', 'build.py'], cwd=CBlenderMalt_folder)
+shutil.rmtree(os.path.join(CBlenderMalt_folder, '.build'))
 
 malt_dependencies_path = os.path.join(blender_malt_folder, 'MaltDependencies')
 dependencies = ['PyOpenGL', 'PyOpenGL_accelerate', 'pcpp', 'Pyrr']
