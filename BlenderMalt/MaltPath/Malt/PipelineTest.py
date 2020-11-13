@@ -101,6 +101,53 @@ class PipelineTest(Pipeline):
         #SETUP PER-OBJECT PARAMETERS
         for i, obj in enumerate(scene.objects):
             obj.parameters['ID'] = i+1
+
+        self.batches = {}
+        batches = self.batches
+        for obj in scene.objects:
+            if obj.material not in batches:
+                batches[obj.material] = {}
+            if obj.mesh not in batches[obj.material]:
+                batches[obj.material][obj.mesh] = []
+            batches[obj.material][obj.mesh].append(obj)
+        
+        # Assume at least 64kb of UBO storage (d3d11 requirement) and max element size of mat4
+        max_instances = 1000
+        models = (max_instances * (ctypes.c_float * 16))()
+        ids = (max_instances * ctypes.c_float)()
+
+        for material, meshes in batches.items():
+            for mesh, objs in meshes.items():
+                local_batches = []
+                meshes[mesh] = local_batches
+                
+                i = 0
+                batch_length = len(objs)
+                
+                while i < batch_length:
+                    instance_i = i % max_instances
+                    models[instance_i] = objs[i].matrix
+                    ids[instance_i] = objs[i].parameters['ID']
+
+                    i+=1
+                    instances_count = instance_i + 1
+
+                    if i == batch_length or instances_count == max_instances:
+                        local_models = ((ctypes.c_float * 16) * instances_count).from_address(ctypes.addressof(models))
+                        local_ids = (ctypes.c_float * instances_count).from_address(ctypes.addressof(ids))
+
+                        models_UBO = UBO()
+                        ids_UBO = UBO()
+
+                        models_UBO.load_data(local_models)
+                        ids_UBO.load_data(local_ids)
+
+                        local_batches.append({
+                            'instances_count': instances_count,
+                            'BATCH_MODELS':models_UBO,
+                            'BATCH_IDS':ids_UBO,
+                        })
+                
         
         #SETUP UNIFORM BLOCKS
         self.common_buffer.load(scene, resolution, sample_offset, self.sample_count)

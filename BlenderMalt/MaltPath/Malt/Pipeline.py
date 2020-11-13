@@ -104,21 +104,7 @@ class Pipeline(object):
         self.draw_screen_pass(self.blend_shader, target, True)
     
     def draw_scene_pass(self, render_target, objects, pass_name=None, default_shader=None, uniform_blocks={}, uniforms={}, textures={}, shader_callbacks=[]):
-        batches = {}
-        for obj in objects:
-            if obj.material not in batches:
-                batches[obj.material] = {}
-            if obj.mesh not in batches[obj.material]:
-                batches[obj.material][obj.mesh] = []
-            batches[obj.material][obj.mesh].append(obj)
-        
-        # Assume at least 64kb of UBO storage (d3d11 requirement) and max element size of mat4
-        max_instances = 1000
-        models = (max_instances * (ctypes.c_float * 16))()
-        ids = (max_instances * ctypes.c_float)()
-
-        models_UBO = UBO()
-        ids_UBO = UBO()
+        batches = self.batches
         
         glDisable(GL_BLEND)
         glEnable(GL_DEPTH_TEST)
@@ -148,7 +134,7 @@ class Pipeline(object):
                 if name in shader.uniform_blocks:
                     block.bind(shader.uniform_blocks[name])
 
-            for mesh, batch in meshes.items():
+            for mesh, batches in meshes.items():
 
                 if mesh.parameters['double_sided']:
                     glDisable(GL_CULL_FACE)
@@ -158,27 +144,10 @@ class Pipeline(object):
                 
                 mesh.mesh.bind()
                 
-                i = 0
-                batch_length = len(batch)
-                while i < batch_length:
-                    instance_i = i % max_instances
-                    models[instance_i] = batch[i].matrix
-                    ids[instance_i] = batch[i].parameters['ID']
-
-                    i+=1
-                    instances_count = instance_i + 1
-
-                    if i == batch_length or instances_count == max_instances:
-                        local_models = ((ctypes.c_float * 16) * instances_count).from_address(ctypes.addressof(models))
-                        local_ids = (ctypes.c_float * instances_count).from_address(ctypes.addressof(ids))
-
-                        models_UBO.load_data(local_models)
-                        ids_UBO.load_data(local_ids)
-
-                        models_UBO.bind(shader.uniform_blocks['BATCH_MODELS'])
-                        ids_UBO.bind(shader.uniform_blocks['BATCH_IDS'])
-
-                        glDrawElementsInstanced(GL_TRIANGLES, mesh.mesh.index_count, GL_UNSIGNED_INT, NULL, instances_count)
+                for batch in batches:
+                    batch['BATCH_MODELS'].bind(shader.uniform_blocks['BATCH_MODELS'])
+                    batch['BATCH_IDS'].bind(shader.uniform_blocks['BATCH_IDS'])
+                    glDrawElementsInstanced(GL_TRIANGLES, mesh.mesh.index_count, GL_UNSIGNED_INT, NULL, batch['instances_count'])
         
         '''
         last_double_sided = None
