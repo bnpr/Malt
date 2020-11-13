@@ -54,3 +54,5 @@ class Scene(object):
         self.frame = 0
         self.time = 0
 
+        self.batches = None
+

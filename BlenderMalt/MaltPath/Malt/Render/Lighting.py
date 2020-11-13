@@ -200,7 +200,7 @@ class LightsBuffer(object):
 
                 self.shadowmaps.spot_fbos[spot_count].clear(depth=1)
                 pipeline.draw_scene_pass(self.shadowmaps.spot_fbos[spot_count], 
-                    scene.objects, pass_name, pipeline.default_shader[pass_name], UBOS)
+                    scene.batches, pass_name, pipeline.default_shader[pass_name], UBOS)
 
                 spot_count+=1
             
@@ -229,7 +229,7 @@ class LightsBuffer(object):
                     fbo = self.shadowmaps.sun_fbos[sun_count * sun_cascades + i]
                     fbo.clear(depth=1)
                     glEnable(GL_DEPTH_CLAMP)
-                    pipeline.draw_scene_pass(fbo, scene.objects, pass_name, pipeline.default_shader[pass_name], UBOS)
+                    pipeline.draw_scene_pass(fbo, scene.batches, pass_name, pipeline.default_shader[pass_name], UBOS)
                     glDisable(GL_DEPTH_CLAMP)
 
                 sun_count+=1
@@ -265,7 +265,7 @@ class LightsBuffer(object):
                     
                     fbo = self.shadowmaps.point_fbos[point_count * 6 + i]
                     fbo.clear(depth=1)
-                    pipeline.draw_scene_pass(fbo, scene.objects, pass_name, pipeline.default_shader[pass_name], UBOS)
+                    pipeline.draw_scene_pass(fbo, scene.batches, pass_name, pipeline.default_shader[pass_name], UBOS)
                 
                 point_count+=1
             

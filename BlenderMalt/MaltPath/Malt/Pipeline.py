@@ -103,9 +103,55 @@ class Pipeline(object):
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
         self.draw_screen_pass(self.blend_shader, target, True)
     
-    def draw_scene_pass(self, render_target, objects, pass_name=None, default_shader=None, uniform_blocks={}, uniforms={}, textures={}, shader_callbacks=[]):
-        batches = self.batches
+    def build_scene_batches(self, objects):
+        batches = {}
+        for obj in objects:
+            if obj.material not in batches:
+                batches[obj.material] = {}
+            if obj.mesh not in batches[obj.material]:
+                batches[obj.material][obj.mesh] = []
+            batches[obj.material][obj.mesh].append(obj)
         
+        # Assume at least 64kb of UBO storage (d3d11 requirement) and max element size of mat4
+        max_instances = 1000
+        models = (max_instances * (ctypes.c_float * 16))()
+        ids = (max_instances * ctypes.c_float)()
+
+        for material, meshes in batches.items():
+            for mesh, objs in meshes.items():
+                local_batches = []
+                meshes[mesh] = local_batches
+                
+                i = 0
+                batch_length = len(objs)
+                
+                while i < batch_length:
+                    instance_i = i % max_instances
+                    models[instance_i] = objs[i].matrix
+                    ids[instance_i] = objs[i].parameters['ID']
+
+                    i+=1
+                    instances_count = instance_i + 1
+
+                    if i == batch_length or instances_count == max_instances:
+                        local_models = ((ctypes.c_float * 16) * instances_count).from_address(ctypes.addressof(models))
+                        local_ids = (ctypes.c_float * instances_count).from_address(ctypes.addressof(ids))
+
+                        models_UBO = UBO()
+                        ids_UBO = UBO()
+
+                        models_UBO.load_data(local_models)
+                        ids_UBO.load_data(local_ids)
+
+                        local_batches.append({
+                            'instances_count': instances_count,
+                            'BATCH_MODELS':models_UBO,
+                            'BATCH_IDS':ids_UBO,
+                        })
+        
+        return batches
+    
+    def draw_scene_pass(self, render_target, batches, pass_name=None, default_shader=None, uniform_blocks={}, uniforms={}, textures={}, shader_callbacks=[]):
         glDisable(GL_BLEND)
         glEnable(GL_DEPTH_TEST)
         glDepthFunc(GL_LEQUAL)
@@ -148,69 +194,6 @@ class Pipeline(object):
                     batch['BATCH_MODELS'].bind(shader.uniform_blocks['BATCH_MODELS'])
                     batch['BATCH_IDS'].bind(shader.uniform_blocks['BATCH_IDS'])
                     glDrawElementsInstanced(GL_TRIANGLES, mesh.mesh.index_count, GL_UNSIGNED_INT, NULL, batch['instances_count'])
-        
-        '''
-        last_double_sided = None
-        last_neg_scale = None
-        last_shader = None
-        last_mesh = None
-
-        for obj in objects:
-            
-            double_sided = obj.mesh.parameters['double_sided']
-            if double_sided != last_double_sided:
-                if obj.mesh.parameters['double_sided']:
-                    glDisable(GL_CULL_FACE)
-                else:
-                    glEnable(GL_CULL_FACE)
-                    glCullFace(GL_BACK)
-            
-            if obj.negative_scale != last_neg_scale:
-                if obj.negative_scale:
-                    glFrontFace(GL_CW)
-                else:
-                    glFrontFace(GL_CCW)
-
-            shader = default_shader
-            if obj.material and pass_name in obj.material.shader and obj.material.shader[pass_name]:
-                shader = obj.material.shader[pass_name]
-            
-            if shader != last_shader:
-                for name, uniform in uniforms.items():
-                    if name in shader.uniforms:
-                        shader.uniforms[name].set_value(uniform)
-                
-                for name, texture in textures.items():
-                    if name in shader.textures:
-                        shader.textures[name] = texture
-                
-                for callback in shader_callbacks:
-                    callback(shader)
-                
-                shader.bind()
-
-                #TODO: Do the opposite. Set the shader uniform block location to the UBO location
-                for name, block in uniform_blocks.items():
-                    if name in shader.uniform_blocks:
-                        block.bind(shader.uniform_blocks[name])
-            
-            shader.uniforms['MODEL'].bind(obj.matrix)
-            if shader != last_shader or obj.negative_scale != last_neg_scale:
-                shader.uniforms['MIRROR_SCALE'].bind(obj.negative_scale)
-            
-            for key, value in obj.parameters:
-                if key in shader.uniforms:
-                    shader.uniforms[key].bind(value)
-            
-            if obj.mesh is not last_mesh:
-                obj.mesh.mesh.bind()
-            obj.mesh.mesh.draw(False)
-
-            last_double_sided = double_sided
-            last_neg_scale = obj.negative_scale
-            last_shader = shader
-            last_mesh = obj.mesh
-        '''
 
 
     def get_parameters(self):
@@ -256,8 +239,6 @@ class Pipeline(object):
         
         if self.needs_more_samples() == False:
             return self.result
-        
-        scene.objects.sort(key = lambda e: (id(e.material), id(e.mesh)))
         
         self.result = self.do_render(resolution, scene, is_final_render, is_new_frame)
         

@@ -39,8 +39,10 @@ class MaltRenderEngine(bpy.types.RenderEngine):
     def __init__(self):
         self.display_draw = None
         self.pipeline = None
+        self.scene = Scene.Scene()
         self.view_matrix = None
-        self.request_new_frame = False
+        self.request_new_frame = True
+        self.request_scene_update = True
         self.profiling_data = io.StringIO()
 
     def __del__(self):
@@ -51,12 +53,14 @@ class MaltRenderEngine(bpy.types.RenderEngine):
             self.pipeline = MaltPipeline.get_pipeline().__class__()
         return self.pipeline
     
-    def load_scene(self, context, depsgraph):
-
+    def get_scene(self, context, depsgraph, request_scene_update):
         def flatten_matrix(matrix):
             return (ctypes.c_float * 16)(*[e for v in matrix.transposed() for e in v])
 
-        scene = Scene.Scene()
+        if request_scene_update == True:
+            scene = Scene.Scene()
+            self.scene = scene
+        scene = self.scene
         scene.parameters = depsgraph.scene_eval.malt_parameters.get_parameters()
         scene.world_parameters = depsgraph.scene_eval.world.malt_parameters.get_parameters()
 
@@ -84,6 +88,9 @@ class MaltRenderEngine(bpy.types.RenderEngine):
                     y=depsgraph.scene_eval.render.resolution_y
             ))
             scene.camera = Scene.Camera(camera_matrix, projection_matrix)
+        
+        if request_scene_update == False:
+            return scene
 
         #Objects
         materials = {}
@@ -174,6 +181,12 @@ class MaltRenderEngine(bpy.types.RenderEngine):
         for instance in depsgraph.object_instances:
             if instance.instance_object:
                 add_object(instance.instance_object, instance.matrix_world)
+        
+        #TODO: 
+        for i, obj in enumerate(scene.objects):
+            obj.parameters['ID'] = i+1
+        
+        scene.batches = self.get_pipeline().build_scene_batches(scene.objects)
 
         return scene
 
@@ -188,7 +201,7 @@ class MaltRenderEngine(bpy.types.RenderEngine):
         self.size_y = int(scene.render.resolution_y * scale)
         resolution = (self.size_x, self.size_y)
 
-        scene = self.load_scene(None, depsgraph)
+        scene = self.get_scene(None, depsgraph, True)
         render_textures = None
         while True:
             render_textures = self.get_pipeline().render(resolution, scene, True, False)
@@ -228,6 +241,8 @@ class MaltRenderEngine(bpy.types.RenderEngine):
         self.request_new_frame = True
         # Test which datablocks changed
         for update in depsgraph.updates:
+            if 'Object' in str(update.id.__class__):
+                self.request_scene_update = True
             if update.is_updated_geometry:
                 MaltMeshes.MESHES[update.id.name_full] = None
 
@@ -265,7 +280,8 @@ class MaltRenderEngine(bpy.types.RenderEngine):
         GL.glGenVertexArrays(1, VAO)
         
         #render
-        scene = self.load_scene(context, depsgraph)
+        scene = self.get_scene(context, depsgraph, self.request_scene_update)
+        self.request_scene_update = False
         render_texture = self.get_pipeline().render(resolution, scene, False, self.request_new_frame)['COLOR']
         self.request_new_frame = False
         if MaltMaterial.INITIALIZED == False: #First viewport render can happen before initialization
