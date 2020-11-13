@@ -1,11 +1,13 @@
 # Copyright (c) 2020 BlenderNPR and contributors. MIT license. 
 
 from os import path
+import ctypes
 
-from Malt.Mesh import Mesh
-from Malt.Shader import Shader
 from Malt.GL import *
+from Malt.Shader import Shader
 from Malt.Parameter import *
+from Malt.UBO import UBO
+from Malt.Mesh import Mesh
 
 _screen_vertex_default='''
 #version 410 core
@@ -102,12 +104,83 @@ class Pipeline(object):
         self.draw_screen_pass(self.blend_shader, target, True)
     
     def draw_scene_pass(self, render_target, objects, pass_name=None, default_shader=None, uniform_blocks={}, uniforms={}, textures={}, shader_callbacks=[]):
+        batches = {}
+        for obj in objects:
+            if obj.material not in batches:
+                batches[obj.material] = {}
+            if obj.mesh not in batches[obj.material]:
+                batches[obj.material][obj.mesh] = []
+            batches[obj.material][obj.mesh].append(obj)
+        
+        # Assume at least 64kb of UBO storage (d3d11 requirement) and max element size of mat4
+        max_instances = 1000
+        models = (max_instances * (ctypes.c_float * 16))()
+        ids = (max_instances * ctypes.c_float)()
+
+        models_UBO = UBO()
+        ids_UBO = UBO()
+        
         glDisable(GL_BLEND)
         glEnable(GL_DEPTH_TEST)
         glDepthFunc(GL_LEQUAL)
 
         render_target.bind()
 
+        for material, meshes in batches.items():
+            shader = default_shader
+            if material and pass_name in material.shader and material.shader[pass_name]:
+                shader = material.shader[pass_name]
+            
+            for name, uniform in uniforms.items():
+                if name in shader.uniforms:
+                    shader.uniforms[name].set_value(uniform)
+            
+            for name, texture in textures.items():
+                if name in shader.textures:
+                    shader.textures[name] = texture
+            
+            for callback in shader_callbacks:
+                callback(shader)
+            
+            shader.bind()
+
+            for name, block in uniform_blocks.items():
+                if name in shader.uniform_blocks:
+                    block.bind(shader.uniform_blocks[name])
+
+            for mesh, batch in meshes.items():
+
+                if mesh.parameters['double_sided']:
+                    glDisable(GL_CULL_FACE)
+                else:
+                    glEnable(GL_CULL_FACE)
+                    glCullFace(GL_BACK)
+                
+                mesh.mesh.bind()
+                
+                i = 0
+                batch_length = len(batch)
+                while i < batch_length:
+                    instance_i = i % max_instances
+                    models[instance_i] = batch[i].matrix
+                    ids[instance_i] = batch[i].parameters['ID']
+
+                    i+=1
+                    instances_count = instance_i + 1
+
+                    if i == batch_length or instances_count == max_instances:
+                        local_models = ((ctypes.c_float * 16) * instances_count).from_address(ctypes.addressof(models))
+                        local_ids = (ctypes.c_float * instances_count).from_address(ctypes.addressof(ids))
+
+                        models_UBO.load_data(local_models)
+                        ids_UBO.load_data(local_ids)
+
+                        models_UBO.bind(shader.uniform_blocks['BATCH_MODELS'])
+                        ids_UBO.bind(shader.uniform_blocks['BATCH_IDS'])
+
+                        glDrawElementsInstanced(GL_TRIANGLES, mesh.mesh.index_count, GL_UNSIGNED_INT, NULL, instances_count)
+        
+        '''
         last_double_sided = None
         last_neg_scale = None
         last_shader = None
@@ -168,6 +241,7 @@ class Pipeline(object):
             last_neg_scale = obj.negative_scale
             last_shader = shader
             last_mesh = obj.mesh
+        '''
 
 
     def get_parameters(self):

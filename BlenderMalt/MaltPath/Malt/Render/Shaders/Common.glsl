@@ -27,6 +27,9 @@ out vec3 BITANGENT[4];
 out vec2 UV[4];
 out vec4 COLOR[4];
 
+out mat4 MODEL;
+out float ID;
+
 #endif //VERTEX_SHADER
 
 #ifdef PIXEL_SHADER
@@ -38,10 +41,25 @@ in vec3 BITANGENT[4];
 in vec2 UV[4];
 in vec4 COLOR[4];
 
+in mat4 MODEL;
+in float ID;
+
 #endif //PIXEL_SHADER
 
-uniform mat4 MODEL;
-uniform float ID = 0;
+#ifndef MAX_BATCH_SIZE
+    // Assume at least 64kb of UBO storage (d3d11 requirement) and max element size of mat4
+    #define MAX_BATCH_SIZE 1000
+#endif
+
+layout(std140) uniform BATCH_MODELS
+{
+    uniform mat4 BATCH_MODEL[MAX_BATCH_SIZE];
+};
+uniform BATCH_IDS
+{
+    uniform float BATCH_ID[MAX_BATCH_SIZE];
+};
+
 uniform bool MIRROR_SCALE = false;
 
 layout(std140) uniform COMMON_UNIFORMS
@@ -70,6 +88,9 @@ void VERTEX_SETUP_OUTPUT()
 
 void DEFAULT_VERTEX_SHADER()
 {
+    MODEL = BATCH_MODEL[gl_InstanceID];
+    ID = BATCH_ID[gl_InstanceID];
+
     POSITION = transform_point(MODEL, in_position);
     NORMAL = transform_normal(MODEL, in_normal);
 

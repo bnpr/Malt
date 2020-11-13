@@ -195,7 +195,7 @@ LineOutput line_ex(
             {
                 result.delta_distance = max(result.delta_distance, delta_distance);
                 result.delta_angle = min(result.delta_angle, dot(normal, sampled_normal));
-                result.id_boundary = result.id_boundary || sampled_id != id;
+                result.id_boundary = result.id_boundary || round(sampled_id) != round(id);
             }
         }
     }
