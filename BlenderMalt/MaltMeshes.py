@@ -24,8 +24,6 @@ def get_mesh_name(object):
 
 def get_mesh(object):
     key = get_mesh_name(object)
-    if len(object.modifiers) == 0:
-        key = object.data.name_full
     if key not in MESHES.keys() or MESHES[key] is None:
         MESHES[key] = load_mesh(object)
         
