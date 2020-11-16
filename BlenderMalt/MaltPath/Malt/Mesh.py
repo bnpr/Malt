@@ -94,6 +94,9 @@ class Mesh(object):
     
     def __del__(self):
         try:
+            if self.VAO:
+                glDeleteVertexArrays(1, self.VAO)
+            
             def delete_buffer(buffer):
                 if buffer:
                     glDeleteBuffers(1, buffer)
@@ -105,8 +108,6 @@ class Mesh(object):
                 delete_buffer(uv)
             for color in self.colors:
                 delete_buffer(color)
-            if self.VAO:
-                glDeleteVertexArrays(1, self.VAO)
         except:
             #TODO: Make sure GL objects are deleted in the correct context
             pass
