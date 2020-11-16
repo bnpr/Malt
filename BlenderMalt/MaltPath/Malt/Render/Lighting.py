@@ -12,6 +12,8 @@ from Malt.Texture import TextureArray, CubeMapArray
 from Malt.RenderTarget import ArrayLayerTarget, RenderTarget
 from Malt.Render import Common
 
+from Malt import Pipeline
+
 
 LIGHT_SUN = 1
 LIGHT_POINT = 2
@@ -59,9 +61,12 @@ class C_LightsBuffer(ctypes.Structure):
 _LIGHTS_BUFFER = None
 
 def get_lights_buffer():
-    global _LIGHTS_BUFFER
-    if _LIGHTS_BUFFER is None: _LIGHTS_BUFFER = LightsBuffer()
-    return _LIGHTS_BUFFER
+    if Pipeline.MAIN_CONTEXT:
+        global _LIGHTS_BUFFER
+        if _LIGHTS_BUFFER is None: _LIGHTS_BUFFER = LightsBuffer()
+        return _LIGHTS_BUFFER
+    else:
+        return LightsBuffer()
 
 class ShadowMaps(object):
 

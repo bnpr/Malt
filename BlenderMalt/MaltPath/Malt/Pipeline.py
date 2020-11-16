@@ -9,6 +9,9 @@ from Malt.Parameter import *
 from Malt.UBO import UBO
 from Malt.Mesh import Mesh
 
+#Workaround for handling multiple OpenGL contexts
+MAIN_CONTEXT = True
+
 _screen_vertex_default='''
 #version 410 core
 

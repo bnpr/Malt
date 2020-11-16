@@ -11,7 +11,7 @@ import bpy
 from mathutils import Vector,Matrix,Quaternion
 
 from BlenderMalt import MaltMaterial
-from Malt.PipelineTest import PipelineTest
+from Malt import Pipeline
 from Malt.Mesh import Mesh
 from Malt import GL
 from Malt import Scene
@@ -194,6 +194,8 @@ class MaltRenderEngine(bpy.types.RenderEngine):
     # small preview for materials, world and lights.
     #TODO
     def render(self, depsgraph):
+        Pipeline.MAIN_CONTEXT = False
+        
         scene = depsgraph.scene_eval
         scale = scene.render.resolution_percentage / 100.0
 
@@ -207,6 +209,7 @@ class MaltRenderEngine(bpy.types.RenderEngine):
             render_textures = self.get_pipeline().render(resolution, scene, True, False)
             if self.get_pipeline().needs_more_samples() == False:
                 break
+
         render_textures['COLOR'].bind()
         
         result = self.begin_result(0, 0, self.size_x, self.size_y)
@@ -231,7 +234,7 @@ class MaltRenderEngine(bpy.types.RenderEngine):
 
         #Delete the pipeline while we are in the correct OpenGL context
         del self.pipeline
-
+        Pipeline.MAIN_CONTEXT = True
 
     # For viewport renders, this method gets called once at the start and
     # whenever the scene or 3D viewport changes. This method is where data
