@@ -242,10 +242,9 @@ class MaltRenderEngine(bpy.types.RenderEngine):
     # thread will be started to do the work while keeping Blender responsive.
     def view_update(self, context, depsgraph):
         self.request_new_frame = True
+        self.request_scene_update = True
         # Test which datablocks changed
         for update in depsgraph.updates:
-            if 'Object' in str(update.id.__class__):
-                self.request_scene_update = True
             if update.is_updated_geometry:
                 MaltMeshes.MESHES[update.id.name_full] = None
 
