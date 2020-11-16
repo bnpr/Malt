@@ -107,52 +107,59 @@ class Pipeline(object):
         self.draw_screen_pass(self.blend_shader, target, True)
     
     def build_scene_batches(self, objects):
-        batches = {}
+        result = {}
         for obj in objects:
-            if obj.material not in batches:
-                batches[obj.material] = {}
-            if obj.mesh not in batches[obj.material]:
-                batches[obj.material][obj.mesh] = []
-            batches[obj.material][obj.mesh].append(obj)
+            if obj.material not in result:
+                result[obj.material] = {}
+            if obj.mesh not in result[obj.material]:
+                result[obj.material][obj.mesh] = {
+                    'normal_scale':[],
+                    'mirror_scale':[],
+                }
+            if obj.mirror_scale:
+                result[obj.material][obj.mesh]['mirror_scale'].append(obj)
+            else:
+                result[obj.material][obj.mesh]['normal_scale'].append(obj)
         
         # Assume at least 64kb of UBO storage (d3d11 requirement) and max element size of mat4
         max_instances = 1000
         models = (max_instances * (ctypes.c_float * 16))()
         ids = (max_instances * ctypes.c_float)()
 
-        for material, meshes in batches.items():
-            for mesh, objs in meshes.items():
-                local_batches = []
-                meshes[mesh] = local_batches
-                
-                i = 0
-                batch_length = len(objs)
-                
-                while i < batch_length:
-                    instance_i = i % max_instances
-                    models[instance_i] = objs[i].matrix
-                    ids[instance_i] = objs[i].parameters['ID']
+        for material, meshes in result.items():
+            for mesh, scale_groups in meshes.items():
+                for scale_group, objs in scale_groups.items():
+                    batches = []
+                    scale_groups[scale_group] = batches
+                    
+                    i = 0
+                    batch_length = len(objs)
+                    
+                    while i < batch_length:
+                        instance_i = i % max_instances
+                        models[instance_i] = objs[i].matrix
+                        ids[instance_i] = objs[i].parameters['ID']
 
-                    i+=1
-                    instances_count = instance_i + 1
+                        i+=1
+                        instances_count = instance_i + 1
 
-                    if i == batch_length or instances_count == max_instances:
-                        local_models = ((ctypes.c_float * 16) * instances_count).from_address(ctypes.addressof(models))
-                        local_ids = (ctypes.c_float * instances_count).from_address(ctypes.addressof(ids))
+                        if i == batch_length or instances_count == max_instances:
+                            local_models = ((ctypes.c_float * 16) * instances_count).from_address(ctypes.addressof(models))
+                            local_ids = (ctypes.c_float * instances_count).from_address(ctypes.addressof(ids))
 
-                        models_UBO = UBO()
-                        ids_UBO = UBO()
+                            models_UBO = UBO()
+                            ids_UBO = UBO()
 
-                        models_UBO.load_data(local_models)
-                        ids_UBO.load_data(local_ids)
+                            models_UBO.load_data(local_models)
+                            ids_UBO.load_data(local_ids)
 
-                        local_batches.append({
-                            'instances_count': instances_count,
-                            'BATCH_MODELS':models_UBO,
-                            'BATCH_IDS':ids_UBO,
-                        })
-        
-        return batches
+                            batches.append({
+                                'instances_count': instances_count,
+                                'BATCH_MODELS':models_UBO,
+                                'BATCH_IDS':ids_UBO,
+                            })
+            
+        return result
     
     def draw_scene_pass(self, render_target, batches, pass_name=None, default_shader=None, uniform_blocks={}, uniforms={}, textures={}, shader_callbacks=[]):
         glDisable(GL_BLEND)
@@ -183,20 +190,27 @@ class Pipeline(object):
                 if name in shader.uniform_blocks:
                     block.bind(shader.uniform_blocks[name])
 
-            for mesh, batches in meshes.items():
+            for mesh, scale_groups in meshes.items():
 
-                if mesh.parameters['double_sided']:
-                    glDisable(GL_CULL_FACE)
-                else:
-                    glEnable(GL_CULL_FACE)
-                    glCullFace(GL_BACK)
-                
                 mesh.mesh.bind()
                 
-                for batch in batches:
-                    batch['BATCH_MODELS'].bind(shader.uniform_blocks['BATCH_MODELS'])
-                    batch['BATCH_IDS'].bind(shader.uniform_blocks['BATCH_IDS'])
-                    glDrawElementsInstanced(GL_TRIANGLES, mesh.mesh.index_count, GL_UNSIGNED_INT, NULL, batch['instances_count'])
+                for scale_group, batches in scale_groups.items():
+                    if mesh.parameters['double_sided']:
+                        glDisable(GL_CULL_FACE)
+                    else:
+                        glEnable(GL_CULL_FACE)
+                        glCullFace(GL_BACK)  
+                    if scale_group == 'normal_scale':
+                        glFrontFace(GL_CCW)
+                        shader.uniforms['MIRROR_SCALE'].bind(False)
+                    else:
+                        glFrontFace(GL_CW)
+                        shader.uniforms['MIRROR_SCALE'].bind(True)
+                
+                    for batch in batches:
+                        batch['BATCH_MODELS'].bind(shader.uniform_blocks['BATCH_MODELS'])
+                        batch['BATCH_IDS'].bind(shader.uniform_blocks['BATCH_IDS'])
+                        glDrawElementsInstanced(GL_TRIANGLES, mesh.mesh.index_count, GL_UNSIGNED_INT, NULL, batch['instances_count'])
 
 
     def get_parameters(self):

@@ -119,7 +119,7 @@ class MaltRenderEngine(bpy.types.RenderEngine):
                     return
                 
                 scale = matrix.to_scale()
-                negative_scale = scale[0]*scale[1]*scale[2] < 0.0
+                mirror_scale = scale[0]*scale[1]*scale[2] < 0.0
                 matrix = flatten_matrix(matrix)
 
                 obj_parameters = obj.malt_parameters.get_parameters()
@@ -139,10 +139,10 @@ class MaltRenderEngine(bpy.types.RenderEngine):
                                 else:
                                     materials[material_name] = None
                             material = materials[material_name]
-                        result = Scene.Object(matrix, mesh[i], material, obj_parameters, negative_scale)
+                        result = Scene.Object(matrix, mesh[i], material, obj_parameters, mirror_scale)
                         scene.objects.append(result)
                 else:
-                    result = Scene.Object(matrix, mesh[0], None, obj_parameters, negative_scale)
+                    result = Scene.Object(matrix, mesh[0], None, obj_parameters, mirror_scale)
                     scene.objects.append(result)
            
             elif obj.type == 'LIGHT':

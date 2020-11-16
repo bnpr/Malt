@@ -23,12 +23,12 @@ class Mesh(object):
 
 class Object(object):
 
-    def __init__(self, matrix, mesh, material, parameters={}, negative_scale=False):
+    def __init__(self, matrix, mesh, material, parameters={}, mirror_scale=False):
         self.matrix = matrix
         self.mesh = mesh
         self.material = material
         self.parameters = parameters
-        self.negative_scale = negative_scale
+        self.mirror_scale = mirror_scale
 
 class Light(object):
 
