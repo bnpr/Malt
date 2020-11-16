@@ -35,29 +35,39 @@ class MaltMaterial(bpy.types.PropertyGroup):
         if self.shader_source != '':
             path = find_shader_path(self.shader_source)
             if path:
-                pipeline_material = {}
-                SHADERS[self.shader_source] = pipeline_material
+                compiled_material = MaltPipeline.get_pipeline().compile_material(path)
+                if compiled_material is None:
+                    self.compiler_error = 'Invalid file'
+                elif isinstance(compiled_material, str):
+                    self.compiler_error = compiled_material
+                else:
+                    pipeline_material = {}
+                    SHADERS[self.shader_source] = pipeline_material
 
-                pipelines = [MaltPipeline.get_pipeline()]#TODO: get all active pipelines
-                for pipeline in pipelines:
-                    pipeline_name = pipeline.__class__.__name__
-                    pipeline_material[pipeline_name] = pipeline.compile_material(path)
+                    pipelines = [MaltPipeline.get_pipeline()]#TODO: get all active pipelines
+                    for pipeline in pipelines:
+                        pipeline_name = pipeline.__class__.__name__
+                        pipeline_material[pipeline_name] = compiled_material
 
-                    for pass_name, shader in pipeline_material[pipeline_name].items():
-                        for uniform_name, uniform in shader.uniforms.items():
-                            parameters[uniform_name] = Parameter.from_uniform(uniform)
-                        if shader.error:
-                            self.compiler_error += pipeline_name + " : " + pass_name + " : " + shader.error
-                        if shader.validator:
-                            self.compiler_error += pipeline_name + " : " + pass_name + " : " + shader.validator
+                        for pass_name, shader in pipeline_material[pipeline_name].items():
+                            for uniform_name, uniform in shader.uniforms.items():
+                                parameters[uniform_name] = Parameter.from_uniform(uniform)
+                            if shader.error:
+                                self.compiler_error += pipeline_name + " : " + pass_name + " : " + shader.error
+                            if shader.validator:
+                                self.compiler_error += pipeline_name + " : " + pass_name + " : " + shader.validator
             else:
                 self.compiler_error = 'Invalid file path'
 
-        self.parameters.setup(parameters)
+        if self.compiler_error != '':
+            SHADERS[self.shader_source] = None
+            self.parameters.setup({})
+        else:
+            self.parameters.setup(parameters)
     
     def get_shader(self):
         global SHADERS
-        if self.shader_source not in SHADERS.keys():
+        if self.shader_source not in SHADERS.keys() or SHADERS[self.shader_source] is None:
             return None
 
         shader = SHADERS[self.shader_source]

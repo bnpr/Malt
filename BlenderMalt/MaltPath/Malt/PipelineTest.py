@@ -70,6 +70,8 @@ class PipelineTest(Pipeline):
             return {
                 'SHADER' : self.compile_shader_from_source(source, None, None, include_paths)
             }
+        else:
+            return 'Invalid material type. Valid extensions are .mesh.glsl and .screen.glsl'
     
     def setup_render_targets(self, resolution):
         self.t_depth = Texture(resolution, GL_DEPTH_COMPONENT32F)

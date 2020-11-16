@@ -226,10 +226,13 @@ class Pipeline(object):
         return {}
     
     def compile_material(self, shader_path):
-        file_dir = path.dirname(shader_path)
-        material_type = shader_path.split('.')[-2]
-        source = '#include "{}"'.format(shader_path)
-        return self.compile_material_from_source(material_type, source, [file_dir])
+        try:
+            file_dir = path.dirname(shader_path)
+            material_type = shader_path.split('.')[-2]
+            source = '#include "{}"'.format(shader_path)
+            return self.compile_material_from_source(material_type, source, [file_dir])
+        except:
+            return None
 
     def render(self, resolution, scene, is_final_render, is_new_frame):
         if self.resolution != resolution:
