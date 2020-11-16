@@ -270,6 +270,18 @@ def internal_format_to_format(internal_format):
     
     raise Exception(name, ' Texture format not supported')
 
+def reset_GL_state():
+    glBindFramebuffer(GL_FRAMEBUFFER, 0)
+    glUseProgram(0)
+    glBindVertexArray(0)
+    glDisable(GL_BLEND)
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+    glDisable(GL_DEPTH_TEST)
+    glDepthRange(0,1)
+    glDepthFunc(GL_LESS)
+    glDisable(GL_CULL_FACE)
+    glCullFace(GL_BACK)
+    glFrontFace(GL_CCW)
 
 def shader_preprocessor(shader_source, include_directories=[], definitions=[], pass_name = None):
     import pcpp

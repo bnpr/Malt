@@ -309,7 +309,8 @@ class MaltRenderEngine(bpy.types.RenderEngine):
                 PROFILE = False
                 with open(REPORT_PATH, 'w') as file:
                     file.write(self.profiling_data.getvalue())
-
+        
+        GL.reset_GL_state()
 
 #Boilerplate code to draw an OpenGL texture to the viewport using Blender color management
 class DisplayDraw(object):
