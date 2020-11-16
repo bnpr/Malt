@@ -264,11 +264,10 @@ class MaltRenderEngine(bpy.types.RenderEngine):
         # Get viewport resolution
         resolution = context.region.width, context.region.height
         
-        def bind_display_shader():
-            self.bind_display_space_shader(depsgraph.scene_eval)
-        
         if self.display_draw is None or self.display_draw.resolution != resolution:
-            self.display_draw = DisplayDraw(bind_display_shader, resolution)
+            self.bind_display_space_shader(depsgraph.scene_eval)
+            self.display_draw = DisplayDraw(resolution)
+            self.unbind_display_space_shader()
         
         #Save FBO for later use
         fbo = GL.gl_buffer(GL.GL_INT, 1)
@@ -290,7 +289,9 @@ class MaltRenderEngine(bpy.types.RenderEngine):
             self.request_new_frame = True
 
         #Render to viewport
-        self.display_draw.draw(bind_display_shader, fbo, render_texture)
+        self.bind_display_space_shader(depsgraph.scene_eval)
+        self.display_draw.draw(fbo, render_texture)
+        self.unbind_display_space_shader()
 
         if self.get_pipeline().needs_more_samples():
             self.tag_redraw()
@@ -312,12 +313,11 @@ class MaltRenderEngine(bpy.types.RenderEngine):
 
 #Boilerplate code to draw an OpenGL texture to the viewport using Blender color management
 class DisplayDraw(object):
-    def __init__(self, bind_display_shader, resolution):
+    def __init__(self, resolution):
         # Generate dummy float image buffer
         self.resolution = resolution
         width, height = resolution
 
-        bind_display_shader()
         shader_program = GL.gl_buffer(GL.GL_INT, 1)
         GL.glGetIntegerv(GL.GL_CURRENT_PROGRAM, shader_program)
 
@@ -359,10 +359,9 @@ class DisplayDraw(object):
             #TODO: Make sure GL objects are deleted in the correct context
             pass
 
-    def draw(self, bind_display_shader, fbo, texture):
+    def draw(self, fbo, texture):
         GL.glDisable(GL.GL_DEPTH_TEST)
         GL.glDisable(GL.GL_CULL_FACE)
-        bind_display_shader()
         GL.glBindFramebuffer(GL.GL_FRAMEBUFFER, fbo[0])
         GL.glActiveTexture(GL.GL_TEXTURE0)
         texture.bind()
