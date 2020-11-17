@@ -29,7 +29,11 @@ vec3 hsv_to_rgb(vec3 hsv)
 
 vec4 alpha_blend(vec4 base, vec4 blend)
 {
-    return blend * blend.a + base * (1.0 - blend.a);
+    float alpha = blend.a + base.a * (1.0 - blend.a);
+    vec4 result = (blend * blend.a + base * base.a * (1.0 - blend.a)) / alpha;
+    result.a = alpha;
+
+    return result;
 }
 
 #endif // COMMON_COLOR_GLSL
