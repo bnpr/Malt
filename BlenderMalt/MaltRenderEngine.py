@@ -264,11 +264,6 @@ class MaltRenderEngine(bpy.types.RenderEngine):
         # Get viewport resolution
         resolution = context.region.width, context.region.height
         
-        if self.display_draw is None or self.display_draw.resolution != resolution:
-            self.bind_display_space_shader(depsgraph.scene_eval)
-            self.display_draw = DisplayDraw(resolution)
-            self.unbind_display_space_shader()
-        
         #Save FBO for later use
         fbo = GL.gl_buffer(GL.GL_INT, 1)
         GL.glGetIntegerv(GL.GL_FRAMEBUFFER_BINDING, fbo)
@@ -290,11 +285,15 @@ class MaltRenderEngine(bpy.types.RenderEngine):
 
         #Render to viewport
         self.bind_display_space_shader(depsgraph.scene_eval)
+        if self.display_draw is None or self.display_draw.resolution != resolution:
+            self.display_draw = DisplayDraw(resolution)
         self.display_draw.draw(fbo, render_texture)
         self.unbind_display_space_shader()
 
         if self.get_pipeline().needs_more_samples():
             self.tag_redraw()
+        
+        reset_GL_state()
         
         GL.glDeleteVertexArrays(1, VAO)
 
@@ -309,8 +308,18 @@ class MaltRenderEngine(bpy.types.RenderEngine):
                 PROFILE = False
                 with open(REPORT_PATH, 'w') as file:
                     file.write(self.profiling_data.getvalue())
-        
-        GL.reset_GL_state()
+
+def reset_GL_state():
+    GL.glUseProgram(0)
+    GL.glBindVertexArray(0)
+    GL.glDisable(GL.GL_BLEND)
+    GL.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA)
+    GL.glEnable(GL.GL_DEPTH_TEST)
+    GL.glDepthRange(0,1)
+    GL.glDepthFunc(GL.GL_LESS)
+    GL.glDisable(GL.GL_CULL_FACE)
+    GL.glCullFace(GL.GL_BACK)
+    GL.glFrontFace(GL.GL_CCW)
 
 #Boilerplate code to draw an OpenGL texture to the viewport using Blender color management
 class DisplayDraw(object):
