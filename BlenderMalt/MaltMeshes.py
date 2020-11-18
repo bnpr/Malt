@@ -185,6 +185,9 @@ def retrieve_array(bpy_array, property_name, array_format, ctype_format, default
     result = (ctype_format*len(result)).from_buffer(result)
     return result
 
+def unload_mesh(object):
+    MESHES[get_mesh_name(object)] = None
+
 @bpy.app.handlers.persistent
 def reset_meshes(dummy):
     global MESHES
@@ -194,7 +197,8 @@ def reset_meshes(dummy):
 def depsgraph_update(scene, depsgraph):
     for update in depsgraph.updates:
         if update.is_updated_geometry:
-            MESHES[update.id.name_full] = None
+            if 'Object' in str(update.id.__class__):
+                unload_mesh(update.id)
 
 def register():
     bpy.app.handlers.depsgraph_update_post.append(depsgraph_update)
