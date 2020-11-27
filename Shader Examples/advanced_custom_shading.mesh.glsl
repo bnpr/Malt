@@ -1,5 +1,6 @@
 //Copyright (c) 2020 BlenderNPR and contributors. MIT license.
 
+#include "Pipelines/NPR_Pipeline.glsl"
 #include "Shading/ShadingModels.glsl"
 
 uniform vec3 ao_color = vec3(0.0);
@@ -9,8 +10,6 @@ uniform vec3 ambient_color = vec3(0.15);
 uniform vec3 color = vec3(0.5);
 uniform float roughness = 0.5;
 uniform float metalness = 0.0;
-
-#if defined(PIXEL_SHADER) && defined(MAIN_PASS)
 
 vec3 BRDF(LitSurface S)
 {
@@ -67,21 +66,18 @@ vec3 BRDF(LitSurface S)
     return mix(shadow_color, diffuse_color + specular_color, NoL);
 }
 
-#endif
-
-@MAIN_PASS_PIXEL_SHADER
+void COMMON_PIXEL_SHADER(Surface S, inout PixelOutput PO)
 {
     vec3 result = vec3(0,0,0);
 
     for (int i = 0; i < LIGHTS.lights_count; i++)
     {
         Light light = LIGHTS.lights[i];
-        LitSurface surface = lit_surface(POSITION, normalize(NORMAL), light);
+        LitSurface LS = lit_surface(S.position, S.normal, light);
 
-        result += light.color * BRDF(surface);
+        result += BRDF(surface) * LS.light_color * LS.shadow_multiply;
     }
 
-    OUT_COLOR.rgb = result;
-    OUT_COLOR.a = 1.0;
+    PO.color.rgb = result;
 }
 

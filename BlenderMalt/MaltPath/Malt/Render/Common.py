@@ -21,9 +21,9 @@ class CommonBuffer(object):
         self.data = C_CommonBuffer()
         self.UBO = UBO()
     
-    def load(self, scene, resolution, sample_offset, sample_count):
-        self.data.CAMERA = tuple(scene.camera.camera_matrix)
-        self.data.PROJECTION = tuple(scene.camera.projection_matrix)
+    def load(self, scene, resolution, sample_offset, sample_count, camera=None, projection = None):
+        self.data.CAMERA = tuple(camera if camera else scene.camera.camera_matrix)
+        self.data.PROJECTION = tuple(projection if projection else scene.camera.projection_matrix)
         self.data.RESOLUTION = resolution
         self.data.SAMPLE_OFFSET = sample_offset
         self.data.SAMPLE_COUNT = sample_count

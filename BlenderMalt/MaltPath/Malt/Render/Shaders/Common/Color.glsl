@@ -29,11 +29,30 @@ vec3 hsv_to_rgb(vec3 hsv)
 
 vec4 alpha_blend(vec4 base, vec4 blend)
 {
+    if(blend.a <= 0)
+    {
+        return base;
+    }
+    else if(blend.a >= 1)
+    {
+        return blend;
+    }
+    
     float alpha = blend.a + base.a * (1.0 - blend.a);
     vec4 result = (blend * blend.a + base * base.a * (1.0 - blend.a)) / alpha;
     result.a = alpha;
 
     return result;
+}
+
+vec3 rgb_gradient(sampler1D gradient, vec3 uvw)
+{
+    return vec3
+    (
+        texture(gradient, uvw.r).r,
+        texture(gradient, uvw.g).g,
+        texture(gradient, uvw.b).b
+    );
 }
 
 #endif // COMMON_COLOR_GLSL

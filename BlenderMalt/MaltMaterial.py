@@ -78,8 +78,8 @@ class MaltMaterial(bpy.types.PropertyGroup):
 
             for pass_name, pass_shader in pipeline.items():
                 if pass_shader.error:
-                    new_shader[pipeline_name][pass_name] = None
-                    continue
+                    new_shader[pipeline_name] = None
+                    break
 
                 pass_shader_copy = pass_shader.copy()
                 new_shader[pipeline_name][pass_name] = pass_shader_copy

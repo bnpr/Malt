@@ -1,5 +1,9 @@
 //Copyright (c) 2020 BlenderNPR and contributors. MIT license.
 
+#define CUSTOM_VERTEX_SHADER
+
+#include "Pipelines/NPR_Pipeline.glsl"
+
 uniform vec3 ambient_color = vec3(0.1,0.1,0.1);
 uniform vec3 diffuse_color = vec3(1.0,0.1,0.1);
 uniform vec3 specular_color = vec3(1.0,1.0,1.0);
@@ -7,19 +11,17 @@ uniform float roughness = 0.5;
 
 uniform float inflate = 0.2;
 
-@COMMON_VERTEX_SHADER
+void COMMON_VERTEX_SHADER(inout Surface S)
 {
-    DEFAULT_VERTEX_SHADER();
-    POSITION += NORMAL * inflate;
-    VERTEX_SETUP_OUTPUT();
+    S.position += S.normal * inflate;
 }
 
-@MAIN_PASS_PIXEL_SHADER
+void COMMON_PIXEL_SHADER(Surface S, inout PixelOutput PO)
 {
     vec3 diffuse = diffuse_color * get_diffuse_half();
     vec3 specular = specular_color * get_specular(roughness);
     vec3 color = ambient_color + diffuse + specular;
 
-    OUT_COLOR = vec4(color, 1.0);
+    PO.color = vec4(color, 1.0);
 }
 

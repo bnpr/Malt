@@ -42,13 +42,20 @@ layout (location = 0) out vec4 OUT_COLOR;
 void main()
 {
     vec4 color = texture(blend_texture, UV);
-    OUT_COLOR = vec4(color.xyz, opacity);
-    //TODO: This should be :
-    //OUT_COLOR = vec4(color.xyz, color.a * opacity);
+    color.a *= opacity;
+    OUT_COLOR = color;
 }
 '''
 
 _BLEND_SHADER = None
+
+_COPY_SHADER_SRC='''
+#version 410 core
+#extension GL_ARB_shading_language_include : enable
+
+#include "Passes/CopyTextures.glsl"
+'''
+_COPY_SHADER = None
 
 class Pipeline(object):
 
@@ -80,9 +87,14 @@ class Pipeline(object):
         ]
         
         self.quad = Mesh(positions, indices)
+        
         global _BLEND_SHADER
         if _BLEND_SHADER is None: _BLEND_SHADER = Shader(_screen_vertex_default, _screen_pixel_blend)
         self.blend_shader = _BLEND_SHADER
+
+        global _COPY_SHADER
+        if _COPY_SHADER is None: _COPY_SHADER = self.compile_shader_from_source(_COPY_SHADER_SRC)
+        self.copy_shader = _COPY_SHADER
         
         self.default_shader = None
     
@@ -90,7 +102,9 @@ class Pipeline(object):
         pass
 
     def draw_screen_pass(self, shader, target, blend = False):
-        glDisable(GL_DEPTH_TEST)
+        #Allow screen passes draw to gl_FragDepth
+        glEnable(GL_DEPTH_TEST)
+        glDepthFunc(GL_ALWAYS)
         glDisable(GL_CULL_FACE)
         if blend:
             glEnable(GL_BLEND)
@@ -105,6 +119,12 @@ class Pipeline(object):
         self.blend_shader.uniforms['opacity'].set_value(opacity)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
         self.draw_screen_pass(self.blend_shader, target, True)
+    
+    def copy_textures(self, target, color_sources=[], depth_source=None):
+        for i, texture in enumerate(color_sources):
+            self.copy_shader.textures['IN_'+str(i)] = texture
+        self.copy_shader.textures['IN_DEPTH'] = depth_source
+        self.draw_screen_pass(self.copy_shader, target)
     
     def build_scene_batches(self, objects):
         result = {}
@@ -165,6 +185,8 @@ class Pipeline(object):
         glDisable(GL_BLEND)
         glEnable(GL_DEPTH_TEST)
         glDepthFunc(GL_LEQUAL)
+        glDepthMask(GL_TRUE)
+        glDepthRange(0,1)
 
         render_target.bind()
 
@@ -222,19 +244,18 @@ class Pipeline(object):
     def needs_more_samples(self):
         return self.sample_count < len(self.get_samples())
     
-    def compile_shader_from_source(self, shader_source, vertex_pass=None, pixel_pass=None, include_paths=[], defines=[]):
+    def compile_shader_from_source(self, shader_source, include_paths=[], defines=[]):
         include_paths.extend(Pipeline.SHADER_INCLUDE_PATHS)
         
-        #TODO: auto-define the pass name
-        vertex = shader_preprocessor(shader_source, include_paths, ['VERTEX_SHADER'] + defines, vertex_pass)
-        pixel = shader_preprocessor(shader_source, include_paths, ['PIXEL_SHADER'] + defines, pixel_pass)
+        vertex = shader_preprocessor(shader_source, include_paths, ['VERTEX_SHADER'] + defines)
+        pixel = shader_preprocessor(shader_source, include_paths, ['PIXEL_SHADER'] + defines)
 
         return Shader(vertex, pixel)
     
     def compile_shader(self, shader_path):
         file_dir = path.dirname(shader_path)
         source = open(shader_path).read()
-        return self.compile_shader_from_source(source, include_paths=[file_dir])
+        return self.compile_shader_from_source(source, [file_dir])
     
     def compile_material_from_source(self, material_type, source, include_paths=[]):
         return {}

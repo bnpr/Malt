@@ -12,7 +12,9 @@ class ArrayLayerTarget(TargetBase):
         self.texture_array = texture_array.texture[0]
         self.layer = layer
         self.resolution = texture_array.resolution
+        self.internal_format = texture_array.internal_format
         self.format = texture_array.format
+        self.data_format = texture_array.data_format
     
     def attach(self, attachment):
         glFramebufferTextureLayer(GL_FRAMEBUFFER, attachment, self.texture_array, 0, self.layer)

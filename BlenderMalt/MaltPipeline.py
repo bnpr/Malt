@@ -3,7 +3,6 @@
 import bpy
 
 from Malt.Pipeline import Pipeline
-from Malt.PipelineTest import PipelineTest
 
 def get_subclasses(cls):
     subclasses = []

@@ -26,17 +26,20 @@ vec3 transform_normal(mat4 matrix, vec3 normal)
     return normalize(transform_direction(matrix, normal));
 }
 
-#ifdef PIXEL_SHADER
-
+//TODO: pass TBN as parameter
 vec3 sample_normal_map_ex(sampler2D normal_texture, int uv_index, vec2 uv)
 {
     vec3 tangent = texture(normal_texture, uv).xyz;
     tangent = tangent * 2.0 - 1.0;
     mat3 TBN = mat3(TANGENT[uv_index], BITANGENT[uv_index], NORMAL);
-    if(!gl_FrontFacing)
+    #ifdef PIXEL_SHADER
     {
-        TBN = mat3(TANGENT[uv_index], BITANGENT[uv_index], -NORMAL);
+        if(!gl_FrontFacing)
+        {
+            TBN = mat3(TANGENT[uv_index], BITANGENT[uv_index], -NORMAL);
+        }
     }
+    #endif //PIXEL_SHADER
     return normalize(TBN * tangent);
 }
 
@@ -44,8 +47,6 @@ vec3 sample_normal_map(sampler2D normal_texture, int uv_index)
 {
     return sample_normal_map_ex(normal_texture, uv_index, UV[uv_index]);
 }
-
-#endif //PIXEL_SHADER
 
 vec3 camera_position()
 {
@@ -74,14 +75,18 @@ vec3 view_direction()
     }
 }
 
-#ifdef PIXEL_SHADER
-
 vec2 screen_uv()
 {
-    return vec2(gl_FragCoord) / vec2(RESOLUTION);
+    #ifdef PIXEL_SHADER
+    {
+        return vec2(gl_FragCoord) / vec2(RESOLUTION);
+    }
+    #else
+    {
+        return project_point(PROJECTION * CAMERA, POSITION).xy * 0.5 + 0.5;
+    }
+    #endif //PIXEL_SHADER
 }
-
-#endif //PIXEL_SHADER
 
 vec3 screen_to_camera(vec2 uv, float depth)
 {
@@ -92,12 +97,21 @@ vec3 screen_to_camera(vec2 uv, float depth)
     return camera_position.xyz;
 }
 
+float pixel_depth()
+{
+    #ifdef PIXEL_SHADER
+    {
+        return gl_FragCoord.z;
+    }
+    #endif
+
+    return 0.0;
+}
+
 float depth_to_z(float depth)
 {
     return screen_to_camera(vec2(0,0), depth).z;
 }
-
-#ifdef PIXEL_SHADER
 
 float pixel_world_size_at(float depth)
 {
@@ -108,14 +122,20 @@ float pixel_world_size_at(float depth)
 
 float pixel_world_size()
 {
-    return pixel_world_size_at(gl_FragCoord.z);
+    #ifdef PIXEL_SHADER
+    {
+        return pixel_world_size_at(gl_FragCoord.z);
+    }
+    #else
+    {
+        return pixel_world_size_at(project_point(PROJECTION * CAMERA, POSITION).z * 0.5 + 0.5);
+    }
+    #endif
 }
-
-#endif //PIXEL_SHADER
 
 vec3 radial_tangent(vec3 normal, vec3 axis)
 {
-    return normalize(cross(normal, axis));
+    return normalize(cross(axis, normal));
 }
 
 vec2 matcap_uv(vec3 normal)

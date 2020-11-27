@@ -201,14 +201,14 @@ void main()
                 if(override)
                 {
                     line_color = offset_line_color;
-                    line_color.a = alpha;
+                    line_color.a *= alpha;
                     line_depth = offset_line_depth;
                 }
             }
         }
     }
-
-    OUT_RESULT = mix(color, line_color, line_color.a);
+    
+    OUT_RESULT = alpha_blend(color, line_color);
 }
 
 #endif //LINE_MODE

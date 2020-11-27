@@ -1,6 +1,9 @@
 //Copyright (c) 2020 BlenderNPR and contributors. MIT license.
 
-@MAIN_PASS_PIXEL_SHADER
+#include "Pipelines/NPR_Pipeline.glsl"
+
+
+void COMMON_PIXEL_SHADER(Surface S, inout PixelOutput PO)
 {
     vec3 result = vec3(0,0,0);
 
@@ -13,7 +16,7 @@
             result += light.color * (1.0 - (1.0 / SUN_CASCADES) * surface.cascade) * (surface.shadow ? 0 : 1);
         }
     }
-
-    OUT_COLOR = vec4(result, 1.0);
+    
+    PO.color = vec4(result, 1.0);
 }
 

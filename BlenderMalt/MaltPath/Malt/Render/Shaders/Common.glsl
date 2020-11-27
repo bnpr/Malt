@@ -73,9 +73,10 @@ layout(std140) uniform COMMON_UNIFORMS
     uniform float TIME;
 };
 
+#include "Common/Color.glsl"
+//#include "Lighting/Lighting.glsl"
 #include "Common/Math.glsl"
 #include "Common/Transform.glsl"
-#include "Common/Lighting.glsl"
 
 #ifdef VERTEX_SHADER
 
@@ -94,15 +95,27 @@ void DEFAULT_VERTEX_SHADER()
     POSITION = transform_point(MODEL, in_position);
     NORMAL = transform_normal(MODEL, in_normal);
 
-    TANGENT[0]= transform_normal(MODEL, in_tangent0.xyz);
-    TANGENT[1]= transform_normal(MODEL, in_tangent1.xyz);
-    TANGENT[2]= transform_normal(MODEL, in_tangent2.xyz);
-    TANGENT[3]= transform_normal(MODEL, in_tangent3.xyz);
+    if(in_tangent0.xyz == vec3(0)) //No precomputed tangents
+    {
+        vec3 axis = vec3(0,0,1);
+        axis = abs(dot(axis, in_normal)) < 0.99 ? axis : vec3(1,0,0);
+        vec3 tangent = normalize(cross(axis, in_normal));
+        tangent = transform_normal(MODEL, tangent);
+        
+        for(int i = 0; i < 4; i++) TANGENT[i] = tangent;
+    }
+    else
+    {
+        TANGENT[0]= transform_normal(MODEL, in_tangent0.xyz);
+        TANGENT[1]= transform_normal(MODEL, in_tangent1.xyz);
+        TANGENT[2]= transform_normal(MODEL, in_tangent2.xyz);
+        TANGENT[3]= transform_normal(MODEL, in_tangent3.xyz);
+    }
 
-    BITANGENT[0]= cross(NORMAL, TANGENT[0]) * in_tangent0.w;
-    BITANGENT[1]= cross(NORMAL, TANGENT[1]) * in_tangent1.w;
-    BITANGENT[2]= cross(NORMAL, TANGENT[2]) * in_tangent2.w;
-    BITANGENT[3]= cross(NORMAL, TANGENT[3]) * in_tangent3.w;
+    BITANGENT[0]= normalize(cross(NORMAL, TANGENT[0]) * in_tangent0.w);
+    BITANGENT[1]= normalize(cross(NORMAL, TANGENT[1]) * in_tangent1.w);
+    BITANGENT[2]= normalize(cross(NORMAL, TANGENT[2]) * in_tangent2.w);
+    BITANGENT[3]= normalize(cross(NORMAL, TANGENT[3]) * in_tangent3.w);
 
     if(MIRROR_SCALE)
     {
