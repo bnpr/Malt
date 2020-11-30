@@ -10,6 +10,9 @@ malt_dependencies_path = os.path.join(blender_malt_folder, 'MaltDependencies')
 dependencies = ['PyOpenGL', 'PyOpenGL_accelerate', 'pcpp', 'Pyrr']
 subprocess.check_call([sys.executable, '-m', 'pip', 'install', *dependencies, '--target', malt_dependencies_path])
 
+from distutils.dir_util import copy_tree
+copy_tree(os.path.join('..','..','PatchDependencies'), malt_dependencies_path) 
+
 #Remove numpy since Blender already ships with it
 for e in os.listdir(malt_dependencies_path):
     if e.startswith('numpy'):
