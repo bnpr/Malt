@@ -22,7 +22,7 @@ class MaltLight(bpy.types.PropertyGroup):
     )
     radius : bpy.props.FloatProperty(
         name='Radius',
-        default=1,
+        default=5,
         update=sync_data,
     )
     spot_angle : bpy.props.FloatProperty(

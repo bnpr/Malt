@@ -88,6 +88,19 @@ vec2 screen_uv()
     #endif //PIXEL_SHADER
 }
 
+ivec2 screen_pixel()
+{
+    #ifdef PIXEL_SHADER
+    {
+        return ivec2(floor(gl_FragCoord.xy));
+    }
+    #else
+    {
+        return ivec2(floor(screen_uv() * RESOLUTION));
+    }
+    #endif
+}
+
 vec3 screen_to_camera(vec2 uv, float depth)
 {
     vec3 clip_position = vec3(uv, depth) * 2.0 - 1.0;

@@ -61,6 +61,8 @@ class NPR_Pipeline(Pipeline):
         self.parameters.scene['ShadowMaps Sun Resolution'] = Parameter(2048, Type.INT)
         self.parameters.scene['ShadowMaps Point Resolution'] = Parameter(2048, Type.INT)
         self.parameters.scene['Transparency Layers'] = Parameter(4, Type.INT)
+        
+        self.parameters.light['Shader'] = Parameter('', Type.MATERIAL)
 
         global _DEFAULT_SHADER
         if _DEFAULT_SHADER is None: _DEFAULT_SHADER = self.compile_material_from_source('mesh', _DEFAULT_SHADER_SRC)
@@ -73,31 +75,36 @@ class NPR_Pipeline(Pipeline):
         self.common_buffer = Common.CommonBuffer()
         self.lights_buffer = Lighting.get_lights_buffer()
         self.shadowmaps_opaque, self.shadowmaps_transparent = NPR_Lighting.get_shadow_maps()
+        self.custom_light_shading = NPR_Lighting.NPR_LightShaders()
 
         self.line_rendering = Line.LineRendering()
 
         self.composite_depth = DepthToCompositeDepth.CompositeDepth()
 
     def compile_material_from_source(self, material_type, source, include_paths=[]):
+        source = _NPR_Pipeline_Common + source
         if material_type == 'mesh':
-            source = _NPR_Pipeline_Common + source
             return {
                 'PRE_PASS' : self.compile_shader_from_source(
-                    source, include_paths, ['PRE_PASS']
+                    source, include_paths, ['IS_MESH_SHADER','PRE_PASS']
                 ),
                 'MAIN_PASS' : self.compile_shader_from_source(
-                    source, include_paths, ['MAIN_PASS']
+                    source, include_paths, ['IS_MESH_SHADER','MAIN_PASS']
                 ),
                 'SHADOW_PASS' : self.compile_shader_from_source(
-                    source, include_paths, ['SHADOW_PASS']
+                    source, include_paths, ['IS_MESH_SHADER','SHADOW_PASS']
                 )
             }
         elif material_type == 'screen':
             return {
-                'SHADER' : self.compile_shader_from_source(source, include_paths)
+                'SHADER' : self.compile_shader_from_source(source, include_paths, ['IS_SCREEN_SHADER'])
+            }
+        elif material_type == 'light':
+            return {
+                'SHADER' : self.compile_shader_from_source(source, include_paths, ['IS_LIGHT_SHADER'])
             }
         else:
-            return 'Invalid material type. Valid extensions are .mesh.glsl and .screen.glsl'
+            return 'Invalid material type. Valid extensions are .mesh.glsl, .light.glsl and .screen.glsl'
     
     def setup_render_targets(self, resolution):
         self.t_depth = Texture(resolution, GL_DEPTH_COMPONENT32F)
@@ -245,6 +252,12 @@ class NPR_Pipeline(Pipeline):
         }
         self.fbo_prepass.clear([(0,0,1,1), (0,0,0,0)], 1, 0)
         self.draw_scene_pass(self.fbo_prepass, batches, 'PRE_PASS', self.default_shader['PRE_PASS'], UBOS, {}, textures, callbacks)
+
+        #CUSTOM LIGHT SHADING
+        self.custom_light_shading.load(self, self.t_depth, scene)
+        callbacks.append(
+            lambda shader : self.custom_light_shading.shader_callback(shader)
+        )
 
         #MAIN-PASS
         textures = {

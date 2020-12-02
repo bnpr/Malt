@@ -172,8 +172,8 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                     shader = material.malt.get_shader()
                     if shader:
                         parameters[key] = shader[MaltPipeline.get_pipeline().__class__.__name__]
-                else:
-                    parameters[key] = None
+                        continue
+                parameters[key] = None
         return parameters
 
     
@@ -208,10 +208,53 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                 layout.template_color_ramp(get_color_ramp(self.id_data, key), 'color_ramp')
             elif rna[key]['type'] == Type.MATERIAL:
                 layout.label(text=key + " :")
-                layout.template_ID(self.materials[key], "material", new="material.new")
+                row = layout.row(align=True)
+                row.template_ID(self.materials[key], "material")
+                material_path = to_json_rna_path(self.materials[key])
                 if self.materials[key].material:
+                    row.operator('material.malt_add_material', text='', icon='DUPLICATE').material_path = material_path
                     self.materials[key].material.malt.draw_ui(layout)
+                else:
+                    row.operator('material.malt_add_material', text='New', icon='ADD').material_path = material_path
 
+import json
+
+def to_json_rna_path(prop):
+    blend_id = prop.id_data
+    id_type = str(blend_id.__class__).split('.')[-1]
+    id_name = blend_id.name_full
+    path = prop.path_from_id()
+    return json.dumps((id_type, id_name, path))
+
+def from_json_rna_path(prop):
+    id_type, id_name, path = json.loads(prop)
+    data_map = {
+        'Object' : bpy.data.objects,
+        'Mesh' : bpy.data.meshes,
+        'Light' : bpy.data.lights,
+        'Camera' : bpy.data.cameras,
+        'Material' : bpy.data.materials,
+    }
+    for class_name, data in data_map.items():
+        if class_name in id_type:
+            return data[id_name].path_resolve(path)
+    return None
+
+class OT_MaltNewMaterial(bpy.types.Operator):
+    bl_idname = "material.malt_add_material"
+    bl_label = "Malt Add Material"
+    bl_options = {'INTERNAL'}
+
+    material_path : bpy.props.StringProperty()
+
+    def execute(self, context):
+        material_wrapper = from_json_rna_path(self.material_path)
+        if material_wrapper.material:
+            material_wrapper.material = material_wrapper.material.copy()
+        else:
+            material_wrapper.material = bpy.data.materials.new('Material')
+        material_wrapper.id_data.update_tag()
+        return {'FINISHED'}
 
 class MALT_PT_Base(bpy.types.Panel):
     bl_space_type = 'PROPERTIES'
@@ -305,6 +348,7 @@ classes = (
     MaltMaterialPropertyWrapper,
     MaltBoolPropertyWrapper,
     MaltPropertyGroup,
+    OT_MaltNewMaterial,
     MALT_PT_Base,
     MALT_PT_Scene,
     MALT_PT_World,

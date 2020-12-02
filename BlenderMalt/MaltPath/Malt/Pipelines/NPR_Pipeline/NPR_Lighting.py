@@ -1,3 +1,4 @@
+from Malt.Render import Lighting
 from Malt.Render.Lighting import LightsBuffer, ShadowMaps
 
 from Malt.GL import *
@@ -17,6 +18,59 @@ def get_shadow_maps():
         return _SHADOWMAPS
     else:
         return (NPR_ShadowMaps(), NPR_TransparentShadowMaps())
+
+
+class C_NPR_LightShadersBuffer(ctypes.Structure):
+    _fields_ = [
+        ('custom_shading_index', ctypes.c_int*Lighting.MAX_LIGHTS),
+    ]
+
+class NPR_LightShaders(object):
+
+    def __init__(self):
+        self.data = C_NPR_LightShadersBuffer()
+        self.custom_shading_count = 0
+        self.UBO = UBO()
+
+        self.texture = None
+        self.fbos = None
+    
+    def load(self, pipeline, depth_texture, scene):
+        self.custom_shading_count = 0
+        for i, light in enumerate(scene.lights):
+            custom_shading_index = -1
+            if light.parameters['Shader'] is not None:
+                custom_shading_index = self.custom_shading_count
+                self.custom_shading_count += 1
+            self.data.custom_shading_index[i] = custom_shading_index
+
+        self.UBO.load_data(self.data)
+
+        if self.custom_shading_count == 0:
+            return
+
+        lights = [l for l in scene.lights if l.parameters['Shader'] is not None]
+        tex = self.texture
+        if tex is None or tex.resolution != depth_texture.resolution or tex.length < len(lights):
+            self.texture = TextureArray(depth_texture.resolution, len(lights), GL_RGB32F)
+            self.fbos = []
+            for i in range(len(lights)):
+                self.fbos.append(RenderTarget([ArrayLayerTarget(self.texture, i)]))
+        
+        for i, light in enumerate(lights):
+            shader = light.parameters['Shader']['SHADER']
+            pipeline.common_buffer.bind(shader.uniform_blocks['COMMON_UNIFORMS'])
+            pipeline.lights_buffer.bind(shader.uniform_blocks['SCENE_LIGHTS'])
+            shader.textures['IN_DEPTH'] = depth_texture
+            if 'LIGHT_INDEX' in shader.uniforms:
+                shader.uniforms['LIGHT_INDEX'].set_value(i)
+            pipeline.draw_screen_pass(shader, self.fbos[i])
+    
+    def shader_callback(self, shader):
+        if 'LIGHTS_CUSTOM_SHADING' in shader.uniform_blocks:
+            self.UBO.bind(shader.uniform_blocks['LIGHTS_CUSTOM_SHADING'])
+        shader.textures['IN_LIGHT_CUSTOM_SHADING'] = self.texture
+        
 
 class NPR_ShadowMaps(ShadowMaps):
 

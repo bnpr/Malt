@@ -99,7 +99,7 @@ vec3 lit_toon(LitSurface LS, float size, float gradient_size, float specularity,
     for (int i = 0; i < LIGHTS.lights_count; i++)\
     {\
         Light L = LIGHTS.lights[i];\
-        LitSurface LS = NPR_lit_surface(position, normal, ID, L);\
+        LitSurface LS = NPR_lit_surface(position, normal, ID, L, i);\
         result += (callback);\
     }\
     return result;\

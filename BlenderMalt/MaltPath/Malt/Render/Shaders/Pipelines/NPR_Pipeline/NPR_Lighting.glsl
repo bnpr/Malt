@@ -21,10 +21,24 @@ uniform sampler2DArray TRANSPARENT_SHADOWMAPS_COLOR_SPOT;
 uniform sampler2DArray TRANSPARENT_SHADOWMAPS_COLOR_SUN;
 uniform samplerCubeArray TRANSPARENT_SHADOWMAPS_COLOR_POINT;
 
+uniform LIGHTS_CUSTOM_SHADING
+{
+    int CUSTOM_SHADING_INDEX[MAX_LIGHTS];
+};
 
-LitSurface NPR_lit_surface(vec3 position, vec3 normal, float id, Light light)
+uniform sampler2DArray IN_LIGHT_CUSTOM_SHADING;
+
+LitSurface NPR_lit_surface(vec3 position, vec3 normal, float id, Light light, int light_index)
 {
     LitSurface S = lit_surface(position, normal, light, false);
+
+    S.light_color = light.color * S.P;
+
+    int custom_shading_index = CUSTOM_SHADING_INDEX[light_index];
+    if(custom_shading_index >= 0)
+    {
+        S.light_color = texelFetch(IN_LIGHT_CUSTOM_SHADING, ivec3(screen_pixel(), custom_shading_index), 0).rgb;
+    }
 
     if(light.type_index >= 0)
     {
@@ -102,8 +116,6 @@ LitSurface NPR_lit_surface(vec3 position, vec3 normal, float id, Light light)
                 S.shadow_multiply = t_shadow_multiply;
             }
         }
-
-        S.light_color = light.color * S.P;
     }
 
     return S;

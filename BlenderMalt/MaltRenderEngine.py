@@ -158,8 +158,8 @@ class MaltRenderEngine(bpy.types.RenderEngine):
                 light.radius = malt_light.radius
                 light.spot_angle = malt_light.spot_angle
                 light.spot_blend = malt_light.spot_blend_angle
-                light.parameters = obj.malt_parameters.get_parameters()
-                
+                light.parameters = obj.data.malt_parameters.get_parameters()
+
                 types = {
                     'SUN' : 1,
                     'POINT' : 2,

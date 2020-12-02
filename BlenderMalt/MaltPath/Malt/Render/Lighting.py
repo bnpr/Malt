@@ -14,39 +14,6 @@ from Malt.Render import Common
 
 from Malt import Pipeline
 
-
-LIGHT_SUN = 1
-LIGHT_POINT = 2
-LIGHT_SPOT = 3
-
-class C_Light(ctypes.Structure):
-    _fields_ = [
-        ('color', ctypes.c_float*3),
-        ('type', ctypes.c_int32),
-        ('position', ctypes.c_float*3),
-        ('radius', ctypes.c_float),
-        ('direction', ctypes.c_float*3),
-        ('spot_angle', ctypes.c_float),
-        ('spot_blend', ctypes.c_float),
-        ('type_index', ctypes.c_int32),
-        ('__padding', ctypes.c_int32*2),
-    ]
-
-
-MAX_SPOTS = 64
-MAX_SUNS = 8
-SUN_CASCADES = 6
-
-class C_LightsBuffer(ctypes.Structure):
-    
-    _fields_ = [
-        ('lights', C_Light*128),
-        ('lights_count', ctypes.c_int),
-        ('__padding', ctypes.c_int32*3),
-        ('spot_matrices', ctypes.c_float*16*MAX_SPOTS),
-        ('sun_matrices', ctypes.c_float*16*(MAX_SUNS*SUN_CASCADES)),
-    ]
-
 _LIGHTS_BUFFER = None
 
 def get_lights_buffer():
@@ -66,6 +33,39 @@ def get_shadow_maps():
         return _SHADOWMAPS
     else:
         return ShadowMaps()
+
+LIGHT_SUN = 1
+LIGHT_POINT = 2
+LIGHT_SPOT = 3
+
+class C_Light(ctypes.Structure):
+    _fields_ = [
+        ('color', ctypes.c_float*3),
+        ('type', ctypes.c_int32),
+        ('position', ctypes.c_float*3),
+        ('radius', ctypes.c_float),
+        ('direction', ctypes.c_float*3),
+        ('spot_angle', ctypes.c_float),
+        ('spot_blend', ctypes.c_float),
+        ('type_index', ctypes.c_int32),
+        ('__padding', ctypes.c_int32*2),
+    ]
+
+MAX_SPOTS = 64
+MAX_SUNS = 8
+SUN_CASCADES = 6
+
+MAX_LIGHTS = 128
+
+class C_LightsBuffer(ctypes.Structure):
+    
+    _fields_ = [
+        ('lights', C_Light*MAX_LIGHTS),
+        ('lights_count', ctypes.c_int),
+        ('__padding', ctypes.c_int32*3),
+        ('spot_matrices', ctypes.c_float*16*MAX_SPOTS),
+        ('sun_matrices', ctypes.c_float*16*(MAX_SUNS*SUN_CASCADES)),
+    ]
 
 class ShadowMaps(object):
 
