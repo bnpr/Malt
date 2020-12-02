@@ -62,7 +62,7 @@ class NPR_Pipeline(Pipeline):
         self.parameters.scene['ShadowMaps Point Resolution'] = Parameter(2048, Type.INT)
         self.parameters.scene['Transparency Layers'] = Parameter(4, Type.INT)
         
-        self.parameters.light['Shader'] = Parameter('', Type.MATERIAL)
+        self.parameters.light['Shader'] = MaterialParameter('', 'light')
 
         global _DEFAULT_SHADER
         if _DEFAULT_SHADER is None: _DEFAULT_SHADER = self.compile_material_from_source('mesh', _DEFAULT_SHADER_SRC)

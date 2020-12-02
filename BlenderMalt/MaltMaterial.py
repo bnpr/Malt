@@ -65,7 +65,10 @@ class MaltMaterial(bpy.types.PropertyGroup):
         else:
             self.parameters.setup(parameters)
     
-    def get_shader(self):
+    def get_shader(self, extension):
+        if not self.shader_source.endswith('.'+extension+'.glsl'):
+            return None
+
         global SHADERS
         if self.shader_source not in SHADERS.keys() or SHADERS[self.shader_source] is None:
             return None
@@ -97,8 +100,13 @@ class MaltMaterial(bpy.types.PropertyGroup):
 
     parameters : bpy.props.PointerProperty(type=MaltPropertyGroup, name="Shader Parameters")
     
-    def draw_ui(self, layout):
+    def draw_ui(self, layout, extension):
         layout.prop(self, 'shader_source')
+        if not self.shader_source.endswith('.'+extension+'.glsl'):
+            box = layout.box()
+            box.label(text='Wrong shader extension, should be '+extension+'.', icon='ERROR')
+            return
+            
         if self.compiler_error != '':
             layout.operator("wm.malt_print_error", icon='ERROR').message = self.compiler_error
             #layout.label(text='COMPILER ERROR:', icon='ERROR')
@@ -166,7 +174,7 @@ class MALT_PT_MaterialSettings(bpy.types.Panel):
                 row.operator("object.material_slot_deselect", text="Deselect")
         
         if context.material:
-            context.material.malt.draw_ui(layout)
+            context.material.malt.draw_ui(layout, 'mesh')#TODO
 
 
 classes = (

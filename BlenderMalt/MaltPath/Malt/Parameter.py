@@ -44,6 +44,11 @@ class Parameter(object):
         #TODO: uniform length ??? (Arrays)
         return Parameter(value, type, size)
 
+class MaterialParameter(Parameter):
+    def __init__(self, default_path, extension):
+        super().__init__(default_path, Type.MATERIAL)
+        self.extension = extension
+
 def gl_type_to_malt_type(gl_type):
     types = {
         'FLOAT' : Type.FLOAT,

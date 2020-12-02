@@ -50,6 +50,7 @@ class MaltTexturePropertyWrapper(bpy.types.PropertyGroup):
 class MaltMaterialPropertyWrapper(bpy.types.PropertyGroup):
 
     material : bpy.props.PointerProperty(type=bpy.types.Material)
+    extension : bpy.props.StringProperty()
 
 class MaltBoolPropertyWrapper(bpy.types.PropertyGroup):
 
@@ -112,6 +113,7 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                 if name not in self.materials:
                     self.materials.add().name = name
                 
+                self.materials[name].extension = parameter.extension
                 shader_path = parameter.default_value
                 if shader_path and shader_path != '':
                     if shader_path not in bpy.data.materials:
@@ -168,8 +170,9 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                 parameters[key] = get_color_ramp_texture(self.id_data, key)
             elif rna[key]['type'] == Type.MATERIAL:
                 material = self.materials[key].material
+                extension = self.materials[key].extension
                 if material:
-                    shader = material.malt.get_shader()
+                    shader = material.malt.get_shader(extension)
                     if shader:
                         parameters[key] = shader[MaltPipeline.get_pipeline().__class__.__name__]
                         continue
@@ -212,8 +215,9 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                 row.template_ID(self.materials[key], "material")
                 material_path = to_json_rna_path(self.materials[key])
                 if self.materials[key].material:
+                    extension = self.materials[key].extension
                     row.operator('material.malt_add_material', text='', icon='DUPLICATE').material_path = material_path
-                    self.materials[key].material.malt.draw_ui(layout)
+                    self.materials[key].material.malt.draw_ui(layout, extension)
                 else:
                     row.operator('material.malt_add_material', text='New', icon='ADD').material_path = material_path
 
