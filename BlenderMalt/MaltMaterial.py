@@ -102,7 +102,7 @@ class MaltMaterial(bpy.types.PropertyGroup):
     
     def draw_ui(self, layout, extension):
         layout.prop(self, 'shader_source')
-        if not self.shader_source.endswith('.'+extension+'.glsl'):
+        if self.shader_source != '' and self.shader_source.endswith('.'+extension+'.glsl') == False:
             box = layout.box()
             box.label(text='Wrong shader extension, should be '+extension+'.', icon='ERROR')
             return
