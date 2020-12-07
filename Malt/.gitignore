@@ -1,0 +1,15 @@
+.*
+!.gitignore
+!.gitattributes
+!.gitmodules
+
+!.github
+
+__pycache__
+
+*.lib
+*.dll
+*.so
+
+BlenderMalt/MaltDependencies
+BlenderMalt/MaltPath

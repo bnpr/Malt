@@ -35,7 +35,7 @@ jobs:
       shell: python
       run: |
         import shutil
-        shutil.make_archive('Shader Examples', 'zip', 'Shader Examples')
+        shutil.make_archive('Shader Examples', 'zip', 'Malt/Shader Examples')
     
     - name: Release Shader Examples
       uses: actions/upload-release-asset@v1
@@ -65,15 +65,15 @@ jobs:
       with:
         python-version: '3.7'
 
-    - name: package_blender.py
-      run: python package_blender.py
-      working-directory: ${{ github.workspace }}/.github/workflows
+    - name: package_blender_addon.py
+      run: python package_blender_addon.py
+      working-directory: ${{ github.workspace }}/Malt/scripts
     
     - name: Zip Addon
       shell: python
       run: |
         import shutil
-        shutil.make_archive('BlenderMalt', 'zip', '.', 'BlenderMalt')
+        shutil.make_archive('BlenderMalt', 'zip', 'Malt', 'BlenderMalt')
     
     - name: Upload Artifact
       uses: actions/upload-artifact@v2
