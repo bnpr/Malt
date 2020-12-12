@@ -232,6 +232,9 @@ class MaltRenderEngine(bpy.types.RenderEngine):
 
         self.end_result(result)
 
+        # Delete the scene. Otherwise we get memory leaks.
+        # Blender never deletes RenderEngine instances ???
+        del self.scene
         #Delete the pipeline while we are in the correct OpenGL context
         del self.pipeline
         Pipeline.MAIN_CONTEXT = True
