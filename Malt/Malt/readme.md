@@ -4,13 +4,13 @@
 
 *Malt* is a fully customizable rendering framework written in **Python** and **OpenGL**.
 
-Its main goal is to support offline rendering for **animation** and **illustration**, with special care put into supporting the needs of **stylized, non photo-realistic rendering**, while trying to be easily **accesible** to technical artists and users without previous graphics programming experience.
+Its main goal is to support offline rendering for **animation** and **illustration**, with special care put into supporting the needs of **stylized, non photo-realistic rendering** and being **accesible** to technical artists and users without previous graphics programming experience.
 
 Therefore, while it's a **real-time renderer**, it **prioritizes image quality, flexibility and simplicity over rendering performance**.
 
 ## Malt Pipelines
 
-The core class in *Malt* is the *Pipeline*.
+The core class in *Malt* is the [*Pipeline*](Pipeline.py).
 *Malt* allows to write completely custom render *Pipelines* while providing ready to use render utilities in the [*Shaders*](Shaders) and [*Render*](Render) libraries.
 
 *Malt* is meant to be used by a *Host* application, like [*BlenderMalt*](../BlenderMalt).  
@@ -24,7 +24,7 @@ The *render* function takes a *Scene* and must return the rendered result as a *
 ### Scene
 
 The [*Scene*](Scene.py) class makes as little assumptions as posible about the data needed by the *Pipeline*.  
-Instead, the *Pipeline* can declare an arbitrary number of [*Parameters*](Parameter.py) for each *Scene* object type.  
+Instead, the *Pipeline* can declare custom [*Parameters*](Parameter.py) for each *Scene* object type.  
 The host is responsible for exposing those parameters so users can edit them.
 
 ### Materials

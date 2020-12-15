@@ -31,12 +31,12 @@ If you need help or find a bug you can [open a new issue](https://github.com/Ble
 - A **full copy** of the ***System Console* contents** *(Window > Toggle System Console)*.
 - A **.blend file** and a **list of steps** to reproduce the error.
 
-## Developer Docs
-- [BlenderMalt](BlenderMalt)
+## Developer Documentation
 - [Malt](Malt)
 - [Malt/GL](Malt/GL)
 - [Malt/Render](Malt/Render)
 - [Malt/Shaders](Malt/Shaders)
 - [NPR Pipeline](Malt/Pipelines/NPR_Pipeline)
-- [NPR Pipeline Shader Examples](Shader-Examples)
+- [NPR Pipeline Shader Examples](Shader%20Examples)
+- [BlenderMalt](BlenderMalt)
 
