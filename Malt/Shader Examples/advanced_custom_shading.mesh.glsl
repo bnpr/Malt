@@ -11,27 +11,21 @@ uniform vec3 color = vec3(0.5);
 uniform float roughness = 0.5;
 uniform float metalness = 0.0;
 
-vec3 BRDF(LitSurface S)
+vec3 BRDF(LitSurface LS, float ao)
 {
-    vec3 shadow_color = color * ambient_color * mix(ao_color, vec3(1.0), get_ao(ao_samples, ao_radius));
-    if(S.shadow)
-    {
-        return shadow_color;
-    }
-
-    float NoL = S.NoL;
+    float NoL = LS.NoL;
     NoL = max(MIN_DOT, NoL);
 
-    float NoV = dot(S.N, S.V);
+    float NoV = dot(LS.N, LS.V);
     NoV = max(MIN_DOT, NoV);
 
-    float NoH = dot(S.N, S.H);
+    float NoH = dot(LS.N, LS.H);
     NoH = max(MIN_DOT, NoH);
 
-    float LoV = dot(S.L, S.V);
+    float LoV = dot(LS.L, LS.V);
     LoV = max(MIN_DOT, LoV);
 
-    float VoH = dot(S.V, S.H);
+    float VoH = dot(LS.V, LS.H);
     VoH = max(MIN_DOT, VoH);
 
     float a = max(0.001, roughness * roughness);
@@ -56,26 +50,33 @@ vec3 BRDF(LitSurface S)
     //Specular Fresnel Models
     float f_schlick = F_schlick(VoH, F0, 1.0);
     float f_cook_torrance = F_cook_torrance(VoH, F0);
+
     
     // Disney-like PBR shader (Burley for diffuse + GGX for speculars)
+    vec3 shadow_color = ambient_color * mix(ao_color, vec3(1.0), ao);
+    
     vec3 diffuse_color = color * burley * (1.0 - f_schlick) * (1.0 - metalness);
     
     float specular = BRDF_specular_cook_torrance(d_ggx, f_schlick, g_ggx, NoL, NoV);
     vec3 specular_color = mix(vec3(specular), color * specular, metalness);
 
-    return mix(shadow_color, diffuse_color + specular_color, NoL);
+    vec3 lit_color = diffuse_color + specular_color;
+
+    return mix(shadow_color, lit_color, LS.light_color * LS.shadow_multiply * NoL);
 }
 
 void COMMON_PIXEL_SHADER(Surface S, inout PixelOutput PO)
 {
     vec3 result = vec3(0,0,0);
 
+    float ao = get_ao(ao_samples, ao_radius);
+
     for (int i = 0; i < LIGHTS.lights_count; i++)
     {
-        Light light = LIGHTS.lights[i];
-        LitSurface LS = lit_surface(S.position, S.normal, light);
+        Light L = LIGHTS.lights[i];
+        LitSurface LS = NPR_lit_surface(S.position, S.normal, S.id, L, i);
 
-        result += BRDF(surface) * LS.light_color * LS.shadow_multiply;
+        result += BRDF(LS, ao);
     }
 
     PO.color.rgb = result;
