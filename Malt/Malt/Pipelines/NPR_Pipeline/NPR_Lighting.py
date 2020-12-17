@@ -84,9 +84,12 @@ class NPR_ShadowMaps(ShadowMaps):
     
     def setup(self, create_fbos=True):
         super().setup(False)
-        self.spot_id_t = TextureArray((self.spot_resolution, self.spot_resolution), self.max_spots, GL_R32F)
-        self.sun_id_t = TextureArray((self.sun_resolution, self.sun_resolution), self.max_suns * self.sun_cascades, GL_R32F)
-        self.point_id_t = CubeMapArray((self.point_resolution, self.point_resolution), self.max_points, GL_R32F)
+        self.spot_id_t = TextureArray((self.spot_resolution, self.spot_resolution), self.max_spots, 
+            GL_R32F, min_filter=GL_NEAREST, mag_filter=GL_NEAREST)
+        self.sun_id_t = TextureArray((self.sun_resolution, self.sun_resolution), self.max_suns * self.sun_cascades, 
+            GL_R32F, min_filter=GL_NEAREST, mag_filter=GL_NEAREST)
+        self.point_id_t = CubeMapArray((self.point_resolution, self.point_resolution), self.max_points, 
+            GL_R32F, min_filter=GL_NEAREST, mag_filter=GL_NEAREST)
         
         if create_fbos:
             self.spot_fbos = []
