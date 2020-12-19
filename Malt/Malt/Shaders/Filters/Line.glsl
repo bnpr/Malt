@@ -125,6 +125,8 @@ struct LineOutput
 };
 
 LineOutput line_ex(
+    vec3 position,
+    vec3 normal,
     float line_width,
     int line_steps,
     int LINE_DEPTH_MODE,
@@ -145,10 +147,11 @@ LineOutput line_ex(
     sampling_pattern(offsets);
     vec2 offset = vec2(line_width) / RESOLUTION;
 
-    vec3 normal = texture(normal_texture, uv).xyz;
+   // vec3 normal = texture(normal_texture, uv).xyz;
     vec3 normal_camera = transform_normal(CAMERA, normal);
     float depth = texture(depth_texture, uv)[depth_channel];
-    vec3 position = screen_to_camera(uv, depth);
+    position = transform_point(CAMERA, position);
+    //vec3 position = screen_to_camera(uv, depth);
     float id = texture(id_texture, uv)[id_channel];
 
     for(int i = 0; i < offsets.length(); i++)

@@ -372,6 +372,8 @@ float get_line_simple(float width, float depth_threshold, float normal_threshold
     #if defined(PIXEL_SHADER) && defined(MAIN_PASS)
     {
         LineOutput lo = line_ex(
+            POSITION,
+            get_normal(),
             width,
             1,
             LINE_DEPTH_MODE_NEAR,
@@ -405,6 +407,8 @@ float get_line_advanced(
     #if defined(PIXEL_SHADER) && defined(MAIN_PASS)
     {
         LineOutput lo = line_ex(
+            POSITION,
+            get_normal(),
             1.0,
             1,
             LINE_DEPTH_MODE_NEAR,
