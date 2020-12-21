@@ -131,7 +131,7 @@ class MaltRenderEngine(bpy.types.RenderEngine):
                             material_name = slot.material.name_full
                             if material_name not in materials.keys():
                                 #load material
-                                shader = slot.material.malt.get_shader('mesh') #TODO
+                                shader = slot.material.malt.get_shader('mesh', depsgraph.mode != 'VIEWPORT') #TODO
                                 if shader:
                                     pipeline_shaders = shader[self.get_pipeline().__class__.__name__]
                                     parameters = slot.material.malt_parameters.get_parameters()

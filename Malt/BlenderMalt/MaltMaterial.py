@@ -66,12 +66,15 @@ class MaltMaterial(bpy.types.PropertyGroup):
         else:
             self.parameters.setup(parameters)
     
-    def get_shader(self, extension):
+    def get_shader(self, extension, compile_if_needed=False):
         if not self.shader_source.endswith('.'+extension+'.glsl'):
             return None
 
         global SHADERS
         if self.shader_source not in SHADERS.keys() or SHADERS[self.shader_source] is None:
+            if compile_if_needed:
+                self.update_source(None)
+                return self.get_shader(extension)
             return None
 
         shader = SHADERS[self.shader_source]
