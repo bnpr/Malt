@@ -16,6 +16,8 @@ BlenderMalt is a Blender addon that integrates Malt into Blender, exposing a min
 
 To test the renderer go to *Scene Settings* and *change the renderer to Malt*. Create a *Sunlight* and add a new object with a *new material*. Inside the material settings *set the Shader Path* to one of the files from the [*Shader Examples*](Shader-Examples).
 
+If you could fill [this super short survery](https://forms.gle/e4dTicpsxerL4YdQ6) after testing, that would be really helpfull.
+
 #### Uninstall
 
 - Untick the box in *Preferences > Addons > BlenderMalt* to disable the addon.
