@@ -106,6 +106,14 @@ def setup_all_ids():
 
 @bpy.app.handlers.persistent
 def depsgraph_update(scene, depsgraph):
+    global __INITIALIZED
+
+    if scene.render.engine != 'MALT':
+        # Don't do anything if Malt is not the active renderer,
+        # but make sure we setup all IDs the next time Malt is enabled
+        __INITIALIZED = False
+        return
+
     if __INITIALIZED == False:
         setup_all_ids()
         return

@@ -365,6 +365,9 @@ classes = (
 
 @bpy.app.handlers.persistent
 def depsgraph_update(scene, depsgraph):
+    if scene.render.engine != 'MALT':
+        return
+
     for update in depsgraph.updates:
         #if isinstance(update.id, bpy.types.NodeTree):
         if update.id.__class__ == bpy.types.Material:
