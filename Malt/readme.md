@@ -16,6 +16,12 @@ BlenderMalt is a Blender addon that integrates Malt into Blender, exposing a min
 
 To test the renderer go to *Scene Settings* and *change the renderer to Malt*. Create a *Sunlight* and add a new object with a *new material*. Inside the material settings *set the Shader Path* to one of the files from the [*Shader Examples*](Shader-Examples).
 
+> 🔔 By default, *Malt* uses very high quality rendering settings.  
+If you find it runs too slow on your computer, go to *Properties Panel > Scene > Malt Settings* and lower the *Transparency Layers* (1 should be enough for the viewport) and the *ShadowMaps* resolution (1024 or 512 should be fine).
+
+> ⚠️ There are known issues when using the engine with *Intel* graphics cards.  
+A decicated *Nvidia* or *AMD* GPU is highly recommended.
+
 If you could fill [this super short survery](https://forms.gle/e4dTicpsxerL4YdQ6) after testing, that would be really helpfull.
 
 #### Uninstall
