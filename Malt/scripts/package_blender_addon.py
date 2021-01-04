@@ -14,8 +14,9 @@ from distutils.dir_util import copy_tree
 copy_tree(os.path.join(blender_malt_folder, 'PatchDependencies'), malt_dependencies_path) 
 
 #Remove numpy since Blender already ships with it
+#Remove bin to avoid AVs false positives
 for e in os.listdir(malt_dependencies_path):
-    if e.startswith('numpy'):
+    if e.startswith('numpy') or e == 'bin':
         shutil.rmtree(os.path.join(malt_dependencies_path, e))
 
 copy_tree(os.path.join('..', 'Malt'), os.path.join(blender_malt_folder, 'MaltPath', 'Malt'))
