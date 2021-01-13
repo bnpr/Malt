@@ -14,9 +14,9 @@ BEER will have a layers/stack based UI.
 | **Target Audience** | Advanced users | Everyone |
 | **Worflow** | Code <br> (Nodes planned) | Layers/Stacks |
 | **Backend** | None <br> (Built from scratch) | Malt |
-| **Project Lead** | [Miguel Pozo](https://twitter.com/pragma37) | [LightBWK](https://twitter.com/Lightbwk) |
-| **Main Developer** | [Miguel Pozo](https://twitter.com/pragma37) | TBD |
-| **Funding** | [Patreon](https://patreon.com/pragma37) | [BEER Dev Fund](https://blendernpr.org/beer/) |
+| **Project Lead** | [Miguel Pozo]() | [LightBWK]() |
+| **Main Developer** | [Miguel Pozo]() | TBD |
+| **Funding** | [Patreon]() | [BEER Dev Fund]() |
 
 # Will Malt be ported to Vulkan?
 

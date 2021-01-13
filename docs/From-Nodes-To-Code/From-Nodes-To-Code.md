@@ -202,7 +202,7 @@ void COMMON_PIXEL_SHADER(Surface S, inout PixelOutput PO)
 Woah! That was a lot of information, right?
 It's ok if you don't feel like you actually understand it as long as you have a rough intuition of what's going on.
 
-Now would be a good time to look at the [Shader Examples]().
+Now would be a good time to look at the [Shader Examples](https://github.com/bnpr/Malt/tree/master/Shader%20Examples).
 Each of them implements a single feature, why don't you try to mix some of them in the same shader?
 For example, a gradient material with outlines, rim lights and ambient occlusion.
 
@@ -359,4 +359,3 @@ void third_example()
 
 > If you reached here, congrats! I'm working on new chapters, please stay tuned!
 
-```
