@@ -55,7 +55,7 @@ For better viewport performance, you may want to lower the rendering quality:
 - Lower the *ShadowMaps* resolution to **1024** or even **512**.
 - Make sure *Line Width Max* is not higher than **10**.
 
-To learn how to make your own materials in *Malt*, take a look at the [From Nodes To Code](https://malt3d.com/#/From-Nodes-To-Code/From-Nodes-To-Code) tutorial.
+To learn how to make your own materials in *Malt*, take a look at the [From Nodes To Code](https://malt3d.com/#/docs/From-Nodes-To-Code/From-Nodes-To-Code) tutorial.
 
 Please, consider filling this [short survery](https://forms.gle/zvEazGd3SPgWEQdj9) after testing.
 
