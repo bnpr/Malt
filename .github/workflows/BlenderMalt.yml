@@ -73,7 +73,7 @@ jobs:
       shell: python
       run: |
         import shutil
-        shutil.make_archive('BlenderMalt', 'zip', 'BlenderMalt')
+        shutil.make_archive('BlenderMalt', 'zip', '.', 'BlenderMalt')
     
     - name: Upload Artifact
       uses: actions/upload-artifact@v2
