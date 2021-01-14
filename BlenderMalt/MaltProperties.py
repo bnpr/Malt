@@ -85,6 +85,7 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                 rna[name] = {}
 
             type_changed = 'type' not in rna[name].keys() or rna[name]['type'] != parameter.type
+            size_changed = 'size' in rna[name].keys() and rna[name]['size'] != parameter.size
 
             def to_basic_type(value):
                 try: return tuple(value)
@@ -92,15 +93,32 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
             def equals(a, b):
                 return to_basic_type(a) == to_basic_type(b)
 
+            def resize():
+                if parameter.size == 1:
+                       self[name] = self[name][0]
+                else:
+                    if rna[name]['size'] > parameter.size:
+                        self[name] = self.name[:parameter.size]
+                    else:
+                        first = self[name]
+                        try: first = list(first)
+                        except: first = [first]
+                        second = list(parameter.default_value)
+                        self[name] = first + second[rna[name]['size']:]
+
             if parameter.type in (Type.INT, Type.FLOAT):
                 if type_changed or equals(rna[name]['default'], self[name]):
-                    self[name] = parameter.default_value
+                    self[name] = parameter.default_value   
+                elif size_changed:
+                    resize()
 
             if parameter.type == Type.BOOL:
                 if name not in self.bools:
                     self.bools.add().name = name
                 if type_changed or equals(rna[name]['default'], self.bools[name].boolean):
                     self.bools[name].boolean = parameter.default_value
+                elif size_changed:
+                    resize()
             
             if parameter.type == Type.TEXTURE:
                 if name not in self.textures:
@@ -129,6 +147,7 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
             rna[name]['active'] = True
             rna[name]["default"] = parameter.default_value
             rna[name]['type'] = parameter.type
+            rna[name]['size'] = parameter.size
 
             #TODO: for now we assume we want floats as colors
             # ideally it should be opt-in in the UI,
