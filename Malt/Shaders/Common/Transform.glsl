@@ -153,12 +153,24 @@ vec3 radial_tangent(vec3 normal, vec3 axis)
 
 vec2 matcap_uv(vec3 normal)
 {
-    vec3 r = cross(transform_normal(CAMERA, view_direction()), transform_normal(CAMERA, normal));
-    vec2 uv = r.xy * 0.5 + 0.5;
-    uv.xy = uv.yx;
-    uv.y = 1.0 - uv.y;
+	vec3 N = transform_normal(CAMERA, normal);
+	vec3 I = transform_normal(CAMERA, view_direction());
 
-    return uv;
+	vec3 x = vec3(1,0,0);
+	vec3 tangent = normalize(x - I * dot(x, I));
+	vec3 y = vec3(0,1,0);
+	vec3 bitangent = normalize(y - I * dot(y, I));
+	
+	vec3 screen_normal = vec3
+	(
+		dot(N, tangent),
+		dot(N, bitangent),
+		dot(N, I)
+	);
+
+	screen_normal = normalize(screen_normal);
+
+	return screen_normal.xy * 0.499 + 0.5;
 }
 
 vec2 hdri_uv(vec3 normal)
