@@ -89,6 +89,9 @@ class GLUniform(object):
         return 'SAMPLER' in GL_ENUMS[self.type]
     
     def set_value(self, value):
+        if self.base_type == GL_UNSIGNED_INT:
+            try: value = max(0, value)
+            except: value = [max(0, v) for v in value]
         self.value = gl_buffer(self.base_type, self.base_size * self.array_length, value)
     
     def set_buffer(self, buffer):
