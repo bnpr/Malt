@@ -212,28 +212,50 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
         # Most drivers sort the uniforms in alphabetical order anyway, 
         # so there's no point in tracking the actual index since it doesn't follow
         # the declaration order
-        keys = sorted(rna.keys(), key=natual_sort_key) 
+        keys = sorted(rna.keys(), key=natual_sort_key)
+
+        namespace_stack = [(None, layout)]
         
         for key in keys:
             if rna[key]['active'] == False:
                 continue
+            
+            names = key.split('.')
+
+            if len(names) == 1:
+                namespace_stack = namespace_stack[:1]
+                layout = namespace_stack[0][1]
+            else:
+                for i in range(0, len(names) - 1):
+                    name = names[i]
+                    stack_i = i+1
+                    if len(namespace_stack) > stack_i and namespace_stack[stack_i][0] != name:
+                        namespace_stack = namespace_stack[:stack_i]
+                    if len(namespace_stack) < stack_i+1:
+                        box = namespace_stack[stack_i - 1][1].box()
+                        box.label(text=name + " :")
+                        namespace_stack.append((name, box))
+                    layout = namespace_stack[stack_i][1]
+
+            name = names[-1]
+
             if rna[key]['type'] in (Type.INT, Type.FLOAT):
                 #TODO: add subtype toggle
-                layout.prop(self, '["'+key+'"]')
+                layout.prop(self, '["'+key+'"]', text=name)
             elif rna[key]['type'] == Type.BOOL:
-                layout.prop(self.bools[key], 'boolean', text=key)
+                layout.prop(self.bools[key], 'boolean', text=name)
             elif rna[key]['type'] == Type.TEXTURE:
-                layout.label(text=key + " :")
+                layout.label(text=name + " :")
                 row = layout.row()
                 row = row.split(factor=0.8)
                 row.template_ID(self.textures[key], "texture", new="image.new", open="image.open")
                 if self.textures[key].texture:
                     row.prop(self.textures[key].texture.colorspace_settings, 'name', text='')
             elif rna[key]['type'] == Type.GRADIENT:
-                layout.label(text=key + " :")
+                layout.label(text=name + " :")
                 layout.template_color_ramp(get_color_ramp(self.id_data, key), 'color_ramp')
             elif rna[key]['type'] == Type.MATERIAL:
-                layout.label(text=key + " :")
+                layout.label(text=name + " :")
                 row = layout.row(align=True)
                 row.template_ID(self.materials[key], "material")
                 material_path = to_json_rna_path(self.materials[key])
