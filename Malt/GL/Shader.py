@@ -357,6 +357,63 @@ def reflect_program_uniform_blocks(program):
     return blocks
 
 
+import pyparsing
+
+class GLSL_Reflection(object):
+    # Based on github.com/rougier/glsl-parser.
+    # Copyright (c) 2014, Nicolas P. Rougier. (new) BSD License.
+    LPAREN = pyparsing.Literal("(").suppress()
+    RPAREN = pyparsing.Literal(")").suppress()
+    LBRACE = pyparsing.Literal("{").suppress()
+    RBRACE = pyparsing.Literal("}").suppress()
+    END = pyparsing.Literal(";").suppress()
+    STRUCT = pyparsing.Literal("struct").suppress()
+    IDENTIFIER = pyparsing.Word(pyparsing.alphas + '_', pyparsing.alphanums + '_')
+    TYPE = pyparsing.Word(pyparsing.alphas + '_', pyparsing.alphanums + "_")
+    PRECISION = pyparsing.Regex('lowp |mediump |high ')
+    IO = pyparsing.Regex('in |out |inout ')
+
+    MEMBER = pyparsing.Group(
+        pyparsing.Optional(PRECISION)("precision") +
+        TYPE("type") +
+        IDENTIFIER("name")
+    )
+
+    MEMBERS = pyparsing.delimitedList(MEMBER, ";")("member*") + END
+
+    STRUCT_DEF = (
+        STRUCT + IDENTIFIER("name") + 
+        LBRACE + pyparsing.Optional(MEMBERS)("members") + RBRACE
+    )
+
+    STRUCT_DEF.ignore(pyparsing.cStyleComment)
+
+    @classmethod
+    def reflect_structs(cls, code):
+        return cls.STRUCT_DEF.scanString(code)
+
+    PARAMETER = pyparsing.Group(
+        pyparsing.Optional(IO)("io") +
+        pyparsing.Optional(PRECISION)("precision") +
+        TYPE("type") + pyparsing.Optional(IDENTIFIER)("name")
+    )
+
+    PARAMETERS = pyparsing.delimitedList(PARAMETER)("parameter*")
+
+    FUNCTION = (
+        pyparsing.Optional(PRECISION)("precision") +
+        TYPE("type") + IDENTIFIER("name") +
+        LPAREN + pyparsing.Optional(PARAMETERS)("parameters") + RPAREN +
+        pyparsing.originalTextFor(pyparsing.nestedExpr("{", "}"))("code")
+    )
+
+    FUNCTION.ignore(pyparsing.cStyleComment)
+
+    @classmethod
+    def reflect_functions(cls, code):
+        return cls.FUNCTION.scanString(code)
+
+
 def glslang_validator(source, stage):
     import subprocess
     import tempfile
