@@ -218,7 +218,7 @@ class NPR_Pipeline(Pipeline):
         #COMPOSITE DEPTH
         composite_depth = None
         if is_final_render:
-            composite_depth = self.composite_depth.render(self, self.common_buffer, self.t_depth)
+            composite_depth = self.composite_depth.render(self, self.common_buffer, self.t_opaque_depth)
         
         return {
             'COLOR' : self.t_color_accumulate,
