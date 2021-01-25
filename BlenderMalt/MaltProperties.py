@@ -248,11 +248,20 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
         layout.use_property_decorate = False
         
         namespace_stack = [(None, layout)]
-        
+
+        #'''
+        layout.use_property_split = True
+        layout.use_property_decorate = False
+        layout = layout.column(align=True)
+        #'''
+
         for key in keys:
             if rna[key]['active'] == False:
                 continue
             if filter and rna[key]['filter'] and rna[key]['filter'] != filter:
+                continue
+            
+            if mask and key not in mask:
                 continue
             
             names = key.split('.')

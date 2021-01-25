@@ -43,6 +43,18 @@ class Parameter(object):
             value = value[0]
         #TODO: uniform length ??? (Arrays)
         return Parameter(value, type, size)
+    
+    @classmethod
+    def from_glsl_type(cls, glsl_type):
+        type, size = glsl_type_to_malt_type(glsl_type)
+        value = None
+        if type is Type.INT:
+            value = tuple([0] * size)
+        if type is Type.FLOAT:
+            value = tuple([1.0] * size)
+        if type is Type.BOOL:
+            value = tuple([False] * size)
+        return Parameter(value, type, size)
 
 class MaterialParameter(Parameter):
     def __init__(self, default_path, extension, filter=None):
@@ -77,4 +89,36 @@ def gl_type_to_malt_type(gl_type):
     
     raise Exception(gl_name, ' Uniform type not supported')
 
+def glsl_type_to_malt_type(glsl_type):
+    types = {
+        'float' : Type.FLOAT,
+        'vec' : Type.FLOAT,
+        'mat' : Type.FLOAT,
+        'double' : Type.FLOAT,
+        'd' : Type.FLOAT,
+        'int' : Type.INT,
+        'i' : Type.INT,
+        'uint' : Type.INT,
+        'u' : Type.INT,
+        'bool' : Type.BOOL,
+        'b' : Type.BOOL,
+        'sampler1D' : Type.GRADIENT,
+        'sampler2D' : Type.TEXTURE,
+    }
+    sizes = {
+        'vec2' : 2,
+        'vec3' : 3,
+        'vec4' : 4,
+        'mat2' : 4,
+        'mat3' : 9,
+        'mat4' : 16,
+    }
+    for type_name, type in types.items():
+        if glsl_type.startswith(type_name):
+            for size_name, size in sizes.items():
+                if size_name in glsl_type:
+                    return (type, size)
+            return (type, 1)
+    
+    return None
   

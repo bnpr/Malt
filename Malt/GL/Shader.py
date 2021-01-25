@@ -411,7 +411,21 @@ class GLSL_Reflection(object):
 
     @classmethod
     def reflect_functions(cls, code):
-        return cls.FUNCTION.scanString(code)
+        functions = []
+        for function, start, end in cls.FUNCTION.scanString(code):
+            dictionary = {
+                'name' : function.name,
+                'type' : function.type,
+                'parameters' : []
+            }
+            for parameter in function.parameters:
+                dictionary['parameters'].append({
+                    'name' : parameter.name,
+                    'type' : parameter.type,
+                    'io' : parameter.io
+                })
+            functions.append(dictionary)
+        return functions
 
 
 def glslang_validator(source, stage):

@@ -38,6 +38,7 @@ modules = [
     MaltMaterial,
     MaltLights,
     MaltRenderEngine,
+    MaltNodes,
 ]
 
 if "bpy" in locals():
