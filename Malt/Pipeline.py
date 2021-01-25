@@ -233,6 +233,8 @@ class Pipeline(object):
             source = '#include "{}"'.format(shader_path)
             return self.compile_material_from_source(material_type, source, [file_dir])
         except:
+            import traceback
+            traceback.print_exc()
             return None
 
     def render(self, resolution, scene, is_final_render, is_new_frame):
