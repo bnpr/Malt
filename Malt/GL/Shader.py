@@ -265,7 +265,14 @@ def reflect_program_uniforms(program):
         value = gl_buffer(base_type, size * array_length[0])
         gl_get[base_type](program, location, value)
 
-        uniforms[name] = GLUniform(location, uniform_type[0], value, array_length[0])
+        if array_length[0] > 1:
+            for i in range(array_length[0]):
+                _name = name.replace('[0]', '['+str(i)+']')
+                _value = value[i*size:i*size+size]
+                _location = glGetUniformLocation(program, _name)
+                uniforms[_name] = GLUniform(_location, uniform_type[0], _value)
+        else:
+            uniforms[name] = GLUniform(location, uniform_type[0], value)
     
     return uniforms
 
