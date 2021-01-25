@@ -4,7 +4,7 @@ This tutorial will teach you how to make your own *Malt* shaders.
 
 *Malt* shaders are written in *GLSL* (OpenGL Shading Language), the shader programming language used by *OpenGL* and *Vulkan*.
 
-This tutorial assumes you are already familiar with *EEVEE* nodes.
+This tutorial assumes you are already familiar with *EEVEE* nodes.  
 You may be surprised by how much of your knowledge about node based programming can easily be applied to code and how much more powerfull and convenient can be for advanced tasks.
 
 ## Before we start
@@ -27,11 +27,11 @@ Now we can make changes in our shader file and as soon as we save it (*Ctrl+S*) 
 
 ## First Contact
 
-Let's start by looking at some basic examples in *EEVEE* and *Malt*, so you can see how they compare to each other.  
+Let's start by looking at some basic *Malt* examples and what would be their *EEVEE* counterparts, so you can see how they compare to each other.  
 Read the code, but don't worry if you don't really understand it, we will take a more detailed look at it later.  
 
 To get a better feel of it, let's test this examples as we go.  
-You could just copy-paste them, but you will get a better grasp by typing them yourself.
+You could just copy-paste them, but you will get a better grasp by typing them yourself.  
 It will also serve to get familiar with the extra goodies VSCode provides, like code auto-completion.
 
 If you miss-type something, you will see an error pop up in the Material panel inside *Blender* that will tell you what and where the error is.
@@ -199,11 +199,11 @@ void COMMON_PIXEL_SHADER(Surface S, inout PixelOutput PO)
 
 <div style="clear: both"></div>
 
-Woah! That was a lot of information, right?
+Woah! That was a lot of information, right?  
 It's ok if you don't feel like you actually understand it as long as you have a rough intuition of what's going on.
 
-Now would be a good time to look at the [Shader Examples](https://github.com/bnpr/Malt/tree/master/Shader%20Examples).
-Each of them implements a single feature, why don't you try to mix some of them in the same shader?
+Now would be a good time to look at the [Shader Examples](https://github.com/bnpr/Malt/tree/master/Shader%20Examples).  
+Each of them implements a single feature, why don't you try to mix some of them in the same shader?  
 For example, a gradient material with outlines, rim lights and ambient occlusion.
 
 ## GLSL
@@ -357,5 +357,9 @@ void third_example()
 
 ```
 
-> If you reached here, congrats! I'm working on new chapters, please stay tuned!
+
+>If you reached here, congrats\!  
+>You can share your questions and feedback in this [thread](https://github.com/bnpr/Malt/discussions/46)\.  
+>I'm working on new chapters, meanwhile, [The Book of Shaders](https://thebookofshaders.com/) is a great resource\!  
+
 
