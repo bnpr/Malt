@@ -193,7 +193,7 @@ void main()
                     override = true;
                 }
 
-                if(offset_line_id != id && depth < offset_line_depth)
+                if(round(offset_line_id) != round(id) && depth < offset_line_depth)
                 {
                     override = false;
                 }
