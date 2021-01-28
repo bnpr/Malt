@@ -18,10 +18,11 @@ void COMMON_PIXEL_SHADER(Surface S, inout PixelOutput PO)
     vec3 specular = specular_color * get_specular(roughness);
     vec3 color = ambient_color + diffuse + specular;
 
-    float line = get_line_simple(line_width, line_depth_threshold, line_normal_threshold);
-
-    color = mix(color, line_color, line);
+    float line = get_line_simple(1, line_depth_threshold, line_normal_threshold);
 
     PO.color = vec4(color, 1.0);
+
+    PO.line_color = vec4(line_color, line);
+    PO.line_width = line > 0 ? line_width : 0;
 }
 
