@@ -18,7 +18,7 @@ MESHES = {}
 
 def get_mesh_name(object):
     name = object.name_full
-    if len(object.modifiers) == 0:
+    if len(object.modifiers) == 0 and object.data:
         name = object.type + '_' + object.data.name_full
     return name
 
