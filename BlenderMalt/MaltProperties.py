@@ -283,6 +283,8 @@ def from_json_rna_path(prop):
         'Light' : bpy.data.lights,
         'Camera' : bpy.data.cameras,
         'Material' : bpy.data.materials,
+        'World': bpy.data.worlds,
+        'Scene': bpy.data.scenes,
     }
     for class_name, data in data_map.items():
         if class_name in id_type:
