@@ -17,7 +17,10 @@ jobs:
         delete_orphan_tag: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      
+    
+    - name: Checkout code
+      uses: actions/checkout@v2
+
     - name: Create Release
       id: create_release
       uses: actions/create-release@v1
@@ -28,6 +31,7 @@ jobs:
         release_name: v1-beta
         draft: false
         prerelease: true
+        body_path: SPONSORS.md
     
     - uses: actions/checkout@v2
       
