@@ -7,14 +7,12 @@ from Malt.Parameter import *
 
 from BlenderMalt import MaltPipeline
 
-__GRADIENTS = {}
-__GRADIENT_RESOLUTION = 256
+from BlenderMalt import MaltTextures
 
 # WORKAROUND: We can't declare color ramps from python,
 # so we store them as nodes inside a material
 def get_color_ramp(material, name):
     #TODO: Create a node tree for each ID with Malt Properties to store ramps ??? (Node Trees are ID types)
-    
     if material.use_nodes == False:
         material.use_nodes = True
     nodes = material.node_tree.nodes
@@ -24,24 +22,6 @@ def get_color_ramp(material, name):
        node.name = name
     
     return nodes[name]
-
-
-def get_color_ramp_texture(material, name):
-    node = get_color_ramp(material, name)
-    #pixels = [0,0,0,0]*__GRADIENT_RESOLUTION
-    pixels = []
-    if material.name_full not in __GRADIENTS:
-        __GRADIENTS[material.name_full] = {}
-    gradients = __GRADIENTS[material.name_full]
-    if name not in gradients:
-        for i in range(0, __GRADIENT_RESOLUTION):
-            pixel = node.color_ramp.evaluate( i*(1.0 / __GRADIENT_RESOLUTION))
-            pixels.extend(pixel)
-        nearest = node.color_ramp.interpolation == 'CONSTANT'
-        gradients[name] = Texture.Gradient(pixels, __GRADIENT_RESOLUTION, nearest_interpolation=nearest)
-    
-    return gradients[name]
-
 
 class MaltTexturePropertyWrapper(bpy.types.PropertyGroup):
 
@@ -174,19 +154,22 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
             if rna[key]['active'] == False:
                 continue
             if rna[key]['type'] in (Type.INT, Type.FLOAT):
-                parameters[key] = self[key]
+                try:
+                    parameters[key] = tuple(self[key])
+                except:
+                    parameters[key] = self[key]
             elif rna[key]['type'] == Type.BOOL:
-                parameters[key] = self.bools[key].boolean
+                parameters[key] = bool(self.bools[key].boolean)
             elif rna[key]['type'] == Type.TEXTURE:
                 texture = self.textures[key].texture
                 if texture:
-                    texture.gl_load()
-                    parameters[key] = texture.bindcode
+                    parameters[key] = MaltTextures.get_texture(texture)
                 else:
                     parameters[key] = None
             elif rna[key]['type'] == Type.GRADIENT:
                 #TODO: Only works for materials
-                parameters[key] = get_color_ramp_texture(self.id_data, key)
+                color_ramp = get_color_ramp(self.id_data, key).color_ramp
+                parameters[key] = MaltTextures.get_gradient(color_ramp, self.id_data.name_full, key)
             elif rna[key]['type'] == Type.MATERIAL:
                 material = self.materials[key].material
                 extension = self.materials[key].extension
@@ -410,20 +393,6 @@ classes = (
     MALT_PT_Light,
 )
 
-@bpy.app.handlers.persistent
-def depsgraph_update(scene, depsgraph):
-    if scene.render.engine != 'MALT':
-        return
-
-    for update in depsgraph.updates:
-        #if isinstance(update.id, bpy.types.NodeTree):
-        if update.id.__class__ == bpy.types.Material:
-            __GRADIENTS[update.id.name_full] = {}
-            for screen in bpy.data.screens:
-                for area in screen.areas:
-                    area.tag_redraw()
-
-
 def register():
     for _class in classes: bpy.utils.register_class(_class)
 
@@ -435,8 +404,6 @@ def register():
     bpy.types.Mesh.malt_parameters = bpy.props.PointerProperty(type=MaltPropertyGroup)
     bpy.types.Curve.malt_parameters = bpy.props.PointerProperty(type=MaltPropertyGroup)
     bpy.types.Light.malt_parameters = bpy.props.PointerProperty(type=MaltPropertyGroup)
-
-    bpy.app.handlers.depsgraph_update_post.append(depsgraph_update)
 
 
 def unregister():
@@ -450,7 +417,5 @@ def unregister():
     del bpy.types.Mesh.malt_parameters
     del bpy.types.Curve.malt_parameters
     del bpy.types.Light.malt_parameters
-
-    bpy.app.handlers.depsgraph_update_post.remove(depsgraph_update)
 
 

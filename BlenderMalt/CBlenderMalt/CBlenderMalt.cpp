@@ -104,3 +104,24 @@ EXPORT bool has_flat_polys(void* in_polys, int polys_count)
 
     return has_flat_poly;
 }
+
+struct RenderPass {
+	struct RenderPass *next, *prev;
+	int channels;
+	char name[64];
+	char chan_id[8];
+	float *rect;
+	int rectx, recty;
+
+	char fullname[64];
+	char view[64];
+	int view_id;
+
+	int pad;
+};
+
+EXPORT float* get_rect_ptr(void* render_pass_ptr)
+{
+    return ((RenderPass*)render_pass_ptr)->rect;
+}
+

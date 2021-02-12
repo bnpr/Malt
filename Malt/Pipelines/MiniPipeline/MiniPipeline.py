@@ -70,4 +70,5 @@ class MiniPipeline(Pipeline):
         return { 'COLOR' : self.t_main_color }
 
 
+PIPELINE = MiniPipeline
     

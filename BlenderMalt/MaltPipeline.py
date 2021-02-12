@@ -1,50 +1,47 @@
 # Copyright (c) 2020 BlenderNPR and contributors. MIT license. 
 
+import os
+
 import bpy
 
-from Malt.Pipeline import Pipeline
+import Bridge
 
-def get_subclasses(cls):
-    subclasses = []
-    for subclass in cls.__subclasses__():
-        subclasses.append(subclass)
-        subclasses.extend(get_subclasses(subclass))
-    return subclasses
+from BlenderMalt import MaltMaterial, MaltMeshes, MaltTextures
 
-#TODO: We need to store more than 1 pipeline since it's possible to have more than
-# one scene open at the same time with different worlds and render pipelines
-__PIPELINE__ = None
+__PIPELINE_PARAMETERS = None
+__INITIALIZED = False
 
-def get_pipeline():
-    global __PIPELINE__
-    if __PIPELINE__ is None:
-        #TODO: update pipeline on file loading
-        bpy.context.scene.world.malt.update_pipeline(bpy.context)
-    return __PIPELINE__
+def set_pipeline_parameters(parameters):
+    global __PIPELINE_PARAMETERS
+    __PIPELINE_PARAMETERS = parameters
+
+def set_initialized(initialized):
+    global __INITIALIZED
+    __INITIALIZED = initialized
 
 class MaltPipeline(bpy.types.PropertyGroup):
 
-    def enum_pipelines(self, context):
-        pipelines = []
-        for _cls in get_subclasses(Pipeline):
-            pipelines.append((_cls.__name__,_cls.__name__,""))
-        #Enum needs at least 2 items to work
-        while len(pipelines) < 2:
-            pipelines.append(('---','---',''))
-        return pipelines
-
     def update_pipeline(self, context):
-        for _cls in get_subclasses(Pipeline):
-            if _cls.__name__ == self.pipeline_class:
-                global __PIPELINE__
-                __PIPELINE__ = _cls()
-                setup_all_ids()
+        if self.pipeline == '':
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            default_pipeline = os.path.join(current_dir,'.MaltPath','Malt','Pipelines','NPR_Pipeline','NPR_Pipeline.py')
+            self.pipeline = default_pipeline
+
+        path = bpy.path.abspath(self.pipeline)
+        params = Bridge.Client_API.server_start(path)
+        set_pipeline_parameters(params)
+        
+        MaltMaterial.reset_materials()
+        MaltMeshes.reset_meshes()
+        MaltTextures.reset_textures()
+        
+        setup_all_ids()
+        set_initialized(True)
     
-    pipeline_class : bpy.props.EnumProperty(items=enum_pipelines, update=update_pipeline)
+    pipeline : bpy.props.StringProperty(name="Malt Pipeline", subtype='FILE_PATH', update=update_pipeline)
 
     def draw_ui(self, layout):
-        layout.label(text="Malt Pipeline")
-        layout.prop(self, "pipeline_class")
+        layout.prop(self, 'pipeline')
 
 
 class MALT_PT_Pipeline(bpy.types.Panel):
@@ -67,8 +64,25 @@ classes = (
     MALT_PT_Pipeline,
 )
 
+def setup_all_ids():
+    setup_parameters(bpy.data.scenes)
+    setup_parameters(bpy.data.worlds)
+    setup_parameters(bpy.data.cameras)
+    setup_parameters(bpy.data.objects)
+    setup_parameters(bpy.data.materials)
+    setup_parameters(bpy.data.meshes)
+    setup_parameters(bpy.data.curves)
+    setup_parameters(bpy.data.lights)
+    import BlenderMalt.MaltMaterial as MaltMaterial
+    MaltMaterial.track_shader_changes()
+    '''
+    for material in bpy.data.materials:
+        material.malt.update_source(bpy.context)
+    '''
+
 def setup_parameters(ids):
-    pipeline_parameters = get_pipeline().get_parameters()
+    global __PIPELINE_PARAMETERS
+    pipeline_parameters = __PIPELINE_PARAMETERS
 
     class_parameters_map = {
         bpy.types.Scene : pipeline_parameters.scene,
@@ -87,23 +101,6 @@ def setup_parameters(ids):
                 bid.malt_parameters.setup(parameters)
 
 
-__INITIALIZED = False
-
-def setup_all_ids():
-    setup_parameters(bpy.data.scenes)
-    setup_parameters(bpy.data.worlds)
-    setup_parameters(bpy.data.cameras)
-    setup_parameters(bpy.data.objects)
-    setup_parameters(bpy.data.materials)
-    setup_parameters(bpy.data.meshes)
-    setup_parameters(bpy.data.curves)
-    setup_parameters(bpy.data.lights)
-    for material in bpy.data.materials:
-        material.malt.update_source(bpy.context)
-    global __INITIALIZED
-    __INITIALIZED = True
-
-
 @bpy.app.handlers.persistent
 def depsgraph_update(scene, depsgraph):
     global __INITIALIZED
@@ -115,7 +112,7 @@ def depsgraph_update(scene, depsgraph):
         return
 
     if __INITIALIZED == False:
-        setup_all_ids()
+        scene.world.malt.update_pipeline(bpy.context)
         return
 
     ids = []
@@ -138,45 +135,46 @@ def depsgraph_update(scene, depsgraph):
                     if isinstance(update.id, cls):
                         ids.append(data[update.id.name])
     setup_parameters(ids)
+
+    redraw = False
+    for update in depsgraph.updates:
+        if update.is_updated_geometry:
+            if 'Object' in str(update.id.__class__):
+                MaltMeshes.unload_mesh(update.id)
+        if update.id.__class__ == bpy.types.Image:
+            MaltTextures.unload_texture(update.id)
+            redraw = True
+        elif update.id.__class__ == bpy.types.Material:
+            MaltTextures.unload_gradients(update.id)
+            redraw = True
+    
+    if redraw:
+        for screen in bpy.data.screens:
+            for area in screen.areas:
+                area.tag_redraw()
+
+@bpy.app.handlers.persistent
+def load_scene():
+    bpy.context.scene.world.malt.update_pipeline(bpy.context)
  
-import sys
-import os
-from pathlib import Path
-import importlib
-import traceback
-def load_malt_lib(path):
-    p = Path(path)
-    if str(p) not in sys.path:
-        sys.path.append(str(p))
-    for e in p.iterdir():
-        try:
-            if e.name == '__pycache__':
-                continue
-            name = e.name
-            if e.is_file():
-                name = name.split('.')[0]
-            module = __import__(name)
-            importlib.reload(module)
-        except ModuleNotFoundError:
-            # Ignore it. The file or dir is not a python module (glsl files, for example)
-            pass
-        except Exception:
-            traceback.print_exc()
+import sys, os, multiprocessing as mp
 
 def register():
     for _class in classes: bpy.utils.register_class(_class)
     bpy.types.World.malt = bpy.props.PointerProperty(type=MaltPipeline)
     bpy.app.handlers.depsgraph_update_post.append(depsgraph_update)
+    bpy.app.handlers.load_post.append(load_scene)
 
-    malt_lib_path = bpy.context.preferences.addons['BlenderMalt'].preferences.malt_library_path
-
-    if malt_lib_path != '':
-        load_malt_lib(malt_lib_path)
-        if malt_lib_path not in Pipeline.SHADER_INCLUDE_PATHS:
-            Pipeline.SHADER_INCLUDE_PATHS.append(malt_lib_path)
-
+    # Workaround https://developer.blender.org/rB04c5471ceefb41c9e49bf7c86f07e9e7b8426bb3
+    sys.executable = sys._base_executable
+    python_executable = os.path.join(sys.exec_prefix, 'bin', 'python.exe')
+    mp.set_executable(python_executable)
+    
 def unregister():
     for _class in classes: bpy.utils.unregister_class(_class)
     del bpy.types.World.malt
     bpy.app.handlers.depsgraph_update_post.remove(depsgraph_update)
+    bpy.app.handlers.load_post.remove(load_scene)
+
+    Bridge.Client_API.server_terminate()
 

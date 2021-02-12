@@ -102,26 +102,26 @@ class NPR_Pipeline(Pipeline):
         self.t_depth = Texture(resolution, GL_DEPTH_COMPONENT32F)
         
         self.t_prepass_normal_depth = Texture(resolution, GL_RGBA32F)
-        self.t_prepass_id = Texture(resolution, GL_R32F)
+        self.t_prepass_id = Texture(resolution, GL_R16F, min_filter=GL_NEAREST, mag_filter=GL_NEAREST)
         self.fbo_prepass = RenderTarget([self.t_prepass_normal_depth, self.t_prepass_id], self.t_depth)
         
-        self.t_last_layer_id = Texture(resolution, GL_R32F)
+        self.t_last_layer_id = Texture(resolution, GL_R16F, min_filter=GL_NEAREST, mag_filter=GL_NEAREST)
         self.fbo_last_layer_id = RenderTarget([self.t_last_layer_id])
         
-        self.t_main_color = Texture(resolution, GL_RGBA32F)
-        self.t_line_color = Texture(resolution, GL_RGBA32F)
-        self.t_line_data = Texture(resolution, GL_RGB32F)
+        self.t_main_color = Texture(resolution, GL_RGBA16F)
+        self.t_line_color = Texture(resolution, GL_RGBA16F)
+        self.t_line_data = Texture(resolution, GL_RGB16F)
         self.fbo_main = RenderTarget([self.t_main_color, self.t_line_color, self.t_line_data], self.t_depth)
 
-        self.t_opaque_color = Texture(resolution, GL_RGB32F)
+        self.t_opaque_color = Texture(resolution, GL_RGB16F)
         self.t_opaque_depth = Texture(resolution, GL_DEPTH_COMPONENT32F)
         self.fbo_opaque = RenderTarget([self.t_opaque_color], self.t_opaque_depth)
 
-        self.t_transparent_color = Texture(resolution, GL_RGBA32F)
+        self.t_transparent_color = Texture(resolution, GL_RGBA16F)
         self.t_transparent_depth = Texture(resolution, GL_DEPTH_COMPONENT32F)
         self.fbo_transparent = RenderTarget([self.t_transparent_color], self.t_transparent_depth)
 
-        self.t_color = Texture(resolution, GL_RGBA32F)
+        self.t_color = Texture(resolution, GL_RGBA16F)
         self.fbo_color = RenderTarget([self.t_color])
 
         self.t_color_accumulate = Texture(resolution, GL_RGB32F)
@@ -269,3 +269,5 @@ class NPR_Pipeline(Pipeline):
         
         return composited_line
 
+
+PIPELINE = NPR_Pipeline

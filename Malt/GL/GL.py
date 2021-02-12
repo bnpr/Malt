@@ -31,7 +31,9 @@ if True: #create new scope to import OpenGL
 def gl_buffer(type, size, data=None):
     types = {
         GL_BYTE : GLbyte,
+        GL_UNSIGNED_BYTE : GLubyte,
         GL_SHORT : GLshort,
+        GL_UNSIGNED_SHORT : GLushort,
         GL_INT : GLint,
         GL_UNSIGNED_INT : GLuint,
         GL_FLOAT : GLfloat,

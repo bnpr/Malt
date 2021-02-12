@@ -6,13 +6,13 @@ import platform
 
 src_dir = os.path.abspath(os.path.dirname(__file__))
 
-library = 'libCMalt.so'
-if platform.system() == 'Windows': library = 'CMalt.dll'
-if platform.system() == 'Darwin': library = 'libCMalt.dylib'
+library = 'libCBlenderMalt.so'
+if platform.system() == 'Windows': library = 'CBlenderMalt.dll'
+if platform.system() == 'Darwin': library = 'libCBlenderMalt.dylib'
 
-CMalt = ctypes.CDLL(os.path.join(src_dir, library))
+CBlenderMalt = ctypes.CDLL(os.path.join(src_dir, library))
 
-retrieve_mesh_data = CMalt['retrieve_mesh_data']
+retrieve_mesh_data = CBlenderMalt['retrieve_mesh_data']
 retrieve_mesh_data.argtypes = [
     ctypes.c_void_p, 
     ctypes.c_void_p, ctypes.c_int, 
@@ -23,10 +23,15 @@ retrieve_mesh_data.argtypes = [
 ]
 retrieve_mesh_data.restype = None
 
-retrieve_mesh_uv = CMalt['retrieve_mesh_uv']
+retrieve_mesh_uv = CBlenderMalt['retrieve_mesh_uv']
 retrieve_mesh_uv.argtypes = [ctypes.c_void_p, ctypes.c_int, ctypes.POINTER(ctypes.c_float)]
 retrieve_mesh_uv.restype = None
 
-has_flat_polys = CMalt['has_flat_polys']
+has_flat_polys = CBlenderMalt['has_flat_polys']
 has_flat_polys.argtypes = [ctypes.c_void_p, ctypes.c_int]
 has_flat_polys.restype = ctypes.c_bool
+
+get_rect_ptr = CBlenderMalt['get_rect_ptr']
+get_rect_ptr.argtypes = [ctypes.c_void_p]
+get_rect_ptr.restype = ctypes.POINTER(ctypes.c_float)
+

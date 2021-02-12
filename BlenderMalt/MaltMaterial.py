@@ -4,100 +4,28 @@ import os
 
 import bpy
 
-from Malt.GL.Shader import Shader
-from Malt.Parameter import *
-from Malt.Pipeline import Pipeline
-
 from BlenderMalt import MaltProperties
 from BlenderMalt.MaltProperties import MaltPropertyGroup
 from BlenderMalt import MaltPipeline
 
-#ShaderPath/PipelineName/PassName
-SHADERS = {}
+import Bridge
 
-def find_shader_path(path):
-    full_path = bpy.path.abspath(path)
-    if os.path.exists(full_path):
-        return full_path
-    for shader_path in Pipeline.SHADER_INCLUDE_PATHS:
-        full_path = os.path.join(shader_path, path)
-        if os.path.exists(full_path):
-            return full_path
-    return None
-
+_SHADER_PATHS = []
 class MaltMaterial(bpy.types.PropertyGroup):
 
     def update_source(self, context):
-        #TODO: Store source locally (for linked data and deleted files)
-        global SHADERS
+        #print('UPDATE SOURCE')
+        global _SHADER_PATHS
+        if str(self.shader_source) not in _SHADER_PATHS:
+            _SHADER_PATHS.append(str(self.shader_source))
         self.compiler_error = ''
-        parameters = {}
-
         if self.shader_source != '':
-            path = find_shader_path(self.shader_source)
-            if path:
-                compiled_material = MaltPipeline.get_pipeline().compile_material(path)
-                if compiled_material is None:
-                    self.compiler_error = 'Invalid file'
-                elif isinstance(compiled_material, str):
-                    self.compiler_error = compiled_material
-                else:
-                    pipeline_material = {}
-                    SHADERS[self.shader_source] = pipeline_material
-
-                    pipelines = [MaltPipeline.get_pipeline()]#TODO: get all active pipelines
-                    for pipeline in pipelines:
-                        pipeline_name = pipeline.__class__.__name__
-                        pipeline_material[pipeline_name] = compiled_material
-
-                        for pass_name, shader in pipeline_material[pipeline_name].items():
-                            for uniform_name, uniform in shader.uniforms.items():
-                                parameters[uniform_name] = Parameter.from_uniform(uniform)
-                            if shader.error:
-                                self.compiler_error += pipeline_name + " : " + pass_name + " : " + shader.error
-                            if shader.validator:
-                                self.compiler_error += pipeline_name + " : " + pass_name + " : " + shader.validator
-            else:
-                self.compiler_error = 'Invalid file path'
-
-        if self.compiler_error != '':
-            SHADERS[self.shader_source] = None
-            self.parameters.setup({})
+            path = bpy.path.abspath(self.shader_source)
+            compiled_material = Bridge.Client_API.compile_material(path)
+            self.compiler_error = compiled_material.compiler_error
+            self.parameters.setup(compiled_material.parameters)
         else:
-            self.parameters.setup(parameters)
-    
-    def get_shader(self, extension, compile_if_needed=False):
-        if not self.shader_source.endswith('.'+extension+'.glsl'):
-            return None
-
-        global SHADERS
-        if self.shader_source not in SHADERS.keys() or SHADERS[self.shader_source] is None:
-            if compile_if_needed:
-                self.update_source(None)
-                return self.get_shader(extension)
-            return None
-
-        shader = SHADERS[self.shader_source]
-        new_shader = {}
-
-        for pipeline_name, pipeline in shader.items():
-            new_shader[pipeline_name] = {}
-
-            for pass_name, pass_shader in pipeline.items():
-                if pass_shader.error:
-                    new_shader[pipeline_name] = None
-                    break
-
-                pass_shader_copy = pass_shader.copy()
-                new_shader[pipeline_name][pass_name] = pass_shader_copy
-
-                for name, parameter in self.parameters.get_parameters().items():
-                    if name in pass_shader_copy.textures.keys():
-                        pass_shader_copy.textures[name] = parameter
-                    elif name in pass_shader_copy.uniforms.keys():
-                        pass_shader_copy.uniforms[name].set_value(parameter)
-
-        return new_shader
+            self.parameters.setup({})
         
     shader_source : bpy.props.StringProperty(name="Shader Source", subtype='FILE_PATH', update=update_source)
     compiler_error : bpy.props.StringProperty(name="Compiler Error")
@@ -186,6 +114,10 @@ classes = (
     MALT_PT_MaterialSettings
 )
 
+def reset_materials():
+    global _SHADER_PATHS
+    _SHADER_PATHS = []
+
 import time
 import traceback
 __TIMESTAMP = time.time()
@@ -197,27 +129,39 @@ def track_shader_changes():
         
     global INITIALIZED
     global __TIMESTAMP
-    global SHADERS
+    global _SHADER_PATHS
     try:
-        redraw = False
         start_time = time.time()
 
-        for material in bpy.data.materials:
-            shader_path = material.malt.shader_source
-            abs_path = bpy.path.abspath(shader_path)
-            if os.path.exists(abs_path):
-                stats = os.stat(abs_path)
-                if shader_path not in SHADERS.keys() or stats.st_mtime > __TIMESTAMP:
-                    redraw = True
-                    material.malt.update_source(bpy.context)
-        
-        __TIMESTAMP = start_time
-        INITIALIZED = True
+        #print('TRACK UPDATES')
 
-        if redraw:
+        needs_update = []
+
+        for material in bpy.data.materials:
+            path = bpy.path.abspath(material.malt.shader_source)
+            if path not in needs_update:
+                if os.path.exists(path):
+                    stats = os.stat(path)
+                    if path not in _SHADER_PATHS or stats.st_mtime > __TIMESTAMP:
+                        if path not in _SHADER_PATHS:
+                            _SHADER_PATHS.append(path)
+                            needs_update.append(path)
+        
+        #print(needs_update)
+
+        if len(needs_update) > 0:
+            compiled_materials = Bridge.Client_API.compile_materials(needs_update)
+            for material in bpy.data.materials:
+                path = bpy.path.abspath(material.malt.shader_source)
+                if path in compiled_materials.keys():
+                    material.malt.compiler_error = compiled_materials[path].compiler_error
+                    material.malt.parameters.setup(compiled_materials[path].parameters)
             for screen in bpy.data.screens:
                 for area in screen.areas:
                     area.tag_redraw()
+        
+        __TIMESTAMP = start_time
+        INITIALIZED = True
     except:
         traceback.print_exc()
         pass

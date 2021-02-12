@@ -13,28 +13,13 @@ from os import path
 
 #Add Malt and dependencies to the import path
 current_dir = path.dirname(path.realpath(__file__))
-malt_path = path.join(current_dir, 'MaltPath')
-malt_dependencies_path = path.join(current_dir, 'MaltDependencies')
+malt_path = path.join(current_dir, '.MaltPath')
 if malt_path not in sys.path: sys.path.append(malt_path)
+malt_dependencies_path = path.join(malt_path,'Malt','.Dependencies')
 if malt_dependencies_path not in sys.path: sys.path.append(malt_dependencies_path)
 
-#ENSURE DEPENDENCIES ARE INSTALLED
-try:
-    import OpenGL, OpenGL_accelerate, pcpp, pyrr
-except:
-    import subprocess, site
-    def install_dependencies():
-        dependencies = ['PyOpenGL', 'PyOpenGL_accelerate', 'pcpp', 'Pyrr']
-        subprocess.check_call([bpy.app.binary_path_python, '-m', 'pip', 'install', *dependencies, '--target', malt_dependencies_path])
-    try:
-        install_dependencies()
-    except:
-        import os, ensurepip
-        ensurepip.bootstrap()
-        os.environ.pop("PIP_REQ_TRACKER", None) #https://developer.blender.org/T71856 :(
-        install_dependencies()
-
 import Malt
+import Bridge
 
 from BlenderMalt import MaltLights
 from BlenderMalt import MaltMaterial
@@ -42,13 +27,15 @@ from BlenderMalt import MaltProperties
 from BlenderMalt import MaltMeshes
 from BlenderMalt import MaltPipeline
 from BlenderMalt import MaltRenderEngine
+from BlenderMalt import MaltTextures
 
 modules = [
-    MaltProperties,#MaltProperties must register before MaltMaterial
-    MaltLights,
-    MaltMaterial,
-    MaltMeshes,
     MaltPipeline,
+    MaltProperties,#MaltProperties must register before MaltMaterial
+    MaltTextures,
+    MaltMeshes,
+    MaltMaterial,
+    MaltLights,
     MaltRenderEngine,
 ]
 
@@ -57,6 +44,8 @@ if "bpy" in locals():
     # Maybe reload twice ?
     import importlib
     for module in Malt.modules:
+        importlib.reload(module)
+    for module in Bridge.modules:
         importlib.reload(module)
     for module in modules:
         importlib.reload(module)
@@ -140,6 +129,8 @@ classes=[
     OT_MaltPrintError,
 ]
 
+import multiprocessing as mp
+
 def register():
     for _class in classes: bpy.utils.register_class(_class)
 
@@ -147,7 +138,6 @@ def register():
         module.register()
 
     bpy.app.handlers.save_post.append(setup_vs_code)
-    
 
 def unregister():
     for _class in classes: bpy.utils.unregister_class(_class)
@@ -156,6 +146,7 @@ def unregister():
         module.unregister()
     
     bpy.app.handlers.save_post.remove(setup_vs_code)
+
 
 if __name__ == "__main__":
     register()

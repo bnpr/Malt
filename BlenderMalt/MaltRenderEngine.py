@@ -1,26 +1,27 @@
 # Copyright (c) 2020 BlenderNPR and contributors. MIT license. 
 
-from itertools import chain
-import io
-import cProfile
-import pstats
 import ctypes
+import cProfile, pstats, io
 
 import bpy
 
 from mathutils import Vector,Matrix,Quaternion
 
-from Malt.GL.Mesh import Mesh
 from Malt.GL import GL
 from Malt import Scene
 from Malt import Pipeline
+
+from Malt.GL.Texture import Texture
 
 from BlenderMalt import MaltPipeline
 from BlenderMalt import MaltMeshes
 from BlenderMalt import MaltMaterial
 
+from BlenderMalt import CBlenderMalt
+
+import Bridge
+
 PROFILE = False
-REPORT_PATH = ''
 
 class MaltRenderEngine(bpy.types.RenderEngine):
     # These three members are used by blender to set up the
@@ -30,32 +31,25 @@ class MaltRenderEngine(bpy.types.RenderEngine):
     bl_use_preview = False
     bl_use_postprocess = True
     bl_use_shading_nodes_custom = False
-    bl_use_gpu_context = True
-    bl_use_eevee_freestyle = True
 
     # Init is called whenever a new render engine instance is created. Multiple
     # instances may exist at the same time, for example for a viewport and final
     # render.
     def __init__(self):
         self.display_draw = None
-        self.pipeline = None
         self.scene = Scene.Scene()
         self.view_matrix = None
         self.request_new_frame = True
         self.request_scene_update = True
         self.profiling_data = io.StringIO()
+        self.bridge_id = Bridge.Client_API.get_viewport_id()
 
     def __del__(self):
-        pass
-
-    def get_pipeline(self):
-        if self.pipeline is None or self.pipeline.__class__ != MaltPipeline.get_pipeline().__class__:
-            self.pipeline = MaltPipeline.get_pipeline().__class__()
-        return self.pipeline
+        Bridge.Client_API.free_viewport_id(self.bridge_id)
     
     def get_scene(self, context, depsgraph, request_scene_update):
         def flatten_matrix(matrix):
-            return (ctypes.c_float * 16)(*[e for v in matrix.transposed() for e in v])
+            return [e for v in matrix.transposed() for e in v]
 
         if request_scene_update == True:
             scene = Scene.Scene()
@@ -130,14 +124,12 @@ class MaltRenderEngine(bpy.types.RenderEngine):
                         if slot.material:
                             material_name = slot.material.name_full
                             if material_name not in materials.keys():
-                                #load material
-                                shader = slot.material.malt.get_shader('mesh', depsgraph.mode != 'VIEWPORT') #TODO
-                                if shader:
-                                    pipeline_shaders = shader[self.get_pipeline().__class__.__name__]
-                                    parameters = slot.material.malt_parameters.get_parameters()
-                                    materials[material_name] = Scene.Material(pipeline_shaders, parameters)
-                                else:
-                                    materials[material_name] = None
+                                shader = {
+                                    'path': bpy.path.abspath(slot.material.malt.shader_source),
+                                    'parameters': slot.material.malt.parameters.get_parameters()
+                                }
+                                parameters = slot.material.malt_parameters.get_parameters()
+                                materials[material_name] = Scene.Material(shader, parameters)
                             material = materials[material_name]
                         result = Scene.Object(matrix, mesh[i], material, obj_parameters, mirror_scale)
                         scene.objects.append(result)
@@ -186,16 +178,12 @@ class MaltRenderEngine(bpy.types.RenderEngine):
         for i, obj in enumerate(scene.objects):
             obj.parameters['ID'] = i+1
         
-        scene.batches = self.get_pipeline().build_scene_batches(scene.objects)
-
+        scene.meshes = list(meshes.values())
+        scene.materials = list(materials.values())
+        
         return scene
 
-    # This is the method called by Blender for both final renders (F12) and
-    # small preview for materials, world and lights.
-    #TODO
     def render(self, depsgraph):
-        Pipeline.MAIN_CONTEXT = False
-        
         scene = depsgraph.scene_eval
         scale = scene.render.resolution_percentage / 100.0
 
@@ -204,40 +192,29 @@ class MaltRenderEngine(bpy.types.RenderEngine):
         resolution = (self.size_x, self.size_y)
 
         scene = self.get_scene(None, depsgraph, True)
-        render_textures = None
-        while True:
-            render_textures = self.get_pipeline().render(resolution, scene, True, False)
-            if self.get_pipeline().needs_more_samples() == False:
-                break
+        Bridge.Client_API.render(0, resolution, scene, True)
+
+        pixels = None
+        finished = False
+
+        import time
+        while not finished:
+            pixels, finished = Bridge.Client_API.render_result(0)
+            time.sleep(0.1)
+            if finished: break
+        
+        size = self.size_x * self.size_y
 
         result = self.begin_result(0, 0, self.size_x, self.size_y)
-
-        if 'COLOR' in render_textures.keys():
-            render_textures['COLOR'].bind()
-            gl_pixels = GL.gl_buffer(GL.GL_FLOAT, resolution[0]*resolution[1]*4)
-            GL.glGetTexImage(GL.GL_TEXTURE_2D, 0, GL.GL_RGBA, GL.GL_FLOAT, gl_pixels)
-            it = iter(gl_pixels)
-            pixels = list(zip(it,it,it,it)) #convert from 1D list to list of tuples
-
-            layer = result.layers[0].passes["Combined"]
-            layer.rect = pixels
-
-        if 'DEPTH' in render_textures.keys():
-            render_textures['DEPTH'].bind()
-            gl_pixels = GL.gl_buffer(GL.GL_FLOAT, resolution[0]*resolution[1])
-            GL.glGetTexImage(GL.GL_TEXTURE_2D, 0, GL.GL_RED, GL.GL_FLOAT, gl_pixels)
-
-            layer = result.layers[0].passes["Depth"]
-            layer.rect.foreach_set(list(gl_pixels))
-
+        
+        combined_pass = result.layers[0].passes["Combined"]
+        rect_ptr = CBlenderMalt.get_rect_ptr(combined_pass.as_pointer())
+        ctypes.memmove(rect_ptr, pixels, size*4*4)
+        
         self.end_result(result)
-
         # Delete the scene. Otherwise we get memory leaks.
         # Blender never deletes RenderEngine instances ???
         del self.scene
-        #Delete the pipeline while we are in the correct OpenGL context
-        del self.pipeline
-        Pipeline.MAIN_CONTEXT = True
 
     # For viewport renders, this method gets called once at the start and
     # whenever the scene or 3D viewport changes. This method is where data
@@ -246,6 +223,7 @@ class MaltRenderEngine(bpy.types.RenderEngine):
     def view_update(self, context, depsgraph):
         self.request_new_frame = True
         self.request_scene_update = True
+
         # Test which datablocks changed
         for update in depsgraph.updates:
             if update.is_updated_geometry:
@@ -265,41 +243,33 @@ class MaltRenderEngine(bpy.types.RenderEngine):
             if self.request_new_frame:
                 self.profiling_data = io.StringIO()
 
-        # Get viewport resolution
         resolution = context.region.width, context.region.height
-        
-        #Save FBO for later use
+        scene = self.get_scene(context, depsgraph, self.request_scene_update)
+
+        if self.request_new_frame:
+            Bridge.Client_API.render(self.bridge_id, resolution, scene, self.request_scene_update)
+            self.request_new_frame = False
+            self.request_scene_update = False
+
+        pixels, finished = Bridge.Client_API.render_result(self.bridge_id)
+
+        if not finished:
+            self.tag_redraw()
+        if pixels is None:
+            return
+
         fbo = GL.gl_buffer(GL.GL_INT, 1)
         GL.glGetIntegerv(GL.GL_FRAMEBUFFER_BINDING, fbo)
 
-        # Generating a VAO before loading/rendering fixes an error where the viewport
-        # freezes in edit mode. Why ??? I have no idea. ¯\_(ツ)_/¯
-        # TODO: try to load meshes the normal way, without lazy VAO generation.
-        # (Would need a Pipeline refactor)
-        VAO = GL.gl_buffer(GL.GL_INT, 1)
-        GL.glGenVertexArrays(1, VAO)
+        render_texture = Texture(resolution, GL.GL_RGBA32F, GL.GL_FLOAT, pixels)
         
-        #render
-        scene = self.get_scene(context, depsgraph, self.request_scene_update)
-        self.request_scene_update = False
-        render_texture = self.get_pipeline().render(resolution, scene, False, self.request_new_frame)['COLOR']
-        self.request_new_frame = False
-        if MaltMaterial.INITIALIZED == False: #First viewport render can happen before initialization
-            self.request_new_frame = True
-
-        #Render to viewport
         self.bind_display_space_shader(depsgraph.scene_eval)
         if self.display_draw is None or self.display_draw.resolution != resolution:
+            if self.display_draw:
+                self.display_draw.gl_delete()
             self.display_draw = DisplayDraw(resolution)
         self.display_draw.draw(fbo, render_texture)
         self.unbind_display_space_shader()
-
-        if self.get_pipeline().needs_more_samples():
-            self.tag_redraw()
-        
-        reset_GL_state()
-        
-        GL.glDeleteVertexArrays(1, VAO)
 
         if PROFILE:
             profiler.disable()
@@ -307,28 +277,13 @@ class MaltRenderEngine(bpy.types.RenderEngine):
             stats.strip_dirs()
             stats.sort_stats(pstats.SortKey.CUMULATIVE)
             stats.print_stats()
-
-            if self.get_pipeline().needs_more_samples() == False:
-                PROFILE = False
-                with open(REPORT_PATH, 'w') as file:
-                    file.write(self.profiling_data.getvalue())
-
-def reset_GL_state():
-    GL.glUseProgram(0)
-    GL.glBindVertexArray(0)
-    GL.glDisable(GL.GL_BLEND)
-    GL.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA)
-    GL.glEnable(GL.GL_DEPTH_TEST)
-    GL.glDepthRange(0,1)
-    GL.glDepthFunc(GL.GL_LESS)
-    GL.glDisable(GL.GL_CULL_FACE)
-    GL.glCullFace(GL.GL_BACK)
-    GL.glFrontFace(GL.GL_CCW)
+            print('PROFILE BEGIN--------------------------------------')
+            print(self.profiling_data.getvalue())
+            print('PROFILE END--------------------------------------')
 
 #Boilerplate code to draw an OpenGL texture to the viewport using Blender color management
 class DisplayDraw(object):
     def __init__(self, resolution):
-        # Generate dummy float image buffer
         self.resolution = resolution
         width, height = resolution
 
@@ -365,17 +320,18 @@ class DisplayDraw(object):
         GL.glBindVertexArray(0)
 
     def __del__(self):
-        try:
-            GL.glDeleteBuffers(2, self.vertex_buffer)
-            GL.glDeleteVertexArrays(1, self.vertex_array)
-            GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
-        except:
-            #TODO: Make sure GL objects are deleted in the correct context
-            pass
+        # We can't guarantee that the descructor runs on the correct OpenGL context.
+        # This can cause driver crashes.
+        # So it's better to just return early and let the memory leak. :(
+        return
+        self.gl_delete()
+    
+    def gl_delete(self):
+        GL.glDeleteBuffers(2, self.vertex_buffer)
+        GL.glDeleteVertexArrays(1, self.vertex_array)
+        GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
 
     def draw(self, fbo, texture):
-        GL.glDisable(GL.GL_DEPTH_TEST)
-        GL.glDisable(GL.GL_CULL_FACE)
         GL.glBindFramebuffer(GL.GL_FRAMEBUFFER, fbo[0])
         GL.glActiveTexture(GL.GL_TEXTURE0)
         texture.bind()

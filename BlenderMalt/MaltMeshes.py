@@ -3,15 +3,11 @@
 import ctypes
 import itertools
 
-import numpy as np
 import array
 
 import bpy
 
-from Malt.GL.Mesh import MeshCustomLoad
-from Malt.GL.GL import *
-from Malt.Utils import log
-
+import Bridge 
 from . import CBlenderMalt
 
 MESHES = {}
@@ -26,7 +22,6 @@ def get_mesh(object):
     key = get_mesh_name(object)
     if key not in MESHES.keys() or MESHES[key] is None:
         MESHES[key] = load_mesh(object)
-        
     return MESHES[key]
 
 def load_mesh(object):
@@ -72,103 +67,46 @@ def load_mesh(object):
 
     CBlenderMalt.retrieve_mesh_data(verts_ptr, loops_ptr, loop_count, loop_tris_ptr, loop_tri_count, polys_ptr,
         positions, normals, indices_ptrs, indices_lengths)
-    
-    def load_VBO(data):
-        VBO = gl_buffer(GL_INT, 1)
-        glGenBuffers(1, VBO)
-        glBindBuffer(GL_ARRAY_BUFFER, VBO[0])
-        glBufferData(GL_ARRAY_BUFFER, ctypes.sizeof(data), data, GL_STATIC_DRAW)
-        glBindBuffer(GL_ARRAY_BUFFER, 0)
-        return VBO
 
-    positions = load_VBO(positions)
-    
     if needs_split_normals and use_split_faces == False:
         #TODO: Find a way to get a direct pointer to custom normals
-        normals = retrieve_array(m.loops, 'normal', 'f', ctypes.c_float, [0.0,0.0,0.0])
-    
-    normals = load_VBO(normals)
-    
-    EBOs = []
-    for i in range(material_count):
-        EBO = gl_buffer(GL_INT, 1)
-        glGenBuffers(1, EBO)
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO[0])
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices_lengths[i] * 4, indices[i], GL_STATIC_DRAW)
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0)
-        EBOs.append(EBO)
-    
+        normals = retrieve_array(m.loops, 'normal', 'f', ctypes.c_float, [0.0,0.0,0.0])    
+
     uvs = []
     tangents = []
     for i, uv_layer in enumerate(m.uv_layers):
         uv_ptr = ctypes.c_void_p(uv_layer.data[0].as_pointer())
         uv = get_load_buffer('uv'+str(i), ctypes.c_float, loop_count * 2)
         CBlenderMalt.retrieve_mesh_uv(uv_ptr, loop_count, uv)
-        uvs.append(load_VBO(uv))
+        uvs.append(uv)
 
-        #if(object.type == 'MESH' and object.original.data.malt_precomputed_tangents):
         if(object.original.data.malt_parameters.bools['precomputed_tangents'].boolean):
             m.calc_tangents(uvmap=uv_layer.name)
             #calc_tangents is so slow there's no point in optimizing this
             packed_tangents = [e for l in m.loops for e in (*l.tangent, l.bitangent_sign)]
-            packed_tangents = (ctypes.c_float * (4*len(packed_tangents)))(*packed_tangents)
-            tangents.append(load_VBO(packed_tangents))
-
+            tangents.append(packed_tangents)
 
     colors = []
     for i, vertex_color in enumerate(m.vertex_colors):
         #Colors are already contiguous in memory, so we pass them directly to OpenGL
         color = (ctypes.c_uint8 * (loop_count * 4)).from_address(vertex_color.data[0].as_pointer())
-        colors.append(load_VBO(color))
+        colors.append(color)
     
-    results = []
+    mesh_data = {
+        'positions': bytearray(positions),
+        'indices': [bytearray(i) for i in indices],
+        'indices_lengths': [l for l in indices_lengths],
+        'normals': bytearray(normals),
+        'uvs': [bytearray(u) for u in uvs],
+        'tangents': [bytearray(t) for t in tangents],
+        'colors': [bytearray(c) for c in colors],
+    }
 
-    for i in range(material_count):
-        result = MeshCustomLoad()
-        
-        result.EBO = EBOs[i]
-        result.index_count = indices_lengths[i]
-        result.position = positions
-        result.normal = normals
-        result.uvs = uvs
-        result.tangents = tangents
-        result.colors = colors
+    name = get_mesh_name(object)
 
-        result.VAO = gl_buffer(GL_INT, 1)
-        glGenVertexArrays(1, result.VAO)
-        glBindVertexArray(result.VAO[0])
+    Bridge.Client_API.load_mesh(name, mesh_data)
 
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, result.EBO[0])
-
-        def bind_VBO(VBO, index, element_size, gl_type=GL_FLOAT, gl_normalize=GL_FALSE):
-            glBindBuffer(GL_ARRAY_BUFFER, VBO[0])
-            glEnableVertexAttribArray(index)
-            glVertexAttribPointer(index, element_size, gl_type, gl_normalize, 0, None)
-        
-        bind_VBO(result.position, 0, 3)
-        if needs_split_normals and use_split_faces == False:
-            bind_VBO(result.normal, 1, 3)
-        else:
-            bind_VBO(result.normal, 1, 3, GL_SHORT, GL_TRUE)
-        
-        max_uv = 4
-        tangent0_index = 2
-        uv0_index = tangent0_index + max_uv
-        color0_index = uv0_index + max_uv
-        for i, tangent in enumerate(result.tangents):
-            assert(i < max_uv)
-            bind_VBO(tangent, tangent0_index + i, 4)
-        for i, uv in enumerate(result.uvs):
-            assert(i < max_uv)
-            bind_VBO(uv, uv0_index + i, 2)
-        for i, color in enumerate(result.colors):
-            bind_VBO(color, color0_index + i, 4, GL_UNSIGNED_BYTE, GL_TRUE)
-
-        glBindVertexArray(0)
-        
-        results.append(result)
-
-    return results
+    return [name for i in range(material_count)]
 
 #Reuse load buffers to avoid new allocations
 buffers = {}
@@ -188,23 +126,13 @@ def retrieve_array(bpy_array, property_name, array_format, ctype_format, default
 def unload_mesh(object):
     MESHES[get_mesh_name(object)] = None
 
-@bpy.app.handlers.persistent
-def reset_meshes(dummy):
+def reset_meshes():
     global MESHES
     MESHES = {}    
 
-@bpy.app.handlers.persistent
-def depsgraph_update(scene, depsgraph):
-    for update in depsgraph.updates:
-        if update.is_updated_geometry:
-            if 'Object' in str(update.id.__class__):
-                unload_mesh(update.id)
-
 def register():
-    bpy.app.handlers.depsgraph_update_post.append(depsgraph_update)
-    bpy.app.handlers.load_post.append(reset_meshes)
+    pass
 
 def unregister():
-    bpy.app.handlers.depsgraph_update_post.remove(depsgraph_update)
-    bpy.app.handlers.load_post.remove(reset_meshes)
+    pass
 

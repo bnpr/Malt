@@ -22,18 +22,18 @@ from Malt.Render import Line
 from Malt.Render import Sampling
 
 modules = [
-    GL,
-    Mesh,
+    Scene,
     Parameter,
     Pipeline,
+    Utils,
+    GL,
+    Mesh,
     RenderTarget,
-    Scene,
     Shader,
     Texture,
-    Utils,
-    AO,
     NPR_Lighting,
     NPR_Pipeline,
+    AO,
     Common,
     DepthToCompositeDepth,
     Lighting,

@@ -1,5 +1,6 @@
 # Copyright (c) 2020 BlenderNPR and contributors. MIT license. 
 
+import os
 from os import path
 import ctypes
 
@@ -209,33 +210,37 @@ class Pipeline(object):
     def needs_more_samples(self):
         return self.sample_count < len(self.get_samples())
     
+    def find_shader_path(self, path, search_paths=[]):
+        if os.path.exists(path):
+            return path
+        else:
+            for shader_path in self.SHADER_INCLUDE_PATHS + search_paths:
+                full_path = os.path.join(shader_path, path)
+                if os.path.exists(full_path):
+                    return full_path
+        return None
+    
     def compile_shader_from_source(self, shader_source, include_paths=[], defines=[]):
         shader_source = Pipeline.GLSL_HEADER + shader_source
-        include_paths.extend(Pipeline.SHADER_INCLUDE_PATHS)
+        include_paths = include_paths + Pipeline.SHADER_INCLUDE_PATHS
         
         vertex = shader_preprocessor(shader_source, include_paths, ['VERTEX_SHADER'] + defines)
         pixel = shader_preprocessor(shader_source, include_paths, ['PIXEL_SHADER'] + defines)
 
         return Shader(vertex, pixel)
     
-    def compile_shader(self, shader_path):
-        file_dir = path.dirname(shader_path)
-        source = open(shader_path).read()
-        return self.compile_shader_from_source(source, [file_dir])
-    
     def compile_material_from_source(self, material_type, source, include_paths=[]):
         return {}
     
-    def compile_material(self, shader_path):
+    def compile_material(self, shader_path, search_paths=[]):
         try:
             file_dir = path.dirname(shader_path)
             material_type = shader_path.split('.')[-2]
             source = '#include "{}"'.format(shader_path)
-            return self.compile_material_from_source(material_type, source, [file_dir])
+            return self.compile_material_from_source(material_type, source, search_paths + [file_dir])
         except:
             import traceback
-            traceback.print_exc()
-            return None
+            return traceback.format_exc()
 
     def render(self, resolution, scene, is_final_render, is_new_frame):
         if self.resolution != resolution:

@@ -11,5 +11,5 @@ __pycache__
 *.dll
 *.so
 
-BlenderMalt/MaltDependencies
-BlenderMalt/MaltPath
+*.log
+

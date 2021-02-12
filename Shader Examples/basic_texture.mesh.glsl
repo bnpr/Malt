@@ -15,6 +15,6 @@ void COMMON_PIXEL_SHADER(Surface S, inout PixelOutput PO)
     vec3 specular = specular_color * get_specular(roughness);
     vec3 color = ambient_color + diffuse + specular;
 
-    PO.color = vec4(color, 1.0);
+    PO.color = vec4(diffuse_color, 1.0);
 }
 
