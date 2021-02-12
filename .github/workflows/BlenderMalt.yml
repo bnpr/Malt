@@ -2,7 +2,7 @@ name: BLENDERMALT_PACKAGE_AND_RELEASE
 
 on:
   push:
-    #branches: [ master ]
+    branches: [ master ]
 
 jobs:
   release:
