@@ -145,7 +145,7 @@ def track_shader_changes():
                     if path not in _SHADER_PATHS or stats.st_mtime > __TIMESTAMP:
                         if path not in _SHADER_PATHS:
                             _SHADER_PATHS.append(path)
-                            needs_update.append(path)
+                        needs_update.append(path)
         
         #print(needs_update)
 
