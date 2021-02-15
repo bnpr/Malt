@@ -109,7 +109,7 @@ def setup_vs_code(dummy):
     if bpy.context.scene.render.engine == 'MALT':
         if bpy.context.preferences.addons['BlenderMalt'].preferences.setup_vs_code:
             source_path = path.dirname(__file__)
-            shaders_path = path.join(source_path, 'MaltPath', 'Malt', 'Shaders')
+            shaders_path = path.join(malt_path, 'Malt', 'Shaders')
             intellisense_path = path.join(shaders_path, 'Intellisense', 'intellisense.glsl')
             library_path = bpy.context.preferences.addons['BlenderMalt'].preferences.malt_library_path
 
