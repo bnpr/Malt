@@ -81,7 +81,6 @@ def get_texture_buffer(pixels_times_channels):
 
 def load_texture(name, resolution, channels, sRGB):
     import Bridge.ipc as ipc
-    __SHARED_DIC['TEXTURE_LOCK'] = True
     __CONNECTIONS['TEXTURE'].send({
         'buffer_name': ipc.get_shared_buffer_full_name('TEXTURE_BUFFER'),
         'name': name,
@@ -89,6 +88,8 @@ def load_texture(name, resolution, channels, sRGB):
         'channels': channels,
         'sRGB' : sRGB,
     })
+    #TODO: Recv at the beginning, so it only locks when needed
+    __CONNECTIONS['TEXTURE'].recv()
 
 def load_gradient(name, pixels, nearest):
     import Bridge.ipc as ipc

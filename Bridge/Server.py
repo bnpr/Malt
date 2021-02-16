@@ -229,7 +229,7 @@ def main(pipeline_path, connection_addresses, shared_dic):
                 import traceback
                 #print(traceback.format_exc())
                 pass
-            shared_dic['TEXTURE_LOCK'] = False
+            connections['TEXTURE'].send('COMPLETE')
         
         while connections['GRADIENT'].poll():
             msg = connections['GRADIENT'].recv()
