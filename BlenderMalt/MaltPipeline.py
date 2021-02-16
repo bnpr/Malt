@@ -157,7 +157,7 @@ def depsgraph_update(scene, depsgraph):
 def load_scene():
     bpy.context.scene.world.malt.update_pipeline(bpy.context)
  
-import sys, os, multiprocessing as mp
+import sys, platform, os, multiprocessing as mp
 
 def register():
     for _class in classes: bpy.utils.register_class(_class)
@@ -166,9 +166,10 @@ def register():
     bpy.app.handlers.load_post.append(load_scene)
 
     # Workaround https://developer.blender.org/rB04c5471ceefb41c9e49bf7c86f07e9e7b8426bb3
-    sys.executable = sys._base_executable
-    python_executable = os.path.join(sys.exec_prefix, 'bin', 'python.exe')
-    mp.set_executable(python_executable)
+    if platform.system() == 'Windows':
+        sys.executable = sys._base_executable
+        python_executable = os.path.join(sys.exec_prefix, 'bin', 'python.exe')
+        mp.set_executable(python_executable)
     
 def unregister():
     for _class in classes: bpy.utils.unregister_class(_class)
