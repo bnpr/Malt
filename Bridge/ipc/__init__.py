@@ -51,7 +51,9 @@ class SharedMemoryRef(object):
         self.c = open_shared_memory(self.name, self.size)
     
     def __del__(self):
-        close_shared_memory(self.c)
+        #TODO: Investigate. Seems like Windows ref counts but Linux doesn't?
+        if platform.system() == 'Windows':
+            close_shared_memory(self.c)
 
 def load_shared_buffer(name, ctype, size):
     total_size = ctypes.sizeof(ctype) * size
