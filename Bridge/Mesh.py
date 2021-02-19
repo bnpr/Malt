@@ -11,10 +11,12 @@ def load_mesh(msg):
     MESHES[name] = []
 
     def load_VBO(data):
+        #Cast from bytearray to ctypes, otherwise it breaks on Linux. IDKW
+        data = (ctypes.c_float * (len(data)//4)).from_buffer(data)
         VBO = gl_buffer(GL_INT, 1)
         glGenBuffers(1, VBO)
         glBindBuffer(GL_ARRAY_BUFFER, VBO[0])
-        glBufferData(GL_ARRAY_BUFFER, len(data), data, GL_STATIC_DRAW)
+        glBufferData(GL_ARRAY_BUFFER, len(data)*4, data, GL_STATIC_DRAW)
         glBindBuffer(GL_ARRAY_BUFFER, 0)
         return VBO
 
@@ -31,10 +33,12 @@ def load_mesh(msg):
         glGenVertexArrays(1, result.VAO)
         glBindVertexArray(result.VAO[0])
         
+        #Cast from bytearray to ctypes, otherwise it breaks on Linux. IDKW
+        indices = (ctypes.c_uint32 * (len(indices)//4)).from_buffer(indices)
         result.EBO = gl_buffer(GL_INT, 1)
         glGenBuffers(1, result.EBO)
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, result.EBO[0])
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, len(indices), indices, GL_STATIC_DRAW)
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, len(indices)*4, indices, GL_STATIC_DRAW)
         
         result.index_count = data['indices_lengths'][i]
 

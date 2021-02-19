@@ -92,6 +92,7 @@ def load_mesh(object):
         color = (ctypes.c_uint8 * (loop_count * 4)).from_address(vertex_color.data[0].as_pointer())
         colors.append(color)
     
+    #TODO: Optimize. Create load buffers from bytearrays and retrieve them later
     mesh_data = {
         'positions': bytearray(positions),
         'indices': [bytearray(i) for i in indices],
