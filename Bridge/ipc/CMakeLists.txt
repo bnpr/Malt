@@ -11,7 +11,9 @@ add_library(Ipc ipc.c)
 
 if(NOT WIN32)
     target_link_libraries(Ipc pthread)
-    target_link_libraries(Ipc rt)
+    if(NOT APPLE)
+        target_link_libraries(Ipc rt)
+    endif()
 endif()
 
 install(TARGETS Ipc CONFIGURATIONS Release DESTINATION ${PROJECT_SOURCE_DIR})
