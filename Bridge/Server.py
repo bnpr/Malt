@@ -138,19 +138,14 @@ class Viewport(object):
         
         return len(self.pbos_active) > 0
 
-import time
+import os, sys, time
 import cProfile, pstats, io
-import socket as socket_lib
 import multiprocessing.connection as connection
 
 PROFILE = False
 
 def main(pipeline_path, connection_addresses, shared_dic):
     setup_logging()
-
-    import sys, os, psutil
-    priority = psutil.REALTIME_PRIORITY_CLASS if sys.platform == 'win32' else -20
-    psutil.Process(os.getpid()).nice(priority)
 
     connections = {}
     for name, address in connection_addresses.items():
