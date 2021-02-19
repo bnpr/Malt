@@ -6,17 +6,13 @@ def setup_logging():
 
 import ctypes
 import glfw
-import Malt
-import Malt.Pipelines.NPR_Pipeline.NPR_Pipeline as NPR_Pipeline
 
 from Malt.GL import GL
 from Malt.GL.GL import *
 from Malt.GL.RenderTarget import RenderTarget
-from Malt.GL.Texture import Texture
 
 import Bridge
 from Bridge.Mesh import load_mesh
-from Bridge.Render import render
 from Bridge.Texture import load_texture, load_gradient
 
 import Bridge.ipc as ipc
