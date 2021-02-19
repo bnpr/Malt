@@ -154,7 +154,7 @@ def depsgraph_update(scene, depsgraph):
                 area.tag_redraw()
 
 @bpy.app.handlers.persistent
-def load_scene():
+def load_scene(dummy1=None,dummy2=None):
     bpy.context.scene.world.malt.update_pipeline(bpy.context)
  
 import sys, platform, os, multiprocessing as mp
