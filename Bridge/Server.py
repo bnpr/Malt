@@ -230,6 +230,15 @@ def main(pipeline_path, connection_addresses, shared_dic):
             #print('LOAD GRADIENT', name)
             load_gradient(name, pixels, nearest)
         
+        #TODO: Bad workaround to make sure the scene assets are loaded
+        if connections['RENDER'].poll():
+            needs_loading = False
+            for key in ['MATERIAL','MESH','TEXTURE','GRADIENT']:
+                if connections[key].poll():
+                    needs_loading = True
+            if needs_loading:
+                continue
+        
         setup_viewports = {}
         while connections['RENDER'].poll():
             #print('SETUP RENDER')
