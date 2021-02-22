@@ -3,9 +3,7 @@
 import ctypes
 import numpy as np
 
-import bpy
-
-import Bridge
+from BlenderMalt import MaltPipeline
 
 __TEXTURES = {}
 
@@ -33,7 +31,7 @@ def __load_texture(texture):
     size = w*h*channels
     sRGB = texture.colorspace_settings.name == 'sRGB'
 
-    buffer = Bridge.Client_API.get_texture_buffer(size)
+    buffer = MaltPipeline.get_bridge().get_texture_buffer(size)
 
     array_interface = ArrayInterface('<f4', size, ctypes.addressof(buffer))
 
@@ -42,7 +40,7 @@ def __load_texture(texture):
     
     texture.pixels.foreach_get(np_view)
 
-    Bridge.Client_API.load_texture(name, (w,h), channels, sRGB)
+    MaltPipeline.get_bridge().load_texture(name, (w,h), channels, sRGB)
 
     return True
 
@@ -63,7 +61,7 @@ def get_gradient(color_ramp, material_name, name):
             pixel = color_ramp.evaluate( i*(1.0 / __GRADIENT_RESOLUTION))
             pixels.extend(pixel)
         nearest = color_ramp.interpolation == 'CONSTANT'
-        Bridge.Client_API.load_gradient(full_name, pixels, nearest)
+        MaltPipeline.get_bridge().load_gradient(full_name, pixels, nearest)
         gradients[name] = full_name
     
     return full_name

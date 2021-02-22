@@ -4,11 +4,8 @@ import os
 
 import bpy
 
-from BlenderMalt import MaltProperties
 from BlenderMalt.MaltProperties import MaltPropertyGroup
 from BlenderMalt import MaltPipeline
-
-import Bridge
 
 _SHADER_PATHS = []
 class MaltMaterial(bpy.types.PropertyGroup):
@@ -21,7 +18,7 @@ class MaltMaterial(bpy.types.PropertyGroup):
         self.compiler_error = ''
         if self.shader_source != '':
             path = bpy.path.abspath(self.shader_source)
-            compiled_material = Bridge.Client_API.compile_material(path)
+            compiled_material = MaltPipeline.get_bridge().compile_material(path)
             self.compiler_error = compiled_material.compiler_error
             self.parameters.setup(compiled_material.parameters)
         else:
@@ -150,7 +147,7 @@ def track_shader_changes():
         #print(needs_update)
 
         if len(needs_update) > 0:
-            compiled_materials = Bridge.Client_API.compile_materials(needs_update)
+            compiled_materials = MaltPipeline.get_bridge().compile_materials(needs_update)
             for material in bpy.data.materials:
                 path = bpy.path.abspath(material.malt.shader_source)
                 if path in compiled_materials.keys():

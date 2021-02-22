@@ -1,13 +1,10 @@
 # Copyright (c) 2020 BlenderNPR and contributors. MIT license. 
 
-import ctypes
-import itertools
-
-import array
+import ctypes, array
 
 import bpy
 
-import Bridge 
+from BlenderMalt import MaltPipeline
 from . import CBlenderMalt
 
 MESHES = {}
@@ -105,7 +102,7 @@ def load_mesh(object):
 
     name = get_mesh_name(object)
 
-    Bridge.Client_API.load_mesh(name, mesh_data)
+    MaltPipeline.get_bridge().load_mesh(name, mesh_data)
 
     return [name for i in range(material_count)]
 

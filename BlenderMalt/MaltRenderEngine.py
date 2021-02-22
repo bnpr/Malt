@@ -7,19 +7,11 @@ import bpy
 
 from mathutils import Vector,Matrix,Quaternion
 
+from Malt import Scene, Pipeline
 from Malt.GL import GL
-from Malt import Scene
-from Malt import Pipeline
-
 from Malt.GL.Texture import Texture
 
-from BlenderMalt import MaltPipeline
-from BlenderMalt import MaltMeshes
-from BlenderMalt import MaltMaterial
-
-from BlenderMalt import CBlenderMalt
-
-import Bridge
+from BlenderMalt import MaltPipeline, MaltMeshes, MaltMaterial, CBlenderMalt
 
 PROFILE = False
 
@@ -42,10 +34,10 @@ class MaltRenderEngine(bpy.types.RenderEngine):
         self.request_new_frame = True
         self.request_scene_update = True
         self.profiling_data = io.StringIO()
-        self.bridge_id = Bridge.Client_API.get_viewport_id()
+        self.bridge_id = MaltPipeline.get_bridge().get_viewport_id()
 
     def __del__(self):
-        Bridge.Client_API.free_viewport_id(self.bridge_id)
+        MaltPipeline.get_bridge().free_viewport_id(self.bridge_id)
     
     def get_scene(self, context, depsgraph, request_scene_update):
         def flatten_matrix(matrix):
@@ -192,14 +184,14 @@ class MaltRenderEngine(bpy.types.RenderEngine):
         resolution = (self.size_x, self.size_y)
 
         scene = self.get_scene(None, depsgraph, True)
-        Bridge.Client_API.render(0, resolution, scene, True)
+        MaltPipeline.get_bridge().render(0, resolution, scene, True)
 
         pixels = None
         finished = False
 
         import time
         while not finished:
-            pixels, finished = Bridge.Client_API.render_result(0)
+            pixels, finished = MaltPipeline.get_bridge().render_result(0)
             time.sleep(0.1)
             if finished: break
         
@@ -247,11 +239,11 @@ class MaltRenderEngine(bpy.types.RenderEngine):
         scene = self.get_scene(context, depsgraph, self.request_scene_update)
 
         if self.request_new_frame:
-            Bridge.Client_API.render(self.bridge_id, resolution, scene, self.request_scene_update)
+            MaltPipeline.get_bridge().render(self.bridge_id, resolution, scene, self.request_scene_update)
             self.request_new_frame = False
             self.request_scene_update = False
 
-        pixels, finished = Bridge.Client_API.render_result(self.bridge_id)
+        pixels, finished = MaltPipeline.get_bridge().render_result(self.bridge_id)
 
         if not finished:
             self.tag_redraw()

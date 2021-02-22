@@ -4,12 +4,22 @@ import os
 
 import bpy
 
-import Bridge
-
 from BlenderMalt import MaltMaterial, MaltMeshes, MaltTextures
 
+__BRIDGE = None
 __PIPELINE_PARAMETERS = None
 __INITIALIZED = False
+
+def get_bridge():
+    global __BRIDGE
+    bridge = __BRIDGE
+    if bridge is None or bridge.lost_connection:
+        bpy.context.scene.world.malt.update_pipeline(bpy.context)
+    return __BRIDGE
+
+def set_bridge(bridge):
+    global __BRIDGE
+    __BRIDGE = bridge
 
 def set_pipeline_parameters(parameters):
     global __PIPELINE_PARAMETERS
@@ -22,6 +32,7 @@ def set_initialized(initialized):
 class MaltPipeline(bpy.types.PropertyGroup):
 
     def update_pipeline(self, context):
+        #TODO: Sync all scenes. Only one active pipeline per Blender instance is supported atm.
         pipeline = self.pipeline
         if pipeline == '':
             current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -29,7 +40,10 @@ class MaltPipeline(bpy.types.PropertyGroup):
             pipeline = default_pipeline
 
         path = bpy.path.abspath(pipeline)
-        params = Bridge.Client_API.server_start(path)
+        import Bridge
+        bridge = Bridge.Client_API.Bridge(path)
+        params = bridge.get_parameters()
+        set_bridge(bridge)
         set_pipeline_parameters(params)
         
         MaltMaterial.reset_materials()
@@ -74,12 +88,7 @@ def setup_all_ids():
     setup_parameters(bpy.data.meshes)
     setup_parameters(bpy.data.curves)
     setup_parameters(bpy.data.lights)
-    import BlenderMalt.MaltMaterial as MaltMaterial
     MaltMaterial.track_shader_changes()
-    '''
-    for material in bpy.data.materials:
-        material.malt.update_source(bpy.context)
-    '''
 
 def setup_parameters(ids):
     global __PIPELINE_PARAMETERS
@@ -157,8 +166,6 @@ def depsgraph_update(scene, depsgraph):
 @bpy.app.handlers.persistent
 def load_scene(dummy1=None,dummy2=None):
     bpy.context.scene.world.malt.update_pipeline(bpy.context)
- 
-import sys, platform, os, multiprocessing as mp
 
 def register():
     for _class in classes: bpy.utils.register_class(_class)
@@ -167,6 +174,7 @@ def register():
     bpy.app.handlers.load_post.append(load_scene)
 
     # Workaround https://developer.blender.org/rB04c5471ceefb41c9e49bf7c86f07e9e7b8426bb3
+    import sys, platform, os, multiprocessing as mp
     if platform.system() == 'Windows':
         sys.executable = sys._base_executable
         python_executable = os.path.join(sys.exec_prefix, 'bin', 'python.exe')
@@ -177,6 +185,4 @@ def unregister():
     del bpy.types.World.malt
     bpy.app.handlers.depsgraph_update_post.remove(depsgraph_update)
     bpy.app.handlers.load_post.remove(load_scene)
-
-    Bridge.Client_API.server_terminate()
 
