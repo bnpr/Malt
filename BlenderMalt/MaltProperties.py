@@ -78,7 +78,7 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                        self[name] = self[name][0]
                 else:
                     if rna[name]['size'] > parameter.size:
-                        self[name] = self.name[:parameter.size]
+                        self[name] = self[name][:parameter.size]
                     else:
                         first = self[name]
                         try: first = list(first)
