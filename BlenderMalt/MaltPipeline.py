@@ -22,12 +22,13 @@ def set_initialized(initialized):
 class MaltPipeline(bpy.types.PropertyGroup):
 
     def update_pipeline(self, context):
-        if self.pipeline == '':
+        pipeline = self.pipeline
+        if pipeline == '':
             current_dir = os.path.dirname(os.path.abspath(__file__))
             default_pipeline = os.path.join(current_dir,'.MaltPath','Malt','Pipelines','NPR_Pipeline','NPR_Pipeline.py')
-            self.pipeline = default_pipeline
+            pipeline = default_pipeline
 
-        path = bpy.path.abspath(self.pipeline)
+        path = bpy.path.abspath(pipeline)
         params = Bridge.Client_API.server_start(path)
         set_pipeline_parameters(params)
         
