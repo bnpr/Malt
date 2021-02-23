@@ -15,14 +15,13 @@ void main()
 #ifdef PIXEL_SHADER
 
 uniform sampler2D blend_texture;
-uniform float opacity = 1.0;
 
 layout (location = 0) out vec4 OUT_COLOR;
 
 void main()
 {
     vec4 color = texture(blend_texture, UV[0]);
-    color.a *= opacity;
+    color.rgb *= color.a;
     OUT_COLOR = color;
 }
 

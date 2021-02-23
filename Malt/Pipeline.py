@@ -82,8 +82,9 @@ class Pipeline(object):
     
     def blend_texture(self, blend_texture, target, opacity):
         self.blend_shader.textures['blend_texture'] = blend_texture
-        self.blend_shader.uniforms['opacity'].set_value(opacity)
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+        glBlendFunc(GL_CONSTANT_ALPHA, GL_ONE_MINUS_CONSTANT_ALPHA)
+        glBlendEquation(GL_FUNC_ADD)
+        glBlendColor(0, 0, 0, opacity)
         self.draw_screen_pass(self.blend_shader, target, True)
     
     def copy_textures(self, target, color_sources=[], depth_source=None):

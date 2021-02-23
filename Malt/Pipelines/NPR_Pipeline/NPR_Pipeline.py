@@ -113,7 +113,7 @@ class NPR_Pipeline(Pipeline):
         self.t_line_data = Texture(resolution, GL_RGB16F)
         self.fbo_main = RenderTarget([self.t_main_color, self.t_line_color, self.t_line_data], self.t_depth)
 
-        self.t_opaque_color = Texture(resolution, GL_RGB16F)
+        self.t_opaque_color = Texture(resolution, GL_RGBA16F)
         self.t_opaque_depth = Texture(resolution, GL_DEPTH_COMPONENT32F)
         self.fbo_opaque = RenderTarget([self.t_opaque_color], self.t_opaque_depth)
 
@@ -124,7 +124,7 @@ class NPR_Pipeline(Pipeline):
         self.t_color = Texture(resolution, GL_RGBA16F)
         self.fbo_color = RenderTarget([self.t_color])
 
-        self.t_color_accumulate = Texture(resolution, GL_RGB32F)
+        self.t_color_accumulate = Texture(resolution, GL_RGBA32F)
         self.fbo_accumulate = RenderTarget([self.t_color_accumulate])
 
     def get_samples(self, width=1.0):
@@ -137,6 +137,11 @@ class NPR_Pipeline(Pipeline):
         else:
             self.sampling_grid_size = scene.parameters['Samples Grid Size Preview']
 
+        if is_new_frame:
+            self.fbo_accumulate.clear([(0,0,0,0)])
+        self.fbo_opaque.clear([(0,0,0,0)])
+        self.fbo_color.clear([(0,0,0,0)])
+        
         sample_offset = self.get_samples(scene.parameters['Samples Width'])[self.sample_count]
         
         #SETUP SCENE BATCHES
