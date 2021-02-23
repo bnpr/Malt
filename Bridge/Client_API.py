@@ -1,4 +1,4 @@
-import ctypes
+import ctypes, logging as log, io
 
 import Malt.Scene as Scene
 import Malt.Parameter as Parameter
@@ -16,10 +16,31 @@ def bridge_method(function):
         return None
     return result
 
+class IOCapture(io.StringIO):
+    def __init__(self, parent, log_path, log_level):
+        super().__init__()
+        self.parent = parent
+        self.log_path = log_path
+        self.log_level = log_level
+    
+    def write(self, s):
+        self.parent.write(s)
+        log.log(self.log_level, s)
+        return super().write(s)
+
 class Bridge(object):
 
     def __init__(self, pipeline_path, timeout=5):
         super().__init__()
+
+        import sys
+        if not isinstance(sys.stdout, IOCapture):
+            import os, tempfile, time, platform
+            date = time.strftime("%Y-%m-%d(%H-%M)")
+            log_path = os.path.join(tempfile.gettempdir(),'malt ' + date + '.log')
+            log.basicConfig(filename=log_path, level=log.DEBUG, format='Blender > %(message)s')
+            sys.stdout = IOCapture(sys.stdout, log_path, log.INFO)
+            sys.stderr = IOCapture(sys.stderr, log_path, log.ERROR)
         
         import multiprocessing as mp
         import random, string
@@ -48,7 +69,7 @@ class Bridge(object):
         for name in ['PARAMS','MESH','MATERIAL','TEXTURE','GRADIENT','RENDER']: add_connection(name)
 
         from . import Server
-        self.process = mp.Process(target=Server.main, args=[pipeline_path, malt_to_bridge, self.shared_dict])
+        self.process = mp.Process(target=Server.main, args=[pipeline_path, malt_to_bridge, self.shared_dict, sys.stdout.log_path])
         self.process.daemon = True
         self.process.start()
 
@@ -64,6 +85,7 @@ class Bridge(object):
     def __del__(self):
         if self.process:
             self.process.terminate()
+        
     
     def get_parameters(self):
         return self.parameters
