@@ -165,7 +165,8 @@ def depsgraph_update(scene, depsgraph):
 
 @bpy.app.handlers.persistent
 def load_scene(dummy1=None,dummy2=None):
-    bpy.context.scene.world.malt.update_pipeline(bpy.context)
+    global __INITIALIZED
+    __INITIALIZED = False
 
 def register():
     for _class in classes: bpy.utils.register_class(_class)
