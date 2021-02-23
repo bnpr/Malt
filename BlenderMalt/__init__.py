@@ -85,6 +85,14 @@ class Preferences(bpy.types.AddonPreferences):
 
     def draw(self, context):
         layout = self.layout
+        
+        if context.scene.render.engine == 'MALT':
+            layout.operator('wm.path_open', text="Open Session Log").filepath=sys.stdout.log_path
+        else:
+            row = layout.row()
+            row.enabled = False
+            row.operator('wm.path_open', text="Open Session Log")
+
         layout.prop(self, "malt_library_path")
         layout.prop(self, "setup_vs_code")
 
