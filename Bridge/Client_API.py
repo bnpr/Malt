@@ -30,7 +30,7 @@ class IOCapture(io.StringIO):
 
 class Bridge(object):
 
-    def __init__(self, pipeline_path, timeout=5):
+    def __init__(self, pipeline_path, debug_mode=False, timeout=5):
         super().__init__()
 
         import sys
@@ -69,7 +69,7 @@ class Bridge(object):
         for name in ['PARAMS','MESH','MATERIAL','TEXTURE','GRADIENT','RENDER']: add_connection(name)
 
         from . import Server
-        self.process = mp.Process(target=Server.main, args=[pipeline_path, malt_to_bridge, self.shared_dict, sys.stdout.log_path])
+        self.process = mp.Process(target=Server.main, args=[pipeline_path, malt_to_bridge, self.shared_dict, sys.stdout.log_path, debug_mode])
         self.process.daemon = True
         self.process.start()
 

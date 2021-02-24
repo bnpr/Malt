@@ -39,9 +39,11 @@ class MaltPipeline(bpy.types.PropertyGroup):
             default_pipeline = os.path.join(current_dir,'.MaltPath','Malt','Pipelines','NPR_Pipeline','NPR_Pipeline.py')
             pipeline = default_pipeline
 
+        debug_mode = bool(bpy.context.preferences.addons['BlenderMalt'].preferences.debug_mode)
+        
         path = bpy.path.abspath(pipeline)
         import Bridge
-        bridge = Bridge.Client_API.Bridge(path)
+        bridge = Bridge.Client_API.Bridge(path, debug_mode)
         params = bridge.get_parameters()
         set_bridge(bridge)
         set_pipeline_parameters(params)

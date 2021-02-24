@@ -14,10 +14,10 @@ from Bridge.Texture import load_texture, load_gradient
 import Bridge.ipc as ipc
 
 import logging as log
-def setup_logging(log_path):
-    log.basicConfig(filename=log_path, level=log.DEBUG, format='Malt > %(message)s')
+def setup_logging(log_path, log_level):
+    log.basicConfig(filename=log_path, level=log_level, format='Malt > %(message)s')
     console_logger = log.StreamHandler()
-    console_logger.setLevel(log.INFO)
+    console_logger.setLevel(log.WARNING)
     log.getLogger().addHandler(console_logger)
 
 
@@ -37,13 +37,13 @@ def log_system_info():
     for key, value in GL_NAMES.items():
         if key.startswith('GL_MAX'):
             try:
-                log.debug('{}: {}'.format(key, glGetInteger(value)))
+                log.info('{}: {}'.format(key, glGetInteger(value)))
             except:
                 pass
 
     def log_format_prop(format, prop):
         read = glGetInternalformativ(GL_TEXTURE_2D, format, prop, 1)
-        log.debug('{} {}: {}'.format(GL_ENUMS[format], GL_ENUMS[prop], GL_ENUMS[read]))
+        log.info('{} {}: {}'.format(GL_ENUMS[format], GL_ENUMS[prop], GL_ENUMS[read]))
 
     def log_format_props(format):
         log_format_prop(format, GL_READ_PIXELS)
@@ -154,19 +154,21 @@ class Viewport(object):
     
     def render(self):
         if self.needs_more_samples:
+            import time
+            start_time = time.perf_counter()
             result = self.pipeline.render(self.resolution, self.scene, False, self.is_new_frame)
+            log.debug('RENDER TIME: {} RESOLUTION: {}'.format(time.perf_counter() - start_time, self.resolution))
             self.is_new_frame = False
             self.needs_more_samples = self.pipeline.needs_more_samples()
             
-            if True or len(self.pbos_active) < 10 or not self.needs_more_samples: #Avoid too much latency
-                pbo = None
-                if len(self.pbos_inactive) > 0:
-                    pbo = self.pbos_inactive.pop()
-                else:
-                    pbo = PBO()
-                
-                pbo.setup(RenderTarget([result['COLOR']]))
-                self.pbos_active.append(pbo)
+            pbo = None
+            if len(self.pbos_inactive) > 0:
+                pbo = self.pbos_inactive.pop()
+            else:
+                pbo = PBO()
+            
+            pbo.setup(RenderTarget([result['COLOR']]))
+            self.pbos_active.append(pbo)
 
         if len(self.pbos_active) > 0:
             for i, pbo in reversed(list(enumerate(self.pbos_active))):
@@ -175,6 +177,7 @@ class Viewport(object):
                     self.pbos_inactive.extend(self.pbos_active[:i+1])
                     self.pbos_active = self.pbos_active[i+1:]
                     break
+            log.debug('{} PBOs active'.format(len(self.pbos_active)))
         
         return len(self.pbos_active) > 0
 
@@ -184,13 +187,15 @@ import multiprocessing.connection as connection
 
 PROFILE = False
 
-def main(pipeline_path, connection_addresses, shared_dic, log_path):
-    setup_logging(log_path)
+def main(pipeline_path, connection_addresses, shared_dic, log_path, debug_mode):
+    log_level = log.DEBUG if debug_mode else log.INFO
+    setup_logging(log_path, log_level)
+    log.info('DEBUG MODE: {}'.format(debug_mode))
 
-    log.debug('CONNECTIONS:')
+    log.info('CONNECTIONS:')
     connections = {}
     for name, address in connection_addresses.items():
-        log.debug('Name: {} Adress: {}'.format(name, address))
+        log.info('Name: {} Adress: {}'.format(name, address))
         connections[name] = connection.Client(address)
     
     glfw.init()
@@ -225,8 +230,6 @@ def main(pipeline_path, connection_addresses, shared_dic, log_path):
 
     viewports = {}
 
-    median_time = None
-
     while glfw.window_should_close(window) == False:
         
         try:
@@ -244,13 +247,13 @@ def main(pipeline_path, connection_addresses, shared_dic, log_path):
                 msg = connections['MATERIAL'].recv()
                 path = msg['path']
                 search_paths = msg['search_paths']
-                #print('COMPILE MATERIAL :', path)
+                log.debug('COMPILE MATERIAL : ' + path)
                 material = Bridge.Material.Material(path, pipeline, search_paths)
                 connections['MATERIAL'].send(material)
             
             while connections['MESH'].poll():
                 msg = connections['MESH'].recv()
-                #print('LOAD MESH', msg['name'])
+                log.debug('LOAD MESH : ' + msg['name'])
                 load_mesh(msg)
             
             while connections['TEXTURE'].poll():
@@ -264,7 +267,7 @@ def main(pipeline_path, connection_addresses, shared_dic, log_path):
                 size = w*h*channels
                 buffer = ipc.SharedMemoryRef(buffer_name, size*ctypes.sizeof(ctypes.c_float))
                 float_buffer = (ctypes.c_float*size).from_address(buffer.c.data)
-                #print('LOAD TEXTURE', name)
+                log.debug('LOAD TEXTURE : ' + name)
                 load_texture(name, resolution, channels, float_buffer, sRGB)
                 connections['TEXTURE'].send('COMPLETE')
             
@@ -273,7 +276,7 @@ def main(pipeline_path, connection_addresses, shared_dic, log_path):
                 name = msg['name']
                 pixels = msg['pixels']
                 nearest = msg['nearest']
-                #print('LOAD GRADIENT', name)
+                log.debug('LOAD GRADIENT : ' + name)
                 load_gradient(name, pixels, nearest)
             
             #TODO: Bad workaround to make sure the scene assets are loaded
@@ -287,8 +290,8 @@ def main(pipeline_path, connection_addresses, shared_dic, log_path):
             
             setup_viewports = {}
             while connections['RENDER'].poll():
-                #print('SETUP RENDER')
                 msg = connections['RENDER'].recv()
+                log.debug('SETUP RENDER : {}'.format(msg['viewport_id']))
                 setup_viewports[msg['viewport_id']] = msg
 
             for msg in setup_viewports.values():
@@ -308,7 +311,6 @@ def main(pipeline_path, connection_addresses, shared_dic, log_path):
             
             active_viewports = False
             for v_id, v in viewports.items():
-                #print('RENDER', v_id)
                 need_more_samples = v.render()
                 if need_more_samples == False and shared_dic[(v_id, 'FINISHED')] == False:
                     shared_dic[(v_id, 'FINISHED')] = True
@@ -321,13 +323,7 @@ def main(pipeline_path, connection_addresses, shared_dic, log_path):
             glfw.swap_buffers(window)
 
             if active_viewports:
-                t = time.perf_counter() - start_time
-                if median_time is None:
-                    median_time = t
-                def lerp(a, b, f):
-                    return a * (1 - f) + b * f
-                median_time = lerp(median_time, t, 0.1)
-                #log.debug('FRAME TIME: {} SMOOTH: {}'.format(t, median_time))
+                log.debug('FRAME TIME: {} '.format(time.perf_counter() - start_time))
             
             if PROFILE:
                 profiler.disable()
@@ -336,10 +332,7 @@ def main(pipeline_path, connection_addresses, shared_dic, log_path):
                 stats.sort_stats(pstats.SortKey.CUMULATIVE)
                 stats.print_stats()
                 if active_viewports:
-                    #print('PROFILE BEGIN--------------------------------------')
-                    #print(profiling_data.getvalue())
-                    #print('PROFILE END--------------------------------------')
-                    pass
+                    log.debug(profiling_data.getvalue())
         except:
             import traceback
             log.error(traceback.print_exc())

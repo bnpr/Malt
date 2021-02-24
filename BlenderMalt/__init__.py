@@ -82,6 +82,12 @@ class Preferences(bpy.types.AddonPreferences):
     malt_library_path : bpy.props.StringProperty(name="Malt Library Path", subtype='DIR_PATH')
     
     setup_vs_code : bpy.props.BoolProperty(name="Auto setup VSCode", default=True)
+    
+    def update_debug_mode(self, context):
+        if context.scene.render.engine == 'MALT':
+            context.scene.world.malt.update_pipeline(context)
+
+    debug_mode : bpy.props.BoolProperty(name="Debug Mode", default=False, update=update_debug_mode)
 
     def draw(self, context):
         layout = self.layout
@@ -93,6 +99,7 @@ class Preferences(bpy.types.AddonPreferences):
             row.enabled = False
             row.operator('wm.path_open', text="Open Session Log")
 
+        layout.prop(self, "debug_mode")
         layout.prop(self, "malt_library_path")
         layout.prop(self, "setup_vs_code")
 
