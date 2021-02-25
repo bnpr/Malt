@@ -5,7 +5,7 @@ current_dir = os.path.dirname(os.path.realpath(__file__))
 malt_folder = os.path.join(current_dir, '..', 'Malt')
 
 malt_dependencies_path = os.path.join(malt_folder, '.Dependencies')
-dependencies = ['glfw', 'PyOpenGL', 'PyOpenGL_accelerate', 'pcpp', 'Pyrr']
+dependencies = ['glfw', 'PyOpenGL', 'PyOpenGL_accelerate', 'pcpp', 'Pyrr', 'psutil']
 subprocess.check_call([sys.executable, '-m', 'pip', 'install', *dependencies, '--target', malt_dependencies_path])
 
 from distutils.dir_util import copy_tree
