@@ -44,16 +44,20 @@ class NPR_Pipeline(Pipeline):
 
         self.sampling_grid_size = 2
 
-        self.parameters.world['Background Color'] = Parameter((0.5,0.5,0.5,1), Type.FLOAT, 4)
-        self.parameters.scene['Line Width Max'] = Parameter(10, Type.INT)
-        self.parameters.scene['Samples Grid Size Preview'] = Parameter(4, Type.INT)
-        self.parameters.scene['Samples Grid Size Render'] = Parameter(8, Type.INT)
-        self.parameters.scene['Samples Width'] = Parameter(1.5, Type.FLOAT)
-        self.parameters.scene['Shadow Cascades Distribution Exponent'] = Parameter(21, Type.INT)
-        self.parameters.scene['ShadowMaps Spot Resolution'] = Parameter(2048, Type.INT)
-        self.parameters.scene['ShadowMaps Sun Resolution'] = Parameter(2048, Type.INT)
-        self.parameters.scene['ShadowMaps Point Resolution'] = Parameter(2048, Type.INT)
-        self.parameters.scene['Transparency Layers'] = Parameter(4, Type.INT)
+        self.parameters.world['Background.Color'] = Parameter((0.5,0.5,0.5,1), Type.FLOAT, 4)
+        self.parameters.scene['Line.Max Width'] = Parameter(10, Type.INT)
+        self.parameters.scene['Samples.Grid Size'] = Parameter(8, Type.INT)
+        self.parameters.scene['Samples.Grid Size @ Preview'] = Parameter(4, Type.INT)
+        self.parameters.scene['Samples.Width'] = Parameter(1.5, Type.FLOAT)
+        self.parameters.scene['ShadowMaps.Sun.Cascades.Distribution Exponent'] = Parameter(21, Type.INT)
+        self.parameters.scene['ShadowMaps.Spot.Resolution'] = Parameter(2048, Type.INT)
+        self.parameters.scene['ShadowMaps.Spot.Resolution @ Preview'] = Parameter(512, Type.INT)
+        self.parameters.scene['ShadowMaps.Sun.Resolution'] = Parameter(2048, Type.INT)
+        self.parameters.scene['ShadowMaps.Sun.Resolution @ Preview'] = Parameter(512, Type.INT)
+        self.parameters.scene['ShadowMaps.Point.Resolution'] = Parameter(2048, Type.INT)
+        self.parameters.scene['ShadowMaps.Point.Resolution @ Preview'] = Parameter(512, Type.INT)
+        self.parameters.scene['Transparency.Layers'] = Parameter(4, Type.INT)
+        self.parameters.scene['Transparency.Layers @ Preview'] = Parameter(1, Type.INT)
         
         self.parameters.light['Shader'] = MaterialParameter('', 'light')
 
@@ -132,17 +136,20 @@ class NPR_Pipeline(Pipeline):
     
     def do_render(self, resolution, scene, is_final_render, is_new_frame):
         #SETUP SAMPLING
+        '''
         if is_final_render:
             self.sampling_grid_size = scene.parameters['Samples Grid Size Render']
         else:
             self.sampling_grid_size = scene.parameters['Samples Grid Size Preview']
+        '''
+        self.sampling_grid_size = scene.parameters['Samples.Grid Size']
 
         if is_new_frame:
             self.fbo_accumulate.clear([(0,0,0,0)])
         self.fbo_opaque.clear([(0,0,0,0)])
         self.fbo_color.clear([(0,0,0,0)])
         
-        sample_offset = self.get_samples(scene.parameters['Samples Width'])[self.sample_count]
+        sample_offset = self.get_samples(scene.parameters['Samples.Width'])[self.sample_count]
         
         #SETUP SCENE BATCHES
         opaque_batches = {}
@@ -156,15 +163,15 @@ class NPR_Pipeline(Pipeline):
 
         #SETUP UNIFORM BLOCKS
         self.common_buffer.load(scene, resolution, sample_offset, self.sample_count)
-        self.lights_buffer.load(scene, Lighting.SUN_CASCADES, scene.parameters['Shadow Cascades Distribution Exponent'])
+        self.lights_buffer.load(scene, Lighting.SUN_CASCADES, scene.parameters['ShadowMaps.Sun.Cascades.Distribution Exponent'])
         self.shadowmaps_opaque.load(scene,
-            scene.parameters['ShadowMaps Spot Resolution'],
-            scene.parameters['ShadowMaps Sun Resolution'],
-            scene.parameters['ShadowMaps Point Resolution'])
+            scene.parameters['ShadowMaps.Spot.Resolution'],
+            scene.parameters['ShadowMaps.Sun.Resolution'],
+            scene.parameters['ShadowMaps.Point.Resolution'])
         self.shadowmaps_transparent.load(scene,
-            scene.parameters['ShadowMaps Spot Resolution'],
-            scene.parameters['ShadowMaps Sun Resolution'],
-            scene.parameters['ShadowMaps Point Resolution'])
+            scene.parameters['ShadowMaps.Spot.Resolution'],
+            scene.parameters['ShadowMaps.Sun.Resolution'],
+            scene.parameters['ShadowMaps.Point.Resolution'])
         
         UBOS = {
             'COMMON_UNIFORMS' : self.common_buffer,
@@ -196,14 +203,14 @@ class NPR_Pipeline(Pipeline):
         #Load scene camera settings
         self.common_buffer.load(scene, resolution, sample_offset, self.sample_count)
 
-        result = self.draw_layer(opaque_batches, scene, scene.world_parameters['Background Color'])
+        result = self.draw_layer(opaque_batches, scene, scene.world_parameters['Background.Color'])
 
         self.copy_textures(self.fbo_opaque, [result], self.t_depth)
         
         self.fbo_transparent.clear([(0,0,0,0)], -1)
         self.fbo_last_layer_id.clear([0])
 
-        for i in range(scene.parameters['Transparency Layers']):
+        for i in range(scene.parameters['Transparency.Layers']):
             result = self.draw_layer(transparent_batches, scene)
             self.copy_textures(self.fbo_last_layer_id, [self.t_prepass_id])
 
@@ -269,7 +276,7 @@ class NPR_Pipeline(Pipeline):
         
         #COMPOSITE LINE
         composited_line = self.line_rendering.composite_line(
-            scene.parameters['Line Width Max'], self, self.common_buffer, 
+            scene.parameters['Line.Max Width'], self, self.common_buffer, 
             self.t_main_color, self.t_depth, self.t_prepass_id, self.t_line_color, self.t_line_data)
         
         return composited_line

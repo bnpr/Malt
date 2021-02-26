@@ -39,16 +39,16 @@ class MaltRenderEngine(bpy.types.RenderEngine):
     def __del__(self):
         MaltPipeline.get_bridge().free_viewport_id(self.bridge_id)
     
-    def get_scene(self, context, depsgraph, request_scene_update):
+    def get_scene(self, context, depsgraph, request_scene_update, overrides):
         def flatten_matrix(matrix):
             return [e for v in matrix.transposed() for e in v]
-
+        
         if request_scene_update == True:
             scene = Scene.Scene()
             self.scene = scene
         scene = self.scene
-        scene.parameters = depsgraph.scene_eval.malt_parameters.get_parameters()
-        scene.world_parameters = depsgraph.scene_eval.world.malt_parameters.get_parameters()
+        scene.parameters = depsgraph.scene_eval.malt_parameters.get_parameters(overrides)
+        scene.world_parameters = depsgraph.scene_eval.world.malt_parameters.get_parameters(overrides)
 
         scene.frame = depsgraph.scene_eval.frame_current
         r = depsgraph.scene_eval.render
@@ -87,7 +87,7 @@ class MaltRenderEngine(bpy.types.RenderEngine):
                 name = MaltMeshes.get_mesh_name(obj)
                 if name not in meshes:
                     # (Uses obj.original) Malt Parameters are not present in the evaluated mesh
-                    parameters = obj.original.data.malt_parameters.get_parameters()
+                    parameters = obj.original.data.malt_parameters.get_parameters(overrides)
                     malt_mesh = None
                     
                     if depsgraph.mode == 'VIEWPORT':
@@ -108,7 +108,7 @@ class MaltRenderEngine(bpy.types.RenderEngine):
                 mirror_scale = scale[0]*scale[1]*scale[2] < 0.0
                 matrix = flatten_matrix(matrix)
 
-                obj_parameters = obj.malt_parameters.get_parameters()
+                obj_parameters = obj.malt_parameters.get_parameters(overrides)
                 
                 if len(obj.material_slots) > 0:
                     for i, slot in enumerate(obj.material_slots):
@@ -118,9 +118,9 @@ class MaltRenderEngine(bpy.types.RenderEngine):
                             if material_name not in materials.keys():
                                 shader = {
                                     'path': bpy.path.abspath(slot.material.malt.shader_source),
-                                    'parameters': slot.material.malt.parameters.get_parameters()
+                                    'parameters': slot.material.malt.parameters.get_parameters(overrides)
                                 }
-                                parameters = slot.material.malt_parameters.get_parameters()
+                                parameters = slot.material.malt_parameters.get_parameters(overrides)
                                 materials[material_name] = Scene.Material(shader, parameters)
                             material = materials[material_name]
                         result = Scene.Object(matrix, mesh[i], material, obj_parameters, mirror_scale)
@@ -142,7 +142,7 @@ class MaltRenderEngine(bpy.types.RenderEngine):
                 light.radius = malt_light.radius
                 light.spot_angle = malt_light.spot_angle
                 light.spot_blend = malt_light.spot_blend_angle
-                light.parameters = obj.data.malt_parameters.get_parameters()
+                light.parameters = obj.data.malt_parameters.get_parameters(overrides)
 
                 types = {
                     'SUN' : 1,
@@ -183,7 +183,9 @@ class MaltRenderEngine(bpy.types.RenderEngine):
         self.size_y = int(scene.render.resolution_y * scale)
         resolution = (self.size_x, self.size_y)
 
-        scene = self.get_scene(None, depsgraph, True)
+        overrides = ['Final Render']
+
+        scene = self.get_scene(None, depsgraph, True, overrides)
         MaltPipeline.get_bridge().render(0, resolution, scene, True)
 
         pixels = None
@@ -234,9 +236,13 @@ class MaltRenderEngine(bpy.types.RenderEngine):
             profiler.enable()
             if self.request_new_frame:
                 self.profiling_data = io.StringIO()
+        
+        overrides = []
+        if context.space_data.shading.type == 'MATERIAL':
+            overrides.append('Preview')
 
+        scene = self.get_scene(context, depsgraph, self.request_scene_update, overrides)
         resolution = context.region.width, context.region.height
-        scene = self.get_scene(context, depsgraph, self.request_scene_update)
 
         if self.request_new_frame:
             MaltPipeline.get_bridge().render(self.bridge_id, resolution, scene, self.request_scene_update)

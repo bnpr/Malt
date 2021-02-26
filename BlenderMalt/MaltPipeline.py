@@ -57,6 +57,9 @@ class MaltPipeline(bpy.types.PropertyGroup):
     
     pipeline : bpy.props.StringProperty(name="Malt Pipeline", subtype='FILE_PATH', update=update_pipeline)
 
+    # There's no StringVectorProperty ?!?!?
+    overrides : bpy.props.StringProperty(name='Pipeline Overrides', default='Preview,Final Render')
+
     def draw_ui(self, layout):
         layout.prop(self, 'pipeline')
 

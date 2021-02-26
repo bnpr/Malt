@@ -1,5 +1,6 @@
 # Copyright (c) 2020 BlenderNPR and contributors. MIT license. 
 
+from re import split
 import bpy
 
 from Malt.Parameter import *
@@ -44,20 +45,10 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
             self['_RNA_UI'] = {}
         return self['_RNA_UI']
 
-    def setup(self, parameters):
+    def setup(self, parameters, replace_parameters=True):
         rna = self.get_rna()
-
-        #TODO: We should purge non active properties (specially textures)
-        # at some point, likely on file save or load 
-        # so we don't lose them immediately when changing shaders/pipelines
-        for key, value in rna.items():
-            rna[key]['active'] = False
         
-        for name, parameter in parameters.items():
-            if name.isupper() or name.startswith('_'):
-                # We treat underscored and all caps uniforms as "private"
-                continue
-
+        def setup_parameter(name, parameter):
             if name not in rna.keys():
                 rna[name] = {}
 
@@ -125,57 +116,106 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
             rna[name]["default"] = parameter.default_value
             rna[name]['type'] = parameter.type
             rna[name]['size'] = parameter.size
+        
+        #TODO: We should purge non active properties (specially textures)
+        # at some point, likely on file save or load 
+        # so we don't lose them immediately when changing shaders/pipelines
+        if replace_parameters:
+            for key, value in rna.items():
+                if '@' not in key:
+                    rna[key]['active'] = False
+        
+        for name, parameter in parameters.items():
+            if name.isupper() or name.startswith('_'):
+                # We treat underscored and all caps uniforms as "private"
+                continue
+            setup_parameter(name, parameter)
 
+        for key, value in rna.items():
+            if '@' in key and key not in parameters.keys():
+                main_name = key.split(' @ ')[0]
+                rna[key]['active'] = rna[main_name]['active'] and rna[key]['active']
+                if rna[key]['active']:
+                    parameter = Parameter(rna[main_name]['default'], rna[main_name]['type'], rna[main_name]['size'])
+                    setup_parameter(key, parameter)
+        
+        for key, value in rna.items():
             #TODO: for now we assume we want floats as colors
             # ideally it should be opt-in in the UI,
             # so we can give them propper min/max values
-            if parameter.type == Type.FLOAT and parameter.size >= 3:
-                rna[name]['subtype'] = 'COLOR'
-                rna[name]['use_soft_limits'] = True
-                rna[name]['soft_min'] = 0.0
-                rna[name]['soft_max'] = 1.0
+            if rna[key]['type'] == Type.FLOAT and rna[key]['size'] >= 3:
+                rna[key]['subtype'] = 'COLOR'
+                rna[key]['use_soft_limits'] = True
+                rna[key]['soft_min'] = 0.0
+                rna[key]['soft_max'] = 1.0
             else:
-                rna[name]['subtype'] = 'NONE'
-                rna[name]['use_soft_limits'] = False
-        
+                rna[key]['subtype'] = 'NONE'
+                rna[key]['use_soft_limits'] = False
+
         # Force a depsgraph update. 
         # Otherwise these won't be available inside scene_eval
         self.id_data.update_tag()
+        for screen in bpy.data.screens:
+            for area in screen.areas:
+                area.tag_redraw()
+    
+    def add_override(self, property_name, override_name):
+        rna = self.get_rna()
+        new_name = property_name + ' @ ' + override_name
+        property = {
+            new_name: Parameter(rna[property_name]['default'], rna[property_name]['type'], rna[property_name]['size'])
+        }
+        self.setup(property, replace_parameters= False)
+    
+    def remove_override(self, property):
+        rna = self.get_rna()
+        if property in rna:
+            rna[property]['active'] = False
+            self.id_data.update_tag()
 
-    def get_parameters(self):
+    def get_parameters(self, overrides=[]):
         if '_RNA_UI' not in self.keys():
             return {}
         rna = self.get_rna()
         parameters = {}
         for key in rna.keys():
+            if '@' in key:
+                continue
             if rna[key]['active'] == False:
                 continue
+            result_key = key
+            for override in reversed(overrides):
+                override_key = key + ' @ ' +  override
+                if override_key in rna.keys():
+                    if rna[override_key]['active']:
+                        key = override_key
+
             if rna[key]['type'] in (Type.INT, Type.FLOAT):
                 try:
-                    parameters[key] = tuple(self[key])
+                    parameters[result_key] = tuple(self[key])
                 except:
-                    parameters[key] = self[key]
+                    parameters[result_key] = self[key]
             elif rna[key]['type'] == Type.BOOL:
-                parameters[key] = bool(self.bools[key].boolean)
+                parameters[result_key] = bool(self.bools[key].boolean)
             elif rna[key]['type'] == Type.TEXTURE:
                 texture = self.textures[key].texture
                 if texture:
-                    parameters[key] = MaltTextures.get_texture(texture)
+                    parameters[result_key] = MaltTextures.get_texture(texture)
                 else:
-                    parameters[key] = None
+                    parameters[result_key] = None
             elif rna[key]['type'] == Type.GRADIENT:
                 #TODO: Only works for materials
                 color_ramp = get_color_ramp(self.id_data, key).color_ramp
-                parameters[key] = MaltTextures.get_gradient(color_ramp, self.id_data.name_full, key)
+                parameters[result_key] = MaltTextures.get_gradient(color_ramp, self.id_data.name_full, key)
             elif rna[key]['type'] == Type.MATERIAL:
                 material = self.materials[key].material
                 extension = self.materials[key].extension
                 if material:
                     shader = material.malt.get_shader(extension)
                     if shader:
-                        parameters[key] = shader[MaltPipeline.get_pipeline().__class__.__name__]
+                        parameters[result_key] = shader[MaltPipeline.get_pipeline().__class__.__name__]
                         continue
-                parameters[key] = None
+                parameters[result_key] = None
         return parameters
 
     
@@ -194,6 +234,9 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
         # the declaration order
         keys = sorted(rna.keys(), key=natual_sort_key)
 
+        #layout.use_property_split = True
+        layout.use_property_decorate = False
+        
         namespace_stack = [(None, layout)]
         
         for key in keys:
@@ -216,26 +259,54 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                         box.label(text=name + " :")
                         namespace_stack.append((name, box))
                     layout = namespace_stack[stack_i][1]
+            
+            names = [name.replace('_',' ') for name in names]
 
             name = names[-1]
 
+            def make_row(label_only = False):
+                is_override = False
+                label = name
+                if '@' in name:
+                    is_override = True
+                    label = '⇲ '+name.split(' @ ')[1]
+                
+                row = layout.row(align=True)
+                result = row.split()
+                if not label_only:
+                    result = result.split(factor=0.66)
+                    result.alignment = 'RIGHT'
+                result.label(text=label)
+
+                if is_override:
+                    delete_op = row.operator('wm.malt_delete_override', text='', icon='X')
+                    delete_op.properties_path = to_json_rna_path(self)
+                    delete_op.property = key
+                else:
+                    override_op = row.operator('wm.malt_new_override', text='', icon='DECORATE_OVERRIDE')
+                    override_op.properties_path = to_json_rna_path(self)
+                    override_op.property = key
+                
+                return result
+                
             if rna[key]['type'] in (Type.INT, Type.FLOAT):
                 #TODO: add subtype toggle
-                layout.prop(self, '["'+key+'"]', text=name)
+                make_row().prop(self, '["'+key+'"]', text='')
             elif rna[key]['type'] == Type.BOOL:
-                layout.prop(self.bools[key], 'boolean', text=name)
+                make_row().prop(self.bools[key], 'boolean', text='')
             elif rna[key]['type'] == Type.TEXTURE:
-                layout.label(text=name + " :")
+                make_row(True)
                 row = layout.row()
-                row = row.split(factor=0.8)
+                if self.textures[key].texture:
+                    row = row.split(factor=0.8)
                 row.template_ID(self.textures[key], "texture", new="image.new", open="image.open")
                 if self.textures[key].texture:
                     row.prop(self.textures[key].texture.colorspace_settings, 'name', text='')
             elif rna[key]['type'] == Type.GRADIENT:
-                layout.label(text=name + " :")
+                make_row(True)
                 layout.template_color_ramp(get_color_ramp(self.id_data, key), 'color_ramp')
             elif rna[key]['type'] == Type.MATERIAL:
-                layout.label(text=name + " :")
+                make_row(True)
                 row = layout.row(align=True)
                 row.template_ID(self.materials[key], "material")
                 material_path = to_json_rna_path(self.materials[key])
@@ -285,6 +356,47 @@ class OT_MaltNewMaterial(bpy.types.Operator):
         else:
             material_wrapper.material = bpy.data.materials.new('Material')
         material_wrapper.id_data.update_tag()
+        return {'FINISHED'}
+
+class OT_MaltNewOverride(bpy.types.Operator):
+    bl_idname = "wm.malt_new_override"
+    bl_label = "Malt Add A Property Override"
+    bl_options = {'INTERNAL'}
+
+    properties_path : bpy.props.StringProperty()
+    property : bpy.props.StringProperty()
+    
+    def get_override_enums(self, context):
+        overrides = context.scene.world.malt.overrides.split(',')
+        result = []
+        for i, override in enumerate(overrides):
+            result.append((override, override, '', i))
+        return result
+    override : bpy.props.EnumProperty(items=get_override_enums)
+    
+    def invoke(self, context, event):
+        return context.window_manager.invoke_props_dialog(self)
+    
+    def draw(self, context):
+        layout = self.layout
+        layout.prop(self, "override")
+    
+    def execute(self, context):
+        properties = from_json_rna_path(self.properties_path)
+        properties.add_override(self.property, self.override)
+        return {'FINISHED'}
+
+class OT_MaltDeleteOverride(bpy.types.Operator):
+    bl_idname = "wm.malt_delete_override"
+    bl_label = "Malt Delete A Property Override"
+    bl_options = {'INTERNAL'}
+
+    properties_path : bpy.props.StringProperty()
+    property : bpy.props.StringProperty()
+
+    def execute(self, context):
+        properties = from_json_rna_path(self.properties_path)
+        properties.remove_override(self.property)
         return {'FINISHED'}
 
 class MALT_PT_Base(bpy.types.Panel):
@@ -380,6 +492,8 @@ classes = (
     MaltBoolPropertyWrapper,
     MaltPropertyGroup,
     OT_MaltNewMaterial,
+    OT_MaltNewOverride,
+    OT_MaltDeleteOverride,
     MALT_PT_Base,
     MALT_PT_Scene,
     MALT_PT_World,
