@@ -203,7 +203,7 @@ def main(pipeline_path, connection_addresses, shared_dic, log_path, debug_mode):
         log.info('PROCESS PRIORITY: {}'.format(psutil.Process().nice()))
     except:
         import traceback
-        log.error(traceback.print_exc())
+        log.error(traceback.format_exc())
     
 
     log.info('CONNECTIONS:')
@@ -349,7 +349,7 @@ def main(pipeline_path, connection_addresses, shared_dic, log_path, debug_mode):
                     log.debug(profiling_data.getvalue())
         except:
             import traceback
-            log.error(traceback.print_exc())
+            log.error(traceback.format_exc())
 
     glfw.terminate()
 

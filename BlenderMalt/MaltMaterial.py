@@ -116,7 +116,6 @@ def reset_materials():
     _SHADER_PATHS = []
 
 import time
-import traceback
 __TIMESTAMP = time.time()
 
 INITIALIZED = False
@@ -160,8 +159,8 @@ def track_shader_changes():
         __TIMESTAMP = start_time
         INITIALIZED = True
     except:
-        traceback.print_exc()
-        pass
+        import traceback, logging as log
+        log.error(traceback.format_exc())
     return 1 #Track again in 1 second
     
 

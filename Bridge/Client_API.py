@@ -11,7 +11,7 @@ def bridge_method(function):
                 return function(*args, **kwargs)
         except:
             import traceback
-            print(traceback.print_exc())
+            log.error(traceback.format_exc())
             self.lost_connection = True
         return None
     return result
