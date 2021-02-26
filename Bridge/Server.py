@@ -136,6 +136,8 @@ class Viewport(object):
         
         if scene_update or self.scene is None:
             for mesh in scene.meshes:
+                if mesh is None:
+                    continue
                 for i, submesh in enumerate(mesh):
                     submesh.mesh = Bridge.Mesh.MESHES[submesh.mesh][i]
             
