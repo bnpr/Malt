@@ -1,4 +1,5 @@
 # Copyright (c) 2020 BlenderNPR and contributors. MIT license. 
+import logging as log
 
 from Malt.GL import Mesh
 from Malt.GL.GL import *
@@ -60,16 +61,23 @@ def load_mesh(msg):
             bind_VBO(result.normal, 1, 3, GL_SHORT, GL_TRUE)
         
         max_uv = 4
+        max_vertex_colors = 4
         tangent0_index = 2
         uv0_index = tangent0_index + max_uv
         color0_index = uv0_index + max_uv
         for i, tangent in enumerate(result.tangents):
-            assert(i < max_uv)
+            if i >= max_uv:
+                break
             bind_VBO(tangent, tangent0_index + i, 4)
         for i, uv in enumerate(result.uvs):
-            assert(i < max_uv)
+            if i >= max_uv:
+                log.warning('{} : UV count exceeds max supported UVs ({})'.format(name, max_uv))
+                break
             bind_VBO(uv, uv0_index + i, 2)
         for i, color in enumerate(result.colors):
+            if i >= max_vertex_colors:
+                log.warning('{} : Vertex Color Layer count exceeds max supported layers ({})'.format(name, max_uv))
+                break
             bind_VBO(color, color0_index + i, 4, GL_UNSIGNED_BYTE, GL_TRUE)
 
         glBindVertexArray(0)
