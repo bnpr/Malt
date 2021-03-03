@@ -1,6 +1,6 @@
 # Copyright (c) 2020 BlenderNPR and contributors. MIT license. 
 
-import os
+import os, time
 
 import bpy
 
@@ -9,6 +9,7 @@ from BlenderMalt import MaltMaterial, MaltMeshes, MaltTextures
 __BRIDGE = None
 __PIPELINE_PARAMETERS = None
 __INITIALIZED = False
+TIMESTAMP = time.time()
 
 def get_bridge():
     global __BRIDGE
@@ -32,6 +33,9 @@ def set_initialized(initialized):
 class MaltPipeline(bpy.types.PropertyGroup):
 
     def update_pipeline(self, context):
+        global TIMESTAMP
+        TIMESTAMP = time.time()
+        
         #TODO: Sync all scenes. Only one active pipeline per Blender instance is supported atm.
         pipeline = self.pipeline
         if pipeline == '':
@@ -173,11 +177,29 @@ def load_scene(dummy1=None,dummy2=None):
     global __INITIALIZED
     __INITIALIZED = False
 
+def track_pipeline_changes():
+    if bpy.context.scene.render.engine != 'MALT':
+        return 1
+    print('TRACK PIPELINE CHANGES')
+    try:
+        scene = bpy.context.scene
+        malt = scene.world.malt
+        path = bpy.path.abspath(malt.pipeline)
+        stats = os.stat(path)
+        if stats.st_mtime > TIMESTAMP:
+            malt.update_pipeline(bpy.context)
+    except:
+        import traceback
+        print(traceback.format_exc())
+
+    return 1
+
 def register():
     for _class in classes: bpy.utils.register_class(_class)
     bpy.types.World.malt = bpy.props.PointerProperty(type=MaltPipeline)
     bpy.app.handlers.depsgraph_update_post.append(depsgraph_update)
     bpy.app.handlers.load_post.append(load_scene)
+    bpy.app.timers.register(track_pipeline_changes, persistent=True)
 
     # Workaround https://developer.blender.org/rB04c5471ceefb41c9e49bf7c86f07e9e7b8426bb3
     import sys, platform, os, multiprocessing as mp
@@ -191,4 +213,5 @@ def unregister():
     del bpy.types.World.malt
     bpy.app.handlers.depsgraph_update_post.remove(depsgraph_update)
     bpy.app.handlers.load_post.remove(load_scene)
+    bpy.app.timers.unregister(track_pipeline_changes)
 
