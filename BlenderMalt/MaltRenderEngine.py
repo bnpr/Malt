@@ -43,12 +43,18 @@ class MaltRenderEngine(bpy.types.RenderEngine):
         def flatten_matrix(matrix):
             return [e for v in matrix.transposed() for e in v]
         
+        materials = {}
+        meshes = {}
+        resources = {
+            'materials': materials,
+        }
+        
         if request_scene_update == True:
             scene = Scene.Scene()
             self.scene = scene
         scene = self.scene
-        scene.parameters = depsgraph.scene_eval.malt_parameters.get_parameters(overrides)
-        scene.world_parameters = depsgraph.scene_eval.world.malt_parameters.get_parameters(overrides)
+        scene.parameters = depsgraph.scene_eval.malt_parameters.get_parameters(overrides, resources)
+        scene.world_parameters = depsgraph.scene_eval.world.malt_parameters.get_parameters(overrides, resources)
 
         scene.frame = depsgraph.scene_eval.frame_current
         r = depsgraph.scene_eval.render
@@ -79,15 +85,12 @@ class MaltRenderEngine(bpy.types.RenderEngine):
             return scene
 
         #Objects
-        materials = {}
-        meshes = {}
-
         def add_object(obj, matrix):
             if obj.display_type in ['TEXTURED','SOLID'] and obj.type in ('MESH','CURVE','SURFACE','FONT'):
                 name = MaltMeshes.get_mesh_name(obj)
                 if name not in meshes:
                     # (Uses obj.original) Malt Parameters are not present in the evaluated mesh
-                    parameters = obj.original.data.malt_parameters.get_parameters(overrides)
+                    parameters = obj.original.data.malt_parameters.get_parameters(overrides, resources)
                     malt_mesh = None
                     
                     if depsgraph.mode == 'VIEWPORT':
@@ -108,7 +111,7 @@ class MaltRenderEngine(bpy.types.RenderEngine):
                 mirror_scale = scale[0]*scale[1]*scale[2] < 0.0
                 matrix = flatten_matrix(matrix)
 
-                obj_parameters = obj.malt_parameters.get_parameters(overrides)
+                obj_parameters = obj.malt_parameters.get_parameters(overrides, resources)
                 
                 if len(obj.material_slots) > 0:
                     for i, slot in enumerate(obj.material_slots):
@@ -118,9 +121,9 @@ class MaltRenderEngine(bpy.types.RenderEngine):
                             if material_name not in materials.keys():
                                 shader = {
                                     'path': bpy.path.abspath(slot.material.malt.shader_source),
-                                    'parameters': slot.material.malt.parameters.get_parameters(overrides)
+                                    'parameters': slot.material.malt.parameters.get_parameters(overrides, resources)
                                 }
-                                parameters = slot.material.malt_parameters.get_parameters(overrides)
+                                parameters = slot.material.malt_parameters.get_parameters(overrides, resources)
                                 materials[material_name] = Scene.Material(shader, parameters)
                             material = materials[material_name]
                         result = Scene.Object(matrix, mesh[i], material, obj_parameters, mirror_scale)
@@ -142,7 +145,7 @@ class MaltRenderEngine(bpy.types.RenderEngine):
                 light.radius = malt_light.radius
                 light.spot_angle = malt_light.spot_angle
                 light.spot_blend = malt_light.spot_blend_angle
-                light.parameters = obj.data.malt_parameters.get_parameters(overrides)
+                light.parameters = obj.data.malt_parameters.get_parameters(overrides, resources)
 
                 types = {
                     'SUN' : 1,

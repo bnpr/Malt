@@ -6,6 +6,8 @@ from Malt.GL.GL import *
 from Malt.GL.RenderTarget import RenderTarget
 from Malt.GL.Texture import Texture
 
+import logging as log
+
 class Extended_NPR_Pipeline(NPR_Pipeline):
 
     def __init__(self):
@@ -21,12 +23,19 @@ class Extended_NPR_Pipeline(NPR_Pipeline):
     def draw_layer(self, batches, scene, background_color=(0,0,0,0)):
         result = super().draw_layer(batches, scene, background_color)
 
-        shader = scene.world_parameters['Custom Post Process']
-        if shader and shader['SHADER']:
-            # Pass any input needed to the shader (must be declared in the shader source)
-            shader['SHADER'].textures['IN_COLOR'] = result
-            self.draw_screen_pass(shader['SHADER'], self.fbo_postpro)
-
-            return self.t_postpro
+        material = scene.world_parameters['Custom Post Process']
+        if material and material.shader:
+            try:
+                shader = material.shader['SHADER']
+                # Pass any input needed to the shader (must be declared in the shader source)
+                shader.textures['IN_COLOR'] = result
+                shader.textures['IN_ID'] = self.t_prepass_id
+                self.draw_screen_pass(shader, self.fbo_postpro)
+                return self.t_postpro
+            except:
+                import traceback
+                log.error(traceback.format_exc)
         
         return result
+
+PIPELINE = Extended_NPR_Pipeline

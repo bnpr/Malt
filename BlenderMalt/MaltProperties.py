@@ -4,6 +4,7 @@ from re import split
 import bpy
 
 from Malt.Parameter import *
+from Malt import Scene
 
 from BlenderMalt import MaltPipeline, MaltTextures
 
@@ -173,7 +174,7 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
             rna[property]['active'] = False
             self.id_data.update_tag()
 
-    def get_parameters(self, overrides=[]):
+    def get_parameters(self, overrides, resources):
         if '_RNA_UI' not in self.keys():
             return {}
         rna = self.get_rna()
@@ -211,11 +212,18 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                 material = self.materials[key].material
                 extension = self.materials[key].extension
                 if material:
-                    shader = material.malt.get_shader(extension)
-                    if shader:
-                        parameters[result_key] = shader[MaltPipeline.get_pipeline().__class__.__name__]
-                        continue
-                parameters[result_key] = None
+                    materials = resources['materials']
+                    material_name = material.name_full
+                    if material_name not in materials.keys():
+                        shader = {
+                            'path': bpy.path.abspath(material.malt.shader_source),
+                            'parameters': material.malt.parameters.get_parameters(overrides, resources)
+                        }
+                        material_parameters = material.malt_parameters.get_parameters(overrides, resources)
+                        materials[material_name] = Scene.Material(shader, material_parameters)
+                    parameters[result_key] = materials[material_name]
+                else:
+                    parameters[result_key] = None
         return parameters
 
     
