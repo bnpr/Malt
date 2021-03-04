@@ -180,14 +180,14 @@ def load_scene(dummy1=None,dummy2=None):
 def track_pipeline_changes():
     if bpy.context.scene.render.engine != 'MALT':
         return 1
-    print('TRACK PIPELINE CHANGES')
     try:
         scene = bpy.context.scene
         malt = scene.world.malt
         path = bpy.path.abspath(malt.pipeline)
-        stats = os.stat(path)
-        if stats.st_mtime > TIMESTAMP:
-            malt.update_pipeline(bpy.context)
+        if os.path.exists(path):
+            stats = os.stat(path)
+            if stats.st_mtime > TIMESTAMP:
+                malt.update_pipeline(bpy.context)
     except:
         import traceback
         print(traceback.format_exc())
