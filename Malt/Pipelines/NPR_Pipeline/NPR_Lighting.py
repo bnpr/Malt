@@ -60,13 +60,15 @@ class NPR_LightShaders(object):
                 self.fbos.append(RenderTarget([ArrayLayerTarget(self.texture, i)]))
         
         for i, light in enumerate(lights):
-            shader = light.parameters['Shader']['SHADER']
-            pipeline.common_buffer.bind(shader.uniform_blocks['COMMON_UNIFORMS'])
-            pipeline.lights_buffer.bind(shader.uniform_blocks['SCENE_LIGHTS'])
-            shader.textures['IN_DEPTH'] = depth_texture
-            if 'LIGHT_INDEX' in shader.uniforms:
-                shader.uniforms['LIGHT_INDEX'].set_value(i)
-            pipeline.draw_screen_pass(shader, self.fbos[i])
+            material = light.parameters['Shader']
+            if material.shader and 'SHADER' in material.shader.keys():
+                shader = material.shader['SHADER']
+                pipeline.common_buffer.bind(shader.uniform_blocks['COMMON_UNIFORMS'])
+                pipeline.lights_buffer.bind(shader.uniform_blocks['SCENE_LIGHTS'])
+                shader.textures['IN_DEPTH'] = depth_texture
+                if 'LIGHT_INDEX' in shader.uniforms:
+                    shader.uniforms['LIGHT_INDEX'].set_value(i)
+                pipeline.draw_screen_pass(shader, self.fbos[i])
     
     def shader_callback(self, shader):
         if 'LIGHTS_CUSTOM_SHADING' in shader.uniform_blocks:
