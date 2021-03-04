@@ -26,15 +26,15 @@ struct Light
 };
 
 #define MAX_SPOTS 64
-#define MAX_SUNS 8
-#define SUN_CASCADES 6
+#define MAX_SUNS 64
 
 struct SceneLights
 {
     Light lights[MAX_LIGHTS];
     int lights_count;
+    int cascades_count;
     mat4 spot_matrices[MAX_SPOTS];
-    mat4 sun_matrices[MAX_SUNS * SUN_CASCADES];
+    mat4 sun_matrices[MAX_SUNS];
 };
 
 layout(std140) uniform SCENE_LIGHTS
@@ -132,7 +132,8 @@ LitSurface lit_surface(vec3 position, vec3 normal, Light light, bool shadows)
             }
             if(light.type == LIGHT_SUN)
             {
-                bias = 1e-3;
+                float bias = 1e-3;
+                //bias *= 1.0 - abs(S.NoL);
                 S.shadow = sun_shadow(position, light, SHADOWMAPS_DEPTH_SUN, bias, S.cascade).shadow;
             }
             if(light.type == LIGHT_POINT)
@@ -172,9 +173,9 @@ ShadowData sun_shadow(vec3 position, Light light, sampler2DArray shadowmap, floa
     ShadowData S;
     S.shadow = false;
 
-    for(int c = 0; c < SUN_CASCADES; c++)
+    for(int c = 0; c < LIGHTS.cascades_count; c++)
     {
-        int index = light.type_index * SUN_CASCADES + c;
+        int index = light.type_index * LIGHTS.cascades_count + c;
         
         S.light_space = project_point(LIGHTS.sun_matrices[index], position);
         S.light_space.xy += (SAMPLE_OFFSET / shadowmap_size);

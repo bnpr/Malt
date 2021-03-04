@@ -53,8 +53,7 @@ class C_Light(ctypes.Structure):
     ]
 
 MAX_SPOTS = 64
-MAX_SUNS = 8
-SUN_CASCADES = 6
+MAX_SUNS = 64
 
 MAX_LIGHTS = 128
 
@@ -63,9 +62,10 @@ class C_LightsBuffer(ctypes.Structure):
     _fields_ = [
         ('lights', C_Light*MAX_LIGHTS),
         ('lights_count', ctypes.c_int),
-        ('__padding', ctypes.c_int32*3),
+        ('cascades_count', ctypes.c_int),
+        ('__padding', ctypes.c_int32*2),
         ('spot_matrices', ctypes.c_float*16*MAX_SPOTS),
-        ('sun_matrices', ctypes.c_float*16*(MAX_SUNS*SUN_CASCADES)),
+        ('sun_matrices', ctypes.c_float*16*MAX_SUNS),
     ]
 
 class ShadowMaps(object):
@@ -77,7 +77,6 @@ class ShadowMaps(object):
         self.spot_depth_t = None
         self.spot_fbos = []
 
-        self.sun_cascades = SUN_CASCADES
         self.max_suns = 1
         self.sun_resolution = 2048
         
@@ -92,7 +91,7 @@ class ShadowMaps(object):
 
         self.initialized = False
 
-    def load(self, scene, spot_resolution, sun_resolution, point_resolution):
+    def load(self, scene, spot_resolution, sun_resolution, point_resolution, sun_cascades):
         needs_setup = self.initialized is False
         self.initialized = True
         
@@ -110,6 +109,7 @@ class ShadowMaps(object):
             needs_setup = True
         
         sun_count = len([l for l in scene.lights if l.type == LIGHT_SUN])
+        sun_count  = sun_count * sun_cascades
         if sun_count > self.max_suns:
             self.max_suns = sun_count
             needs_setup = True 
@@ -126,7 +126,7 @@ class ShadowMaps(object):
     
     def setup(self, create_fbos=True):
         self.spot_depth_t = TextureArray((self.spot_resolution, self.spot_resolution), self.max_spots, GL_DEPTH_COMPONENT32F)
-        self.sun_depth_t = TextureArray((self.sun_resolution, self.sun_resolution), self.max_suns * self.sun_cascades, GL_DEPTH_COMPONENT32F)
+        self.sun_depth_t = TextureArray((self.sun_resolution, self.sun_resolution), self.max_suns, GL_DEPTH_COMPONENT32F)
         self.point_depth_t = CubeMapArray((self.point_resolution, self.point_resolution), self.max_points, GL_DEPTH_COMPONENT32F)
 
         if create_fbos:
@@ -145,7 +145,7 @@ class ShadowMaps(object):
     def clear(self, spot_count, sun_count, point_count):
         for i in range(spot_count):
             self.spot_fbos[i].clear(depth=1)
-        for i in range(sun_count * self.sun_cascades):
+        for i in range(sun_count):
             self.sun_fbos[i].clear(depth=1)
         for i in range(point_count*6):
             self.point_fbos[i].clear(depth=1)
@@ -165,7 +165,7 @@ class LightsBuffer(object):
         self.sun_matrices = []
         self.point_matrices = []
     
-    def load(self, scene, cascades_count, cascades_distribution_exponent):
+    def load(self, scene, cascades_count, cascades_distribution_scalar, cascades_max_distance=1.0):
         #TODO: Automatic distribution exponent basedd on FOV
 
         spot_count=0
@@ -204,7 +204,7 @@ class LightsBuffer(object):
                 projection_matrix = pyrr.Matrix44(scene.camera.projection_matrix)
                 view_matrix = projection_matrix * pyrr.Matrix44(scene.camera.camera_matrix)
 
-                cascades_matrices = get_sun_cascades(sun_matrix, projection_matrix, view_matrix, cascades_count, cascades_distribution_exponent)
+                cascades_matrices = get_sun_cascades(sun_matrix, projection_matrix, view_matrix, cascades_count, cascades_distribution_scalar, cascades_max_distance)
                 
                 for i, cascade in enumerate(cascades_matrices):
                     cascade = flatten_matrix(cascade)
@@ -240,6 +240,7 @@ class LightsBuffer(object):
                 point_count+=1
             
         self.data.lights_count = len(scene.lights)
+        self.data.cascades_count = cascades_count
         
         self.UBO.load_data(self.data)
     
@@ -263,7 +264,7 @@ def make_projection_matrix(fov, aspect_ratio, near, far):
     ])
 
 
-def get_sun_cascades(sun_from_world_matrix, projection_matrix, view_from_world_matrix, cascades_count, cascades_distribution_exponent):
+def get_sun_cascades(sun_from_world_matrix, projection_matrix, view_from_world_matrix, cascades_count, cascades_distribution_scalar, cascades_max_distance):
     cascades = []
     splits = []
     
@@ -274,22 +275,26 @@ def get_sun_cascades(sun_from_world_matrix, projection_matrix, view_from_world_m
             splits.append(split)
     #is perspective
     else:
-        clip_end = projection_matrix.inverse * pyrr.Vector4([0,0,1,1])
-        clip_end /= clip_end.w
-        clip_end = -clip_end.z
+        clip_start = projection_matrix.inverse * pyrr.Vector4([0,0,0,1])
+        clip_start /= clip_start.w
+        clip_start = clip_start.z
         
-        step_size = clip_end / cascades_count
-        for i in range(cascades_count):
-            split = (i+1) * step_size
-            projected = projection_matrix * pyrr.Vector4([0,0,-split,1])
+        def lerp(a,b,f):
+            f = max(0,min(f,1))
+            return a * (1.0 - f) + b * f
+        
+        n = clip_start
+        f = -cascades_max_distance
+        m = cascades_count
+        
+        for i in range(1, cascades_count+1):
+            split_log = n * pow(f/n, i/m)
+            split_uniform = n + (f-n) * (i/m)
+            split = lerp(split_uniform, split_log, cascades_distribution_scalar)
+
+            projected = projection_matrix * pyrr.Vector4([0,0,split,1])
             projected = (projected / projected.w) * (1.0 if projected.w >= 0 else -1.0)
             depth = projected.z
-            #normalize depth (0,1)
-            depth = depth * 0.5 + 0.5
-            #make steps less linear
-            depth = depth ** cascades_distribution_exponent
-            #back to (-1,+1) range
-            depth = depth * 2.0 - 1.0
             splits.append(depth)
         
     for i in range(len(splits)):

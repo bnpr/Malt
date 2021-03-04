@@ -1,5 +1,6 @@
 # Copyright (c) 2020 BlenderNPR and contributors. MIT license. 
 
+import logging as log
 from Malt.GL.GL import *
 from Malt.GL.Shader import UBO
 from Malt.GL.Texture import TextureArray, CubeMapArray
@@ -88,7 +89,7 @@ class NPR_ShadowMaps(ShadowMaps):
         super().setup(False)
         self.spot_id_t = TextureArray((self.spot_resolution, self.spot_resolution), self.max_spots, 
             GL_R16F, min_filter=GL_NEAREST, mag_filter=GL_NEAREST)
-        self.sun_id_t = TextureArray((self.sun_resolution, self.sun_resolution), self.max_suns * self.sun_cascades, 
+        self.sun_id_t = TextureArray((self.sun_resolution, self.sun_resolution), self.max_suns, 
             GL_R16F, min_filter=GL_NEAREST, mag_filter=GL_NEAREST)
         self.point_id_t = CubeMapArray((self.point_resolution, self.point_resolution), self.max_points, 
             GL_R16F, min_filter=GL_NEAREST, mag_filter=GL_NEAREST)
@@ -109,7 +110,7 @@ class NPR_ShadowMaps(ShadowMaps):
     def clear(self, spot_count, sun_count, point_count):
         for i in range(spot_count):
             self.spot_fbos[i].clear([0], depth=1)
-        for i in range(sun_count * self.sun_cascades):
+        for i in range(sun_count):
             self.sun_fbos[i].clear([0], depth=1)
         for i in range(point_count*6):
             self.point_fbos[i].clear([0], depth=1)
@@ -131,7 +132,7 @@ class NPR_TransparentShadowMaps(NPR_ShadowMaps):
     def setup(self, create_fbos=True):
         super().setup(False)
         self.spot_color_t = TextureArray((self.spot_resolution, self.spot_resolution), self.max_spots, GL_RGB8)
-        self.sun_color_t = TextureArray((self.sun_resolution, self.sun_resolution), self.max_suns * self.sun_cascades, GL_RGB8)
+        self.sun_color_t = TextureArray((self.sun_resolution, self.sun_resolution), self.max_suns, GL_RGB8)
         self.point_color_t = CubeMapArray((self.point_resolution, self.point_resolution), self.max_points, GL_RGB8)
         
         if create_fbos:
@@ -153,7 +154,7 @@ class NPR_TransparentShadowMaps(NPR_ShadowMaps):
     def clear(self, spot_count, sun_count, point_count):
         for i in range(spot_count):
             self.spot_fbos[i].clear([0, (0,0,0,0)], depth=1)
-        for i in range(sun_count * self.sun_cascades):
+        for i in range(sun_count):
             self.sun_fbos[i].clear([0, (0,0,0,0)], depth=1)
         for i in range(point_count*6):
             self.point_fbos[i].clear([0, (0,0,0,0)], depth=1)

@@ -75,7 +75,7 @@ LitSurface NPR_lit_surface(vec3 position, vec3 normal, float id, Light light, in
             
             shadow = sun_shadow(position, light, SHADOWMAPS_DEPTH_SUN, bias, S.cascade);
             vec2 uv = shadow.light_uv.xy;
-            int index = light.type_index * SUN_CASCADES + S.cascade;
+            int index = light.type_index * LIGHTS.cascades_count + S.cascade;
 
             shadow_id = texture(SHADOWMAPS_ID_SUN, vec3(uv, index)).x;
 

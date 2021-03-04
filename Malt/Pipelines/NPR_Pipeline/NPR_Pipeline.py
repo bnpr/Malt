@@ -49,11 +49,15 @@ class NPR_Pipeline(Pipeline):
         self.parameters.scene['Samples.Grid Size'] = Parameter(8, Type.INT)
         self.parameters.scene['Samples.Grid Size @ Preview'] = Parameter(4, Type.INT)
         self.parameters.scene['Samples.Width'] = Parameter(1.5, Type.FLOAT)
-        self.parameters.scene['ShadowMaps.Sun.Cascades.Distribution Exponent'] = Parameter(21, Type.INT)
+        self.parameters.scene['ShadowMaps.Sun.Cascades.Distribution Scalar'] = Parameter(0.9, Type.FLOAT)
+        self.parameters.scene['ShadowMaps.Sun.Cascades.Count'] = Parameter(4, Type.INT)
+        self.parameters.scene['ShadowMaps.Sun.Cascades.Count @ Preview'] = Parameter(2, Type.INT)
+        self.parameters.scene['ShadowMaps.Sun.Cascades.Max Distance'] = Parameter(100, Type.FLOAT)
+        self.parameters.scene['ShadowMaps.Sun.Cascades.Max Distance @ Preview'] = Parameter(25, Type.FLOAT)
+        self.parameters.scene['ShadowMaps.Sun.Resolution'] = Parameter(2048, Type.INT)
+        #self.parameters.scene['ShadowMaps.Sun.Resolution @ Preview'] = Parameter(512, Type.INT)
         self.parameters.scene['ShadowMaps.Spot.Resolution'] = Parameter(2048, Type.INT)
         self.parameters.scene['ShadowMaps.Spot.Resolution @ Preview'] = Parameter(512, Type.INT)
-        self.parameters.scene['ShadowMaps.Sun.Resolution'] = Parameter(2048, Type.INT)
-        self.parameters.scene['ShadowMaps.Sun.Resolution @ Preview'] = Parameter(512, Type.INT)
         self.parameters.scene['ShadowMaps.Point.Resolution'] = Parameter(2048, Type.INT)
         self.parameters.scene['ShadowMaps.Point.Resolution @ Preview'] = Parameter(512, Type.INT)
         self.parameters.scene['Transparency.Layers'] = Parameter(4, Type.INT)
@@ -133,6 +137,7 @@ class NPR_Pipeline(Pipeline):
 
     def get_samples(self, width=1.0):
         return Sampling.get_RGSS_samples(self.sampling_grid_size, width)
+        return Sampling.get_random_samples(self.sampling_grid_size, width)
     
     def do_render(self, resolution, scene, is_final_render, is_new_frame):
         #SETUP SAMPLING
@@ -163,15 +168,20 @@ class NPR_Pipeline(Pipeline):
 
         #SETUP UNIFORM BLOCKS
         self.common_buffer.load(scene, resolution, sample_offset, self.sample_count)
-        self.lights_buffer.load(scene, Lighting.SUN_CASCADES, scene.parameters['ShadowMaps.Sun.Cascades.Distribution Exponent'])
+        self.lights_buffer.load(scene, 
+            scene.parameters['ShadowMaps.Sun.Cascades.Count'], 
+            scene.parameters['ShadowMaps.Sun.Cascades.Distribution Scalar'],
+            scene.parameters['ShadowMaps.Sun.Cascades.Max Distance'])
         self.shadowmaps_opaque.load(scene,
             scene.parameters['ShadowMaps.Spot.Resolution'],
             scene.parameters['ShadowMaps.Sun.Resolution'],
-            scene.parameters['ShadowMaps.Point.Resolution'])
+            scene.parameters['ShadowMaps.Point.Resolution'],
+            scene.parameters['ShadowMaps.Sun.Cascades.Count'])
         self.shadowmaps_transparent.load(scene,
             scene.parameters['ShadowMaps.Spot.Resolution'],
             scene.parameters['ShadowMaps.Sun.Resolution'],
-            scene.parameters['ShadowMaps.Point.Resolution'])
+            scene.parameters['ShadowMaps.Point.Resolution'],
+            scene.parameters['ShadowMaps.Sun.Cascades.Count'])
         
         UBOS = {
             'COMMON_UNIFORMS' : self.common_buffer,

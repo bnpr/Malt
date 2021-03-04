@@ -56,7 +56,7 @@ void main()
     }
     if(L.type == LIGHT_SUN)
     {
-        mat4 matrix = LIGHTS.sun_matrices[L.type_index*SUN_CASCADES];
+        mat4 matrix = LIGHTS.sun_matrices[L.type_index*LIGHTS.cascades_count];
         matrix[3] = vec4(L.position, 1);
         light_space = project_point(matrix, position);
         light_uv = light_space;

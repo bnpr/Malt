@@ -13,7 +13,7 @@ void COMMON_PIXEL_SHADER(Surface S, inout PixelOutput PO)
         LitSurface surface = lit_surface(POSITION, NORMAL, light, true);
         if(surface.cascade >= 0)
         {
-            result += light.color * (1.0 - (1.0 / SUN_CASCADES) * surface.cascade) * (surface.shadow ? 0 : 1);
+            result += light.color * (1.0 - (1.0 / LIGHTS.cascades_count) * surface.cascade) * (surface.shadow ? 0 : 1);
         }
     }
     
