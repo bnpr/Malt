@@ -237,6 +237,7 @@ def main(pipeline_path, connection_addresses, shared_dic, log_path, debug_mode):
     module = __import__(module_name)
 
     pipeline_class = module.PIPELINE
+    pipeline_class.SHADER_INCLUDE_PATHS.append(pipeline_dir)
     pipeline = pipeline_class()
 
     params = pipeline.get_parameters()
