@@ -35,7 +35,6 @@ class MaltRenderEngine(bpy.types.RenderEngine):
         self.request_scene_update = True
         self.profiling_data = io.StringIO()
         self.bridge_id = MaltPipeline.get_bridge().get_viewport_id()
-        self.render_texture = None
 
     def __del__(self):
         MaltPipeline.get_bridge().free_viewport_id(self.bridge_id)
@@ -257,23 +256,23 @@ class MaltRenderEngine(bpy.types.RenderEngine):
 
         if not finished:
             self.tag_redraw()
-        if pixels and resolution == read_resolution:
-            # Only read if resolution is the same as read_resolution.
+        if pixels is None or resolution != read_resolution:
+            # Only render if resolution is the same as read_resolution.
             # This avoids visual glitches when the viewport is resizing.
             # The alternative would be locking when writing/reading the pixel buffer.
-            self.render_texture = Texture(resolution, GL.GL_RGBA32F, GL.GL_FLOAT, pixels)
-        if self.render_texture is None:
             return
 
         fbo = GL.gl_buffer(GL.GL_INT, 1)
         GL.glGetIntegerv(GL.GL_FRAMEBUFFER_BINDING, fbo)
+        
+        render_texture = Texture(resolution, GL.GL_RGBA32F, GL.GL_FLOAT, pixels)
         
         self.bind_display_space_shader(depsgraph.scene_eval)
         if self.display_draw is None or self.display_draw.resolution != resolution:
             if self.display_draw:
                 self.display_draw.gl_delete()
             self.display_draw = DisplayDraw(resolution)
-        self.display_draw.draw(fbo, self.render_texture)
+        self.display_draw.draw(fbo, render_texture)
         self.unbind_display_space_shader()
 
         if PROFILE:
