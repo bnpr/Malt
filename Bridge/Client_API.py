@@ -174,8 +174,13 @@ class Bridge(object):
         finished = False
         if (viewport_id, 'FINISHED') in self.shared_dict:
             finished = self.shared_dict[(viewport_id, 'FINISHED')] == True
+        
+        read_resolution = None
+        if (viewport_id, 'READ_RESOLUTION') in self.shared_dict:
+            read_resolution = self.shared_dict[viewport_id, 'READ_RESOLUTION']
+        
         if viewport_id in self.render_buffers.keys():
-            return self.render_buffers[viewport_id], finished
+            return self.render_buffers[viewport_id], finished, read_resolution
         else:
-            return None, finished
+            return None, finished, read_resolution
 

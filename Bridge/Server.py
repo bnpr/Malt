@@ -116,6 +116,7 @@ class Viewport(object):
         self.pipeline = pipeline
         self.buffer = None
         self.resolution = None
+        self.read_resolution = None
         self.scene = None
         self.pbos_active = []
         self.pbos_inactive = []
@@ -178,6 +179,7 @@ class Viewport(object):
                     pbo.load(self.buffer.c.data)
                     self.pbos_inactive.extend(self.pbos_active[:i+1])
                     self.pbos_active = self.pbos_active[i+1:]
+                    self.read_resolution = self.resolution
                     break
             log.debug('{} PBOs active'.format(len(self.pbos_active)))
         
@@ -327,6 +329,7 @@ def main(pipeline_path, connection_addresses, shared_dic, log_path, debug_mode):
             active_viewports = False
             for v_id, v in viewports.items():
                 need_more_samples = v.render()
+                shared_dic[(v_id, 'READ_RESOLUTION')] = v.read_resolution
                 if need_more_samples == False and shared_dic[(v_id, 'FINISHED')] == False:
                     shared_dic[(v_id, 'FINISHED')] = True
                 active_viewports = active_viewports or need_more_samples
