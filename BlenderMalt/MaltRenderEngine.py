@@ -191,12 +191,12 @@ class MaltRenderEngine(bpy.types.RenderEngine):
         scene = self.get_scene(None, depsgraph, True, overrides)
         MaltPipeline.get_bridge().render(0, resolution, scene, True)
 
-        pixels = None
+        buffers = None
         finished = False
 
         import time
         while not finished:
-            pixels, finished, read_resolution = MaltPipeline.get_bridge().render_result(0)
+            buffers, finished, read_resolution = MaltPipeline.get_bridge().render_result(0)
             time.sleep(0.1)
             if finished: break
         
@@ -206,7 +206,12 @@ class MaltRenderEngine(bpy.types.RenderEngine):
         
         combined_pass = result.layers[0].passes["Combined"]
         rect_ptr = CBlenderMalt.get_rect_ptr(combined_pass.as_pointer())
-        ctypes.memmove(rect_ptr, pixels, size*4*4)
+        ctypes.memmove(rect_ptr, buffers['COLOR'], size*4*4)
+
+
+        depth_pass = result.layers[0].passes["Depth"]
+        rect_ptr = CBlenderMalt.get_rect_ptr(depth_pass.as_pointer())
+        ctypes.memmove(rect_ptr, buffers['DEPTH'], size*4)
         
         self.end_result(result)
         # Delete the scene. Otherwise we get memory leaks.
@@ -252,7 +257,8 @@ class MaltRenderEngine(bpy.types.RenderEngine):
             self.request_new_frame = False
             self.request_scene_update = False
 
-        pixels, finished, read_resolution = MaltPipeline.get_bridge().render_result(self.bridge_id)
+        buffers, finished, read_resolution = MaltPipeline.get_bridge().render_result(self.bridge_id)
+        pixels = buffers['COLOR']
 
         if not finished:
             self.tag_redraw()

@@ -156,17 +156,33 @@ class Bridge(object):
 
     @bridge_method
     def render(self, viewport_id, resolution, scene, scene_update):
-        buffer_name = 'MALT_RENDER_BUFFER_' + str(viewport_id) + '_' + self.id
-        w,h = resolution
         import Bridge.ipc as ipc
-        self.render_buffers[viewport_id] = ipc.load_shared_buffer(buffer_name, ctypes.c_float, w*h*4)
+        w,h = resolution
+        
+        if viewport_id not in self.render_buffers.keys():
+            self.render_buffers[viewport_id] = {}
+
+        color_buffer_name = 'MALT_RENDER_BUFFER_' + str(viewport_id) + '_COLOR_' + self.id
+        self.render_buffers[viewport_id]['COLOR'] = ipc.load_shared_buffer(color_buffer_name, ctypes.c_float, w*h*4)
+        color_buffer_full_name = ipc.get_shared_buffer_full_name(color_buffer_name)
+        
+        depth_buffer_full_name = None
+        if viewport_id == 0: #F12 render
+            depth_buffer_name = 'MALT_RENDER_BUFFER_' + str(viewport_id) + '_DEPTH_' + self.id
+            self.render_buffers[viewport_id]['DEPTH'] = ipc.load_shared_buffer(depth_buffer_name, ctypes.c_float, w*h*4)
+            depth_buffer_full_name = ipc.get_shared_buffer_full_name(depth_buffer_name)
+        
         self.shared_dict[(viewport_id, 'FINISHED')] = None
         self.connections['RENDER'].send({
             'viewport_id': viewport_id,
             'resolution': resolution,
             'scene': scene,
             'scene_update': scene_update,
-            'buffer_name': ipc.get_shared_buffer_full_name(buffer_name),
+            #TODO: Arbitrary render passes
+            'buffer_names': {
+                'COLOR': color_buffer_full_name,
+                'DEPTH': depth_buffer_full_name
+            }
         })
 
     @bridge_method

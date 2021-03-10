@@ -67,12 +67,15 @@ class PBO(object):
         self.handle = gl_buffer(GL_INT, 1)
         self.size = None
         self.sync = None
+        self.buffer = None
     
     def __del__(self):
         glDeleteBuffers(1, self.handle)
     
-    def setup(self, render_target):
-        w,h = render_target.resolution
+    def setup(self, texture, buffer):
+        self.buffer = buffer
+        render_target = RenderTarget([texture])
+        w,h = texture.resolution
         size = w*h*4*4
         if self.size != size:
             self.size = size
@@ -86,7 +89,7 @@ class PBO(object):
         GL.glReadBuffer(GL.GL_COLOR_ATTACHMENT0)
         
         glBindBuffer(GL_PIXEL_PACK_BUFFER, self.handle[0])
-        GL.glReadPixels(0, 0, w, h, GL_RGBA, GL_FLOAT, 0)
+        GL.glReadPixels(0, 0, w, h, texture.format, texture.data_format, 0)
         glBindBuffer(GL_PIXEL_PACK_BUFFER, 0)
 
         if self.sync:
@@ -97,13 +100,13 @@ class PBO(object):
         wait = glClientWaitSync(self.sync, GL_SYNC_FLUSH_COMMANDS_BIT, 0)
         return wait == GL_ALREADY_SIGNALED
     
-    def load(self, buffer):
+    def load(self):
         wait = glClientWaitSync(self.sync, GL_SYNC_FLUSH_COMMANDS_BIT, 0)
         if wait == GL_ALREADY_SIGNALED:
             glBindBuffer(GL_PIXEL_PACK_BUFFER, self.handle[0])
             result = glMapBuffer(GL_PIXEL_PACK_BUFFER, GL_READ_ONLY)
             if result:
-                ctypes.memmove(buffer, result, self.size)
+                ctypes.memmove(self.buffer.c.data, result, self.size)
                 glUnmapBuffer(GL_PIXEL_PACK_BUFFER)
             glBindBuffer(GL_PIXEL_PACK_BUFFER, 0)
             return True
@@ -112,9 +115,9 @@ class PBO(object):
 
 class Viewport(object):
 
-    def __init__(self, pipeline):
+    def __init__(self, pipeline, is_final_render):
         self.pipeline = pipeline
-        self.buffer = None
+        self.buffers = None
         self.resolution = None
         self.read_resolution = None
         self.scene = None
@@ -122,13 +125,14 @@ class Viewport(object):
         self.pbos_inactive = []
         self.is_new_frame = True
         self.needs_more_samples = True
+        self.is_final_render = is_final_render
     
-    def setup(self, buffer, resolution, scene, scene_update):
+    def setup(self, buffers, resolution, scene, scene_update):
         if self.resolution != resolution:
             self.pbos_inactive.extend(self.pbos_active)
             self.pbos_active = []
         
-        self.buffer = buffer
+        self.buffers = buffers
         self.resolution = resolution
 
         self.sample_index = 0
@@ -159,27 +163,38 @@ class Viewport(object):
         if self.needs_more_samples:
             import time
             start_time = time.perf_counter()
-            result = self.pipeline.render(self.resolution, self.scene, False, self.is_new_frame)
+            result = self.pipeline.render(self.resolution, self.scene, self.is_final_render, self.is_new_frame)
             log.debug('RENDER TIME: {} RESOLUTION: {}'.format(time.perf_counter() - start_time, self.resolution))
             self.is_new_frame = False
             self.needs_more_samples = self.pipeline.needs_more_samples()
             
-            pbo = None
-            if len(self.pbos_inactive) > 0:
-                pbo = self.pbos_inactive.pop()
-            else:
-                pbo = PBO()
+            pbos = None
             
-            pbo.setup(RenderTarget([result['COLOR']]))
-            self.pbos_active.append(pbo)
+            if len(self.pbos_inactive) > 0:
+                pbos = self.pbos_inactive.pop()
+            else:
+                pbos = {}
+            
+            for key, texture in result.items():
+                if texture and key in self.buffers.keys():
+                    if key not in pbos.keys():
+                        pbos[key] = PBO()
+                    pbos[key].setup(texture, self.buffers[key])
+            
+            self.pbos_active.append(pbos)
 
         if len(self.pbos_active) > 0:
-            for i, pbo in reversed(list(enumerate(self.pbos_active))):
-                if pbo.poll():
-                    pbo.load(self.buffer.c.data)
-                    self.pbos_inactive.extend(self.pbos_active[:i+1])
-                    self.pbos_active = self.pbos_active[i+1:]
-                    self.read_resolution = self.resolution
+            for i, pbos in reversed(list(enumerate(self.pbos_active))):
+                is_ready = True
+                for pbo in pbos.values():
+                    if pbo.poll() == False:
+                        is_ready = False
+                if is_ready:
+                    for pbo in pbos.values():
+                        pbo.load()
+                        self.pbos_inactive.extend(self.pbos_active[:i+1])
+                        self.pbos_active = self.pbos_active[i+1:]
+                        self.read_resolution = self.resolution
                     break
             log.debug('{} PBOs active'.format(len(self.pbos_active)))
         
@@ -316,14 +331,17 @@ def main(pipeline_path, connection_addresses, shared_dic, log_path, debug_mode):
                 resolution = msg['resolution']
                 scene = msg['scene']
                 scene_update = msg['scene_update']
-                buffer_name = msg['buffer_name']
+                buffer_names = msg['buffer_names']
                 w,h = resolution
-                buffer = ipc.SharedMemoryRef(buffer_name, w*h*4*4)
+                buffers = {}
+                for key, buffer_name in buffer_names.items():
+                    if buffer_name:
+                        buffers[key] = ipc.SharedMemoryRef(buffer_name, w*h*4*4)
 
                 if viewport_id not in viewports:
-                    viewports[viewport_id] = Viewport(pipeline_class())
+                    viewports[viewport_id] = Viewport(pipeline_class(), viewport_id == 0)
 
-                viewports[viewport_id].setup(buffer, resolution, scene, scene_update)
+                viewports[viewport_id].setup(buffers, resolution, scene, scene_update)
                 shared_dic[(viewport_id, 'FINISHED')] = False
             
             active_viewports = False
