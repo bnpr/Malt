@@ -34,12 +34,12 @@ The shader library can be a good fit for other engines that can run GLSL shaders
 
 Malt main focus is animation and illustration and it prioritizes flexibility and image quality, which usually comes at a performance cost.
 
-# How can I contribute?
+# How can I help?
 
-- Make art with Malt and share it.
+- Make art with Malt and share it. *#malt3d*
 - Make tutorials.
 - Improve the documentation.
 - Implement new features.
 - Join the Malt Gallery program.
-- Fund the project.
+- Join the [Patreon](https://www.patreon.com/pragma37).
 

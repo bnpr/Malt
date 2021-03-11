@@ -14,6 +14,11 @@ But we can make our lifes much easier by using a code editor.
 
 *Malt* has built-in integration with [VSCode](https://code.visualstudio.com/download), it's free, cross-platform and open source so go ahead, download and install it!
 
+<div style="position: relative; width: 100%; padding-top: 56.25%; /* 16:9 Aspect Ratio */">
+<iframe style="position: absolute; top: 0; left: 0; bottom: 0;right: 0; width:100%; height:100%; margin:0; border:0;" 
+src="https://www.youtube-nocookie.com/embed/UjsW7Ce0BKo" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div>
+
 After installation:
 
 1. Open Blender, change the render engine to *Malt* and save the *.blend* file in a new folder.  
