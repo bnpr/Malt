@@ -2,7 +2,7 @@ name: BLENDERMALT_PACKAGE_AND_RELEASE
 
 on:
   push:
-    branches: [ pre-release-refactor ]
+    #branches: [ master ]
 
 jobs:
   release:
@@ -13,7 +13,7 @@ jobs:
       uses: author/action-rollback@stable
       continue-on-error: true
       with:
-        tag: 'v1-refactor'
+        tag: 'v1-beta'
         delete_orphan_tag: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -27,8 +27,8 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        tag_name: v1-refactor
-        release_name: v1-refactor
+        tag_name: v1-beta
+        release_name: v1-beta
         draft: false
         prerelease: true
         body_path: SPONSORS.md
