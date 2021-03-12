@@ -63,6 +63,8 @@ class NPR_Pipeline(Pipeline):
         self.parameters.scene['Transparency.Layers'] = Parameter(4, Type.INT)
         self.parameters.scene['Transparency.Layers @ Preview'] = Parameter(1, Type.INT)
         
+        self.parameters.world['Material Override'] = MaterialParameter('', 'mesh')
+        
         self.parameters.light['Shader'] = MaterialParameter('', 'light')
 
         global _DEFAULT_SHADER
@@ -155,6 +157,14 @@ class NPR_Pipeline(Pipeline):
         self.fbo_color.clear([(0,0,0,0)])
         
         sample_offset = self.get_samples(scene.parameters['Samples.Width'])[self.sample_count]
+
+        material_override = scene.world_parameters['Material Override']
+        if material_override:
+            if scene.materials != [material_override]:
+                scene.materials = [material_override]
+                for object in scene.objects:
+                    object.material = material_override
+                scene.batches = self.build_scene_batches(scene.objects)
         
         #SETUP SCENE BATCHES
         opaque_batches = {}
