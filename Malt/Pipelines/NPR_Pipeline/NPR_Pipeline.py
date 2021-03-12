@@ -143,12 +143,6 @@ class NPR_Pipeline(Pipeline):
     
     def do_render(self, resolution, scene, is_final_render, is_new_frame):
         #SETUP SAMPLING
-        '''
-        if is_final_render:
-            self.sampling_grid_size = scene.parameters['Samples Grid Size Render']
-        else:
-            self.sampling_grid_size = scene.parameters['Samples Grid Size Preview']
-        '''
         self.sampling_grid_size = scene.parameters['Samples.Grid Size']
 
         if is_new_frame:
