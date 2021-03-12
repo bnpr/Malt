@@ -161,11 +161,13 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                 area.tag_redraw()
     
     def add_override(self, property_name, override_name):
-        rna = self.get_rna()
+        main_prop = self.get_rna()[property_name]
         new_name = property_name + ' @ ' + override_name
-        property = {
-            new_name: Parameter(rna[property_name]['default'], rna[property_name]['type'], rna[property_name]['size'])
-        }
+        property = {}
+        if main_prop['type'] == Type.MATERIAL:
+            property[new_name] =  MaterialParameter(main_prop['default'], self.materials[property_name].extension)
+        else:
+            property[new_name] = Parameter(main_prop['default'], main_prop['type'], main_prop['size'])
         self.setup(property, replace_parameters= False)
     
     def remove_override(self, property):
