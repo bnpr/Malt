@@ -15,6 +15,8 @@ void main()
     VERTEX_SETUP_OUTPUT();
     vec4 bake_position = vec4(UV[0] * 2 - 1, -0.99, 1);
     gl_Position = mix(gl_Position, bake_position, saturate(bake));
+    //Temporal Super Sampling
+    gl_Position.xy += SAMPLE_OFFSET / vec2(RESOLUTION);
 }
 #endif
 
