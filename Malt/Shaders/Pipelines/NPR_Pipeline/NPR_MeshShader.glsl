@@ -57,6 +57,7 @@ vec3 VERTEX_DISPLACEMENT_SHADER(Surface S){ return vec3(0); }
     #define VERTEX_DISPLACEMENT_OFFSET 0.1
 #endif
 
+#ifndef CUSTOM_MAIN
 void main()
 {
     DEFAULT_VERTEX_SHADER();
@@ -102,12 +103,11 @@ void main()
     
     VERTEX_SETUP_OUTPUT();
 }
+#endif //NDEF CUSTOM_MAIN
 
 #endif //VERTEX_SHADER
 
 #ifdef PIXEL_SHADER
-
-void COMMON_PIXEL_SHADER(Surface S, inout PixelOutput PO);
 
 uniform sampler2D IN_OPAQUE_DEPTH;
 uniform sampler2D IN_TRANSPARENT_DEPTH;
@@ -131,6 +131,10 @@ layout (location = 0) out vec4 OUT_COLOR;
 layout (location = 1) out vec4 OUT_LINE_COLOR;
 layout (location = 2) out vec4 OUT_LINE_DATA;
 #endif //MAIN_PASS
+
+#ifndef CUSTOM_MAIN
+
+void COMMON_PIXEL_SHADER(Surface S, inout PixelOutput PO);
 
 void main()
 {
@@ -222,6 +226,7 @@ void main()
     }
     #endif
 }
+#endif //NDEF CUSTOM_MAIN
 
 #endif //PIXEL_SHADER
 
