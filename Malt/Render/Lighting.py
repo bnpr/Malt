@@ -161,9 +161,9 @@ class LightsBuffer(object):
     def __init__(self):
         self.data = C_LightsBuffer()
         self.UBO = UBO()
-        self.spot_matrices = []
-        self.sun_matrices = []
-        self.point_matrices = []
+        self.spots = None
+        self.suns = None
+        self.points = None
     
     def load(self, scene, cascades_count, cascades_distribution_scalar, cascades_max_distance=1.0):
         #TODO: Automatic distribution exponent basedd on FOV
@@ -172,9 +172,11 @@ class LightsBuffer(object):
         sun_count=0
         point_count=0
 
-        self.spot_matrices = []
-        self.sun_matrices = []
-        self.point_matrices = []
+        from collections import OrderedDict
+
+        self.spots = OrderedDict()
+        self.suns = OrderedDict()
+        self.points = OrderedDict()
 
         for i, light in enumerate(scene.lights):
             self.data.lights[i].color = light.color
@@ -193,7 +195,7 @@ class LightsBuffer(object):
                 
                 self.data.spot_matrices[spot_count] = flatten_matrix(spot_matrix)
 
-                self.spot_matrices.append((light.matrix, flatten_matrix(projection_matrix)))
+                self.spots[light] = [(light.matrix, flatten_matrix(projection_matrix))]
 
                 spot_count+=1
             
@@ -206,11 +208,12 @@ class LightsBuffer(object):
 
                 cascades_matrices = get_sun_cascades(sun_matrix, projection_matrix, view_matrix, cascades_count, cascades_distribution_scalar, cascades_max_distance)
                 
+                self.suns[light] = []
                 for i, cascade in enumerate(cascades_matrices):
                     cascade = flatten_matrix(cascade)
                     self.data.sun_matrices[sun_count * cascades_count + i] = cascade
                     
-                    self.sun_matrices.append((cascade, flatten_matrix(pyrr.Matrix44.identity())))
+                    self.suns[light].append((cascade, flatten_matrix(pyrr.Matrix44.identity())))
 
                 sun_count+=1
             
@@ -234,8 +237,9 @@ class LightsBuffer(object):
 
                 projection_matrix = make_projection_matrix(math.pi / 2.0, 1.0, 0.01, light.radius)
 
+                self.points[light] = []
                 for i in range(6):
-                    self.point_matrices.append((flatten_matrix(matrices[i]), flatten_matrix(projection_matrix)))
+                    self.points[light].append((flatten_matrix(matrices[i]), flatten_matrix(projection_matrix)))
                 
                 point_count+=1
             
