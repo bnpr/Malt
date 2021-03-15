@@ -211,17 +211,10 @@ def main(pipeline_path, connection_addresses, shared_dic, log_path, debug_mode):
     setup_logging(log_path, log_level)
     log.info('DEBUG MODE: {}'.format(debug_mode))
 
-    try:
+    # Trying to change process prioriy in Linux seems to hang Malt for some users
+    if sys.platform == 'win32':
         import psutil
-        if sys.platform == 'win32':
-            psutil.Process().nice(psutil.REALTIME_PRIORITY_CLASS)
-        else:
-            psutil.Process().nice(-15)
-        log.info('PROCESS PRIORITY: {}'.format(psutil.Process().nice()))
-    except:
-        import traceback
-        log.error(traceback.format_exc())
-    
+        psutil.Process().nice(psutil.REALTIME_PRIORITY_CLASS)
 
     log.info('CONNECTIONS:')
     connections = {}
