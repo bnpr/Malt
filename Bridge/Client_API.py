@@ -42,8 +42,8 @@ class Bridge(object):
             sys.stdout = IOCapture(sys.stdout, log_path, log.INFO)
             sys.stderr = IOCapture(sys.stderr, log_path, log.ERROR)
         
-        import multiprocessing as mp
-        import random, string
+        import multiprocessing, random, string
+        mp = multiprocessing.get_context('spawn')
 
         self.manager = mp.Manager()
         self.shared_dict = self.manager.dict()
