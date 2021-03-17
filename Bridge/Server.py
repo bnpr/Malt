@@ -43,7 +43,7 @@ def log_system_info():
 
     def log_format_prop(format, prop):
         read = glGetInternalformativ(GL_TEXTURE_2D, format, prop, 1)
-        log.info('{} {}: {}'.format(GL_ENUMS[format], GL_ENUMS[prop], GL_ENUMS[read]))
+        log.debug('{} {}: {}'.format(GL_ENUMS[format], GL_ENUMS[prop], GL_ENUMS[read]))
 
     def log_format_props(format):
         log_format_prop(format, GL_READ_PIXELS)
@@ -270,19 +270,20 @@ def main(pipeline_path, connection_addresses, shared_dic, log_path, debug_mode):
 
             while connections['MATERIAL'].poll():
                 msg = connections['MATERIAL'].recv()
+                log.debug('COMPILE MATERIAL : {}'.format(msg))
                 path = msg['path']
                 search_paths = msg['search_paths']
-                log.debug('COMPILE MATERIAL : ' + path)
                 material = Bridge.Material.Material(path, pipeline, search_paths)
                 connections['MATERIAL'].send(material)
             
             while connections['MESH'].poll():
                 msg = connections['MESH'].recv()
-                log.debug('LOAD MESH : ' + msg['name'])
+                log.debug('LOAD MESH : {}'.format(msg))
                 load_mesh(msg)
             
             while connections['TEXTURE'].poll():
                 msg = connections['TEXTURE'].recv()
+                log.debug('LOAD TEXTURE : {}'.format(msg))
                 name = msg['name']
                 resolution = msg['resolution']
                 channels = msg['channels']
@@ -292,16 +293,15 @@ def main(pipeline_path, connection_addresses, shared_dic, log_path, debug_mode):
                 size = w*h*channels
                 buffer = ipc.SharedMemoryRef(buffer_name, size*ctypes.sizeof(ctypes.c_float))
                 float_buffer = (ctypes.c_float*size).from_address(buffer.c.data)
-                log.debug('LOAD TEXTURE : ' + name)
                 load_texture(name, resolution, channels, float_buffer, sRGB)
                 connections['TEXTURE'].send('COMPLETE')
             
             while connections['GRADIENT'].poll():
                 msg = connections['GRADIENT'].recv()
+                log.debug('LOAD GRADIENT : {}'.format(msg))
                 name = msg['name']
                 pixels = msg['pixels']
                 nearest = msg['nearest']
-                log.debug('LOAD GRADIENT : ' + name)
                 load_gradient(name, pixels, nearest)
             
             #TODO: Bad workaround to make sure the scene assets are loaded
@@ -316,7 +316,7 @@ def main(pipeline_path, connection_addresses, shared_dic, log_path, debug_mode):
             setup_viewports = {}
             while connections['RENDER'].poll():
                 msg = connections['RENDER'].recv()
-                log.debug('SETUP RENDER : {}'.format(msg['viewport_id']))
+                log.debug('SETUP RENDER : {}'.format(msg))
                 setup_viewports[msg['viewport_id']] = msg
 
             for msg in setup_viewports.values():

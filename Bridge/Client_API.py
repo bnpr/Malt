@@ -41,6 +41,7 @@ class Bridge(object):
             log.basicConfig(filename=log_path, level=log.DEBUG, format='Blender > %(message)s')
             sys.stdout = IOCapture(sys.stdout, log_path, log.INFO)
             sys.stderr = IOCapture(sys.stderr, log_path, log.ERROR)
+            log.info('SETUP IOCapture')
         
         import multiprocessing, random, string
         mp = multiprocessing.get_context('spawn')
