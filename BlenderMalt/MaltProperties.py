@@ -161,11 +161,13 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                 area.tag_redraw()
     
     def add_override(self, property_name, override_name):
-        rna = self.get_rna()
+        main_prop = self.get_rna()[property_name]
         new_name = property_name + ' @ ' + override_name
-        property = {
-            new_name: Parameter(rna[property_name]['default'], rna[property_name]['type'], rna[property_name]['size'])
-        }
+        property = {}
+        if main_prop['type'] == Type.MATERIAL:
+            property[new_name] =  MaterialParameter(main_prop['default'], self.materials[property_name].extension)
+        else:
+            property[new_name] = Parameter(main_prop['default'], main_prop['type'], main_prop['size'])
         self.setup(property, replace_parameters= False)
     
     def remove_override(self, property):
@@ -228,7 +230,6 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
 
     
     def draw_ui(self, layout):
-        layout.label(text="Malt Properties")
         if '_RNA_UI' not in self.keys():
             return #Can't modify ID classes from here
         rna = self.get_rna()
@@ -456,12 +457,15 @@ class MALT_PT_Object(MALT_PT_Base):
     def get_malt_property_owner(cls, context):
         return context.object
 
+# In MaltMaterials
+'''
 class MALT_PT_Material(MALT_PT_Base):
     bl_context = "material"
     @classmethod
     def get_malt_property_owner(cls, context):
-        if context.object and len(context.object.material_slots) > 0:
-            return context.object.material_slots[0].material
+        if context.material:
+            return context.material
+'''
 
 class MALT_PT_Mesh(MALT_PT_Base):
     bl_context = "data"
@@ -507,7 +511,6 @@ classes = (
     MALT_PT_World,
     MALT_PT_Camera,
     MALT_PT_Object,
-    MALT_PT_Material,
     MALT_PT_Mesh,
     MALT_PT_Light,
 )

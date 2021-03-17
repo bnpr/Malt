@@ -41,9 +41,10 @@ class Bridge(object):
             log.basicConfig(filename=log_path, level=log.DEBUG, format='Blender > %(message)s')
             sys.stdout = IOCapture(sys.stdout, log_path, log.INFO)
             sys.stderr = IOCapture(sys.stderr, log_path, log.ERROR)
+            log.info('SETUP IOCapture')
         
-        import multiprocessing as mp
-        import random, string
+        import multiprocessing, random, string
+        mp = multiprocessing.get_context('spawn')
 
         self.manager = mp.Manager()
         self.shared_dict = self.manager.dict()
@@ -53,6 +54,8 @@ class Bridge(object):
         self.parameters = {}
         self.render_buffers = {}
         self.id = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
+
+        self.viewport_ids = []
 
         listeners = {}
         bridge_to_malt = {}
@@ -139,26 +142,26 @@ class Bridge(object):
             'nearest' : nearest,
         })
 
-    viewport_ids = []
-
     @bridge_method
     def get_viewport_id(self):
         i = 1 #0 is reserved for F12
         while True:
-            if i not in Bridge.viewport_ids:
-                Bridge.viewport_ids.append(i)
+            if i not in self.viewport_ids:
+                self.viewport_ids.append(i)
                 return i
             i+=1
 
     @bridge_method
     def free_viewport_id(self, viewport_id):
-        Bridge.viewport_ids.remove(viewport_id)
+        self.viewport_ids.remove(viewport_id)
 
     @bridge_method
     def render(self, viewport_id, resolution, scene, scene_update):
         import Bridge.ipc as ipc
         w,h = resolution
-        
+
+        assert(viewport_id in self.viewport_ids or viewport_id == 0)
+
         if viewport_id not in self.render_buffers.keys():
             self.render_buffers[viewport_id] = {}
 

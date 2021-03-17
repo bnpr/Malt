@@ -23,6 +23,32 @@ def get_shadow_maps():
         return (NPR_ShadowMaps(), NPR_TransparentShadowMaps())
 
 
+class C_NPR_LightGroupsBuffer(ctypes.Structure):
+    _fields_ = [
+        ('light_group_index', ctypes.c_int*Lighting.MAX_LIGHTS),
+    ]
+
+class NPR_LightsGroupsBuffer(object):
+
+    def __init__(self):
+        self.data = C_NPR_LightGroupsBuffer()
+        self.UBO = UBO()
+    
+    def load(self, scene):
+        for i, light in enumerate(scene.lights):
+            self.data.light_group_index[i] = light.parameters['Light Group']
+
+        self.UBO.load_data(self.data)
+
+        for material in scene.materials:
+            for shader in material.shader.values():
+                if 'MATERIAL_LIGHT_GROUPS' in shader.uniforms.keys():
+                    shader.uniforms['MATERIAL_LIGHT_GROUPS'].set_value(material.parameters['Light Groups.Light'])
+
+    def shader_callback(self, shader):
+        if 'LIGHT_GROUPS' in shader.uniform_blocks:
+            self.UBO.bind(shader.uniform_blocks['LIGHT_GROUPS'])
+
 class C_NPR_LightShadersBuffer(ctypes.Structure):
     _fields_ = [
         ('custom_shading_index', ctypes.c_int*Lighting.MAX_LIGHTS),

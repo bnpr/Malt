@@ -25,6 +25,13 @@ uniform sampler2DArray TRANSPARENT_SHADOWMAPS_COLOR_SPOT;
 uniform sampler2DArray TRANSPARENT_SHADOWMAPS_COLOR_SUN;
 uniform samplerCubeArray TRANSPARENT_SHADOWMAPS_COLOR_POINT;
 
+uniform ivec4 MATERIAL_LIGHT_GROUPS;
+
+uniform LIGHT_GROUPS
+{
+    int LIGHT_GROUP_INDEX[MAX_LIGHTS];
+};
+
 uniform LIGHTS_CUSTOM_SHADING
 {
     int CUSTOM_SHADING_INDEX[MAX_LIGHTS];
@@ -35,6 +42,23 @@ uniform sampler2DArray IN_LIGHT_CUSTOM_SHADING;
 LitSurface NPR_lit_surface(vec3 position, vec3 normal, float id, Light light, int light_index)
 {
     LitSurface S = lit_surface(position, normal, light, false);
+
+    if
+    (
+        MATERIAL_LIGHT_GROUPS.x != LIGHT_GROUP_INDEX[light_index] &&
+        MATERIAL_LIGHT_GROUPS.y != LIGHT_GROUP_INDEX[light_index] &&
+        MATERIAL_LIGHT_GROUPS.z != LIGHT_GROUP_INDEX[light_index] &&
+        MATERIAL_LIGHT_GROUPS.w != LIGHT_GROUP_INDEX[light_index]
+    )
+    {
+        S.P = 0;
+        S.light_color = vec3(0);
+        S.shadow = false;
+        S.shadow_multiply = vec3(1);
+
+        return S;
+    }
+
 
     S.light_color = light.color * S.P;
 

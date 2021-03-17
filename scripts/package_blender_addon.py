@@ -1,5 +1,10 @@
 import os, sys, platform, subprocess, shutil
 
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument('--link-folders', action='store_true', help='For developers. Link folders instead of making a copy. (Unix only, Windows always links')
+ARGS = parser.parse_args()
+
 current_dir = os.path.dirname(os.path.realpath(__file__))
 main_dir = os.path.realpath(os.path.join(current_dir, '..'))
 
@@ -24,10 +29,12 @@ def make_link(point_from, point_to):
         import _winapi
         _winapi.CreateJunction(point_to, point_from)
     else:
-        from distutils.dir_util import copy_tree
-        copy_tree(point_to, point_from)
-        #Symlinks don't work ?!?!?
-        #os.symlink(point_to, point_from, True)
+        if ARGS.link_folders:
+            os.symlink(point_to, point_from, True)
+        else:
+            # On Unix, symlinks are skipped when zipping
+            from distutils.dir_util import copy_tree
+            copy_tree(point_to, point_from)
 
 import_path = os.path.join(blender_malt_folder, '.MaltPath')
 if os.path.exists(import_path) == False:

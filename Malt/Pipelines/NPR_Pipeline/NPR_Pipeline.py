@@ -63,7 +63,13 @@ class NPR_Pipeline(Pipeline):
         self.parameters.scene['Transparency.Layers'] = Parameter(4, Type.INT)
         self.parameters.scene['Transparency.Layers @ Preview'] = Parameter(1, Type.INT)
         
+        self.parameters.world['Material Override'] = MaterialParameter('', 'mesh')
+        
         self.parameters.light['Shader'] = MaterialParameter('', 'light')
+        self.parameters.light['Light Group'] = Parameter(1, Type.INT)
+        
+        self.parameters.material['Light Groups.Light'] = Parameter([1,0,0,0], Type.INT, 4)
+        self.parameters.material['Light Groups.Shadow'] = Parameter([1,0,0,0], Type.INT, 4)
 
         global _DEFAULT_SHADER
         if _DEFAULT_SHADER is None: _DEFAULT_SHADER = self.compile_material_from_source('mesh', _DEFAULT_SHADER_SRC)
@@ -75,6 +81,7 @@ class NPR_Pipeline(Pipeline):
 
         self.common_buffer = Common.CommonBuffer()
         self.lights_buffer = Lighting.get_lights_buffer()
+        self.light_groups_buffer = NPR_Lighting.NPR_LightsGroupsBuffer()
         self.shadowmaps_opaque, self.shadowmaps_transparent = NPR_Lighting.get_shadow_maps()
         self.custom_light_shading = NPR_Lighting.NPR_LightShaders()
 
@@ -141,12 +148,6 @@ class NPR_Pipeline(Pipeline):
     
     def do_render(self, resolution, scene, is_final_render, is_new_frame):
         #SETUP SAMPLING
-        '''
-        if is_final_render:
-            self.sampling_grid_size = scene.parameters['Samples Grid Size Render']
-        else:
-            self.sampling_grid_size = scene.parameters['Samples Grid Size Preview']
-        '''
         self.sampling_grid_size = scene.parameters['Samples.Grid Size']
 
         if is_new_frame:
@@ -155,6 +156,14 @@ class NPR_Pipeline(Pipeline):
         self.fbo_color.clear([(0,0,0,0)])
         
         sample_offset = self.get_samples(scene.parameters['Samples.Width'])[self.sample_count]
+
+        material_override = scene.world_parameters['Material Override']
+        if material_override:
+            if scene.materials != [material_override]:
+                scene.materials = [material_override]
+                for object in scene.objects:
+                    object.material = material_override
+                scene.batches = self.build_scene_batches(scene.objects)
         
         #SETUP SCENE BATCHES
         opaque_batches = {}
@@ -172,6 +181,7 @@ class NPR_Pipeline(Pipeline):
             scene.parameters['ShadowMaps.Sun.Cascades.Count'], 
             scene.parameters['ShadowMaps.Sun.Cascades.Distribution Scalar'],
             scene.parameters['ShadowMaps.Sun.Cascades.Max Distance'])
+        self.light_groups_buffer.load(scene)
         self.shadowmaps_opaque.load(scene,
             scene.parameters['ShadowMaps.Spot.Resolution'],
             scene.parameters['ShadowMaps.Sun.Resolution'],
@@ -189,24 +199,33 @@ class NPR_Pipeline(Pipeline):
         }
 
         #RENDER SHADOWMAPS
-        def render_shadow_passes(matrices, fbos_opaque, fbos_transparent):
-            for i, matrix_pair in enumerate(matrices):
-                camera, projection = matrix_pair
-                self.common_buffer.load(scene, fbos_opaque[i].resolution, sample_offset, self.sample_count, camera, projection)
-                self.draw_scene_pass(fbos_opaque[i], opaque_batches, 
-                    'SHADOW_PASS', self.default_shader['SHADOW_PASS'], UBOS)
-                self.draw_scene_pass(fbos_transparent[i], transparent_batches, 
-                    'SHADOW_PASS', self.default_shader['SHADOW_PASS'], UBOS)
+        def render_shadow_passes(lights, fbos_opaque, fbos_transparent):
+            for light_index, light_matrices_pair in enumerate(lights.items()):
+                light, matrices = light_matrices_pair
+                for matrix_index, camera_projection_pair in enumerate(matrices): 
+                    camera, projection = camera_projection_pair
+                    i = light_index * len(matrices) + matrix_index
+                    self.common_buffer.load(scene, fbos_opaque[i].resolution, sample_offset, self.sample_count, camera, projection)
+                    def get_light_group_batches(batches):
+                        result = {}
+                        for material, meshes in batches.items():
+                            if material and light.parameters['Light Group'] in material.parameters['Light Groups.Shadow']:
+                                result[material] = meshes
+                        return result
+                    self.draw_scene_pass(fbos_opaque[i], get_light_group_batches(opaque_batches), 
+                        'SHADOW_PASS', self.default_shader['SHADOW_PASS'], UBOS)
+                    self.draw_scene_pass(fbos_transparent[i], get_light_group_batches(transparent_batches), 
+                        'SHADOW_PASS', self.default_shader['SHADOW_PASS'], UBOS)
         
-        render_shadow_passes(self.lights_buffer.spot_matrices,
+        render_shadow_passes(self.lights_buffer.spots,
             self.shadowmaps_opaque.spot_fbos, self.shadowmaps_transparent.spot_fbos)
         
         glEnable(GL_DEPTH_CLAMP)
-        render_shadow_passes(self.lights_buffer.sun_matrices,
+        render_shadow_passes(self.lights_buffer.suns,
             self.shadowmaps_opaque.sun_fbos, self.shadowmaps_transparent.sun_fbos)
         glDisable(GL_DEPTH_CLAMP)
 
-        render_shadow_passes(self.lights_buffer.point_matrices,
+        render_shadow_passes(self.lights_buffer.points,
             self.shadowmaps_opaque.point_fbos, self.shadowmaps_transparent.point_fbos)
 
         #SCENE RENDER
@@ -254,6 +273,7 @@ class NPR_Pipeline(Pipeline):
         }
         
         callbacks = [
+            lambda shader : self.light_groups_buffer.shader_callback(shader),
             lambda shader : self.shadowmaps_opaque.shader_callback(shader),
             lambda shader : self.shadowmaps_transparent.shader_callback(shader),
         ]

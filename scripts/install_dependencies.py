@@ -6,7 +6,13 @@ malt_folder = os.path.join(current_dir, '..', 'Malt')
 
 malt_dependencies_path = os.path.join(malt_folder, '.Dependencies')
 dependencies = ['glfw', 'PyOpenGL', 'PyOpenGL_accelerate', 'pcpp', 'Pyrr', 'psutil']
-subprocess.check_call([sys.executable, '-m', 'pip', 'install', *dependencies, '--target', malt_dependencies_path])
+for dependency in dependencies:
+    try:
+        subprocess.check_call([sys.executable, '-m', 'pip', 'install', dependency, '--target', malt_dependencies_path])
+    except:
+        print('ERROR: pip install {} failed.'.format(dependency))
+        import traceback
+        traceback.print_exc()
 
 from distutils.dir_util import copy_tree
 copy_tree(os.path.join(current_dir, 'PatchDependencies'), malt_dependencies_path) 

@@ -29,7 +29,7 @@ class MaltMaterial(bpy.types.PropertyGroup):
 
     parameters : bpy.props.PointerProperty(type=MaltPropertyGroup, name="Shader Parameters")
     
-    def draw_ui(self, layout, extension):
+    def draw_ui(self, layout, extension, material_parameters):
         layout.prop(self, 'shader_source')
         if self.shader_source != '' and self.shader_source.endswith('.'+extension+'.glsl') == False:
             box = layout.box()
@@ -38,11 +38,12 @@ class MaltMaterial(bpy.types.PropertyGroup):
             
         if self.compiler_error != '':
             layout.operator("wm.malt_print_error", icon='ERROR').message = self.compiler_error
-            #layout.label(text='COMPILER ERROR:', icon='ERROR')
             box = layout.box()
             lines = self.compiler_error.splitlines()
             for line in lines:
                 box.label(text=line)
+        
+        material_parameters.draw_ui(layout)
         self.parameters.draw_ui(layout)
 
 
@@ -51,7 +52,7 @@ class MALT_PT_MaterialSettings(bpy.types.Panel):
     bl_region_type = 'WINDOW'
 
     bl_context = "material"
-    bl_label = "Material Settings"
+    bl_label = "Malt Settings"
     COMPAT_ENGINES = {'MALT'}
 
     @classmethod
@@ -103,7 +104,7 @@ class MALT_PT_MaterialSettings(bpy.types.Panel):
                 row.operator("object.material_slot_deselect", text="Deselect")
         
         if context.material:
-            context.material.malt.draw_ui(layout, 'mesh')#TODO
+            context.material.malt.draw_ui(layout, 'mesh', context.material.malt_parameters)
 
 
 classes = (

@@ -3,6 +3,10 @@
 //Every NPR_Pipeline shader should include this file regardless of its type.
 //IS_MESH_SHADER and the likes are defined by the pipeline itself based on the shader file extension.
 
+#ifndef NPR_PIPELINE
+
+#define NPR_PIPELINE
+
 #ifdef IS_MESH_SHADER
 #include "NPR_Pipeline/NPR_MeshShader.glsl"
 #endif
@@ -28,6 +32,8 @@
 #include "NPR_Pipeline/NPR_MeshShader.glsl"
 #include "NPR_Pipeline/NPR_LightShader.glsl"
 #include "NPR_Pipeline/NPR_ScreenShader.glsl"
+
+#endif
 
 #endif
 

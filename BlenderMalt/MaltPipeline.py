@@ -48,6 +48,8 @@ class MaltPipeline(bpy.types.PropertyGroup):
         path = bpy.path.abspath(pipeline)
         import Bridge
         bridge = Bridge.Client_API.Bridge(path, debug_mode)
+        import logging as log
+        log.info('Blender {} {} {}'.format(bpy.app.version_string, bpy.app.build_branch, bpy.app.build_hash))
         params = bridge.get_parameters()
         set_bridge(bridge)
         set_pipeline_parameters(params)
