@@ -34,10 +34,12 @@ class MaltRenderEngine(bpy.types.RenderEngine):
         self.request_new_frame = True
         self.request_scene_update = True
         self.profiling_data = io.StringIO()
-        self.bridge_id = MaltPipeline.get_bridge().get_viewport_id()
+        self.bridge = MaltPipeline.get_bridge()
+        self.bridge_id = self.bridge.get_viewport_id()
 
     def __del__(self):
-        MaltPipeline.get_bridge().free_viewport_id(self.bridge_id)
+        self.bridge.free_viewport_id(self.bridge_id)
+        self.bridge = None
     
     def get_scene(self, context, depsgraph, request_scene_update, overrides):
         def flatten_matrix(matrix):
@@ -245,6 +247,14 @@ class MaltRenderEngine(bpy.types.RenderEngine):
             if self.request_new_frame:
                 self.profiling_data = io.StringIO()
         
+        if self.bridge is not MaltPipeline.get_bridge():
+            #The Bridge has been reset
+            self.bridge.free_viewport_id(self.bridge_id)
+            self.bridge = MaltPipeline.get_bridge()
+            self.bridge_id = self.bridge.get_viewport_id()
+            self.request_new_frame = True
+            self.request_scene_update = True
+        
         overrides = []
         if context.space_data.shading.type == 'MATERIAL':
             overrides.append('Preview')
@@ -253,11 +263,11 @@ class MaltRenderEngine(bpy.types.RenderEngine):
         resolution = context.region.width, context.region.height
 
         if self.request_new_frame:
-            MaltPipeline.get_bridge().render(self.bridge_id, resolution, scene, self.request_scene_update)
+            self.bridge.render(self.bridge_id, resolution, scene, self.request_scene_update)
             self.request_new_frame = False
             self.request_scene_update = False
 
-        buffers, finished, read_resolution = MaltPipeline.get_bridge().render_result(self.bridge_id)
+        buffers, finished, read_resolution = self.bridge.render_result(self.bridge_id)
         pixels = buffers['COLOR']
 
         if not finished:
