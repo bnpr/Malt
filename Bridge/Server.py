@@ -198,7 +198,7 @@ class Viewport(object):
                     break
             log.debug('{} PBOs active'.format(len(self.pbos_active)))
         
-        return len(self.pbos_active) > 0
+        return self.needs_more_samples or len(self.pbos_active) > 0
 
 import os, sys, time
 import cProfile, pstats, io
