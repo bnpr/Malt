@@ -322,7 +322,8 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                 if self.materials[key].material:
                     extension = self.materials[key].extension
                     row.operator('material.malt_add_material', text='', icon='DUPLICATE').material_path = material_path
-                    self.materials[key].material.malt.draw_ui(layout, extension)
+                    material = self.materials[key].material
+                    material.malt.draw_ui(layout, extension, material.malt_parameters)
                 else:
                     row.operator('material.malt_add_material', text='New', icon='ADD').material_path = material_path
 
