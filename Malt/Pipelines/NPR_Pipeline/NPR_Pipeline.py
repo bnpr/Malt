@@ -159,11 +159,11 @@ class NPR_Pipeline(Pipeline):
 
         material_override = scene.world_parameters['Material Override']
         if material_override:
-            if scene.materials != [material_override]:
-                scene.materials = [material_override]
-                for object in scene.objects:
-                    object.material = material_override
-                scene.batches = self.build_scene_batches(scene.objects)
+            scene.world_parameters['Material Override'] = None
+            scene.materials = [material_override]
+            for object in scene.objects:
+                object.material = material_override
+            scene.batches = self.build_scene_batches(scene.objects)
         
         #SETUP SCENE BATCHES
         opaque_batches = {}
