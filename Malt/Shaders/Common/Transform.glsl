@@ -23,7 +23,8 @@ vec3 transform_direction(mat4 matrix, vec3 direction)
 
 vec3 transform_normal(mat4 matrix, vec3 normal)
 {
-    return normalize(transform_direction(matrix, normal));
+    mat3 m = transpose(inverse(mat3(matrix)));
+    return normalize(m * normal);
 }
 
 //TODO: pass TBN as parameter
