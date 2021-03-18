@@ -164,12 +164,16 @@ class MaltRenderEngine(bpy.types.RenderEngine):
                 
                 scene.lights.append(light)
 
+        is_f12 = depsgraph.mode == 'RENDER'
+
         for obj in depsgraph.objects:
-            add_object(obj, obj.matrix_world)
+            if is_f12 or obj.visible_in_viewport_get(context.space_data):
+                add_object(obj, obj.matrix_world)
 
         for instance in depsgraph.object_instances:
             if instance.instance_object:
-                add_object(instance.instance_object, instance.matrix_world)
+                if is_f12 or instance.parent.visible_in_viewport_get(context.space_data):
+                    add_object(instance.instance_object, instance.matrix_world)
         
         #TODO: 
         for i, obj in enumerate(scene.objects):
