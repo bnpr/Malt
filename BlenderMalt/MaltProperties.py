@@ -218,7 +218,7 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                     material_name = material.name_full
                     if material_name not in materials.keys():
                         shader = {
-                            'path': bpy.path.abspath(material.malt.shader_source),
+                            'path': bpy.path.abspath(material.malt.shader_source, library=material.library),
                             'parameters': material.malt.parameters.get_parameters(overrides, resources)
                         }
                         material_parameters = material.malt_parameters.get_parameters(overrides, resources)
@@ -428,6 +428,7 @@ class MALT_PT_Base(bpy.types.Panel):
     def draw(self, context):
         owner = self.__class__.get_malt_property_owner(context)
         if owner:
+            self.layout.active = owner.library is None #Only local data can be edited
             owner.malt_parameters.draw_ui(self.layout)
 
 

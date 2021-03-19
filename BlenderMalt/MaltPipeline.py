@@ -45,7 +45,7 @@ class MaltPipeline(bpy.types.PropertyGroup):
 
         debug_mode = bool(bpy.context.preferences.addons['BlenderMalt'].preferences.debug_mode)
         
-        path = bpy.path.abspath(pipeline)
+        path = bpy.path.abspath(pipeline, library=self.id_data.library)
         import Bridge
         bridge = Bridge.Client_API.Bridge(path, debug_mode)
         import logging as log
@@ -148,13 +148,12 @@ def depsgraph_update(scene, depsgraph):
         bpy.types.Light : bpy.data.lights,
     }
     for update in depsgraph.updates:
-        if update.id.library is None: # Only local data
-            # Try to avoid as much re-setups as possible. 
-            # Ideally we would do it only on ID creation.
-            if update.is_updated_geometry == True or update.is_updated_transform == False:
-                for cls, data in class_data_map.items():
-                    if isinstance(update.id, cls):
-                        ids.append(data[update.id.name])
+        # Try to avoid as much re-setups as possible. 
+        # Ideally we would do it only on ID creation.
+        if update.is_updated_geometry == True or update.is_updated_transform == False:
+            for cls, data in class_data_map.items():
+                if isinstance(update.id, cls):
+                    ids.append(data[update.id.name])
     setup_parameters(ids)
 
     redraw = False
@@ -185,7 +184,7 @@ def track_pipeline_changes():
     try:
         scene = bpy.context.scene
         malt = scene.world.malt
-        path = bpy.path.abspath(malt.pipeline)
+        path = bpy.path.abspath(malt.pipeline, library=malt.id_data.library)
         if os.path.exists(path):
             stats = os.stat(path)
             if stats.st_mtime > TIMESTAMP:
