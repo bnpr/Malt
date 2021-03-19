@@ -17,7 +17,7 @@ class MaltMaterial(bpy.types.PropertyGroup):
             _SHADER_PATHS.append(str(self.shader_source))
         self.compiler_error = ''
         if self.shader_source != '':
-            path = bpy.path.abspath(self.shader_source)
+            path = bpy.path.abspath(self.shader_source, library=self.id_data.library)
             compiled_material = MaltPipeline.get_bridge().compile_material(path)
             self.compiler_error = compiled_material.compiler_error
             self.parameters.setup(compiled_material.parameters)
@@ -30,6 +30,7 @@ class MaltMaterial(bpy.types.PropertyGroup):
     parameters : bpy.props.PointerProperty(type=MaltPropertyGroup, name="Shader Parameters")
     
     def draw_ui(self, layout, extension, material_parameters):
+        layout.active = self.id_data.library is None #only local data can be edited
         layout.prop(self, 'shader_source')
         if self.shader_source != '' and self.shader_source.endswith('.'+extension+'.glsl') == False:
             box = layout.box()
@@ -135,7 +136,7 @@ def track_shader_changes():
         needs_update = []
 
         for material in bpy.data.materials:
-            path = bpy.path.abspath(material.malt.shader_source)
+            path = bpy.path.abspath(material.malt.shader_source, library=material.library)
             if path not in needs_update:
                 if os.path.exists(path):
                     stats = os.stat(path)
@@ -149,7 +150,7 @@ def track_shader_changes():
         if len(needs_update) > 0:
             compiled_materials = MaltPipeline.get_bridge().compile_materials(needs_update)
             for material in bpy.data.materials:
-                path = bpy.path.abspath(material.malt.shader_source)
+                path = bpy.path.abspath(material.malt.shader_source, library=material.library)
                 if path in compiled_materials.keys():
                     material.malt.compiler_error = compiled_materials[path].compiler_error
                     material.malt.parameters.setup(compiled_materials[path].parameters)
