@@ -209,15 +209,17 @@ class MaltRenderEngine(bpy.types.RenderEngine):
         size = self.size_x * self.size_y
 
         result = self.begin_result(0, 0, self.size_x, self.size_y)
-        
-        combined_pass = result.layers[0].passes["Combined"]
-        rect_ptr = CBlenderMalt.get_rect_ptr(combined_pass.as_pointer())
-        ctypes.memmove(rect_ptr, buffers['COLOR'], size*4*4)
+        passes = result.layers[0].passes
 
+        if 'Combined' in passes:
+            combined_pass = passes['Combined']
+            rect_ptr = CBlenderMalt.get_rect_ptr(combined_pass.as_pointer())
+            ctypes.memmove(rect_ptr, buffers['COLOR'], size*4*4)
 
-        depth_pass = result.layers[0].passes["Depth"]
-        rect_ptr = CBlenderMalt.get_rect_ptr(depth_pass.as_pointer())
-        ctypes.memmove(rect_ptr, buffers['DEPTH'], size*4)
+        if 'Depth' in passes:
+            depth_pass = passes['Depth']
+            rect_ptr = CBlenderMalt.get_rect_ptr(depth_pass.as_pointer())
+            ctypes.memmove(rect_ptr, buffers['DEPTH'], size*4)
         
         self.end_result(result)
         # Delete the scene. Otherwise we get memory leaks.
