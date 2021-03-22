@@ -44,7 +44,7 @@ class MaltMaterial(bpy.types.PropertyGroup):
             for line in lines:
                 box.label(text=line)
         
-        material_parameters.draw_ui(layout)
+        material_parameters.draw_ui(layout, filter=extension)
         self.parameters.draw_ui(layout)
 
 

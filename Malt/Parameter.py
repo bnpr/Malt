@@ -27,10 +27,11 @@ class Type(object):
     #RENDER_TARGET=9 #TODO
 
 class Parameter(object):
-    def __init__(self, default_value, type, size=1):
+    def __init__(self, default_value, type, size=1, filter=None):
         self.default_value = default_value
         self.type = type
         self.size = size
+        self.filter = filter
 
     @classmethod
     def from_uniform(cls, uniform):
@@ -44,8 +45,8 @@ class Parameter(object):
         return Parameter(value, type, size)
 
 class MaterialParameter(Parameter):
-    def __init__(self, default_path, extension):
-        super().__init__(default_path, Type.MATERIAL)
+    def __init__(self, default_path, extension, filter=None):
+        super().__init__(default_path, Type.MATERIAL, 1, filter)
         self.extension = extension
 
 def gl_type_to_malt_type(gl_type):
