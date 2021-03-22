@@ -117,6 +117,7 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
             rna[name]["default"] = parameter.default_value
             rna[name]['type'] = parameter.type
             rna[name]['size'] = parameter.size
+            rna[name]['filter'] = parameter.filter
         
         #TODO: We should purge non active properties (specially textures)
         # at some point, likely on file save or load 
@@ -229,7 +230,7 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
         return parameters
 
     
-    def draw_ui(self, layout):
+    def draw_ui(self, layout, filter=None):
         if '_RNA_UI' not in self.keys():
             return #Can't modify ID classes from here
         rna = self.get_rna()
@@ -250,6 +251,8 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
         
         for key in keys:
             if rna[key]['active'] == False:
+                continue
+            if filter and rna[key]['filter'] and rna[key]['filter'] != filter:
                 continue
             
             names = key.split('.')
@@ -323,7 +326,7 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                     extension = self.materials[key].extension
                     row.operator('material.malt_add_material', text='', icon='DUPLICATE').material_path = material_path
                     material = self.materials[key].material
-                    material.malt.draw_ui(layout, extension, material.malt_parameters)
+                    material.malt.draw_ui(layout.box(), extension, material.malt_parameters)
                 else:
                     row.operator('material.malt_add_material', text='New', icon='ADD').material_path = material_path
 

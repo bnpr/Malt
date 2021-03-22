@@ -68,8 +68,8 @@ class NPR_Pipeline(Pipeline):
         self.parameters.light['Shader'] = MaterialParameter('', 'light')
         self.parameters.light['Light Group'] = Parameter(1, Type.INT)
         
-        self.parameters.material['Light Groups.Light'] = Parameter([1,0,0,0], Type.INT, 4)
-        self.parameters.material['Light Groups.Shadow'] = Parameter([1,0,0,0], Type.INT, 4)
+        self.parameters.material['Light Groups.Light'] = Parameter([1,0,0,0], Type.INT, 4, 'mesh')
+        self.parameters.material['Light Groups.Shadow'] = Parameter([1,0,0,0], Type.INT, 4, 'mesh')
 
         global _DEFAULT_SHADER
         if _DEFAULT_SHADER is None: _DEFAULT_SHADER = self.compile_material_from_source('mesh', _DEFAULT_SHADER_SRC)
