@@ -18,10 +18,10 @@ def get_mesh_name(object):
 def get_mesh(object):
     key = get_mesh_name(object)
     if key not in MESHES.keys() or MESHES[key] is None:
-        MESHES[key] = load_mesh(object)
+        MESHES[key] = load_mesh(object, key)
     return MESHES[key]
 
-def load_mesh(object):
+def load_mesh(object, name):
     use_split_faces = False #Use split_faces instead of calc_normals_split (Slightly faster)
 
     m = object.data
@@ -99,8 +99,6 @@ def load_mesh(object):
         'tangents': [bytearray(t) for t in tangents],
         'colors': [bytearray(c) for c in colors],
     }
-
-    name = get_mesh_name(object)
 
     MaltPipeline.get_bridge().load_mesh(name, mesh_data)
 
