@@ -90,6 +90,9 @@ class MaltRenderEngine(bpy.types.RenderEngine):
         def add_object(obj, matrix):
             if obj.display_type in ['TEXTURED','SOLID'] and obj.type in ('MESH','CURVE','SURFACE','FONT'):
                 name = MaltMeshes.get_mesh_name(obj)
+                if depsgraph.mode == 'RENDER':
+                    name = '___F12___' + name
+                
                 if name not in meshes:
                     # (Uses obj.original) Malt Parameters are not present in the evaluated mesh
                     parameters = obj.original.data.malt_parameters.get_parameters(overrides, resources)
@@ -98,7 +101,7 @@ class MaltRenderEngine(bpy.types.RenderEngine):
                     if depsgraph.mode == 'VIEWPORT':
                         malt_mesh = MaltMeshes.get_mesh(obj)
                     else: #always load the mesh for final renders
-                        malt_mesh = MaltMeshes.load_mesh(obj)
+                        malt_mesh = MaltMeshes.load_mesh(obj, name)
                     
                     if malt_mesh:
                         meshes[name] = [Scene.Mesh(submesh, parameters) for submesh in malt_mesh]
