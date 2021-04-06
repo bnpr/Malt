@@ -366,17 +366,23 @@ class GLSL_Reflection(object):
     RPAREN = pyparsing.Literal(")").suppress()
     LBRACE = pyparsing.Literal("{").suppress()
     RBRACE = pyparsing.Literal("}").suppress()
+    LBRACKET = pyparsing.Literal("[").suppress()
+    RBRACKET = pyparsing.Literal("]").suppress()
     END = pyparsing.Literal(";").suppress()
     STRUCT = pyparsing.Literal("struct").suppress()
     IDENTIFIER = pyparsing.Word(pyparsing.alphas + '_', pyparsing.alphanums + '_')
     TYPE = pyparsing.Word(pyparsing.alphas + '_', pyparsing.alphanums + "_")
+    INT = pyparsing.Word(pyparsing.nums)
     PRECISION = pyparsing.Regex('lowp |mediump |high ')
     IO = pyparsing.Regex('in |out |inout ')
+
+    ARRAY_SIZE = LBRACKET + INT("array_size") + RBRACKET
 
     MEMBER = pyparsing.Group(
         pyparsing.Optional(PRECISION)("precision") +
         TYPE("type") +
-        IDENTIFIER("name")
+        IDENTIFIER("name") +
+        pyparsing.Optional(ARRAY_SIZE)
     )
 
     MEMBERS = pyparsing.delimitedList(MEMBER, ";")("member*") + END
@@ -387,15 +393,30 @@ class GLSL_Reflection(object):
     )
 
     STRUCT_DEF.ignore(pyparsing.cStyleComment)
+    STRUCT_DEF.ignore(pyparsing.dblSlashComment)
 
     @classmethod
     def reflect_structs(cls, code):
-        return cls.STRUCT_DEF.scanString(code)
+        structs = []
+        for struct, start, end in cls.STRUCT_DEF.scanString(code):
+            dictionary = {
+                'name' : struct.name,
+                'members' : []
+            }
+            for member in struct.members:
+                dictionary['members'].append({
+                    'name' : member.name,
+                    'type' : member.type,
+                    'size' : int(member.array_size) if member.array_size else 1
+                })
+            structs.append(dictionary)
+        return structs
 
     PARAMETER = pyparsing.Group(
         pyparsing.Optional(IO)("io") +
         pyparsing.Optional(PRECISION)("precision") +
-        TYPE("type") + pyparsing.Optional(IDENTIFIER)("name")
+        TYPE("type") + pyparsing.Optional(IDENTIFIER)("name") +
+        pyparsing.Optional(ARRAY_SIZE)
     )
 
     PARAMETERS = pyparsing.delimitedList(PARAMETER)("parameter*")
@@ -408,6 +429,8 @@ class GLSL_Reflection(object):
     )
 
     FUNCTION.ignore(pyparsing.cStyleComment)
+    FUNCTION.ignore(pyparsing.dblSlashComment)
+
 
     @classmethod
     def reflect_functions(cls, code):
@@ -422,7 +445,8 @@ class GLSL_Reflection(object):
                 dictionary['parameters'].append({
                     'name' : parameter.name,
                     'type' : parameter.type,
-                    'io' : parameter.io
+                    'size' : int(parameter.array_size) if parameter.array_size else 1,
+                    'io' : parameter.io,
                 })
             functions.append(dictionary)
         return functions
