@@ -186,6 +186,10 @@ class MaltRenderEngine(bpy.types.RenderEngine):
         scene.materials = list(materials.values())
         
         return scene
+    
+    def update_render_passes(self, scene=None, renderlayer=None):
+        self.register_pass(scene, renderlayer, "Combined", 4, "RGBA", 'COLOR')
+        self.register_pass(scene, renderlayer, "Depth", 1, "R", 'VALUE')
 
     def render(self, depsgraph):
         scene = depsgraph.scene_eval
