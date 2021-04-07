@@ -211,7 +211,7 @@ class MaltRenderEngine(bpy.types.RenderEngine):
         
         size = self.size_x * self.size_y
 
-        result = self.begin_result(0, 0, self.size_x, self.size_y)
+        result = self.begin_result(0, 0, self.size_x, self.size_y, layer=depsgraph.view_layer.name)
         passes = result.layers[0].passes
 
         if 'Combined' in passes:
