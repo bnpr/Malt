@@ -63,10 +63,54 @@ class Pipeline(object):
         self.copy_shader = Pipeline.COPY_SHADER
         
         self.default_shader = None
+
+    def get_parameters(self):
+        return self.parameters
+    
+    def get_nodes(self):
+        return None
+    
+    def get_samples(self):
+        return [(0,0)]
+    
+    def needs_more_samples(self):
+        return self.sample_count < len(self.get_samples())
     
     def setup_render_targets(self, resolution):
         pass
+    
+    def find_shader_path(self, path, search_paths=[]):
+        if os.path.exists(path):
+            return path
+        else:
+            for shader_path in self.SHADER_INCLUDE_PATHS + search_paths:
+                full_path = os.path.join(shader_path, path)
+                if os.path.exists(full_path):
+                    return full_path
+        return None
+    
+    def compile_shader_from_source(self, shader_source, include_paths=[], defines=[]):
+        shader_source = Pipeline.GLSL_HEADER + shader_source
+        include_paths = include_paths + Pipeline.SHADER_INCLUDE_PATHS
+        
+        vertex = shader_preprocessor(shader_source, include_paths, ['VERTEX_SHADER'] + defines)
+        pixel = shader_preprocessor(shader_source, include_paths, ['PIXEL_SHADER'] + defines)
 
+        return Shader(vertex, pixel)
+    
+    def compile_material_from_source(self, material_type, source, include_paths=[]):
+        return {}
+    
+    def compile_material(self, shader_path, search_paths=[]):
+        try:
+            file_dir = path.dirname(shader_path)
+            material_type = shader_path.split('.')[-2]
+            source = '#include "{}"'.format(shader_path)
+            return self.compile_material_from_source(material_type, source, search_paths + [file_dir])
+        except:
+            import traceback
+            return traceback.format_exc()
+    
     def draw_screen_pass(self, shader, target, blend = False):
         #Allow screen passes draw to gl_FragDepth
         glEnable(GL_DEPTH_TEST)
@@ -201,47 +245,6 @@ class Pipeline(object):
                         batch['BATCH_IDS'].bind(shader.uniform_blocks['BATCH_IDS'])
                         glDrawElementsInstanced(GL_TRIANGLES, mesh.mesh.index_count, GL_UNSIGNED_INT, NULL, batch['instances_count'])
 
-
-    def get_parameters(self):
-        return self.parameters
-    
-    def get_samples(self):
-        return [(0,0)]
-    
-    def needs_more_samples(self):
-        return self.sample_count < len(self.get_samples())
-    
-    def find_shader_path(self, path, search_paths=[]):
-        if os.path.exists(path):
-            return path
-        else:
-            for shader_path in self.SHADER_INCLUDE_PATHS + search_paths:
-                full_path = os.path.join(shader_path, path)
-                if os.path.exists(full_path):
-                    return full_path
-        return None
-    
-    def compile_shader_from_source(self, shader_source, include_paths=[], defines=[]):
-        shader_source = Pipeline.GLSL_HEADER + shader_source
-        include_paths = include_paths + Pipeline.SHADER_INCLUDE_PATHS
-        
-        vertex = shader_preprocessor(shader_source, include_paths, ['VERTEX_SHADER'] + defines)
-        pixel = shader_preprocessor(shader_source, include_paths, ['PIXEL_SHADER'] + defines)
-
-        return Shader(vertex, pixel)
-    
-    def compile_material_from_source(self, material_type, source, include_paths=[]):
-        return {}
-    
-    def compile_material(self, shader_path, search_paths=[]):
-        try:
-            file_dir = path.dirname(shader_path)
-            material_type = shader_path.split('.')[-2]
-            source = '#include "{}"'.format(shader_path)
-            return self.compile_material_from_source(material_type, source, search_paths + [file_dir])
-        except:
-            import traceback
-            return traceback.format_exc()
 
     def render(self, resolution, scene, is_final_render, is_new_frame):
         if self.resolution != resolution:

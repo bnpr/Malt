@@ -230,7 +230,7 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
         return parameters
 
     
-    def draw_ui(self, layout, filter=None):
+    def draw_ui(self, layout, filter=None, mask=None, is_node_socket=False):
         if '_RNA_UI' not in self.keys():
             return #Can't modify ID classes from here
         rna = self.get_rna()
@@ -286,6 +286,11 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
             name = names[-1]
 
             def make_row(label_only = False):
+                if is_node_socket:
+                    #c = layout.column()
+                    layout.label(text=name)
+                    return layout
+                
                 is_override = False
                 label = name
                 if '@' in name:

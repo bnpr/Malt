@@ -397,7 +397,7 @@ class GLSL_Reflection(object):
 
     @classmethod
     def reflect_structs(cls, code):
-        structs = []
+        structs = {}
         for struct, start, end in cls.STRUCT_DEF.scanString(code):
             dictionary = {
                 'name' : struct.name,
@@ -409,7 +409,7 @@ class GLSL_Reflection(object):
                     'type' : member.type,
                     'size' : int(member.array_size) if member.array_size else 1
                 })
-            structs.append(dictionary)
+            structs[struct.name] = dictionary
         return structs
 
     PARAMETER = pyparsing.Group(
@@ -434,7 +434,7 @@ class GLSL_Reflection(object):
 
     @classmethod
     def reflect_functions(cls, code):
-        functions = []
+        functions = {}
         for function, start, end in cls.FUNCTION.scanString(code):
             dictionary = {
                 'name' : function.name,
@@ -446,9 +446,9 @@ class GLSL_Reflection(object):
                     'name' : parameter.name,
                     'type' : parameter.type,
                     'size' : int(parameter.array_size) if parameter.array_size else 1,
-                    'io' : parameter.io,
+                    'io' : parameter.io.replace(' ',''),#TODO
                 })
-            functions.append(dictionary)
+            functions[function.name] = dictionary
         return functions
 
 

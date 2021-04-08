@@ -52,6 +52,7 @@ class Bridge(object):
         self.process = None
         self.lost_connection = True
         self.parameters = {}
+        self.nodes = None
         self.render_buffers = {}
         self.id = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
 
@@ -82,7 +83,7 @@ class Bridge(object):
         self.connections = bridge_to_malt
 
         if self.connections['PARAMS'].poll(timeout):
-            self.parameters = self.connections['PARAMS'].recv()
+            self.parameters, self.nodes = self.connections['PARAMS'].recv()
             self.lost_connection = False
     
     def __del__(self):

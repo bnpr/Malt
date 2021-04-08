@@ -196,6 +196,7 @@ class MaltRenderEngine(bpy.types.RenderEngine):
         self.register_pass(scene, renderlayer, "Depth", 1, "R", 'VALUE')
 
     def render(self, depsgraph):
+        print('RENDER')
         scene = depsgraph.scene_eval
         scale = scene.render.resolution_percentage / 100.0
 
@@ -225,6 +226,8 @@ class MaltRenderEngine(bpy.types.RenderEngine):
 
         result = self.begin_result(0, 0, self.size_x, self.size_y, layer=depsgraph.view_layer.name)
         passes = result.layers[0].passes
+
+        print(*passes)
 
         if 'Combined' in passes:
             combined_pass = passes['Combined']

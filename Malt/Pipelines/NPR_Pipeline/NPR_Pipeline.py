@@ -5,7 +5,7 @@ from os import path
 from Malt.GL.GL import *
 from Malt.GL.Mesh import Mesh
 from Malt.GL.RenderTarget import RenderTarget
-from Malt.GL.Shader import Shader, UBO
+from Malt.GL.Shader import Shader, UBO, GLSL_Reflection
 from Malt.GL.Texture import Texture
 
 from Malt.Render import Common
@@ -88,6 +88,24 @@ class NPR_Pipeline(Pipeline):
         self.line_rendering = Line.LineRendering()
 
         self.composite_depth = DepthToCompositeDepth.CompositeDepth()
+
+        #self.get_nodes()
+    
+    def get_nodes(self):
+        functions = GLSL_Reflection.reflect_functions(self.default_shader['MAIN_PASS'].pixel_source)
+        structs = GLSL_Reflection.reflect_structs(self.default_shader['MAIN_PASS'].pixel_source)
+        graph_functions = [functions['COMMON_PIXEL_SHADER']]
+        for name in [*functions.keys()]:
+            if name.startswith('_') or name.isupper() or name == 'main':
+                functions.pop(name)
+        for name in [*structs.keys()]:
+            if name.startswith('_'):
+                structs.pop(name)
+        return {
+            'functions': functions,
+            'structs': structs,
+            'graph functions': graph_functions
+        }
 
     def compile_material_from_source(self, material_type, source, include_paths=[]):
         if material_type == 'mesh':
