@@ -362,6 +362,9 @@ def main(pipeline_path, connection_addresses, shared_dic, log_path, debug_mode):
                 stats.print_stats()
                 if active_viewports:
                     log.debug(profiling_data.getvalue())
+        except (ConnectionResetError, EOFError):
+            #Connection Lost
+            break
         except:
             import traceback
             log.error(traceback.format_exc())
