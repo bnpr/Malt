@@ -24,7 +24,6 @@ class MaltTree(bpy.types.NodeTree):
     def update_source(self, context):
         source = open(self.source_path, 'r').read()
         functions = GLSL_Reflection.reflect_functions(source)
-        print(functions)
         self.functions_json = json.dumps(functions)
 
     generated_source: bpy.props.StringProperty()
@@ -32,7 +31,6 @@ class MaltTree(bpy.types.NodeTree):
     functions_json: bpy.props.StringProperty()
 
     def update(self):
-        print('UPDATE NODE TREE')
         '''
         for link in self.links:
             if link.from_socket.data_type != link.to_socket.data_type:
@@ -43,7 +41,6 @@ class MaltTree(bpy.types.NodeTree):
         if pipeline_nodes:
             for node in self.nodes:
                 if isinstance(node, MaltIONode) and node.is_output:
-                    print('has output')
                     output_node = node
         nodes = []
         def add_node_inputs(node):
@@ -121,7 +118,6 @@ def get_type_color(type):
         seed = hashlib.sha1(type.encode('ascii')).digest()
         rand = random.Random(seed)
         __TYPE_COLORS[type] = (rand.random(),rand.random(),rand.random(),1.0)
-        print(type, seed, __TYPE_COLORS[type])
     return __TYPE_COLORS[type]
 
 class MaltSocket(bpy.types.NodeSocket):
@@ -140,7 +136,6 @@ class MaltSocket(bpy.types.NodeSocket):
             return None
         else:
             link = self.links[0]
-            print(self, self.is_output, link.from_socket, link.to_socket)
             return link.to_socket if self.is_output else link.from_socket
     
     def draw(self, context, layout, node, text):
@@ -262,12 +257,17 @@ class MaltFunctionNode(MaltNode):
     def get_glsl_code(self):
         code = ''
         function = json.loads(self.function_json)
-        variables = []
         parameters = []
         for parameter in function['parameters']:
-            #if parameter['io'] == 'out':
-            #    code += '{} {};\n'.format(parameter['type'], to_glsl_name(self.name, parameter['name']))
-            if parameter['io'] in ['','in','inout']:
+            if parameter['io'] in ['out','inout']:
+                socket = self.outputs[parameter['name']]
+                copy_from = '{}()'.format(socket.data_type)
+                linked = socket.get_linked()
+                if linked:
+                    copy_from = linked.get_glsl_renference()
+                code += '{} {} = {};\n'.format(parameter['type'], socket.get_glsl_reference(), copy_from)
+                parameters.append(socket.get_glsl_reference())
+            if parameter['io'] in ['','in']:
                 socket = self.inputs[parameter['name']]
                 linked = socket.get_linked()
                 if linked:
@@ -339,10 +339,7 @@ class MaltIONode(MaltNode):
                 if linked:
                     result = linked.get_glsl_reference()
                 code += 'return {};\n'.format(result)
-            print('PRINT IO OUTPUT')
-            print(code)
-        else:
-            print('NO IO OUTPUT')
+
         return code
 
 
