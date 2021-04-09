@@ -110,6 +110,7 @@ def node_items(context):
             yield NodeItem("MaltStructNode", label=name, settings={
                 'struct_json' : repr(json.dumps(struct))
             })
+    yield NodeItem("MaltInlineNode", label='Inline Code')
 
 __TYPE_COLORS = {}
 def get_type_color(type):
@@ -295,28 +296,24 @@ class MaltIONode(MaltNode):
     is_output: bpy.props.BoolProperty()
 
     def setup(self, context):
-        try:
-            malt_parameters = {}
+        malt_parameters = {}
 
-            function = json.loads(self.function_json)
-            self.name = function['name'] + ' Output' if self.is_output else ' Input'
-            max_len = len(self.name)
-            if function['type'] != 'void':
-                self.inputs.new('MaltSocket', 'result').data_type = function['type']
-            for parameter in function['parameters']:
-                max_len = max(max_len, len(parameter['name']) * 2)
-                if parameter['io'] in ['out','inout'] and self.is_output == True:
-                    self.inputs.new('MaltSocket', parameter['name']).data_type = parameter['type']
-                    #malt_parameters[parameter['name']] = Parameter.from_glsl_type(parameter['type'])
-                if parameter['io'] in ['','in','inout'] and self.is_output == False:
-                    self.outputs.new('MaltSocket', parameter['name']).data_type = parameter['type']
-            
-            self.properties.setup(malt_parameters)
-            #TODO: Measure actual string width
-            self.width = max_len * 10
-        except:
-            import traceback
-            traceback.print_exc()
+        function = json.loads(self.function_json)
+        self.name = function['name'] + (' Output' if self.is_output else ' Input')
+        max_len = len(self.name)
+        if function['type'] != 'void':
+            self.inputs.new('MaltSocket', 'result').data_type = function['type']
+        for parameter in function['parameters']:
+            max_len = max(max_len, len(parameter['name']) * 2)
+            if parameter['io'] in ['out','inout'] and self.is_output == True:
+                self.inputs.new('MaltSocket', parameter['name']).data_type = parameter['type']
+                #malt_parameters[parameter['name']] = Parameter.from_glsl_type(parameter['type'])
+            if parameter['io'] in ['','in','inout'] and self.is_output == False:
+                self.outputs.new('MaltSocket', parameter['name']).data_type = parameter['type']
+        
+        self.properties.setup(malt_parameters)
+        #TODO: Measure actual string width
+        self.width = max_len * 10
 
     function_json : bpy.props.StringProperty(update=setup)
 
@@ -343,6 +340,54 @@ class MaltIONode(MaltNode):
         return code
 
 
+class MaltInlineNode(MaltNode):
+    
+    bl_label = "Custom Node"
+
+    code : bpy.props.StringProperty()
+
+    def init(self, context):
+        self.name = 'Inline Code'
+        for input in 'abcdefgh':
+            self.inputs.new('MaltSocket', input)
+        self.outputs.new('MaltSocket', 'result')
+    
+    def update(self):
+        max = 0
+        for i, input in enumerate(self.inputs):
+            if input.get_linked():
+                max = i
+        for i, input in enumerate(self.inputs):
+            input.hide = i > max + 1
+        
+        from itertools import chain
+        for socket in chain(self.inputs, self.outputs):
+            if socket.get_linked():
+                socket.data_type = socket.get_linked().data_type
+            else:
+                socket.data_type = ''
+    
+    def draw_buttons(self, context, layout):
+        layout.prop(self, 'code', text='')
+
+    def get_glsl_socket_reference(self, socket):
+        return '{}__{}'.format(self.get_glsl_name(), socket.name)
+    
+    def get_glsl_code(self):
+        code = '{} {};\n'.format(self.outputs['result'].data_type, self.outputs['result'].get_glsl_reference())
+        code += '{\n'
+
+        for input in self.inputs:
+            if input.get_linked():
+                code += '   {} {} = {};\n'.format(input.data_type, input.name, input.get_linked().get_glsl_reference())
+        if self.code != '':
+            code += '   {} = {};\n'.format(self.outputs['result'].get_glsl_reference(), self.code)
+
+        code += '}\n\n'
+
+        return code
+
+
 classes = (
     MaltTree,
     NODE_PT_MaltNodeTree,
@@ -351,6 +396,7 @@ classes = (
     MaltStructNode,
     MaltFunctionNode,
     MaltIONode,
+    MaltInlineNode,
 )
 
 
