@@ -54,62 +54,12 @@ class MaltTree(bpy.types.NodeTree):
                         add_node_inputs(new_node)
                         nodes.append(new_node)
 
-        def to_glsl_node_name(node):
-            return '_' + node.name.replace('.','_').replace(' ','_')
-        def to_glsl_name(node, variable_name):
-            return to_glsl_node_name(node) + '__' + variable_name
-
         code = ''
         if output_node:
             add_node_inputs(output_node)
             for node in nodes:
-                '''
-                if isintance(node, MaltIONode):
-                    for output in node.ouputs:
-                        type = output.data_type
-                        variable = name + '__' + output.name
-                        line = '{} {} = {}.{}'
-                '''
-                if isinstance(node, MaltStructNode):
-                    struct = json.loads(node.struct_json)
-                    node_name = to_glsl_node_name(node)
-                    initialization = '{}()'.format(struct['name'])
-                    if node.inputs[struct['name']].is_linked:
-                        link = node.inputs[struct['name']].links[0]
-                        initialization = to_glsl_name(link.from_node, link.from_socket.name)
-                    code += '{} {} = {};\n'.format(struct['name'], node_name, initialization)
-                    for input in node.inputs:
-                        if input.is_linked and input.name != struct['name']:
-                            link = input.links[0]
-                            referenced_variable_name = to_glsl_name(link.from_node, link.from_socket.name)
-                            code += '{}.{} = {};\n'.format(node_name, input.name, referenced_variable_name)
-                    for output in node.outputs:
-                        if output.is_linked and output.name != struct['name']:
-                            new_variable_name = to_glsl_name(node, output.name)
-                            code += '{} {} = {}.{};\n'.format(output.data_type, new_variable_name, node_name, output.name)
-                if isinstance(node, MaltFunctionNode):
-                    function = json.loads(node.function_json)
-                    variables = []
-                    parameters = []
-                    for parameter in function['parameters']:
-                        #if parameter['io'] == 'out':
-                        #    code += '{} {};\n'.format(parameter['type'], to_glsl_name(node.name, parameter['name']))
-                        if parameter['io'] in ['','in','inout']:
-                            socket = node.inputs[parameter['name']]
-                            if socket.is_linked:
-                                link = socket.links[0]
-                                parameters.append(to_glsl_name(link.from_node, link.from_socket.name))
-                            else:
-                                parameters.append(parameter['type'] + '()')
-                    if function['type'] != 'void':
-                        code += '{} {} = '.format(function['type'], to_glsl_name(node, 'result'))
-                    
-                    code += function['name']+'('
-                    for i, parameter in enumerate(parameters):
-                        code += parameter
-                        if i < len(parameters) - 1:
-                            code += ', '
-                    code += ');\n\n'
+                code += node.get_glsl_code()
+            code += output_node.get_glsl_code()
         
         print('-'*10)
         print(code)
@@ -180,6 +130,18 @@ class MaltSocket(bpy.types.NodeSocket):
 
     data_type: bpy.props.StringProperty()
     #TODO: Array
+
+    def get_glsl_reference(self):
+        #assert(self.is_output)
+        return self.node.get_glsl_socket_reference(self)
+    
+    def get_linked(self):
+        if len(self.links) == 0:
+            return None
+        else:
+            link = self.links[0]
+            print(self, self.is_output, link.from_socket, link.to_socket)
+            return link.to_socket if self.is_output else link.from_socket
     
     def draw(self, context, layout, node, text):
         label = text + ' ' + self.data_type
@@ -193,13 +155,22 @@ class MaltSocket(bpy.types.NodeSocket):
             node.properties.draw_ui(layout, mask=[self.name], is_node_socket=True)
     
     def draw_color(self, context, node):
-        return get_type_color(self.data_type)# (0.5,1.0,0.5,1.0)
+        return get_type_color(self.data_type)
     
 
 class MaltNode(bpy.types.Node):
 
     bl_label = "Custom Node"
     
+    def get_glsl_name(self):
+        return '_' + ''.join(char for char in self.name if char.isalnum() or char == '_')
+
+    def get_glsl_code(self):
+        return '/*{} not implemented*/'.format(self)
+
+    def get_glsl_socket_reference(self, socket):
+        return '{} /*not implemented*/'.format(socket.name)
+
     @classmethod
     def poll(cls, ntree):
         return ntree.bl_idname == 'MaltTree'
@@ -227,7 +198,7 @@ class MaltStructNode(MaltNode):
             max_len = max(max_len, len(member['name']) * 2)
             self.inputs.new('MaltSocket', member['name']).data_type = member['type']
             self.outputs.new('MaltSocket', member['name']).data_type = member['type']
-                #malt_parameters[parameter['name']] = Parameter.from_glsl_type(parameter['type'])
+            #malt_parameters[parameter['name']] = Parameter.from_glsl_type(parameter['type'])
         
         self.properties.setup(malt_parameters)
         #TODO: Measure actual string width
@@ -235,6 +206,27 @@ class MaltStructNode(MaltNode):
 
     struct_json : bpy.props.StringProperty(update=setup)
 
+    def get_glsl_socket_reference(self, socket):
+        return '{}.{}'.format(self.get_glsl_name(), socket.name)
+
+    def get_glsl_code(self):
+        code = ''
+        struct = json.loads(self.struct_json)
+        node_name = self.get_glsl_name()
+        
+        initialization = '{}()'.format(struct['name'])
+        if self.inputs[struct['name']].get_linked():
+            linked = self.inputs[struct['name']].get_linked()
+            initialization = linked.get_glsl_reference()
+        code += '{} {} = {};\n'.format(struct['name'], node_name, initialization)
+        
+        for input in self.inputs:
+            if input.get_linked() and input.name != struct['name']:
+                linked = input.get_linked()
+                code += '{}.{} = {};\n'.format(node_name, input.name, linked.get_glsl_reference())
+        
+        return code + '\n'
+        
 
 class MaltFunctionNode(MaltNode):
     
@@ -264,6 +256,37 @@ class MaltFunctionNode(MaltNode):
 
     function_json : bpy.props.StringProperty(update=setup)
 
+    def get_glsl_socket_reference(self, socket):
+        return '{}__{}'.format(self.get_glsl_name(), socket.name)
+
+    def get_glsl_code(self):
+        code = ''
+        function = json.loads(self.function_json)
+        variables = []
+        parameters = []
+        for parameter in function['parameters']:
+            #if parameter['io'] == 'out':
+            #    code += '{} {};\n'.format(parameter['type'], to_glsl_name(self.name, parameter['name']))
+            if parameter['io'] in ['','in','inout']:
+                socket = self.inputs[parameter['name']]
+                linked = socket.get_linked()
+                if linked:
+                    parameters.append(linked.get_glsl_reference())
+                else:
+                    parameters.append(parameter['type'] + '()')
+        if function['type'] != 'void':
+            code += '{} {} = '.format(function['type'], self.outputs['result'].get_glsl_reference())
+        
+        code += function['name']+'('
+        for i, parameter in enumerate(parameters):
+            code += parameter
+            if i < len(parameters) - 1:
+                code += ', '
+        code += ');\n\n'
+
+        return code
+
+
 class MaltIONode(MaltNode):
     
     bl_label = "Custom Node"
@@ -278,6 +301,8 @@ class MaltIONode(MaltNode):
             function = json.loads(self.function_json)
             self.name = function['name'] + ' Output' if self.is_output else ' Input'
             max_len = len(self.name)
+            if function['type'] != 'void':
+                self.inputs.new('MaltSocket', 'result').data_type = function['type']
             for parameter in function['parameters']:
                 max_len = max(max_len, len(parameter['name']) * 2)
                 if parameter['io'] in ['out','inout'] and self.is_output == True:
@@ -294,6 +319,31 @@ class MaltIONode(MaltNode):
             traceback.print_exc()
 
     function_json : bpy.props.StringProperty(update=setup)
+
+    def get_glsl_socket_reference(self, socket):
+        return socket.name
+    
+    def get_glsl_code(self):
+        code = ''
+        if self.is_output:
+            function = json.loads(self.function_json)
+            for socket in self.inputs:
+                if socket.name == 'result':
+                    continue
+                if socket.get_linked():
+                    code += '{} = {};\n'.format(socket.name, socket.get_linked().get_glsl_reference())
+
+            if function['type'] != 'void':
+                result = '{}()'.format(function['type'])
+                linked = self.inputs['result'].get_linked()
+                if linked:
+                    result = linked.get_glsl_reference()
+                code += 'return {};\n'.format(result)
+            print('PRINT IO OUTPUT')
+            print(code)
+        else:
+            print('NO IO OUTPUT')
+        return code
 
 
 classes = (
