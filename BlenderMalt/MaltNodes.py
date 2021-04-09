@@ -2,7 +2,6 @@
 
 from copy import copy, deepcopy
 import bpy
-from bpy.types import NodeTree, Node, NodeSocket
 import nodeitems_utils
 from nodeitems_utils import NodeCategory, NodeItem
 
@@ -13,7 +12,7 @@ from Malt.Parameter import Parameter
 from BlenderMalt.MaltProperties import MaltPropertyGroup
 from BlenderMalt import MaltPipeline
 
-class MaltTree(NodeTree):
+class MaltTree(bpy.types.NodeTree):
     
     bl_label = "Malt Node Tree"
     bl_icon = 'NODETREE'
@@ -34,6 +33,11 @@ class MaltTree(NodeTree):
 
     def update(self):
         print('UPDATE NODE TREE')
+        '''
+        for link in self.links:
+            if link.from_socket.data_type != link.to_socket.data_type:
+                self.links.remove(link)
+        '''
         output_node = None
         pipeline_nodes = MaltPipeline.get_bridge().nodes
         if pipeline_nodes:
@@ -50,8 +54,10 @@ class MaltTree(NodeTree):
                         add_node_inputs(new_node)
                         nodes.append(new_node)
 
+        def to_glsl_node_name(node):
+            return '_' + node.name.replace('.','_').replace(' ','_')
         def to_glsl_name(node, variable_name):
-            return '_' + node.name.replace('.','_').replace(' ','_') + '__' + variable_name
+            return to_glsl_node_name(node) + '__' + variable_name
 
         code = ''
         if output_node:
@@ -64,6 +70,23 @@ class MaltTree(NodeTree):
                         variable = name + '__' + output.name
                         line = '{} {} = {}.{}'
                 '''
+                if isinstance(node, MaltStructNode):
+                    struct = json.loads(node.struct_json)
+                    node_name = to_glsl_node_name(node)
+                    initialization = '{}()'.format(struct['name'])
+                    if node.inputs[struct['name']].is_linked:
+                        link = node.inputs[struct['name']].links[0]
+                        initialization = to_glsl_name(link.from_node, link.from_socket.name)
+                    code += '{} {} = {};\n'.format(struct['name'], node_name, initialization)
+                    for input in node.inputs:
+                        if input.is_linked and input.name != struct['name']:
+                            link = input.links[0]
+                            referenced_variable_name = to_glsl_name(link.from_node, link.from_socket.name)
+                            code += '{}.{} = {};\n'.format(node_name, input.name, referenced_variable_name)
+                    for output in node.outputs:
+                        if output.is_linked and output.name != struct['name']:
+                            new_variable_name = to_glsl_name(node, output.name)
+                            code += '{} {} = {}.{};\n'.format(output.data_type, new_variable_name, node_name, output.name)
                 if isinstance(node, MaltFunctionNode):
                     function = json.loads(node.function_json)
                     variables = []
@@ -151,7 +174,7 @@ def get_type_color(type):
         print(type, seed, __TYPE_COLORS[type])
     return __TYPE_COLORS[type]
 
-class MaltSocket(NodeSocket):
+class MaltSocket(bpy.types.NodeSocket):
     
     bl_label = "Malt Node Socket"
 
@@ -173,7 +196,9 @@ class MaltSocket(NodeSocket):
         return get_type_color(self.data_type)# (0.5,1.0,0.5,1.0)
     
 
-class MaltTreeNode:
+class MaltNode(bpy.types.Node):
+
+    bl_label = "Custom Node"
     
     @classmethod
     def poll(cls, ntree):
@@ -183,7 +208,7 @@ class MaltTreeNode:
         return self.name
 
 
-class MaltStructNode(Node, MaltTreeNode):
+class MaltStructNode(MaltNode):
     
     bl_label = "Custom Node"
 
@@ -211,7 +236,7 @@ class MaltStructNode(Node, MaltTreeNode):
     struct_json : bpy.props.StringProperty(update=setup)
 
 
-class MaltFunctionNode(Node, MaltTreeNode):
+class MaltFunctionNode(MaltNode):
     
     bl_label = "Custom Node"
 
@@ -239,7 +264,7 @@ class MaltFunctionNode(Node, MaltTreeNode):
 
     function_json : bpy.props.StringProperty(update=setup)
 
-class MaltIONode(Node, MaltTreeNode):
+class MaltIONode(MaltNode):
     
     bl_label = "Custom Node"
 
@@ -275,6 +300,7 @@ classes = (
     MaltTree,
     NODE_PT_MaltNodeTree,
     MaltSocket,
+    MaltNode,
     MaltStructNode,
     MaltFunctionNode,
     MaltIONode,
