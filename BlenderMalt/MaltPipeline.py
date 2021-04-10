@@ -11,11 +11,18 @@ __PIPELINE_PARAMETERS = None
 __INITIALIZED = False
 TIMESTAMP = time.time()
 
-def get_bridge():
+def get_bridge(world=None):
     global __BRIDGE
     bridge = __BRIDGE
     if bridge is None or bridge.lost_connection:
-        bpy.context.scene.world.malt.update_pipeline(bpy.context)
+        __BRIDGE = None
+        try:
+            if world is None:
+                bpy.context.scene.world.malt.update_pipeline(bpy.context)
+            else:
+                world.malt.update_pipeline(bpy.context)
+        except:
+            pass
     return __BRIDGE
 
 def set_bridge(bridge):
@@ -57,7 +64,7 @@ class MaltPipeline(bpy.types.PropertyGroup):
         MaltMaterial.reset_materials()
         MaltMeshes.reset_meshes()
         MaltTextures.reset_textures()
-        
+
         setup_all_ids()
         set_initialized(True)
     
@@ -99,7 +106,7 @@ def setup_all_ids():
     setup_parameters(bpy.data.meshes)
     setup_parameters(bpy.data.curves)
     setup_parameters(bpy.data.lights)
-    MaltMaterial.track_shader_changes()
+    MaltMaterial.track_shader_changes(force_update=True)
 
 def setup_parameters(ids):
     global __PIPELINE_PARAMETERS
