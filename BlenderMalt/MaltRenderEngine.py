@@ -35,7 +35,7 @@ class MaltRenderEngine(bpy.types.RenderEngine):
         self.request_scene_update = True
         self.profiling_data = io.StringIO()
         self.bridge = MaltPipeline.get_bridge()
-        self.bridge_id = self.bridge.get_viewport_id()
+        self.bridge_id = self.bridge.get_viewport_id() if self.bridge else None
 
     def __del__(self):
         self.bridge.free_viewport_id(self.bridge_id)
@@ -201,6 +201,10 @@ class MaltRenderEngine(bpy.types.RenderEngine):
 
         overrides = ['Final Render']
 
+        if self.bridge is not MaltPipeline.get_bridge(depsgraph.scene.world):
+            self.bridge = MaltPipeline.get_bridge()
+            self.bridge_id = self.bridge.get_viewport_id()
+
         scene = self.get_scene(None, depsgraph, True, overrides)
         MaltPipeline.get_bridge().render(0, resolution, scene, True)
 
@@ -262,7 +266,6 @@ class MaltRenderEngine(bpy.types.RenderEngine):
         
         if self.bridge is not MaltPipeline.get_bridge():
             #The Bridge has been reset
-            self.bridge.free_viewport_id(self.bridge_id)
             self.bridge = MaltPipeline.get_bridge()
             self.bridge_id = self.bridge.get_viewport_id()
             self.request_new_frame = True

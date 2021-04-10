@@ -121,8 +121,8 @@ import time
 __TIMESTAMP = time.time()
 
 INITIALIZED = False
-def track_shader_changes():
-    if bpy.context.scene.render.engine != 'MALT':
+def track_shader_changes(force_update=False):
+    if bpy.context.scene.render.engine != 'MALT' and force_update == False:
         return 1
         
     global INITIALIZED
