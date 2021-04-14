@@ -30,6 +30,9 @@ class MaltTree(bpy.types.NodeTree):
     source_path: bpy.props.StringProperty(update=update_source, subtype='FILE_PATH')
     functions_json: bpy.props.StringProperty()
 
+    def get_node_types(self):
+        return MaltPipeline.get_bridge().nodes
+
     def update(self):
         '''
         for link in self.links:
@@ -87,31 +90,6 @@ class MaltNodeCategory(NodeCategory):
         return context.space_data.tree_type == 'MaltTree'
 
 
-def node_items(context):
-    if context is None or context.space_data is None or context.space_data.edit_tree is None:
-        return
-    
-    nodes = MaltPipeline.get_bridge().nodes
-    if nodes:
-        for name, function in nodes['functions'].items():
-            yield NodeItem("MaltFunctionNode", label=name, settings={
-                'function_json' : repr(json.dumps(function))
-            })
-        for function in nodes['graph functions']:
-            yield NodeItem("MaltIONode", label=function['name'] + ' Input', settings={
-                'is_output' : repr(False), 
-                'function_json' : repr(json.dumps(function))
-            })
-            yield NodeItem("MaltIONode", label=function['name'] + ' Output', settings={
-                'is_output' : repr(True),
-                'function_json' : repr(json.dumps(function))
-            })
-        for name, struct in nodes['structs'].items():
-            yield NodeItem("MaltStructNode", label=name, settings={
-                'struct_json' : repr(json.dumps(struct))
-            })
-    yield NodeItem("MaltInlineNode", label='Inline Code')
-
 __TYPE_COLORS = {}
 def get_type_color(type):
     if type not in __TYPE_COLORS:
@@ -120,6 +98,7 @@ def get_type_color(type):
         rand = random.Random(seed)
         __TYPE_COLORS[type] = (rand.random(),rand.random(),rand.random(),1.0)
     return __TYPE_COLORS[type]
+
 
 class MaltSocket(bpy.types.NodeSocket):
     
@@ -156,7 +135,7 @@ class MaltSocket(bpy.types.NodeSocket):
 
 class MaltNode(bpy.types.Node):
 
-    bl_label = "Custom Node"
+    bl_label = "Malt Node"
     
     def get_glsl_name(self):
         return '_' + ''.join(char for char in self.name if char.isalnum() or char == '_')
@@ -177,7 +156,7 @@ class MaltNode(bpy.types.Node):
 
 class MaltStructNode(MaltNode):
     
-    bl_label = "Custom Node"
+    bl_label = "Struct Node"
 
     properties: bpy.props.PointerProperty(type=MaltPropertyGroup)
 
@@ -226,14 +205,15 @@ class MaltStructNode(MaltNode):
 
 class MaltFunctionNode(MaltNode):
     
-    bl_label = "Custom Node"
-
+    bl_label = "Function Node"
+    
     properties: bpy.props.PointerProperty(type=MaltPropertyGroup)
 
     def setup(self, context):
+        self.inputs.clear()
+        self.outputs.clear()
         malt_parameters = {}
-
-        function = json.loads(self.function_json)
+        function = self.get_function()
         self.name = function['name']
         max_len = len(self.name)
         if function['type'] != 'void':
@@ -250,14 +230,29 @@ class MaltFunctionNode(MaltNode):
         #TODO: Measure actual string width
         self.width = max_len * 10
 
-    function_json : bpy.props.StringProperty(update=setup)
+    def functions_enum(self, context):
+        nodes = MaltPipeline.get_bridge().nodes
+        items = [('','','')]
+        for function in nodes['functions']:
+            items.append((function,function,''))
+        return items
+
+    function_type : bpy.props.EnumProperty(items=functions_enum, update=setup)
+    #function_type : bpy.props.StringProperty(update=setup)
+
+    def draw_buttons(self, context, layout):
+        layout.prop(self, 'function_type', text='')
+
+    def get_function(self):
+        nodes = MaltPipeline.get_bridge().nodes
+        return nodes['functions'][self.function_type]
 
     def get_glsl_socket_reference(self, socket):
         return '{}__{}'.format(self.get_glsl_name(), socket.name)
 
     def get_glsl_code(self):
         code = ''
-        function = json.loads(self.function_json)
+        function = self.get_function()
         parameters = []
         for parameter in function['parameters']:
             if parameter['io'] in ['out','inout']:
@@ -290,7 +285,7 @@ class MaltFunctionNode(MaltNode):
 
 class MaltIONode(MaltNode):
     
-    bl_label = "Custom Node"
+    bl_label = "IO Node"
 
     properties: bpy.props.PointerProperty(type=MaltPropertyGroup)
     is_output: bpy.props.BoolProperty()
@@ -342,7 +337,7 @@ class MaltIONode(MaltNode):
 
 class MaltInlineNode(MaltNode):
     
-    bl_label = "Custom Node"
+    bl_label = "Inline Code Node"
 
     code : bpy.props.StringProperty()
 
@@ -405,7 +400,13 @@ def register():
 
     nodeitems_utils.register_node_categories(
         'MALT_NODES',
-        [ MaltNodeCategory('MALTNODES', "Malt Nodes", items=node_items) ]
+        [ MaltNodeCategory('MALTNODES', 'Nodes', items= [
+            NodeItem("MaltFunctionNode", label='Function'),
+            NodeItem("MaltIONode", label='Input', settings={'is_output' : repr(False)}),
+            NodeItem("MaltIONode", label='Output', settings={'is_output' : repr(True)}),
+            NodeItem("MaltStructNode", label='Struct'),
+            NodeItem("MaltInlineNode", label='Inline Code'),
+        ])]
     )
     
 
