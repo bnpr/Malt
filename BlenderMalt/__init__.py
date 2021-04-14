@@ -33,12 +33,12 @@ from BlenderMalt import MaltTextures
 modules = [
     MaltPipeline,
     MaltProperties,#MaltProperties must register before MaltMaterial
+    MaltNodes,
     MaltTextures,
     MaltMeshes,
     MaltMaterial,
     MaltLights,
     MaltRenderEngine,
-    MaltNodes,
 ]
 
 if "bpy" in locals():

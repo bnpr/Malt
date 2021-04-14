@@ -6,6 +6,7 @@ import bpy
 
 from BlenderMalt.MaltProperties import MaltPropertyGroup
 from BlenderMalt import MaltPipeline
+from BlenderMalt.MaltNodes import MaltTree
 
 _SHADER_PATHS = []
 class MaltMaterial(bpy.types.PropertyGroup):
@@ -25,13 +26,18 @@ class MaltMaterial(bpy.types.PropertyGroup):
             self.parameters.setup({})
         
     shader_source : bpy.props.StringProperty(name="Shader Source", subtype='FILE_PATH', update=update_source)
+    shader_nodes : bpy.props.PointerProperty(name="Node Tree", type=MaltTree, update=update_source)
     compiler_error : bpy.props.StringProperty(name="Compiler Error")
 
     parameters : bpy.props.PointerProperty(type=MaltPropertyGroup, name="Shader Parameters")
     
     def draw_ui(self, layout, extension, material_parameters):
         layout.active = self.id_data.library is None #only local data can be edited
-        layout.prop(self, 'shader_source')
+        row = layout.row()
+        row.active = self.shader_nodes is None
+        row.prop(self, 'shader_source')
+        layout.template_ID(self, "shader_nodes", new="node.new_node_tree")
+
         if self.shader_source != '' and self.shader_source.endswith('.'+extension+'.glsl') == False:
             box = layout.box()
             box.label(text='Wrong shader extension, should be '+extension+'.', icon='ERROR')

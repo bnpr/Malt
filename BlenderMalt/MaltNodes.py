@@ -1,6 +1,7 @@
 # Copyright (c) 2020 BlenderNPR and contributors. MIT license. 
 
 from copy import copy, deepcopy
+from random import uniform
 import bpy
 import nodeitems_utils
 from nodeitems_utils import NodeCategory, NodeItem
@@ -54,6 +55,10 @@ class MaltTree(bpy.types.NodeTree):
                         add_node_inputs(new_node)
                         nodes.append(new_node)
 
+        uniforms = ''
+        for node in self.nodes:
+            uniforms += node.get_glsl_uniforms()
+        
         code = ''
         if output_node:
             add_node_inputs(output_node)
@@ -62,6 +67,7 @@ class MaltTree(bpy.types.NodeTree):
             code += output_node.get_glsl_code()
         
         print('-'*10)
+        print(uniforms)
         print(code)
         print('-'*10)
         self.generated_source = code
@@ -111,6 +117,9 @@ class MaltSocket(bpy.types.NodeSocket):
         #assert(self.is_output)
         return self.node.get_glsl_socket_reference(self)
     
+    def get_glsl_uniform(self):
+        return 'UNIFORM__{}__{}'.format(self.node.get_glsl_name(), self.name)
+    
     def get_linked(self):
         if len(self.links) == 0:
             return None
@@ -133,9 +142,11 @@ class MaltSocket(bpy.types.NodeSocket):
         return get_type_color(self.data_type)
     
 
-class MaltNode(bpy.types.Node):
+class MaltNode():
 
     bl_label = "Malt Node"
+
+    expose_uniforms : bpy.props.BoolProperty(default=False)
     
     def get_glsl_name(self):
         return '_' + ''.join(char for char in self.name if char.isalnum() or char == '_')
@@ -145,6 +156,14 @@ class MaltNode(bpy.types.Node):
 
     def get_glsl_socket_reference(self, socket):
         return '{} /*not implemented*/'.format(socket.name)
+    
+    def get_glsl_uniforms(self):
+        code = ''
+        if self.expose_uniforms:
+            for name, socket in self.inputs.items():
+                if socket.get_linked() is None and socket.data_type != '':
+                    code += 'uniform {} {};\n'.format(socket.data_type, socket.get_glsl_uniform())
+        return code
 
     @classmethod
     def poll(cls, ntree):
@@ -154,7 +173,7 @@ class MaltNode(bpy.types.Node):
         return self.name
 
 
-class MaltStructNode(MaltNode):
+class MaltStructNode(bpy.types.Node, MaltNode):
     
     bl_label = "Struct Node"
 
@@ -220,13 +239,14 @@ class MaltStructNode(MaltNode):
         return code + '\n'
         
 
-class MaltFunctionNode(MaltNode):
+class MaltFunctionNode(bpy.types.Node, MaltNode):
     
     bl_label = "Function Node"
     
     properties: bpy.props.PointerProperty(type=MaltPropertyGroup)
 
     def setup(self, context):
+        self.expose_uniforms = True
         self.inputs.clear()
         self.outputs.clear()
         malt_parameters = {}
@@ -302,7 +322,7 @@ class MaltFunctionNode(MaltNode):
         return code
 
 
-class MaltIONode(MaltNode):
+class MaltIONode(bpy.types.Node, MaltNode):
     
     bl_label = "IO Node"
 
@@ -370,7 +390,45 @@ class MaltIONode(MaltNode):
         return code
 
 
-class MaltInlineNode(MaltNode):
+class MaltUniformsNode(bpy.types.Node, MaltNode):
+    
+    bl_label = "Uniforms Node"
+
+    def init(self, context):
+        self.name = 'Uniforms'
+        self.outputs.new('MaltSocket', 'parameter')
+    
+    def update(self):
+        remove = []
+        for i, output in enumerate(self.outputs):
+            if output.get_linked() is None:
+                remove.append(output)
+        for socket in remove:
+            self.outputs.remove(socket)
+        
+        self.outputs.new('MaltSocket', 'parameter')
+
+        for output in self.outputs:
+            if output.get_linked():
+                linked = output.get_linked()
+                output.data_type = linked.data_type
+                output.name = linked.name
+
+    def get_glsl_socket_reference(self, socket):
+        return socket.get_glsl_uniform()
+    
+    def get_glsl_code(self):
+        return ''
+    
+    def get_glsl_uniforms(self):
+        code = ''
+        for name, socket in self.outputs.items():
+            if socket.get_linked() and socket.data_type != '':
+                code += 'uniform {} {};\n'.format(socket.data_type, socket.get_glsl_uniform())
+        return code
+
+
+class MaltInlineNode(bpy.types.Node, MaltNode):
     
     bl_label = "Inline Code Node"
 
@@ -422,10 +480,11 @@ classes = (
     MaltTree,
     NODE_PT_MaltNodeTree,
     MaltSocket,
-    MaltNode,
+    #MaltNode,
     MaltStructNode,
     MaltFunctionNode,
     MaltIONode,
+    MaltUniformsNode,
     MaltInlineNode,
 )
 
@@ -455,8 +514,8 @@ def input_nodes(context):
     if nodes:
         for name in nodes['graph functions']:
             yield NodeItem("MaltIONode", label=name + ' Input', settings={
-                'io_type' : repr(name),
                 'is_output' : repr(False),
+                'io_type' : repr(name),
             })
 
 def output_nodes(context):
@@ -464,8 +523,8 @@ def output_nodes(context):
     if nodes:
         for name in nodes['graph functions']:
             yield NodeItem("MaltIONode", label=name + ' Ouput', settings={
-                'io_type' : repr(name),
                 'is_output' : repr(True),
+                'io_type' : repr(name),
             })
 
 
@@ -480,7 +539,8 @@ def register():
             MaltNodeCategory('INPUTS', 'Inputs', items=input_nodes),
             MaltNodeCategory('OUTPUTS', 'Outputs', items=output_nodes),
             MaltNodeCategory('OTHER', 'Other', items=[
-                NodeItem("MaltInlineNode", label='Inline Code')
+                NodeItem("MaltUniformsNode", label='Uniforms'),
+                NodeItem("MaltInlineNode", label='Inline Code'),
             ]),
         ]
     )

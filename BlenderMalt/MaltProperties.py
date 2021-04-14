@@ -6,7 +6,7 @@ import bpy
 from Malt.Parameter import *
 from Malt import Scene
 
-from BlenderMalt import MaltPipeline, MaltTextures
+from BlenderMalt import MaltTextures
 
 # WORKAROUND: We can't declare color ramps from python,
 # so we store them as nodes inside a material
