@@ -163,7 +163,7 @@ class MaltStructNode(MaltNode):
     def setup(self, context):
         malt_parameters = {}
 
-        struct = json.loads(self.struct_json)
+        struct = self.get_struct()
         self.name = struct['name']
         max_len = len(self.name)
         
@@ -179,14 +179,31 @@ class MaltStructNode(MaltNode):
         #TODO: Measure actual string width
         self.width = max_len * 10
 
-    struct_json : bpy.props.StringProperty(update=setup)
+    def structs_enum(self, context):
+        nodes = MaltPipeline.get_bridge().nodes
+        items = [('','','')]
+        for struct in nodes['structs']:
+            items.append((struct,struct,''))
+        return items
+
+    struct_type : bpy.props.EnumProperty(items=structs_enum, update=setup)
+    #struct_type : bpy.props.StringProperty(update=setup)
+
+    '''
+    def draw_buttons(self, context, layout):
+        layout.prop(self, 'struct_type', text='')
+    '''
+
+    def get_struct(self):
+        nodes = MaltPipeline.get_bridge().nodes
+        return nodes['structs'][self.struct_type]
 
     def get_glsl_socket_reference(self, socket):
         return '{}.{}'.format(self.get_glsl_name(), socket.name)
 
     def get_glsl_code(self):
         code = ''
-        struct = json.loads(self.struct_json)
+        struct = self.get_struct()
         node_name = self.get_glsl_name()
         
         initialization = '{}()'.format(struct['name'])
@@ -240,8 +257,10 @@ class MaltFunctionNode(MaltNode):
     function_type : bpy.props.EnumProperty(items=functions_enum, update=setup)
     #function_type : bpy.props.StringProperty(update=setup)
 
+    '''
     def draw_buttons(self, context, layout):
         layout.prop(self, 'function_type', text='')
+    '''
 
     def get_function(self):
         nodes = MaltPipeline.get_bridge().nodes
@@ -292,8 +311,7 @@ class MaltIONode(MaltNode):
 
     def setup(self, context):
         malt_parameters = {}
-
-        function = json.loads(self.function_json)
+        function = self.get_function()
         self.name = function['name'] + (' Output' if self.is_output else ' Input')
         max_len = len(self.name)
         if function['type'] != 'void':
@@ -310,7 +328,24 @@ class MaltIONode(MaltNode):
         #TODO: Measure actual string width
         self.width = max_len * 10
 
-    function_json : bpy.props.StringProperty(update=setup)
+    def functions_enum(self, context):
+        nodes = MaltPipeline.get_bridge().nodes
+        items = [('','','')]
+        for function in nodes['graph functions']:
+            items.append((function,function,''))
+        return items
+
+    io_type : bpy.props.EnumProperty(items=functions_enum, update=setup)
+    #function_json : bpy.props.StringProperty(update=setup)
+
+    '''
+    def draw_buttons(self, context, layout):
+        layout.prop(self, 'io_type', text='')
+    '''
+
+    def get_function(self):
+        nodes = MaltPipeline.get_bridge().nodes
+        return nodes['graph functions'][self.io_type]
 
     def get_glsl_socket_reference(self, socket):
         return socket.name
@@ -318,7 +353,7 @@ class MaltIONode(MaltNode):
     def get_glsl_code(self):
         code = ''
         if self.is_output:
-            function = json.loads(self.function_json)
+            function = self.get_function()
             for socket in self.inputs:
                 if socket.name == 'result':
                     continue
@@ -361,7 +396,7 @@ class MaltInlineNode(MaltNode):
                 socket.data_type = socket.get_linked().data_type
             else:
                 socket.data_type = ''
-    
+
     def draw_buttons(self, context, layout):
         layout.prop(self, 'code', text='')
 
@@ -394,19 +429,60 @@ classes = (
     MaltInlineNode,
 )
 
+def get_pipeline_nodes(context):
+    if context is None or context.space_data is None or context.space_data.edit_tree is None:
+        return None
+    return MaltPipeline.get_bridge().nodes
+
+def function_nodes(context):
+    nodes = get_pipeline_nodes(context)
+    if nodes:
+        for name in nodes['functions']:
+            yield NodeItem("MaltFunctionNode", label=name, settings={
+                'function_type' : repr(name)
+            })
+
+def struct_nodes(context):
+    nodes = get_pipeline_nodes(context)
+    if nodes:
+        for name in nodes['structs']:
+            yield NodeItem("MaltStructNode", label=name, settings={
+                'struct_type' : repr(name)
+            })
+
+def input_nodes(context):
+    nodes = get_pipeline_nodes(context)
+    if nodes:
+        for name in nodes['graph functions']:
+            yield NodeItem("MaltIONode", label=name + ' Input', settings={
+                'io_type' : repr(name),
+                'is_output' : repr(False),
+            })
+
+def output_nodes(context):
+    nodes = get_pipeline_nodes(context)
+    if nodes:
+        for name in nodes['graph functions']:
+            yield NodeItem("MaltIONode", label=name + ' Ouput', settings={
+                'io_type' : repr(name),
+                'is_output' : repr(True),
+            })
+
 
 def register():
     for _class in classes: bpy.utils.register_class(_class)
 
     nodeitems_utils.register_node_categories(
         'MALT_NODES',
-        [ MaltNodeCategory('MALTNODES', 'Nodes', items= [
-            NodeItem("MaltFunctionNode", label='Function'),
-            NodeItem("MaltIONode", label='Input', settings={'is_output' : repr(False)}),
-            NodeItem("MaltIONode", label='Output', settings={'is_output' : repr(True)}),
-            NodeItem("MaltStructNode", label='Struct'),
-            NodeItem("MaltInlineNode", label='Inline Code'),
-        ])]
+        [ 
+            MaltNodeCategory('FUNCTIONS', 'Functions', items=function_nodes),
+            MaltNodeCategory('STRUCTS', 'Structs', items=struct_nodes),
+            MaltNodeCategory('INPUTS', 'Inputs', items=input_nodes),
+            MaltNodeCategory('OUTPUTS', 'Outputs', items=output_nodes),
+            MaltNodeCategory('OTHER', 'Other', items=[
+                NodeItem("MaltInlineNode", label='Inline Code')
+            ]),
+        ]
     )
     
 

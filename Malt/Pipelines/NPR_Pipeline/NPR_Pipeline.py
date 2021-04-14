@@ -94,7 +94,9 @@ class NPR_Pipeline(Pipeline):
     def get_nodes(self):
         functions = GLSL_Reflection.reflect_functions(self.default_shader['MAIN_PASS'].pixel_source)
         structs = GLSL_Reflection.reflect_structs(self.default_shader['MAIN_PASS'].pixel_source)
-        graph_functions = [functions['COMMON_PIXEL_SHADER']]
+        graph_functions = {
+            'COMMON_PIXEL_SHADER': functions['COMMON_PIXEL_SHADER']
+        }
         for name in [*functions.keys()]:
             if name.startswith('_') or name.isupper() or name == 'main':
                 functions.pop(name)
