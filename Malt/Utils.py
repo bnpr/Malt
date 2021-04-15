@@ -18,17 +18,20 @@ def log(mode, *messages):
 
 import cProfile, io, pstats
 
-class ScopedProfile(object):
+def profile_function(function):
+    def profiled_function(*args, **kwargs):
+        profiler = cProfile.Profile()
+        profiling_data = io.StringIO()
+        profiler.enable()
 
-    def __init__(self, profiling_data=io.StringIO()):
-        self.profiler = cProfile.Profile()
-        self.profiler.enable()
-        self.profiling_data = profiling_data
+        function(*args, **kwargs)
 
-    def __del__(self):
-        self.profiler.disable()
-        stats = pstats.Stats(self.profiler, stream=self.profiling_data)
+        profiler.disable()
+        stats = pstats.Stats(profiler, stream=profiling_data)
         stats.strip_dirs()
         stats.sort_stats(pstats.SortKey.CUMULATIVE)
         stats.print_stats()
+        print(profiling_data.getvalue())
+    
+    return profiled_function
 

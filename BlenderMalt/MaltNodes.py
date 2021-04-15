@@ -22,24 +22,28 @@ class MaltTree(bpy.types.NodeTree):
     def poll(cls, context):
         return context.scene.render.engine == 'MALT'
 
-    def update_source(self, context):
-        source = open(self.source_path, 'r').read()
-        functions = GLSL_Reflection.reflect_functions(source)
-        self.functions_json = json.dumps(functions)
-
-    generated_source: bpy.props.StringProperty()
-    source_path: bpy.props.StringProperty(update=update_source, subtype='FILE_PATH')
-    functions_json: bpy.props.StringProperty()
+    extension: bpy.props.StringProperty(default='.mesh.glsl')
 
     def get_node_types(self):
         return MaltPipeline.get_bridge().nodes
+    
+    def get_generated_source_dir(self):
+        import os, tempfile
+        base_path = '//'
+        if bpy.context.blend_data.is_saved == False:
+            base_path = tempfile.gettempdir()
+        
+        return os.path.join(base_path,'malt-shaders')
 
-    def update(self):
-        '''
-        for link in self.links:
-            if link.from_socket.data_type != link.to_socket.data_type:
-                self.links.remove(link)
-        '''
+    def get_generated_source_path(self):
+        import os
+        file_prefix = 'temp'
+        if bpy.context.blend_data.is_saved:  
+            file_prefix = bpy.path.basename(bpy.context.blend_data.filepath).split('.')[0]
+        
+        return os.path.join(self.get_generated_source_dir(),'{}-{}{}'.format(file_prefix, self.name, self.extension))
+    
+    def get_generated_source(self):
         output_node = None
         pipeline_nodes = MaltPipeline.get_bridge().nodes
         if pipeline_nodes:
@@ -65,12 +69,32 @@ class MaltTree(bpy.types.NodeTree):
             for node in nodes:
                 code += node.get_glsl_code()
             code += output_node.get_glsl_code()
+
+        f = {}
         
-        print('-'*10)
-        print(uniforms)
-        print(code)
-        print('-'*10)
-        self.generated_source = code
+        exec(pipeline_nodes['generate_source'], f)
+        
+        return f['generate_source']({
+            'UNIFORMS': uniforms,
+            'COMMON_PIXEL_SHADER': code,
+        })
+
+    def update(self):
+        '''
+        for link in self.links:
+            if link.from_socket.data_type != link.to_socket.data_type:
+                self.links.remove(link)
+        '''
+        source = self.get_generated_source()
+        source_dir = bpy.path.abspath(self.get_generated_source_dir())
+        print('source_dir: ',source_dir)
+        source_path = bpy.path.abspath(self.get_generated_source_path())
+        import pathlib
+        pathlib.Path(source_dir).mkdir(parents=True, exist_ok=True)
+        with open(source_path,'w') as f:
+            f.write(source)
+        from BlenderMalt import MaltMaterial
+        MaltMaterial.track_shader_changes()
 
 
 class NODE_PT_MaltNodeTree(bpy.types.Panel):
@@ -118,7 +142,7 @@ class MaltSocket(bpy.types.NodeSocket):
         return self.node.get_glsl_socket_reference(self)
     
     def get_glsl_uniform(self):
-        return 'UNIFORM__{}__{}'.format(self.node.get_glsl_name(), self.name)
+        return 'UNIFORM_0{}_0_{}'.format(self.node.get_glsl_name(), self.name)
     
     def get_linked(self):
         if len(self.links) == 0:
@@ -218,7 +242,10 @@ class MaltStructNode(bpy.types.Node, MaltNode):
         return nodes['structs'][self.struct_type]
 
     def get_glsl_socket_reference(self, socket):
-        return '{}.{}'.format(self.get_glsl_name(), socket.name)
+        if socket.name == self.struct_type:
+            return self.get_glsl_name()
+        else:
+            return '{}.{}'.format(self.get_glsl_name(), socket.name)
 
     def get_glsl_code(self):
         code = ''
@@ -287,7 +314,7 @@ class MaltFunctionNode(bpy.types.Node, MaltNode):
         return nodes['functions'][self.function_type]
 
     def get_glsl_socket_reference(self, socket):
-        return '{}__{}'.format(self.get_glsl_name(), socket.name)
+        return '{}_0_{}'.format(self.get_glsl_name(), socket.name)
 
     def get_glsl_code(self):
         code = ''
@@ -459,7 +486,7 @@ class MaltInlineNode(bpy.types.Node, MaltNode):
         layout.prop(self, 'code', text='')
 
     def get_glsl_socket_reference(self, socket):
-        return '{}__{}'.format(self.get_glsl_name(), socket.name)
+        return '{}_0_{}'.format(self.get_glsl_name(), socket.name)
     
     def get_glsl_code(self):
         code = '{} {};\n'.format(self.outputs['result'].data_type, self.outputs['result'].get_glsl_reference())

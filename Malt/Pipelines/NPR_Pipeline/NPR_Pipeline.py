@@ -103,10 +103,26 @@ class NPR_Pipeline(Pipeline):
         for name in [*structs.keys()]:
             if name.startswith('_'):
                 structs.pop(name)
+        
+        def generate_source(params):
+            import textwrap
+            return textwrap.dedent('''\
+            #include "Pipelines/NPR_Pipeline.glsl"
+
+            {UNIFORMS}
+
+            void COMMON_PIXEL_SHADER(Surface S, inout PixelOutput PO)
+            {{
+                {COMMON_PIXEL_SHADER}
+            }}
+            ''').format(**params)
+        
+        import inspect, textwrap
         return {
             'functions': functions,
             'structs': structs,
-            'graph functions': graph_functions
+            'graph functions': graph_functions,
+            'generate_source': textwrap.dedent(inspect.getsource(generate_source))
         }
 
     def compile_material_from_source(self, material_type, source, include_paths=[]):

@@ -24,9 +24,13 @@ class MaltMaterial(bpy.types.PropertyGroup):
             self.parameters.setup(compiled_material.parameters)
         else:
             self.parameters.setup({})
+    
+    def update_nodes(self, context):
+        self.shader_source = self.shader_nodes.get_generated_source_path()
+        self.update_source(context)
         
     shader_source : bpy.props.StringProperty(name="Shader Source", subtype='FILE_PATH', update=update_source)
-    shader_nodes : bpy.props.PointerProperty(name="Node Tree", type=MaltTree, update=update_source)
+    shader_nodes : bpy.props.PointerProperty(name="Node Tree", type=MaltTree, update=update_nodes)
     compiler_error : bpy.props.StringProperty(name="Compiler Error")
 
     parameters : bpy.props.PointerProperty(type=MaltPropertyGroup, name="Shader Parameters")
