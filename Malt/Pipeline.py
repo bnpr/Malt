@@ -26,6 +26,9 @@ class Pipeline(object):
     COPY_SHADER = None
 
     def __init__(self):
+        from multiprocessing.dummy import Pool
+        self.pool = Pool(16)
+
         self.parameters = PipelineParameters()
         self.parameters.mesh['double_sided'] = Parameter(False, Type.BOOL)
         self.parameters.mesh['precomputed_tangents'] = Parameter(False, Type.BOOL)
@@ -64,6 +67,7 @@ class Pipeline(object):
         
         self.default_shader = None
 
+
     def get_parameters(self):
         return self.parameters
     
@@ -90,13 +94,31 @@ class Pipeline(object):
         return None
     
     def compile_shader_from_source(self, shader_source, include_paths=[], defines=[]):
+        return self.compile_shaders_from_source(shader_source, include_paths, {'shader': defines})['shader']
+        
+    def compile_shaders_from_source(self, shader_source, include_paths=[], shader_defines_map={}):
         shader_source = Pipeline.GLSL_HEADER + shader_source
         include_paths = include_paths + Pipeline.SHADER_INCLUDE_PATHS
-        
-        vertex = shader_preprocessor(shader_source, include_paths, ['VERTEX_SHADER'] + defines)
-        pixel = shader_preprocessor(shader_source, include_paths, ['PIXEL_SHADER'] + defines)
 
-        return Shader(vertex, pixel)
+        def preprocess(params):
+            return shader_preprocessor(*params)
+        
+        params = []
+
+        for defines in shader_defines_map.values():
+            params.append((shader_source, include_paths, ['VERTEX_SHADER'] + defines))
+            params.append((shader_source, include_paths, ['PIXEL_SHADER'] + defines))
+
+        preprocessed_sources = self.pool.map(preprocess, params)
+
+        results = {}
+
+        for shader in shader_defines_map:
+            vertex = preprocessed_sources.pop(0)
+            pixel = preprocessed_sources.pop(0)
+            results[shader] = Shader(vertex, pixel)
+
+        return results
     
     def compile_material_from_source(self, material_type, source, include_paths=[]):
         return {}
@@ -105,8 +127,8 @@ class Pipeline(object):
         try:
             file_dir = path.dirname(shader_path)
             material_type = shader_path.split('.')[-2]
-            source = '#include "{}"'.format(shader_path)
-            return self.compile_material_from_source(material_type, source, search_paths + [file_dir])
+            source = '#include "{}"'.format(path.basename(shader_path))
+            return self.compile_material_from_source(material_type, source, [file_dir] + search_paths)
         except:
             import traceback
             return traceback.format_exc()

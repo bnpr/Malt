@@ -356,6 +356,7 @@ def reflect_program_uniform_blocks(program):
     
     return blocks
 
+USE_GLSLANG_VALIDATOR = False
 
 import pyparsing
 
@@ -453,6 +454,9 @@ class GLSL_Reflection(object):
 
 
 def glslang_validator(source, stage):
+    if not USE_GLSLANG_VALIDATOR:
+        return ''
+        
     import subprocess
     import tempfile
     import os

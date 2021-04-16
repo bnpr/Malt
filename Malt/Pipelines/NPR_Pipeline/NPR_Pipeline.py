@@ -127,25 +127,19 @@ class NPR_Pipeline(Pipeline):
 
     def compile_material_from_source(self, material_type, source, include_paths=[]):
         if material_type == 'mesh':
-            return {
-                'PRE_PASS' : self.compile_shader_from_source(
-                    source, include_paths, ['IS_MESH_SHADER','PRE_PASS']
-                ),
-                'MAIN_PASS' : self.compile_shader_from_source(
-                    source, include_paths, ['IS_MESH_SHADER','MAIN_PASS']
-                ),
-                'SHADOW_PASS' : self.compile_shader_from_source(
-                    source, include_paths, ['IS_MESH_SHADER','SHADOW_PASS']
-                )
-            }
+            return self.compile_shaders_from_source(source, include_paths, {
+                'PRE_PASS': ['IS_MESH_SHADER','PRE_PASS'],
+                'MAIN_PASS': ['IS_MESH_SHADER','MAIN_PASS'],
+                'SHADOW_PASS': ['IS_MESH_SHADER','SHADOW_PASS'],
+            })
         elif material_type == 'screen':
-            return {
-                'SHADER' : self.compile_shader_from_source(source, include_paths, ['IS_SCREEN_SHADER'])
-            }
+            return self.compile_shaders_from_source(source, include_paths, {
+                'SHADER': ['IS_SCREEN_SHADER'],
+            })
         elif material_type == 'light':
-            return {
-                'SHADER' : self.compile_shader_from_source(source, include_paths, ['IS_LIGHT_SHADER'])
-            }
+            return self.compile_shaders_from_source(source, include_paths, {
+                'SHADER': ['IS_LIGHT_SHADER'],
+            })
         else:
             return 'Invalid material type. Valid extensions are .mesh.glsl, .light.glsl and .screen.glsl'
     
