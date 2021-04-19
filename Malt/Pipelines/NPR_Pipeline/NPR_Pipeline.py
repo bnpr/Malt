@@ -113,7 +113,7 @@ class NPR_Pipeline(Pipeline):
 
             void COMMON_PIXEL_SHADER(Surface S, inout PixelOutput PO)
             {{
-                {COMMON_PIXEL_SHADER}
+            {COMMON_PIXEL_SHADER}
             }}
             ''').format(**params)
         

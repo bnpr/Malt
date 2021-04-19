@@ -9,7 +9,7 @@ MATERIAL_SHADERS = {}
 
 class Material(object):
 
-    @profile_function
+    #@profile_function
     def __init__(self, path, pipeline, search_paths=[]):
         self.path = path
         self.parameters = {}
