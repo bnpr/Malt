@@ -144,9 +144,23 @@ classes=[
     OT_MaltPrintError,
 ]
 
-import multiprocessing as mp
-
 def register():
+    import platform, multiprocessing as mp, ctypes
+    from shutil import copy
+    # Workaround https://developer.blender.org/rB04c5471ceefb41c9e49bf7c86f07e9e7b8426bb3
+    if platform.system() == 'Windows':
+        sys.executable = sys._base_executable
+        # Use python-gpu on windows (patched python with NvOptimusEnablement and AmdPowerXpressRequestHighPerformance)
+        python_executable = path.join(sys.exec_prefix, 'bin', 'python-gpu.exe')
+        if os.path.exists(python_executable) == False:
+            python_gpu_path = path.join(malt_dependencies_path, 'python-gpu.exe')
+            try:
+                copy(python_gpu_path, python_executable)
+            except PermissionError as e:
+                command = '/c copy "{}" "{}"'.format(python_gpu_path, python_executable)
+                result = ctypes.windll.shell32.ShellExecuteW(None, 'runas', 'cmd.exe', command, None, 0)
+        mp.set_executable(python_executable)
+
     for _class in classes: bpy.utils.register_class(_class)
 
     for module in modules:
