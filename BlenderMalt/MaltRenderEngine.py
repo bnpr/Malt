@@ -38,8 +38,12 @@ class MaltRenderEngine(bpy.types.RenderEngine):
         self.bridge_id = self.bridge.get_viewport_id() if self.bridge else None
 
     def __del__(self):
-        self.bridge.free_viewport_id(self.bridge_id)
-        self.bridge = None
+        try:
+            self.bridge.free_viewport_id(self.bridge_id)
+            self.bridge = None
+        except:
+            # Sometimes Blender seems to call the destructor on unitialiazed instances (???)
+            pass
     
     def get_scene(self, context, depsgraph, request_scene_update, overrides):
         def flatten_matrix(matrix):
