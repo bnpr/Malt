@@ -100,12 +100,31 @@ class Bridge(object):
         return self.connections['MATERIAL'].recv()
 
     @bridge_method
-    def compile_materials(self, paths, search_paths=[]):
+    def compile_materials(self, paths, search_paths=[], async_compilation=False):
         for path in paths:
             self.connections['MATERIAL'].send({'path': path, 'search_paths': search_paths})
         results = {}
-        for path in paths:
-            results[path] = self.connections['MATERIAL'].recv()
+        received = []
+        if async_compilation == False:
+            while True:
+                completed = True
+                for path in paths:
+                    if path not in received:
+                        completed = False
+                        break
+                if completed:
+                    break
+                material = self.connections['MATERIAL'].recv()
+                results[material.path] = material
+                received.append(material.path)
+        return results
+    
+    @bridge_method
+    def receive_async_compilation_materials(self):
+        results = {}
+        while self.connections['MATERIAL'].poll():
+            material = self.connections['MATERIAL'].recv()
+            results[material.path] = material
         return results
 
     @bridge_method

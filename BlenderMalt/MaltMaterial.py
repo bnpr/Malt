@@ -131,7 +131,7 @@ import time
 __TIMESTAMP = time.time()
 
 INITIALIZED = False
-def track_shader_changes(force_update=False):
+def track_shader_changes(force_update=False, async_compilation=False):
     if bpy.context.scene.render.engine != 'MALT' and force_update == False:
         return 1
         
@@ -140,8 +140,6 @@ def track_shader_changes(force_update=False):
     global _SHADER_PATHS
     try:
         start_time = time.time()
-
-        #print('TRACK UPDATES')
 
         needs_update = []
 
@@ -154,11 +152,15 @@ def track_shader_changes(force_update=False):
                         if path not in _SHADER_PATHS:
                             _SHADER_PATHS.append(path)
                         needs_update.append(path)
-        
-        #print(needs_update)
+
+        compiled_materials = {}
 
         if len(needs_update) > 0:
-            compiled_materials = MaltPipeline.get_bridge().compile_materials(needs_update)
+            compiled_materials = MaltPipeline.get_bridge().compile_materials(needs_update, async_compilation=async_compilation)
+        else:
+            compiled_materials = MaltPipeline.get_bridge().receive_async_compilation_materials()
+        
+        if len(compiled_materials) > 0:
             for material in bpy.data.materials:
                 path = bpy.path.abspath(material.malt.shader_source, library=material.library)
                 if path in compiled_materials.keys():

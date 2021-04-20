@@ -96,7 +96,7 @@ class MaltTree(bpy.types.NodeTree):
         with open(source_path,'w') as f:
             f.write(source)
         from BlenderMalt import MaltMaterial
-        MaltMaterial.track_shader_changes()
+        MaltMaterial.track_shader_changes(async_compilation=True)
 
 
 class NODE_PT_MaltNodeTree(bpy.types.Panel):
