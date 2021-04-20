@@ -209,6 +209,8 @@ class MaltRenderEngine(bpy.types.RenderEngine):
         if self.bridge is not MaltPipeline.get_bridge(depsgraph.scene.world):
             self.bridge = MaltPipeline.get_bridge()
             self.bridge_id = self.bridge.get_viewport_id()
+        
+        MaltMaterial.track_shader_changes(force_update=True, async_compilation=False)
 
         scene = self.get_scene(None, depsgraph, True, overrides)
         MaltPipeline.get_bridge().render(0, resolution, scene, True)

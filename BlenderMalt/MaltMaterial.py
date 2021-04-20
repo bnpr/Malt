@@ -131,7 +131,7 @@ import time
 __TIMESTAMP = time.time()
 
 INITIALIZED = False
-def track_shader_changes(force_update=False, async_compilation=False):
+def track_shader_changes(force_update=False, async_compilation=True):
     if bpy.context.scene.render.engine != 'MALT' and force_update == False:
         return 1
         
@@ -175,7 +175,7 @@ def track_shader_changes(force_update=False, async_compilation=False):
     except:
         import traceback, logging as log
         log.error(traceback.format_exc())
-    return 1 #Track again in 1 second
+    return 0.1 #Track again in 0.1 second
     
 
 def register():
