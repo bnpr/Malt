@@ -3,8 +3,6 @@
 from copy import copy, deepcopy
 from random import uniform
 import bpy
-import nodeitems_utils
-from nodeitems_utils import NodeCategory, NodeItem
 
 import json
 
@@ -113,14 +111,7 @@ class NODE_PT_MaltNodeTree(bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
         layout.prop(context.space_data.node_tree, 'generated_source')
-
-
-class MaltNodeCategory(NodeCategory):
-    
-    @classmethod
-    def poll(cls, context):
-        return context.space_data.tree_type == 'MaltTree'
-
+        
 
 __TYPE_COLORS = {}
 def get_type_color(type):
@@ -495,6 +486,93 @@ class MaltInlineNode(bpy.types.Node, MaltNode):
         return code
 
 
+def get_pipeline_nodes(context):
+    if context is None or context.space_data is None or context.space_data.edit_tree is None:
+        return None
+    return MaltPipeline.get_bridge().nodes
+
+def insert_node(layout, type, label, settings = {}):
+    operator = layout.operator("node.add_node", text=label)
+    operator.type = type
+    operator.use_transform = True
+    for name, value in settings.items():
+        item = operator.settings.add()
+        item.name = name
+        item.value = value
+    return operator
+
+class MALT_MT_NodeFunctions(bpy.types.Menu):
+    bl_label = "Malt Node Functions Menu"
+
+    def draw(self, context):
+        layout = self.layout
+        nodes = get_pipeline_nodes(context)
+        if nodes:
+            for name in nodes['functions']:
+                insert_node(self.layout, "MaltFunctionNode", name, settings={
+                    'function_type' : repr(name)
+                })
+
+class MALT_MT_NodeStructs(bpy.types.Menu):
+    bl_label = "Malt Node Structs Menu"
+
+    def draw(self, context):
+        layout = self.layout
+        nodes = get_pipeline_nodes(context)
+        if nodes:
+            for name in nodes['structs']:
+                insert_node(self.layout, "MaltStructNode", name, settings={
+                    'struct_type' : repr(name)
+                })
+
+class MALT_MT_NodeInputs(bpy.types.Menu):
+    bl_label = "Malt Node Inputs Menu"
+
+    def draw(self, context):
+        layout = self.layout
+        nodes = get_pipeline_nodes(context)
+        if nodes:
+            for name in nodes['graph functions']:
+                insert_node(self.layout, "MaltIONode", name + ' Input', settings={
+                    'is_output' : repr(False),
+                    'io_type' : repr(name),
+            })
+
+class MALT_MT_NodeOutputs(bpy.types.Menu):
+    bl_label = "Malt Node Outputs Menu"
+
+    def draw(self, context):
+        layout = self.layout
+        nodes = get_pipeline_nodes(context)
+        if nodes:
+            for name in nodes['graph functions']:
+                insert_node(self.layout, "MaltIONode", name + ' Ouput', settings={
+                    'is_output' : repr(True),
+                    'io_type' : repr(name),
+            })
+
+class MALT_MT_NodeOther(bpy.types.Menu):
+    bl_label = "Malt Node Other Menu"
+
+    def draw(self, context):
+        layout = self.layout
+        nodes = get_pipeline_nodes(context)
+        if nodes:
+            insert_node(self.layout, "MaltUniformsNode", 'Uniforms')
+            insert_node(self.layout, "MaltInlineNode", 'Inline Code')
+
+
+def add_node_ui(self, context):
+    if context.space_data.tree_type != 'MaltTree':
+        return
+    nodes = get_pipeline_nodes(context)
+    if nodes:
+        self.layout.menu("MALT_MT_NodeFunctions", text='Functions')
+        self.layout.menu("MALT_MT_NodeStructs", text='Structs')
+        self.layout.menu("MALT_MT_NodeInputs", text='Inputs')
+        self.layout.menu("MALT_MT_NodeOutputs", text='Outputs')
+        self.layout.menu("MALT_MT_NodeOther", text='Other')
+    
 classes = (
     MaltTree,
     NODE_PT_MaltNodeTree,
@@ -505,68 +583,21 @@ classes = (
     MaltIONode,
     MaltUniformsNode,
     MaltInlineNode,
+    MALT_MT_NodeFunctions,
+    MALT_MT_NodeStructs,
+    MALT_MT_NodeInputs,
+    MALT_MT_NodeOutputs,
+    MALT_MT_NodeOther,
 )
-
-def get_pipeline_nodes(context):
-    if context is None or context.space_data is None or context.space_data.edit_tree is None:
-        return None
-    return MaltPipeline.get_bridge().nodes
-
-def function_nodes(context):
-    nodes = get_pipeline_nodes(context)
-    if nodes:
-        for name in nodes['functions']:
-            yield NodeItem("MaltFunctionNode", label=name, settings={
-                'function_type' : repr(name)
-            })
-
-def struct_nodes(context):
-    nodes = get_pipeline_nodes(context)
-    if nodes:
-        for name in nodes['structs']:
-            yield NodeItem("MaltStructNode", label=name, settings={
-                'struct_type' : repr(name)
-            })
-
-def input_nodes(context):
-    nodes = get_pipeline_nodes(context)
-    if nodes:
-        for name in nodes['graph functions']:
-            yield NodeItem("MaltIONode", label=name + ' Input', settings={
-                'is_output' : repr(False),
-                'io_type' : repr(name),
-            })
-
-def output_nodes(context):
-    nodes = get_pipeline_nodes(context)
-    if nodes:
-        for name in nodes['graph functions']:
-            yield NodeItem("MaltIONode", label=name + ' Ouput', settings={
-                'is_output' : repr(True),
-                'io_type' : repr(name),
-            })
-
 
 def register():
     for _class in classes: bpy.utils.register_class(_class)
 
-    nodeitems_utils.register_node_categories(
-        'MALT_NODES',
-        [ 
-            MaltNodeCategory('FUNCTIONS', 'Functions', items=function_nodes),
-            MaltNodeCategory('STRUCTS', 'Structs', items=struct_nodes),
-            MaltNodeCategory('INPUTS', 'Inputs', items=input_nodes),
-            MaltNodeCategory('OUTPUTS', 'Outputs', items=output_nodes),
-            MaltNodeCategory('OTHER', 'Other', items=[
-                NodeItem("MaltUniformsNode", label='Uniforms'),
-                NodeItem("MaltInlineNode", label='Inline Code'),
-            ]),
-        ]
-    )
+    bpy.types.NODE_MT_add.append(add_node_ui)
     
 
 def unregister():
-    nodeitems_utils.unregister_node_categories('MALT_NODES')
+    bpy.types.NODE_MT_add.remove(add_node_ui)
 
     for _class in classes: bpy.utils.unregister_class(_class)
 
