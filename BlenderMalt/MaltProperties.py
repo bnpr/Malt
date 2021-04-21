@@ -249,11 +249,8 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
         
         namespace_stack = [(None, layout)]
 
-        #'''
         layout.use_property_split = True
         layout.use_property_decorate = False
-        layout = layout.column(align=True)
-        #'''
 
         for key in keys:
             if rna[key]['active'] == False:
@@ -264,33 +261,28 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
             if mask and key not in mask:
                 continue
             
-            names = key.split('.')
+            names = key.replace('_0_','.').replace('_',' ').split('.')
+            names = [name for name in names if name.isupper() == False]
 
-            if len(names) == 1:
-                namespace_stack = namespace_stack[:1]
-                layout = namespace_stack[0][1]
-            else:
-                for i in range(0, len(names) - 1):
-                    name = names[i]
-                    stack_i = i+1
-                    if len(namespace_stack) > stack_i and namespace_stack[stack_i][0] != name:
-                        namespace_stack = namespace_stack[:stack_i]
-                    if len(namespace_stack) < stack_i+1:
-                        box = namespace_stack[stack_i - 1][1].box()
-                        box.label(text=name + " :")
-                        namespace_stack.append((name, box))
-                    layout = namespace_stack[stack_i][1]
+            if is_node_socket == False:
+                if len(names) == 1:
+                    namespace_stack = namespace_stack[:1]
+                    layout = namespace_stack[0][1]
+                else:
+                    for i in range(0, len(names) - 1):
+                        name = names[i]
+                        stack_i = i+1
+                        if len(namespace_stack) > stack_i and namespace_stack[stack_i][0] != name:
+                            namespace_stack = namespace_stack[:stack_i]
+                        if len(namespace_stack) < stack_i+1:
+                            box = namespace_stack[stack_i - 1][1].box()
+                            box.label(text=name + " :")
+                            namespace_stack.append((name, box))
+                        layout = namespace_stack[stack_i][1]
             
-            names = [name.replace('_',' ') for name in names]
-
             name = names[-1]
 
             def make_row(label_only = False):
-                if is_node_socket:
-                    #c = layout.column()
-                    layout.label(text=name)
-                    return layout
-                
                 is_override = False
                 label = name
                 if '@' in name:
@@ -303,6 +295,9 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                     result = result.split(factor=0.66)
                     result.alignment = 'RIGHT'
                 result.label(text=label)
+                
+                if is_node_socket:
+                    return result
 
                 if is_override:
                     delete_op = row.operator('wm.malt_delete_override', text='', icon='X')

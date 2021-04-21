@@ -111,7 +111,6 @@ class NODE_PT_MaltNodeTree(bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
         layout.prop(context.space_data.node_tree, 'generated_source')
-        
 
 __TYPE_COLORS = {}
 def get_type_color(type):
@@ -159,7 +158,9 @@ class MaltNode():
     bl_label = "Malt Node"
 
     def get_glsl_name(self):
-        return '_' + ''.join(char for char in self.name if char.isalnum() or char == '_')
+        name = self.name.replace('.','_')
+        name = '_' + ''.join(char for char in name if char.isalnum() or char == '_')
+        return name.replace('__','_')
 
     def get_glsl_code(self):
         return '/*{} not implemented*/'.format(self)
@@ -422,7 +423,16 @@ class MaltUniformsNode(bpy.types.Node, MaltNode):
             if output.get_linked():
                 linked = output.get_linked()
                 output.data_type = linked.data_type
-                output.name = linked.name
+                if output.name.startswith(linked.name) == False:
+                    name = linked.name
+                    #make sure name is unique
+                    while name in self.outputs:
+                        if name[-2:].isdigit():
+                            number = int(name[-2:]) + 1
+                            name = name[:-2] + (str(0) + str(number))[-2:]
+                        else:
+                            name = name + '_01'
+                    output.name = name
 
     def get_glsl_socket_reference(self, socket):
         return socket.get_glsl_uniform()
@@ -442,7 +452,11 @@ class MaltInlineNode(bpy.types.Node, MaltNode):
     
     bl_label = "Inline Code Node"
 
-    code : bpy.props.StringProperty()
+    def code_update(self, context):
+        #update the node tree
+        self.id_data.update()
+
+    code : bpy.props.StringProperty(update=code_update)
 
     def init(self, context):
         self.name = 'Inline Code'
@@ -453,20 +467,25 @@ class MaltInlineNode(bpy.types.Node, MaltNode):
     def update(self):
         max = 0
         for i, input in enumerate(self.inputs):
-            if input.get_linked():
+            if input.data_type != '':
                 max = i
         for i, input in enumerate(self.inputs):
             input.hide = i > max + 1
         
         from itertools import chain
         for socket in chain(self.inputs, self.outputs):
-            if socket.get_linked():
+            linked = socket.get_linked()
+            if linked and linked.data_type != '':
                 socket.data_type = socket.get_linked().data_type
-            else:
-                socket.data_type = ''
 
     def draw_buttons(self, context, layout):
         layout.prop(self, 'code', text='')
+    
+    def draw_socket(self, context, layout, socket, text):
+        layout = layout.row()
+        layout.label(text=socket.name)
+        if socket.is_output == False:
+            layout.prop(socket, 'data_type', text='')
 
     def get_glsl_socket_reference(self, socket):
         return '{}_0_{}'.format(self.get_glsl_name(), socket.name)
