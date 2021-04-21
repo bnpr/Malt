@@ -249,9 +249,6 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
         
         namespace_stack = [(None, layout)]
 
-        layout.use_property_split = True
-        layout.use_property_decorate = False
-
         for key in keys:
             if rna[key]['active'] == False:
                 continue
