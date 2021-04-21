@@ -230,14 +230,7 @@ class MaltStructNode(bpy.types.Node, MaltNode):
         #TODO: Measure actual string width
         self.width = max_len * 10
 
-    def structs_enum(self, context):
-        nodes = MaltPipeline.get_bridge().nodes
-        items = [('','','')]
-        for struct in nodes['structs']:
-            items.append((struct,struct,''))
-        return items
-
-    struct_type : bpy.props.EnumProperty(items=structs_enum, update=setup)
+    struct_type : bpy.props.StringProperty(update=setup)
 
     def get_struct(self):
         nodes = MaltPipeline.get_bridge().nodes
@@ -295,8 +288,6 @@ class MaltFunctionNode(bpy.types.Node, MaltNode):
     
     bl_label = "Function Node"
     
-    properties: bpy.props.PointerProperty(type=MaltPropertyGroup)
-
     def setup(self, context):
         self.inputs.clear()
         self.outputs.clear()
@@ -318,14 +309,7 @@ class MaltFunctionNode(bpy.types.Node, MaltNode):
         #TODO: Measure actual string width
         self.width = max_len * 10
 
-    def functions_enum(self, context):
-        nodes = MaltPipeline.get_bridge().nodes
-        items = [('','','')]
-        for function in nodes['functions']:
-            items.append((function,function,''))
-        return items
-
-    function_type : bpy.props.EnumProperty(items=functions_enum, update=setup)
+    function_type : bpy.props.StringProperty(update=setup)
 
     def get_function(self):
         nodes = MaltPipeline.get_bridge().nodes
@@ -396,14 +380,7 @@ class MaltIONode(bpy.types.Node, MaltNode):
         #TODO: Measure actual string width
         self.width = max_len * 10
 
-    def functions_enum(self, context):
-        nodes = MaltPipeline.get_bridge().nodes
-        items = [('','','')]
-        for function in nodes['graph functions']:
-            items.append((function,function,''))
-        return items
-
-    io_type : bpy.props.EnumProperty(items=functions_enum, update=setup)
+    io_type : bpy.props.StringProperty(update=setup)
 
     def get_function(self):
         nodes = MaltPipeline.get_bridge().nodes
