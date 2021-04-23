@@ -16,7 +16,7 @@ from Malt.Render import Sampling
 
 from Malt.Pipelines.NPR_Pipeline import NPR_Lighting
 
-from Malt.Parameter import Parameter
+from Malt.Parameter import Parameter, PipelineGraph
 from Malt.Pipeline import *
 
 
@@ -89,9 +89,9 @@ class NPR_Pipeline(Pipeline):
 
         self.composite_depth = DepthToCompositeDepth.CompositeDepth()
 
-        #self.get_nodes()
+        self.setup_graphs()
     
-    def get_nodes(self):
+    def setup_graphs(self):
         functions = GLSL_Reflection.reflect_functions(self.default_shader['MAIN_PASS'].pixel_source)
         structs = GLSL_Reflection.reflect_structs(self.default_shader['MAIN_PASS'].pixel_source)
         graph_functions = {
@@ -117,13 +117,7 @@ class NPR_Pipeline(Pipeline):
             }}
             ''').format(**params)
         
-        import inspect, textwrap
-        return {
-            'functions': functions,
-            'structs': structs,
-            'graph functions': graph_functions,
-            'generate_source': textwrap.dedent(inspect.getsource(generate_source))
-        }
+        self.graphs['Mesh Shader'] = PipelineGraph('GLSL','.mesh.glsl', functions, structs, graph_functions, generate_source)
 
     def compile_material_from_source(self, material_type, source, include_paths=[]):
         if material_type == 'mesh':

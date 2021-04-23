@@ -33,6 +33,8 @@ class Pipeline(object):
         self.parameters.mesh['double_sided'] = Parameter(False, Type.BOOL)
         self.parameters.mesh['precomputed_tangents'] = Parameter(False, Type.BOOL)
 
+        self.graphs = {}
+
         shader_dir = path.join(path.dirname(__file__), 'Shaders')
         if shader_dir not in Pipeline.SHADER_INCLUDE_PATHS:
             Pipeline.SHADER_INCLUDE_PATHS.append(shader_dir)
@@ -67,12 +69,11 @@ class Pipeline(object):
         
         self.default_shader = None
 
-
     def get_parameters(self):
         return self.parameters
     
-    def get_nodes(self):
-        return None
+    def get_graphs(self):
+        return self.graphs
     
     def get_samples(self):
         return [(0,0)]

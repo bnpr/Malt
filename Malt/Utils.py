@@ -15,6 +15,17 @@ def log(mode, *messages):
         for message in messages:
             print(message)
 
+def dump_function(function):
+    import textwrap, inspect
+    name = function.__name__
+    function = textwrap.dedent(inspect.getsource(function))
+    return (name, function)
+
+def load_function(function):
+    name, function = function
+    f = {}
+    exec(function, f)
+    return f[name]
 
 import cProfile, io, pstats
 

@@ -251,8 +251,8 @@ def main(pipeline_path, connection_addresses, shared_dic, log_path, debug_mode):
     pipeline = pipeline_class()
 
     params = pipeline.get_parameters()
-    nodes = pipeline.get_nodes()
-    connections['PARAMS'].send((params,nodes))
+    graphs = pipeline.get_graphs()
+    connections['PARAMS'].send((params, graphs))
 
     viewports = {}
 

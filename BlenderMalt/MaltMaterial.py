@@ -12,7 +12,6 @@ _SHADER_PATHS = []
 class MaltMaterial(bpy.types.PropertyGroup):
 
     def update_source(self, context):
-        #print('UPDATE SOURCE')
         global _SHADER_PATHS
         if str(self.shader_source) not in _SHADER_PATHS:
             _SHADER_PATHS.append(str(self.shader_source))
@@ -24,13 +23,19 @@ class MaltMaterial(bpy.types.PropertyGroup):
             self.parameters.setup(compiled_material.parameters)
         else:
             self.parameters.setup({})
+        
+        if self.shader_nodes and self.shader_source != self.shader_nodes.get_generated_source_path():
+            self.shader_nodes = None
     
     def update_nodes(self, context):
-        self.shader_source = self.shader_nodes.get_generated_source_path()
-        self.update_source(context)
+        if self.shader_nodes:
+            self.shader_source = self.shader_nodes.get_generated_source_path()
+    
+    def poll_tree(self, object):
+        return object.bl_idname == 'MaltTree'
         
     shader_source : bpy.props.StringProperty(name="Shader Source", subtype='FILE_PATH', update=update_source)
-    shader_nodes : bpy.props.PointerProperty(name="Node Tree", type=MaltTree, update=update_nodes)
+    shader_nodes : bpy.props.PointerProperty(name="Node Tree", type=MaltTree, update=update_nodes, poll=poll_tree)
     compiler_error : bpy.props.StringProperty(name="Compiler Error")
 
     parameters : bpy.props.PointerProperty(type=MaltPropertyGroup, name="Shader Parameters")
@@ -40,7 +45,7 @@ class MaltMaterial(bpy.types.PropertyGroup):
         row = layout.row()
         row.active = self.shader_nodes is None
         row.prop(self, 'shader_source')
-        layout.template_ID(self, "shader_nodes", new="node.new_node_tree")
+        layout.prop_search(self, 'shader_nodes', bpy.data, 'node_groups')
 
         if self.shader_source != '' and self.shader_source.endswith('.'+extension+'.glsl') == False:
             box = layout.box()

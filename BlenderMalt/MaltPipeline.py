@@ -37,6 +37,7 @@ def set_initialized(initialized):
     global __INITIALIZED
     __INITIALIZED = initialized
 
+
 class MaltPipeline(bpy.types.PropertyGroup):
 
     def update_pipeline(self, context):
@@ -61,6 +62,10 @@ class MaltPipeline(bpy.types.PropertyGroup):
         set_bridge(bridge)
         set_pipeline_parameters(params)
         
+        self.graph_types.clear()
+        for graph in bridge.graphs.keys():
+            self.graph_types.add().name = graph
+        
         MaltMaterial.reset_materials()
         MaltMeshes.reset_meshes()
         MaltTextures.reset_textures()
@@ -69,8 +74,7 @@ class MaltPipeline(bpy.types.PropertyGroup):
         set_initialized(True)
     
     pipeline : bpy.props.StringProperty(name="Malt Pipeline", subtype='FILE_PATH', update=update_pipeline)
-
-    # There's no StringVectorProperty ?!?!?
+    graph_types : bpy.props.CollectionProperty(type=bpy.types.PropertyGroup)
     overrides : bpy.props.StringProperty(name='Pipeline Overrides', default='Preview,Final Render')
 
     def draw_ui(self, layout):
@@ -106,6 +110,8 @@ def setup_all_ids():
     setup_parameters(bpy.data.meshes)
     setup_parameters(bpy.data.curves)
     setup_parameters(bpy.data.lights)
+    from BlenderMalt import MaltNodes
+    MaltNodes.setup_node_trees()
     MaltMaterial.track_shader_changes(force_update=True)
 
 def setup_parameters(ids):

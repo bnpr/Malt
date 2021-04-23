@@ -107,7 +107,6 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                         bpy.data.materials.new(shader_path)
                         material = bpy.data.materials[shader_path]
                         material.malt.shader_source = shader_path    
-                        material.malt.update_source(bpy.context)
                 
                     material = self.materials[name].material
                     if type_changed or (material and rna[name]['default'] == material.malt.shader_source):

@@ -20,17 +20,19 @@ class MaltTree(bpy.types.NodeTree):
     def poll(cls, context):
         return context.scene.render.engine == 'MALT'
 
-    extension: bpy.props.StringProperty(default='.mesh.glsl')
+    graph_type: bpy.props.StringProperty(name='Type')
 
-    def get_node_types(self):
-        return MaltPipeline.get_bridge().nodes
+    def get_pipeline_graph(self):
+        graphs = MaltPipeline.get_bridge().graphs
+        if self.graph_type in graphs:
+            return graphs[self.graph_type]
+        return None
     
     def get_generated_source_dir(self):
         import os, tempfile
         base_path = '//'
         if bpy.context.blend_data.is_saved == False:
             base_path = tempfile.gettempdir()
-        
         return os.path.join(base_path,'malt-shaders')
 
     def get_generated_source_path(self):
@@ -38,13 +40,15 @@ class MaltTree(bpy.types.NodeTree):
         file_prefix = 'temp'
         if bpy.context.blend_data.is_saved:  
             file_prefix = bpy.path.basename(bpy.context.blend_data.filepath).split('.')[0]
-        
-        return os.path.join(self.get_generated_source_dir(),'{}-{}{}'.format(file_prefix, self.name, self.extension))
+        pipeline_graph = self.get_pipeline_graph()
+        if pipeline_graph:
+            return os.path.join(self.get_generated_source_dir(),'{}-{}{}'.format(file_prefix, self.name, pipeline_graph.file_extension))
+        return None
     
     def get_generated_source(self):
         output_node = None
-        pipeline_nodes = MaltPipeline.get_bridge().nodes
-        if pipeline_nodes:
+        pipeline_graph = self.get_pipeline_graph()
+        if pipeline_graph:
             for node in self.nodes:
                 if isinstance(node, MaltIONode) and node.is_output:
                     output_node = node
@@ -71,16 +75,14 @@ class MaltTree(bpy.types.NodeTree):
         import textwrap
         code = textwrap.indent(code,'\t')
 
-        f = {}
-        
-        exec(pipeline_nodes['generate_source'], f)
-        
-        return f['generate_source']({
+        return pipeline_graph.generate_source({
             'UNIFORMS': uniforms,
             'COMMON_PIXEL_SHADER': code,
         })
 
     def update(self):
+        if self.get_pipeline_graph() is None:
+            return
         '''
         for link in self.links:
             if link.from_socket.data_type != link.to_socket.data_type:
@@ -133,7 +135,7 @@ class MaltSocket(bpy.types.NodeSocket):
         return self.node.get_glsl_socket_reference(self)
     
     def get_glsl_uniform(self):
-        return 'UNIFORM_0{}_0_{}'.format(self.node.get_glsl_name(), self.name)
+        return 'U_0{}_0_{}'.format(self.node.get_glsl_name(), self.name)
     
     def get_glsl_uniform_declaration(self):
         return 'uniform {} {};\n'.format(self.data_type, self.get_glsl_uniform())
@@ -225,8 +227,8 @@ class MaltStructNode(bpy.types.Node, MaltNode):
     struct_type : bpy.props.StringProperty(update=setup)
 
     def get_struct(self):
-        nodes = MaltPipeline.get_bridge().nodes
-        return nodes['structs'][self.struct_type]
+        graph = self.id_data.get_pipeline_graph()
+        return graph.structs[self.struct_type]
 
     def get_glsl_socket_reference(self, socket):
         if socket.name == self.struct_type:
@@ -304,8 +306,8 @@ class MaltFunctionNode(bpy.types.Node, MaltNode):
     function_type : bpy.props.StringProperty(update=setup)
 
     def get_function(self):
-        nodes = MaltPipeline.get_bridge().nodes
-        return nodes['functions'][self.function_type]
+        graph = self.id_data.get_pipeline_graph()
+        return graph.functions[self.function_type]
 
     def get_glsl_socket_reference(self, socket):
         return '{}_0_{}'.format(self.get_glsl_name(), socket.name)
@@ -375,8 +377,8 @@ class MaltIONode(bpy.types.Node, MaltNode):
     io_type : bpy.props.StringProperty(update=setup)
 
     def get_function(self):
-        nodes = MaltPipeline.get_bridge().nodes
-        return nodes['graph functions'][self.io_type]
+        graph = self.id_data.get_pipeline_graph()
+        return graph.graph_IO[self.io_type]
 
     def get_glsl_socket_reference(self, socket):
         return socket.name
@@ -505,10 +507,10 @@ class MaltInlineNode(bpy.types.Node, MaltNode):
         return code
 
 
-def get_pipeline_nodes(context):
+def get_pipeline_graph(context):
     if context is None or context.space_data is None or context.space_data.edit_tree is None:
         return None
-    return MaltPipeline.get_bridge().nodes
+    return context.space_data.edit_tree.get_pipeline_graph()
 
 def insert_node(layout, type, label, settings = {}):
     operator = layout.operator("node.add_node", text=label)
@@ -525,9 +527,9 @@ class MALT_MT_NodeFunctions(bpy.types.Menu):
 
     def draw(self, context):
         layout = self.layout
-        nodes = get_pipeline_nodes(context)
-        if nodes:
-            for name in nodes['functions']:
+        graph = get_pipeline_graph(context)
+        if graph:
+            for name in graph.functions:
                 insert_node(self.layout, "MaltFunctionNode", name, settings={
                     'function_type' : repr(name)
                 })
@@ -537,9 +539,9 @@ class MALT_MT_NodeStructs(bpy.types.Menu):
 
     def draw(self, context):
         layout = self.layout
-        nodes = get_pipeline_nodes(context)
-        if nodes:
-            for name in nodes['structs']:
+        graph = get_pipeline_graph(context)
+        if graph:
+            for name in graph.structs:
                 insert_node(self.layout, "MaltStructNode", name, settings={
                     'struct_type' : repr(name)
                 })
@@ -549,9 +551,9 @@ class MALT_MT_NodeInputs(bpy.types.Menu):
 
     def draw(self, context):
         layout = self.layout
-        nodes = get_pipeline_nodes(context)
-        if nodes:
-            for name in nodes['graph functions']:
+        graph = get_pipeline_graph(context)
+        if graph:
+            for name in graph.graph_IO:
                 insert_node(self.layout, "MaltIONode", name + ' Input', settings={
                     'is_output' : repr(False),
                     'io_type' : repr(name),
@@ -562,9 +564,9 @@ class MALT_MT_NodeOutputs(bpy.types.Menu):
 
     def draw(self, context):
         layout = self.layout
-        nodes = get_pipeline_nodes(context)
-        if nodes:
-            for name in nodes['graph functions']:
+        graph = get_pipeline_graph(context)
+        if graph:
+            for name in graph.graph_IO:
                 insert_node(self.layout, "MaltIONode", name + ' Ouput', settings={
                     'is_output' : repr(True),
                     'io_type' : repr(name),
@@ -575,22 +577,36 @@ class MALT_MT_NodeOther(bpy.types.Menu):
 
     def draw(self, context):
         layout = self.layout
-        nodes = get_pipeline_nodes(context)
-        if nodes:
+        graph = get_pipeline_graph(context)
+        if graph:
             insert_node(self.layout, "MaltUniformsNode", 'Uniforms')
             insert_node(self.layout, "MaltInlineNode", 'Inline Code')
 
+def setup_node_trees():
+    for tree in bpy.data.node_groups:
+        if tree.bl_idname == 'MaltTree':
+            tree.update()
+    for material in bpy.data.materials:
+        if material.malt.shader_nodes:
+            #Avoid triggering a property update
+            material.malt['shader_source'] = material.malt.shader_nodes.get_generated_source_path()
 
 def add_node_ui(self, context):
     if context.space_data.tree_type != 'MaltTree':
         return
-    nodes = get_pipeline_nodes(context)
-    if nodes:
+    graph = get_pipeline_graph(context)
+    if graph:
         self.layout.menu("MALT_MT_NodeFunctions", text='Functions')
         self.layout.menu("MALT_MT_NodeStructs", text='Structs')
         self.layout.menu("MALT_MT_NodeInputs", text='Inputs')
         self.layout.menu("MALT_MT_NodeOutputs", text='Outputs')
         self.layout.menu("MALT_MT_NodeOther", text='Other')
+
+def node_header_ui(self, context):
+    if context.space_data.tree_type != 'MaltTree':
+        return
+    self.layout.prop_search(context.space_data.node_tree, 'graph_type', context.scene.world.malt, 'graph_types',text='')
+
     
 classes = (
     MaltTree,
@@ -613,13 +629,13 @@ def register():
     for _class in classes: bpy.utils.register_class(_class)
 
     bpy.types.NODE_MT_add.append(add_node_ui)
+    bpy.types.NODE_HT_header.append(node_header_ui)
     
 
 def unregister():
     bpy.types.NODE_MT_add.remove(add_node_ui)
+    bpy.types.NODE_HT_header.remove(node_header_ui)
 
     for _class in classes: bpy.utils.unregister_class(_class)
 
 
-if __name__ == "__main__":
-    register()

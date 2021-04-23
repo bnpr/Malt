@@ -2,6 +2,21 @@
 
 from Malt.GL import GL
 
+class PipelineGraph(object):
+    
+    def __init__(self, language, file_extension, functions, structs, graph_IO, generate_source_callback):
+        self.language = language
+        self.file_extension = file_extension
+        self.functions = functions
+        self.structs = structs
+        self.graph_IO = graph_IO
+        from Malt.Utils import dump_function
+        self.generate_source_callback = dump_function(generate_source_callback)
+    
+    def generate_source(self, parameters):
+        from Malt.Utils import load_function
+        return load_function(self.generate_source_callback)(parameters)
+
 class PipelineParameters(object):
 
     def __init__(self, scene={}, world={}, camera={}, object={}, material={}, mesh={}, light={}):
