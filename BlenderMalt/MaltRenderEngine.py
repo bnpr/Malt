@@ -129,7 +129,7 @@ class MaltRenderEngine(bpy.types.RenderEngine):
                             material_name = slot.material.name_full
                             if material_name not in materials.keys():
                                 shader = {
-                                    'path': bpy.path.abspath(slot.material.malt.shader_source, library=slot.material.library),
+                                    'path': slot.material.malt.get_source_path(),
                                     'parameters': slot.material.malt.parameters.get_parameters(overrides, resources)
                                 }
                                 parameters = slot.material.malt_parameters.get_parameters(overrides, resources)

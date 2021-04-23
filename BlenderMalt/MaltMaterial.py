@@ -8,37 +8,34 @@ from BlenderMalt.MaltProperties import MaltPropertyGroup
 from BlenderMalt import MaltPipeline
 from BlenderMalt.MaltNodes import MaltTree
 
-_SHADER_PATHS = []
+_MATERIALS = {}
+
 class MaltMaterial(bpy.types.PropertyGroup):
 
     def update_source(self, context):
-        global _SHADER_PATHS
-        if str(self.shader_source) not in _SHADER_PATHS:
-            _SHADER_PATHS.append(str(self.shader_source))
-        self.compiler_error = ''
-        if self.shader_source != '':
-            path = bpy.path.abspath(self.shader_source, library=self.id_data.library)
-            compiled_material = MaltPipeline.get_bridge().compile_material(path)
-            self.compiler_error = compiled_material.compiler_error
-            self.parameters.setup(compiled_material.parameters)
+        path = self.get_source_path()
+        if path in _MATERIALS.keys() and _MATERIALS[path]:
+            self.compiler_error = _MATERIALS[path].compiler_error
+            self.parameters.setup(_MATERIALS[path].parameters)
         else:
+            self.compiler_error = ''
             self.parameters.setup({})
-        
-        if self.shader_nodes and self.shader_source != self.shader_nodes.get_generated_source_path():
-            self.shader_nodes = None
-    
-    def update_nodes(self, context):
-        if self.shader_nodes:
-            self.shader_source = self.shader_nodes.get_generated_source_path()
+            track_shader_changes()
     
     def poll_tree(self, object):
         return object.bl_idname == 'MaltTree'
         
     shader_source : bpy.props.StringProperty(name="Shader Source", subtype='FILE_PATH', update=update_source)
-    shader_nodes : bpy.props.PointerProperty(name="Node Tree", type=MaltTree, update=update_nodes, poll=poll_tree)
+    shader_nodes : bpy.props.PointerProperty(name="Node Tree", type=MaltTree, update=update_source, poll=poll_tree)
     compiler_error : bpy.props.StringProperty(name="Compiler Error")
 
     parameters : bpy.props.PointerProperty(type=MaltPropertyGroup, name="Shader Parameters")
+
+    def get_source_path(self):
+        path = self.shader_source
+        if self.shader_nodes:
+            path = self.shader_nodes.get_generated_source_path()
+        return bpy.path.abspath(path, library=self.id_data.library)
     
     def draw_ui(self, layout, extension, material_parameters):
         layout.active = self.id_data.library is None #only local data can be edited
@@ -47,7 +44,9 @@ class MaltMaterial(bpy.types.PropertyGroup):
         row.prop(self, 'shader_source')
         layout.prop_search(self, 'shader_nodes', bpy.data, 'node_groups')
 
-        if self.shader_source != '' and self.shader_source.endswith('.'+extension+'.glsl') == False:
+        source_path = self.get_source_path()
+
+        if source_path != '' and source_path.endswith('.'+extension+'.glsl') == False:
             box = layout.box()
             box.label(text='Wrong shader extension, should be '+extension+'.', icon='ERROR')
             return
@@ -129,8 +128,8 @@ classes = (
 )
 
 def reset_materials():
-    global _SHADER_PATHS
-    _SHADER_PATHS = []
+    global _MATERIALS
+    _MATERIALS = {}
 
 import time
 __TIMESTAMP = time.time()
@@ -142,20 +141,20 @@ def track_shader_changes(force_update=False, async_compilation=True):
         
     global INITIALIZED
     global __TIMESTAMP
-    global _SHADER_PATHS
+    global _MATERIALS
     try:
         start_time = time.time()
 
         needs_update = []
 
         for material in bpy.data.materials:
-            path = bpy.path.abspath(material.malt.shader_source, library=material.library)
+            path = material.malt.get_source_path()
             if path not in needs_update:
                 if os.path.exists(path):
                     stats = os.stat(path)
-                    if path not in _SHADER_PATHS or stats.st_mtime > __TIMESTAMP:
-                        if path not in _SHADER_PATHS:
-                            _SHADER_PATHS.append(path)
+                    if path not in _MATERIALS.keys() or stats.st_mtime > __TIMESTAMP:
+                        if path not in _MATERIALS:
+                            _MATERIALS[path] = None
                         needs_update.append(path)
 
         compiled_materials = {}
@@ -166,8 +165,10 @@ def track_shader_changes(force_update=False, async_compilation=True):
             compiled_materials = MaltPipeline.get_bridge().receive_async_compilation_materials()
         
         if len(compiled_materials) > 0:
+            for key, value in compiled_materials.items():
+                _MATERIALS[key] = value
             for material in bpy.data.materials:
-                path = bpy.path.abspath(material.malt.shader_source, library=material.library)
+                path = material.malt.get_source_path()
                 if path in compiled_materials.keys():
                     material.malt.compiler_error = compiled_materials[path].compiler_error
                     material.malt.parameters.setup(compiled_materials[path].parameters)
@@ -178,8 +179,8 @@ def track_shader_changes(force_update=False, async_compilation=True):
         __TIMESTAMP = start_time
         INITIALIZED = True
     except:
-        import traceback, logging as log
-        log.error(traceback.format_exc())
+        import traceback
+        traceback.print_exc()
     return 0.1 #Track again in 0.1 second
     
 

@@ -81,6 +81,9 @@ class MaltTree(bpy.types.NodeTree):
         })
 
     def update(self):
+        if MaltPipeline.is_initialized() == False:
+            #Blender can call this before fully initializing the blend file. <(T_T)>
+            return
         if self.get_pipeline_graph() is None:
             return
         '''
@@ -586,10 +589,6 @@ def setup_node_trees():
     for tree in bpy.data.node_groups:
         if tree.bl_idname == 'MaltTree':
             tree.update()
-    for material in bpy.data.materials:
-        if material.malt.shader_nodes:
-            #Avoid triggering a property update
-            material.malt['shader_source'] = material.malt.shader_nodes.get_generated_source_path()
 
 def add_node_ui(self, context):
     if context.space_data.tree_type != 'MaltTree':

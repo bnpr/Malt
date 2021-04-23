@@ -37,6 +37,9 @@ def set_initialized(initialized):
     global __INITIALIZED
     __INITIALIZED = initialized
 
+def is_initialized():
+    global __INITIALIZED
+    return __INITIALIZED
 
 class MaltPipeline(bpy.types.PropertyGroup):
 

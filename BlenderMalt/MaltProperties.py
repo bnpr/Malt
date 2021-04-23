@@ -218,7 +218,7 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                     material_name = material.name_full
                     if material_name not in materials.keys():
                         shader = {
-                            'path': bpy.path.abspath(material.malt.shader_source, library=material.library),
+                            'path': material.malt.get_source_path(),
                             'parameters': material.malt.parameters.get_parameters(overrides, resources)
                         }
                         material_parameters = material.malt_parameters.get_parameters(overrides, resources)
