@@ -4,7 +4,8 @@ current_dir = os.path.dirname(os.path.realpath(__file__))
 
 malt_folder = os.path.join(current_dir, '..', 'Malt')
 
-malt_dependencies_path = os.path.join(malt_folder, '.Dependencies')
+py_version = str(sys.version_info[0])+str(sys.version_info[1])
+malt_dependencies_path = os.path.join(malt_folder, '.Dependencies-{}'.format(py_version))
 dependencies = ['glfw', 'PyOpenGL', 'PyOpenGL_accelerate', 'pcpp', 'Pyrr', 'psutil']
 for dependency in dependencies:
     try:

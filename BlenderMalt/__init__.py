@@ -15,7 +15,8 @@ from os import path
 current_dir = path.dirname(path.realpath(__file__))
 malt_path = path.join(current_dir, '.MaltPath')
 if malt_path not in sys.path: sys.path.append(malt_path)
-malt_dependencies_path = path.join(malt_path,'Malt','.Dependencies')
+py_version = str(sys.version_info[0])+str(sys.version_info[1])
+malt_dependencies_path = path.join(malt_path,'Malt','.Dependencies-{}'.format(py_version))
 if malt_dependencies_path not in sys.path: sys.path.append(malt_dependencies_path)
 
 import Malt
@@ -151,9 +152,9 @@ def register():
     if platform.system() == 'Windows':
         sys.executable = sys._base_executable
         # Use python-gpu on windows (patched python with NvOptimusEnablement and AmdPowerXpressRequestHighPerformance)
-        python_executable = path.join(sys.exec_prefix, 'bin', 'python-gpu.exe')
+        python_executable = path.join(sys.exec_prefix, 'bin', 'python-gpu-{}.exe'.format(py_version))
         if os.path.exists(python_executable) == False:
-            python_gpu_path = path.join(malt_dependencies_path, 'python-gpu.exe')
+            python_gpu_path = path.join(malt_dependencies_path, 'python-gpu-{}.exe'.format(py_version))
             try:
                 copy(python_gpu_path, python_executable)
             except PermissionError as e:
