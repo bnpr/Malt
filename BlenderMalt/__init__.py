@@ -15,7 +15,8 @@ from os import path
 current_dir = path.dirname(path.realpath(__file__))
 malt_path = path.join(current_dir, '.MaltPath')
 if malt_path not in sys.path: sys.path.append(malt_path)
-malt_dependencies_path = path.join(malt_path,'Malt','.Dependencies')
+py_version = str(sys.version_info[0])+str(sys.version_info[1])
+malt_dependencies_path = path.join(malt_path,'Malt','.Dependencies-{}'.format(py_version))
 if malt_dependencies_path not in sys.path: sys.path.append(malt_dependencies_path)
 
 import Malt
@@ -79,15 +80,15 @@ class Preferences(bpy.types.AddonPreferences):
     # this must match the addon name
     bl_idname = __package__
 
-    malt_library_path : bpy.props.StringProperty(name="Malt Library Path", subtype='DIR_PATH')
+    setup_vs_code : bpy.props.BoolProperty(name="Auto setup VSCode", default=True, description="Setups a VSCode project on your .blend file folder")
     
-    setup_vs_code : bpy.props.BoolProperty(name="Auto setup VSCode", default=True)
+    malt_library_path : bpy.props.StringProperty(name="Malt Library Path", subtype='DIR_PATH')
     
     def update_debug_mode(self, context):
         if context.scene.render.engine == 'MALT':
             context.scene.world.malt.update_pipeline(context)
 
-    debug_mode : bpy.props.BoolProperty(name="Debug Mode", default=False, update=update_debug_mode)
+    debug_mode : bpy.props.BoolProperty(name="Debug Mode", default=False, update=update_debug_mode, description="Developers only. Do not touch !!!")
 
     def draw(self, context):
         layout = self.layout
@@ -99,9 +100,9 @@ class Preferences(bpy.types.AddonPreferences):
             row.enabled = False
             row.operator('wm.path_open', text="Open Session Log")
 
-        layout.prop(self, "debug_mode")
-        layout.prop(self, "malt_library_path")
         layout.prop(self, "setup_vs_code")
+        layout.prop(self, "malt_library_path")
+        layout.prop(self, "debug_mode")
 
 
 _VS_CODE_SETTINGS = '''
@@ -144,9 +145,23 @@ classes=[
     OT_MaltPrintError,
 ]
 
-import multiprocessing as mp
-
 def register():
+    import platform, multiprocessing as mp, ctypes
+    from shutil import copy
+    # Workaround https://developer.blender.org/rB04c5471ceefb41c9e49bf7c86f07e9e7b8426bb3
+    if platform.system() == 'Windows':
+        sys.executable = sys._base_executable
+        # Use python-gpu on windows (patched python with NvOptimusEnablement and AmdPowerXpressRequestHighPerformance)
+        python_executable = path.join(sys.exec_prefix, 'bin', 'python-gpu-{}.exe'.format(py_version))
+        if os.path.exists(python_executable) == False:
+            python_gpu_path = path.join(malt_dependencies_path, 'python-gpu-{}.exe'.format(py_version))
+            try:
+                copy(python_gpu_path, python_executable)
+            except PermissionError as e:
+                command = '/c copy "{}" "{}"'.format(python_gpu_path, python_executable)
+                result = ctypes.windll.shell32.ShellExecuteW(None, 'runas', 'cmd.exe', command, None, 0)
+        mp.set_executable(python_executable)
+
     for _class in classes: bpy.utils.register_class(_class)
 
     for module in modules:

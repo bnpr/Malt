@@ -68,7 +68,15 @@ jobs:
     - uses: actions/setup-python@v2
       with:
         python-version: '3.7'
-
+    
+    - name: install 3.7 dependencies
+      run: python install_dependencies.py
+      working-directory: ${{ github.workspace }}/scripts
+    
+    - uses: actions/setup-python@v2
+      with:
+        python-version: '3.9'
+    
     - name: package_blender_addon.py
       run: python package_blender_addon.py
       working-directory: ${{ github.workspace }}/scripts
