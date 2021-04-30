@@ -532,7 +532,7 @@ class MALT_MT_NodeFunctions(bpy.types.Menu):
         layout = self.layout
         graph = get_pipeline_graph(context)
         if graph:
-            for name in graph.functions:
+            for name in sorted(graph.functions):
                 insert_node(self.layout, "MaltFunctionNode", name, settings={
                     'function_type' : repr(name)
                 })
@@ -544,7 +544,7 @@ class MALT_MT_NodeStructs(bpy.types.Menu):
         layout = self.layout
         graph = get_pipeline_graph(context)
         if graph:
-            for name in graph.structs:
+            for name in sorted(graph.structs):
                 insert_node(self.layout, "MaltStructNode", name, settings={
                     'struct_type' : repr(name)
                 })
@@ -556,7 +556,7 @@ class MALT_MT_NodeInputs(bpy.types.Menu):
         layout = self.layout
         graph = get_pipeline_graph(context)
         if graph:
-            for name in graph.graph_IO:
+            for name in sorted(graph.graph_IO):
                 insert_node(self.layout, "MaltIONode", name + ' Input', settings={
                     'is_output' : repr(False),
                     'io_type' : repr(name),
@@ -569,7 +569,7 @@ class MALT_MT_NodeOutputs(bpy.types.Menu):
         layout = self.layout
         graph = get_pipeline_graph(context)
         if graph:
-            for name in graph.graph_IO:
+            for name in sorted(graph.graph_IO):
                 insert_node(self.layout, "MaltIONode", name + ' Ouput', settings={
                     'is_output' : repr(True),
                     'io_type' : repr(name),
