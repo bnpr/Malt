@@ -397,11 +397,19 @@ class GLSL_Reflection(object):
     STRUCT_DEF.ignore(pyparsing.dblSlashComment)
 
     @classmethod
+    def get_file_path(cls, code, position):
+        line_directive_start = code.rfind('#line', 0, position)
+        path_start = code.find('"', line_directive_start)
+        path_end = code.find('"', path_start+1)
+        return code[path_start:path_end]
+    
+    @classmethod
     def reflect_structs(cls, code):
         structs = {}
         for struct, start, end in cls.STRUCT_DEF.scanString(code):
             dictionary = {
                 'name' : struct.name,
+                'file' : cls.get_file_path(code, start),
                 'members' : []
             }
             for member in struct.members:
@@ -440,6 +448,7 @@ class GLSL_Reflection(object):
             dictionary = {
                 'name' : function.name,
                 'type' : function.type,
+                'file' : cls.get_file_path(code, start),
                 'parameters' : []
             }
             for parameter in function.parameters:
