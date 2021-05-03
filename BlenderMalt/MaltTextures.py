@@ -31,6 +31,9 @@ def __load_texture(texture):
     size = w*h*channels
     sRGB = texture.colorspace_settings.name == 'sRGB'
 
+    if size == 0:
+        return True
+
     buffer = MaltPipeline.get_bridge().get_texture_buffer(size)
 
     array_interface = ArrayInterface('<f4', size, ctypes.addressof(buffer))
