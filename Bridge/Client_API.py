@@ -70,7 +70,7 @@ class Bridge(object):
             listeners[name] = listener
             malt_to_bridge[name] = address
 
-        for name in ['PARAMS','MESH','MATERIAL','TEXTURE','GRADIENT','RENDER']: add_connection(name)
+        for name in ['PARAMS','MESH','MATERIAL','SHADER REFLECTION','TEXTURE','GRADIENT','RENDER']: add_connection(name)
 
         from . import Server
         self.process = mp.Process(target=Server.main, args=[pipeline_path, malt_to_bridge, self.shared_dict, sys.stdout.log_path, debug_mode])
@@ -126,6 +126,11 @@ class Bridge(object):
             material = self.connections['MATERIAL'].recv()
             results[material.path] = material
         return results
+    
+    @bridge_method
+    def reflect_glsl_libraries(self, paths):
+        self.connections['SHADER REFLECTION'].send({'paths': paths})
+        return self.connections['SHADER REFLECTION'].recv()
 
     @bridge_method
     def load_mesh(self, name, mesh_data):

@@ -277,6 +277,24 @@ def main(pipeline_path, connection_addresses, shared_dic, log_path, debug_mode):
                 material = Bridge.Material.Material(path, pipeline, search_paths)
                 connections['MATERIAL'].send(material)
             
+            while connections['SHADER REFLECTION'].poll():
+                msg = connections['SHADER REFLECTION'].recv()
+                log.debug('REFLECT SHADER : {}'.format(msg))
+                paths = msg['paths']
+                results = {}
+                from Malt.GL.Shader import GLSL_Reflection, shader_preprocessor
+                for path in paths:
+                    src = shader_preprocessor(open(path).read(), [os.path.dirname(path)])
+                    reflection = {
+                        'structs':  GLSL_Reflection.reflect_structs(src),
+                        'functions':  GLSL_Reflection.reflect_functions(src),
+                        'paths': set([path])
+                    }
+                    for struct in reflection['structs'].values(): reflection['paths'].add(struct['file'])
+                    for function in reflection['functions'].values(): reflection['paths'].add(function['file'])
+                    results[path] = reflection
+                connections['SHADER REFLECTION'].send(results)
+            
             while connections['MESH'].poll():
                 msg = connections['MESH'].recv()
                 log.debug('LOAD MESH : {}'.format(msg))

@@ -1,15 +1,74 @@
 # Copyright (c) 2020 BlenderNPR and contributors. MIT license. 
 
-from copy import copy, deepcopy
-from random import uniform
+import os
 import bpy
-
-import json
 
 from Malt.GL.Shader import GLSL_Reflection
 from Malt.Parameter import Parameter
 from BlenderMalt.MaltProperties import MaltPropertyGroup
 from BlenderMalt import MaltPipeline
+
+__LIBRARIES = {}    
+__EMPTY_LIBRARY = {
+    'structs':[],
+    'functions':[],
+    'paths':[],
+}
+def get_libraries():
+    return __LIBRARIES
+def get_empty_library():
+    return __EMPTY_LIBRARY
+
+import time
+__TIMESTAMP = time.time()
+
+def track_library_changes(force_update=False):
+    if bpy.context.scene.render.engine != 'MALT' and force_update == False:
+        return 1
+
+    global __LIBRARIES
+    global __TIMESTAMP
+    start_time = time.time()
+
+    #purge unused libraries
+    new_dic = {}
+    for tree in bpy.data.node_groups:
+        if isinstance(tree, MaltTree):
+            src_path = tree.get_library_path()
+            if src_path:
+                if src_path in __LIBRARIES:
+                    new_dic[src_path] = __LIBRARIES[src_path]
+                else:
+                    new_dic[src_path] = None
+    __LIBRARIES = new_dic
+
+    needs_update = set()
+    for path, library in __LIBRARIES.items():
+        if os.path.exists(path):
+            if library is None:
+                needs_update.add(path)
+            else:
+                for sub_path in library['paths']:
+                    if os.path.exists(sub_path):
+                        # Don't track individual files granularly since macros can completely change them
+                        if os.stat(path).st_mtime > __TIMESTAMP:
+                            needs_update.add(path)
+                            break
+    
+    if len(needs_update) > 0:
+        results = MaltPipeline.get_bridge().reflect_glsl_libraries(needs_update)
+        for path, reflection in results.items():
+            __LIBRARIES[path] = reflection
+        
+        for tree in bpy.data.node_groups:
+            if isinstance(tree, MaltTree):
+                src_path = tree.get_library_path()
+                if src_path:
+                    if src_path in needs_update:
+                        tree.update()
+    
+    __TIMESTAMP = start_time
+    return 0.1
 
 class MaltTree(bpy.types.NodeTree):
     
@@ -21,6 +80,22 @@ class MaltTree(bpy.types.NodeTree):
         return context.scene.render.engine == 'MALT'
 
     graph_type: bpy.props.StringProperty(name='Type')
+
+    library_source : bpy.props.StringProperty(name="Shader Library", subtype='FILE_PATH')
+
+    def get_library_path(self):
+        if self.library_source != '':
+            src_path = bpy.path.abspath(self.library_source, library=self.library)
+            if os.path.exists(src_path):
+                return src_path
+        return None
+    
+    def get_library(self):
+        library_path = self.get_library_path()
+        if library_path:
+            return get_libraries()[library_path]
+        else:
+            return get_empty_library()
 
     def get_pipeline_graph(self):
         graphs = MaltPipeline.get_bridge().graphs
@@ -61,9 +136,14 @@ class MaltTree(bpy.types.NodeTree):
                         add_node_inputs(new_node)
                         nodes.append(new_node)
 
-        uniforms = ''
+        global_scope = ''
+        
+        library_path = self.get_library_path()
+        if library_path:
+            global_scope += '#include "{}"\n'.format(library_path)
+        
         for node in self.nodes:
-            uniforms += node.get_glsl_uniforms()
+            global_scope += node.get_glsl_uniforms()
         
         code = ''
         if output_node:
@@ -76,7 +156,7 @@ class MaltTree(bpy.types.NodeTree):
         code = textwrap.indent(code,'\t')
 
         return pipeline_graph.generate_source({
-            'UNIFORMS': uniforms,
+            'GLOBAL': global_scope,
             'COMMON_PIXEL_SHADER': code,
         })
 
@@ -231,7 +311,10 @@ class MaltStructNode(bpy.types.Node, MaltNode):
 
     def get_struct(self):
         graph = self.id_data.get_pipeline_graph()
-        return graph.structs[self.struct_type]
+        if self.struct_type in graph.structs:
+            return graph.structs[self.struct_type]
+        else:
+            return self.id_data.get_library()['structs'][self.struct_type]
 
     def get_glsl_socket_reference(self, socket):
         if socket.name == self.struct_type:
@@ -310,7 +393,10 @@ class MaltFunctionNode(bpy.types.Node, MaltNode):
 
     def get_function(self):
         graph = self.id_data.get_pipeline_graph()
-        return graph.functions[self.function_type]
+        if self.function_type in graph.functions:
+            return graph.functions[self.function_type]
+        else:
+            return self.id_data.get_library()['functions'][self.function_type]
 
     def get_glsl_socket_reference(self, socket):
         return '{}_0_{}'.format(self.get_glsl_name(), socket.name)
@@ -525,6 +611,8 @@ def insert_node(layout, type, label, settings = {}):
         item.value = value
     return operator
 
+from itertools import chain
+
 class MALT_MT_NodeFunctions(bpy.types.Menu):
     bl_label = "Malt Node Functions Menu"
 
@@ -532,7 +620,8 @@ class MALT_MT_NodeFunctions(bpy.types.Menu):
         layout = self.layout
         graph = get_pipeline_graph(context)
         if graph:
-            for name in sorted(graph.functions):
+            library_functions = context.space_data.node_tree.get_library()['functions']
+            for name in sorted(chain(graph.functions, library_functions)):
                 insert_node(self.layout, "MaltFunctionNode", name, settings={
                     'function_type' : repr(name)
                 })
@@ -544,7 +633,8 @@ class MALT_MT_NodeStructs(bpy.types.Menu):
         layout = self.layout
         graph = get_pipeline_graph(context)
         if graph:
-            for name in sorted(graph.structs):
+            library_structs = context.space_data.node_tree.get_library()['structs']
+            for name in sorted(chain(graph.structs,library_structs)):
                 insert_node(self.layout, "MaltStructNode", name, settings={
                     'struct_type' : repr(name)
                 })
@@ -604,6 +694,7 @@ def add_node_ui(self, context):
 def node_header_ui(self, context):
     if context.space_data.tree_type != 'MaltTree':
         return
+    self.layout.prop(context.space_data.node_tree, 'library_source')
     self.layout.prop_search(context.space_data.node_tree, 'graph_type', context.scene.world.malt, 'graph_types',text='')
 
     
@@ -629,6 +720,8 @@ def register():
 
     bpy.types.NODE_MT_add.append(add_node_ui)
     bpy.types.NODE_HT_header.append(node_header_ui)
+
+    bpy.app.timers.register(track_library_changes, persistent=True)
     
 
 def unregister():
@@ -637,4 +730,5 @@ def unregister():
 
     for _class in classes: bpy.utils.unregister_class(_class)
 
+    bpy.app.timers.unregister(track_library_changes)
 

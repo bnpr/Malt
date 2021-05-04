@@ -109,7 +109,7 @@ class NPR_Pipeline(Pipeline):
             return textwrap.dedent('''\
             #include "Pipelines/NPR_Pipeline.glsl"
 
-            {UNIFORMS}
+            {GLOBAL}
 
             void COMMON_PIXEL_SHADER(Surface S, inout PixelOutput PO)
             {{
