@@ -1,12 +1,9 @@
 # Copyright (c) 2020 BlenderNPR and contributors. MIT license. 
 
-from re import split
 import bpy
-
-from Malt.Parameter import Type
+from Malt.Parameter import Type, Parameter
 from Malt import Scene
-
-from BlenderMalt import MaltTextures
+from . import MaltTextures
 
 # WORKAROUND: We can't declare color ramps from python,
 # so we store them as nodes inside a material

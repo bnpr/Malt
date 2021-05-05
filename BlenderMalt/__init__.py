@@ -8,49 +8,18 @@ bl_info = {
     "category": "Render"
 }
 
-import bpy, sys, os
+import sys, os
 from os import path
+import bpy
 
 #Add Malt and dependencies to the import path
-current_dir = path.dirname(path.realpath(__file__))
-malt_path = path.join(current_dir, '.MaltPath')
-if malt_path not in sys.path: sys.path.append(malt_path)
-py_version = str(sys.version_info[0])+str(sys.version_info[1])
-malt_dependencies_path = path.join(malt_path,'Malt','.Dependencies-{}'.format(py_version))
-if malt_dependencies_path not in sys.path: sys.path.append(malt_dependencies_path)
+__CURRENT_DIR = path.dirname(path.realpath(__file__))
+__MALT_PATH = path.join(__CURRENT_DIR, '.MaltPath')
+if __MALT_PATH not in sys.path: sys.path.append(__MALT_PATH)
+_PY_VERSION = str(sys.version_info[0])+str(sys.version_info[1])
+__MALT_DEPENDENCIES_PATH = path.join(__MALT_PATH,'Malt','.Dependencies-{}'.format(_PY_VERSION))
+if __MALT_DEPENDENCIES_PATH not in sys.path: sys.path.append(__MALT_DEPENDENCIES_PATH)
 
-from BlenderMalt import MaltLights
-from BlenderMalt import MaltMaterial
-from BlenderMalt import MaltProperties
-from BlenderMalt import MaltNodes
-from BlenderMalt import MaltMeshes
-from BlenderMalt import MaltPipeline
-from BlenderMalt import MaltRenderEngine
-from BlenderMalt import MaltTextures
-
-modules = [
-    MaltPipeline,
-    MaltProperties,#MaltProperties must register before MaltMaterial
-    MaltNodes,
-    MaltTextures,
-    MaltMeshes,
-    MaltMaterial,
-    MaltLights,
-    MaltRenderEngine,
-]
-
-'''
-if "bpy" in locals():
-    #TODO: Module dependency order is important for reloading
-    # Maybe reload twice ?
-    import importlib
-    for module in Malt.modules:
-        importlib.reload(module)
-    for module in Bridge.modules:
-        importlib.reload(module)
-    for module in modules:
-        importlib.reload(module)
-'''
 
 class OT_MaltPrintError(bpy.types.Operator):
     bl_idname = "wm.malt_print_error"
@@ -120,12 +89,12 @@ _VS_CODE_SETTINGS = '''
 }}
 '''
 
+
 @bpy.app.handlers.persistent
 def setup_vs_code(dummy):
     if bpy.context.scene.render.engine == 'MALT':
         if bpy.context.preferences.addons['BlenderMalt'].preferences.setup_vs_code:
-            source_path = path.dirname(__file__)
-            shaders_path = path.join(malt_path, 'Malt', 'Shaders')
+            shaders_path = path.join(__MALT_PATH, 'Malt', 'Shaders')
             intellisense_path = path.join(shaders_path, 'Intellisense', 'intellisense.glsl')
             library_path = bpy.context.preferences.addons['BlenderMalt'].preferences.malt_library_path
 
@@ -140,22 +109,17 @@ def setup_vs_code(dummy):
             with open(path.join(settings_dir, 'settings.json'), 'w') as f:
                 f.write(vscode_settings)
 
-classes=[
-    Preferences,
-    OT_MaltPrintError,
-]
 
-def register():
+def do_windows_fixes():
     import platform, multiprocessing as mp, ctypes
     from shutil import copy
     # Workaround https://developer.blender.org/rB04c5471ceefb41c9e49bf7c86f07e9e7b8426bb3
     if platform.system() == 'Windows':
         sys.executable = sys._base_executable
         # Use python-gpu on windows (patched python with NvOptimusEnablement and AmdPowerXpressRequestHighPerformance)
-        python_executable = path.join(sys.exec_prefix, 'bin', 'python-gpu-{}.exe'.format(py_version))
-        python_executable = path.join(sys.exec_prefix, 'bin', 'python_d.exe')
+        python_executable = path.join(sys.exec_prefix, 'bin', 'python-gpu-{}.exe'.format(_PY_VERSION))
         if os.path.exists(python_executable) == False:
-            python_gpu_path = path.join(malt_dependencies_path, 'python-gpu-{}.exe'.format(py_version))
+            python_gpu_path = path.join(__MALT_DEPENDENCIES_PATH, 'python-gpu-{}.exe'.format(_PY_VERSION))
             try:
                 copy(python_gpu_path, python_executable)
             except PermissionError as e:
@@ -163,9 +127,26 @@ def register():
                 result = ctypes.windll.shell32.ShellExecuteW(None, 'runas', 'cmd.exe', command, None, 0)
         mp.set_executable(python_executable)
 
+
+def get_modules():
+    from . import MaltTextures, MaltMeshes, MaltLights, MaltProperties, MaltPipeline, MaltNodes, MaltMaterial, MaltRenderEngine
+    return [ MaltTextures, MaltMeshes, MaltLights, MaltProperties, MaltPipeline, MaltNodes, MaltMaterial, MaltRenderEngine ]
+
+classes=[
+    Preferences,
+    OT_MaltPrintError,
+]
+
+def register():
+    import importlib
+    for module in get_modules():
+        importlib.reload(module)
+
+    do_windows_fixes()
+
     for _class in classes: bpy.utils.register_class(_class)
 
-    for module in modules:
+    for module in get_modules():
         module.register()
 
     bpy.app.handlers.save_post.append(setup_vs_code)
@@ -173,7 +154,7 @@ def register():
 def unregister():
     for _class in reversed(classes): bpy.utils.unregister_class(_class)
 
-    for module in reversed(modules):
+    for module in reversed(get_modules()):
         module.unregister()
     
     bpy.app.handlers.save_post.remove(setup_vs_code)

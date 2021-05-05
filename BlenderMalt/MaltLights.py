@@ -1,7 +1,6 @@
 # Copyright (c) 2020 BlenderNPR and contributors. MIT license. 
 
 import math
-
 import bpy
 
 class MaltLight(bpy.types.PropertyGroup):

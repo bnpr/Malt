@@ -2,8 +2,7 @@
 
 import ctypes
 import numpy as np
-
-from BlenderMalt import MaltPipeline
+from . import MaltPipeline
 
 __TEXTURES = {}
 

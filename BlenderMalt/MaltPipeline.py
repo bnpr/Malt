@@ -1,10 +1,8 @@
 # Copyright (c) 2020 BlenderNPR and contributors. MIT license. 
 
 import os, time
-
 import bpy
-
-from BlenderMalt import MaltMaterial, MaltMeshes, MaltTextures
+from . import MaltMaterial, MaltMeshes, MaltTextures
 
 __BRIDGE = None
 __PIPELINE_PARAMETERS = None

@@ -2,18 +2,14 @@
 
 import ctypes
 import cProfile, pstats, io
-
 import bpy
-
 from mathutils import Vector,Matrix,Quaternion
-
 from Malt import Scene
 from Malt.GL import GL
 from Malt.GL.Texture import Texture
+from . import MaltPipeline, MaltMeshes, MaltMaterial, CBlenderMalt
 
-from BlenderMalt import MaltPipeline, MaltMeshes, MaltMaterial, CBlenderMalt
-
-PROFILE = False
+__PROFILE = False
 
 class MaltRenderEngine(bpy.types.RenderEngine):
     # These three members are used by blender to set up the
@@ -264,8 +260,8 @@ class MaltRenderEngine(bpy.types.RenderEngine):
     # rendered image automatically.
     def view_draw(self, context, depsgraph):
         profiler = cProfile.Profile()
-        global PROFILE
-        if PROFILE:
+        global __PROFILE
+        if __PROFILE:
             profiler.enable()
             if self.request_new_frame:
                 self.profiling_data = io.StringIO()
@@ -313,7 +309,7 @@ class MaltRenderEngine(bpy.types.RenderEngine):
         self.display_draw.draw(fbo, render_texture)
         self.unbind_display_space_shader()
 
-        if PROFILE:
+        if __PROFILE:
             profiler.disable()
             stats = pstats.Stats(profiler, stream=self.profiling_data)
             stats.strip_dirs()
@@ -400,8 +396,8 @@ class OT_MaltProfileFrameReport(bpy.types.Operator, bpy_extras.io_utils.ExportHe
     def execute(self, context):
         global REPORT_PATH
         REPORT_PATH = self.filepath
-        global PROFILE
-        PROFILE = True
+        global __PROFILE
+        __PROFILE = True
         context.space_data.shading.type = 'SOLID'
         context.space_data.shading.type = 'RENDERED'
         return{'FINISHED'}

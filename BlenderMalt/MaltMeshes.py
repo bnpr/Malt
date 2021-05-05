@@ -1,11 +1,7 @@
 # Copyright (c) 2020 BlenderNPR and contributors. MIT license. 
 
 import ctypes, array
-
 import bpy
-
-from BlenderMalt import MaltPipeline
-from . import CBlenderMalt
 
 MESHES = {}
 
@@ -22,6 +18,7 @@ def get_mesh(object):
     return MESHES[key]
 
 def load_mesh(object, name):
+    from . import CBlenderMalt
     use_split_faces = False #Use split_faces instead of calc_normals_split (Slightly faster)
 
     m = object.data
@@ -32,7 +29,6 @@ def load_mesh(object, name):
         return None
     
     m.calc_loop_triangles()
-
     polys_ptr = ctypes.c_void_p(m.polygons[0].as_pointer())
     has_flat_polys = CBlenderMalt.has_flat_polys(polys_ptr, len(m.polygons))
 
@@ -100,6 +96,7 @@ def load_mesh(object, name):
         'colors': [bytearray(c) for c in colors],
     }
 
+    from . import MaltPipeline
     MaltPipeline.get_bridge().load_mesh(name, mesh_data)
 
     return [name for i in range(material_count)]

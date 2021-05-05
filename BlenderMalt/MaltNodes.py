@@ -2,9 +2,8 @@
 
 import os
 import bpy
-
-from BlenderMalt.MaltProperties import MaltPropertyGroup
-from BlenderMalt import MaltPipeline
+from . MaltProperties import MaltPropertyGroup
+from . import MaltPipeline
 
 __LIBRARIES = {}    
 __EMPTY_LIBRARY = {

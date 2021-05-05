@@ -1,12 +1,9 @@
 # Copyright (c) 2020 BlenderNPR and contributors. MIT license. 
 
 import os
-
 import bpy
-
-from BlenderMalt.MaltProperties import MaltPropertyGroup
-from BlenderMalt import MaltPipeline
-from BlenderMalt.MaltNodes import MaltTree
+from . MaltProperties import MaltPropertyGroup
+from . MaltNodes import MaltTree
 
 _MATERIALS = {}
 
@@ -159,6 +156,7 @@ def track_shader_changes(force_update=False, async_compilation=True):
 
         compiled_materials = {}
 
+        from . import MaltPipeline
         if len(needs_update) > 0:
             compiled_materials = MaltPipeline.get_bridge().compile_materials(needs_update, async_compilation=async_compilation)
         else:
