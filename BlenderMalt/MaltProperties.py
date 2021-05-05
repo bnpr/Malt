@@ -3,7 +3,7 @@
 from re import split
 import bpy
 
-from Malt.Parameter import *
+from Malt.Parameter import Type
 from Malt import Scene
 
 from BlenderMalt import MaltTextures
@@ -539,7 +539,7 @@ def register():
 
 
 def unregister():
-    for _class in classes: bpy.utils.unregister_class(_class)
+    for _class in reversed(classes): bpy.utils.unregister_class(_class)
 
     del bpy.types.Scene.malt_parameters
     del bpy.types.World.malt_parameters

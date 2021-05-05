@@ -191,7 +191,7 @@ def register():
     bpy.app.timers.register(track_shader_changes, persistent=True)
 
 def unregister():
-    for _class in classes: bpy.utils.unregister_class(_class)
+    for _class in reversed(classes): bpy.utils.unregister_class(_class)
     del bpy.types.Material.malt
     
     bpy.app.timers.unregister(track_shader_changes)

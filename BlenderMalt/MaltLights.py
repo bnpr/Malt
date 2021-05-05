@@ -60,5 +60,5 @@ def register():
     bpy.types.Light.malt = bpy.props.PointerProperty(type=MaltLight)
 
 def unregister():
-    for _class in classes: bpy.utils.unregister_class(_class)
+    for _class in reversed(classes): bpy.utils.unregister_class(_class)
     del bpy.types.Light.malt

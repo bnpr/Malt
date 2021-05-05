@@ -19,12 +19,10 @@ py_version = str(sys.version_info[0])+str(sys.version_info[1])
 malt_dependencies_path = path.join(malt_path,'Malt','.Dependencies-{}'.format(py_version))
 if malt_dependencies_path not in sys.path: sys.path.append(malt_dependencies_path)
 
-import Malt
-import Bridge
-
 from BlenderMalt import MaltLights
 from BlenderMalt import MaltMaterial
 from BlenderMalt import MaltProperties
+from BlenderMalt import MaltNodes
 from BlenderMalt import MaltMeshes
 from BlenderMalt import MaltPipeline
 from BlenderMalt import MaltRenderEngine
@@ -41,6 +39,7 @@ modules = [
     MaltRenderEngine,
 ]
 
+'''
 if "bpy" in locals():
     #TODO: Module dependency order is important for reloading
     # Maybe reload twice ?
@@ -51,7 +50,7 @@ if "bpy" in locals():
         importlib.reload(module)
     for module in modules:
         importlib.reload(module)
-
+'''
 
 class OT_MaltPrintError(bpy.types.Operator):
     bl_idname = "wm.malt_print_error"
@@ -154,6 +153,7 @@ def register():
         sys.executable = sys._base_executable
         # Use python-gpu on windows (patched python with NvOptimusEnablement and AmdPowerXpressRequestHighPerformance)
         python_executable = path.join(sys.exec_prefix, 'bin', 'python-gpu-{}.exe'.format(py_version))
+        python_executable = path.join(sys.exec_prefix, 'bin', 'python_d.exe')
         if os.path.exists(python_executable) == False:
             python_gpu_path = path.join(malt_dependencies_path, 'python-gpu-{}.exe'.format(py_version))
             try:
@@ -171,13 +171,9 @@ def register():
     bpy.app.handlers.save_post.append(setup_vs_code)
 
 def unregister():
-    for _class in classes: bpy.utils.unregister_class(_class)
+    for _class in reversed(classes): bpy.utils.unregister_class(_class)
 
-    for module in modules:
+    for module in reversed(modules):
         module.unregister()
     
     bpy.app.handlers.save_post.remove(setup_vs_code)
-
-
-if __name__ == "__main__":
-    register()

@@ -3,8 +3,6 @@
 import os
 import bpy
 
-from Malt.GL.Shader import GLSL_Reflection
-from Malt.Parameter import Parameter
 from BlenderMalt.MaltProperties import MaltPropertyGroup
 from BlenderMalt import MaltPipeline
 
@@ -71,7 +69,7 @@ def track_library_changes(force_update=False):
     return 0.1
 
 class MaltTree(bpy.types.NodeTree):
-    
+
     bl_label = "Malt Node Tree"
     bl_icon = 'NODETREE'
 
@@ -183,7 +181,7 @@ class MaltTree(bpy.types.NodeTree):
 
 
 class NODE_PT_MaltNodeTree(bpy.types.Panel):
-    
+
     bl_space_type = 'NODE_EDITOR'
     bl_region_type = 'UI'
     bl_category = "Malt Nodes"
@@ -239,8 +237,6 @@ class MaltSocket(bpy.types.NodeSocket):
     
 
 class MaltNode():
-
-    bl_label = "Malt Node"
 
     def get_glsl_name(self):
         name = self.name.replace('.','_')
@@ -614,6 +610,7 @@ def insert_node(layout, type, label, settings = {}):
 from itertools import chain
 
 class MALT_MT_NodeFunctions(bpy.types.Menu):
+    
     bl_label = "Malt Node Functions Menu"
 
     def draw(self, context):
@@ -627,6 +624,7 @@ class MALT_MT_NodeFunctions(bpy.types.Menu):
                 })
 
 class MALT_MT_NodeStructs(bpy.types.Menu):
+    
     bl_label = "Malt Node Structs Menu"
 
     def draw(self, context):
@@ -640,6 +638,7 @@ class MALT_MT_NodeStructs(bpy.types.Menu):
                 })
 
 class MALT_MT_NodeInputs(bpy.types.Menu):
+    
     bl_label = "Malt Node Inputs Menu"
 
     def draw(self, context):
@@ -653,6 +652,7 @@ class MALT_MT_NodeInputs(bpy.types.Menu):
             })
 
 class MALT_MT_NodeOutputs(bpy.types.Menu):
+    
     bl_label = "Malt Node Outputs Menu"
 
     def draw(self, context):
@@ -666,6 +666,7 @@ class MALT_MT_NodeOutputs(bpy.types.Menu):
             })
 
 class MALT_MT_NodeOther(bpy.types.Menu):
+    
     bl_label = "Malt Node Other Menu"
 
     def draw(self, context):
@@ -728,7 +729,7 @@ def unregister():
     bpy.types.NODE_MT_add.remove(add_node_ui)
     bpy.types.NODE_HT_header.remove(node_header_ui)
 
-    for _class in classes: bpy.utils.unregister_class(_class)
+    for _class in reversed(classes): bpy.utils.unregister_class(_class)
 
     bpy.app.timers.unregister(track_library_changes)
 

@@ -219,7 +219,7 @@ def register():
     bpy.app.timers.register(track_pipeline_changes, persistent=True)
     
 def unregister():
-    for _class in classes: bpy.utils.unregister_class(_class)
+    for _class in reversed(classes): bpy.utils.unregister_class(_class)
     del bpy.types.World.malt
     bpy.app.handlers.depsgraph_update_post.remove(depsgraph_update)
     bpy.app.handlers.load_post.remove(load_scene)

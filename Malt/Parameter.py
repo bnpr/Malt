@@ -1,7 +1,5 @@
 # Copyright (c) 2020 BlenderNPR and contributors. MIT license. 
 
-from Malt.GL import GL
-
 class PipelineGraph(object):
     
     def __init__(self, language, file_extension, functions, structs, graph_IO, generate_source_callback):
@@ -27,8 +25,6 @@ class PipelineParameters(object):
         self.material = material
         self.mesh = mesh
         self.light = light
-
-from enum import Enum
 
 class Type(object):
     BOOL=0
@@ -77,6 +73,7 @@ class MaterialParameter(Parameter):
         self.extension = extension
 
 def gl_type_to_malt_type(gl_type):
+    from Malt.GL import GL
     types = {
         'FLOAT' : Type.FLOAT,
         'DOUBLE' : Type.FLOAT,
