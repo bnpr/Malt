@@ -9,7 +9,7 @@ from Malt.GL import GL
 from Malt.GL.Texture import Texture
 from . import MaltPipeline, MaltMeshes, MaltMaterial, CBlenderMalt
 
-__PROFILE = False
+PROFILE = False
 
 class MaltRenderEngine(bpy.types.RenderEngine):
     # These three members are used by blender to set up the
@@ -260,8 +260,8 @@ class MaltRenderEngine(bpy.types.RenderEngine):
     # rendered image automatically.
     def view_draw(self, context, depsgraph):
         profiler = cProfile.Profile()
-        global __PROFILE
-        if __PROFILE:
+        global PROFILE
+        if PROFILE:
             profiler.enable()
             if self.request_new_frame:
                 self.profiling_data = io.StringIO()
@@ -309,7 +309,7 @@ class MaltRenderEngine(bpy.types.RenderEngine):
         self.display_draw.draw(fbo, render_texture)
         self.unbind_display_space_shader()
 
-        if __PROFILE:
+        if PROFILE:
             profiler.disable()
             stats = pstats.Stats(profiler, stream=self.profiling_data)
             stats.strip_dirs()
@@ -396,8 +396,8 @@ class OT_MaltProfileFrameReport(bpy.types.Operator, bpy_extras.io_utils.ExportHe
     def execute(self, context):
         global REPORT_PATH
         REPORT_PATH = self.filepath
-        global __PROFILE
-        __PROFILE = True
+        global PROFILE
+        PROFILE = True
         context.space_data.shading.type = 'SOLID'
         context.space_data.shading.type = 'RENDERED'
         return{'FINISHED'}

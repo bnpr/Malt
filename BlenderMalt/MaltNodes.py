@@ -366,7 +366,6 @@ class MaltFunctionNode(bpy.types.Node, MaltNode):
     def setup(self, context):
         self.inputs.clear()
         self.outputs.clear()
-        malt_parameters = {}
         function = self.get_function()
         self.name = self.function_type
         max_len = len(self.name)
@@ -380,7 +379,6 @@ class MaltFunctionNode(bpy.types.Node, MaltNode):
                 self.inputs.new('MaltSocket', parameter['name']).data_type = parameter['type']
                 #malt_parameters[parameter['name']] = Parameter.from_glsl_type(parameter['type'])
         
-        self.properties.setup(malt_parameters)
         #TODO: Measure actual string width
         self.width = max_len * 10
 
