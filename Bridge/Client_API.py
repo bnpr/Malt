@@ -1,7 +1,6 @@
-import ctypes, logging as log, io
+# Copyright (c) 2020 BlenderNPR and contributors. MIT license. 
 
-import Malt.Scene as Scene
-import Malt.Parameter as Parameter
+import ctypes, logging as log, io
 
 def bridge_method(function):
     def result(*args, **kwargs):
@@ -35,7 +34,7 @@ class Bridge(object):
 
         import sys
         if not isinstance(sys.stdout, IOCapture):
-            import os, tempfile, time, platform
+            import os, tempfile, time
             date = time.strftime("%Y-%m-%d(%H-%M)")
             log_path = os.path.join(tempfile.gettempdir(),'malt ' + date + '.log')
             log.basicConfig(filename=log_path, level=log.DEBUG, format='Blender > %(message)s')

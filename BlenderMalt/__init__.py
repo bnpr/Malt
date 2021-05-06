@@ -141,6 +141,9 @@ def register():
     import importlib
     for module in get_modules():
         importlib.reload(module)
+    
+    import Bridge
+    Bridge.reload()
 
     do_windows_fixes()
 

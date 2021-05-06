@@ -3,7 +3,7 @@
 from Malt.Parameter import Parameter
 from Malt.Utils import profile_function
 
-from Bridge import Texture
+from . import Texture
 
 MATERIAL_SHADERS = {}
 

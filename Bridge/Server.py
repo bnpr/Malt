@@ -7,11 +7,8 @@ from Malt.GL import GL
 from Malt.GL.GL import *
 from Malt.GL.RenderTarget import RenderTarget
 
-import Bridge
-from Bridge.Mesh import load_mesh
-from Bridge.Texture import load_texture, load_gradient
-
-import Bridge.ipc as ipc
+import Bridge.Mesh, Bridge.Material, Bridge.Texture
+from . import ipc as ipc
 
 import logging as log
 def setup_logging(log_path, log_level):
@@ -298,7 +295,7 @@ def main(pipeline_path, connection_addresses, shared_dic, log_path, debug_mode):
             while connections['MESH'].poll():
                 msg = connections['MESH'].recv()
                 log.debug('LOAD MESH : {}'.format(msg))
-                load_mesh(msg)
+                Bridge.Mesh.load_mesh(msg)
             
             while connections['TEXTURE'].poll():
                 msg = connections['TEXTURE'].recv()
@@ -312,7 +309,7 @@ def main(pipeline_path, connection_addresses, shared_dic, log_path, debug_mode):
                 size = w*h*channels
                 buffer = ipc.SharedMemoryRef(buffer_name, size*ctypes.sizeof(ctypes.c_float))
                 float_buffer = (ctypes.c_float*size).from_address(buffer.c.data)
-                load_texture(name, resolution, channels, float_buffer, sRGB)
+                Bridge.Texture.load_texture(name, resolution, channels, float_buffer, sRGB)
                 connections['TEXTURE'].send('COMPLETE')
             
             while connections['GRADIENT'].poll():
@@ -321,7 +318,7 @@ def main(pipeline_path, connection_addresses, shared_dic, log_path, debug_mode):
                 name = msg['name']
                 pixels = msg['pixels']
                 nearest = msg['nearest']
-                load_gradient(name, pixels, nearest)
+                Bridge.Texture.load_gradient(name, pixels, nearest)
             
             #TODO: Bad workaround to make sure the scene assets are loaded
             if connections['RENDER'].poll():
