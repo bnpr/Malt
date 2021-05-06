@@ -281,10 +281,12 @@ def main(pipeline_path, connection_addresses, shared_dic, log_path, debug_mode):
                 results = {}
                 from Malt.GL.Shader import GLSL_Reflection, shader_preprocessor
                 for path in paths:
-                    src = shader_preprocessor(open(path).read(), [os.path.dirname(path)])
+                    root_path = os.path.dirname(path)
+                    src = '#include "{}"\n'.format(path)
+                    src = shader_preprocessor(src, [root_path])
                     reflection = {
-                        'structs':  GLSL_Reflection.reflect_structs(src),
-                        'functions':  GLSL_Reflection.reflect_functions(src),
+                        'structs':  GLSL_Reflection.reflect_structs(src, root_path),
+                        'functions':  GLSL_Reflection.reflect_functions(src, root_path),
                         'paths': set([path])
                     }
                     for struct in reflection['structs'].values(): reflection['paths'].add(struct['file'])

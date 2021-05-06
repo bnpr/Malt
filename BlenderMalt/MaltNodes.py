@@ -7,8 +7,8 @@ from . import MaltPipeline
 
 __LIBRARIES = {}    
 __EMPTY_LIBRARY = {
-    'structs':[],
-    'functions':[],
+    'structs':{},
+    'functions':{},
     'paths':[],
 }
 def get_libraries():
@@ -41,14 +41,16 @@ def track_library_changes(force_update=False):
 
     needs_update = set()
     for path, library in __LIBRARIES.items():
+        root_dir = os.path.dirname(path)
         if os.path.exists(path):
             if library is None:
                 needs_update.add(path)
             else:
                 for sub_path in library['paths']:
+                    sub_path = os.path.join(root_dir, sub_path)
                     if os.path.exists(sub_path):
                         # Don't track individual files granularly since macros can completely change them
-                        if os.stat(path).st_mtime > __TIMESTAMP:
+                        if os.stat(sub_path).st_mtime > __TIMESTAMP:
                             needs_update.add(path)
                             break
     
@@ -56,6 +58,18 @@ def track_library_changes(force_update=False):
         results = MaltPipeline.get_bridge().reflect_glsl_libraries(needs_update)
         for path, reflection in results.items():
             __LIBRARIES[path] = reflection
+
+            files = set()
+            for name, function in reflection['functions'].items():
+                files.add(function['file'])
+            for file in files:
+                get_functions_menu(file)
+            
+            files = set()
+            for name, struct in reflection['structs'].items():
+                files.add(struct['file'])
+            for file in files:
+                get_structs_menu(file)
         
         for tree in bpy.data.node_groups:
             if isinstance(tree, MaltTree):
@@ -606,33 +620,93 @@ def insert_node(layout, type, label, settings = {}):
 
 from itertools import chain
 
+__FUNCTION_MENUES = []
+
+def get_functions_menu(file):
+    print('file : ', file)
+    global __FUNCTION_MENUES
+    file_to_class_name = 'MALT_MT_functions_' + file.replace('\\', '_').replace('/', '_').replace('.glsl', '').replace(' ', '')
+    file_to_label = file.replace('\\', '/').replace('/', ' - ').replace('.glsl', '')
+
+    if file_to_class_name not in __FUNCTION_MENUES:
+        def draw(self, context):
+            graph = get_pipeline_graph(context)
+            if graph:
+                library_functions = context.space_data.node_tree.get_library()['functions']
+                for name, function in sorted(chain(graph.functions.items(), library_functions.items())):
+                    if function['file'] == file:
+                        insert_node(self.layout, "MaltFunctionNode", name.replace('_', ' '), settings={
+                            'function_type' : repr(name)
+                        })
+
+        menu_type = type(file_to_class_name, (bpy.types.Menu,), {
+            "bl_space_type": 'NODE_EDITOR',
+            "bl_label": file_to_label,
+            "draw": draw,
+        })
+        bpy.utils.register_class(menu_type)
+
+        __FUNCTION_MENUES.append(file_to_class_name)
+    
+    return file_to_class_name
+
+__STRUCT_MENUES = []
+
+def get_structs_menu(file):
+    global __STRUCT_MENUES
+    file_to_class_name = 'MALT_MT_structs_' + file.replace('\\', '_').replace('/', '_').replace('.glsl', '').replace(' ', '')
+    file_to_label = file.replace('\\', '/').replace('/', ' - ').replace('.glsl', '')
+
+    if file_to_class_name not in __STRUCT_MENUES:
+        def draw(self, context):
+            graph = get_pipeline_graph(context)
+            if graph:
+                library_structs = context.space_data.node_tree.get_library()['structs']
+                for name, struct in sorted(chain(graph.structs.items(), library_structs.items())):
+                    if struct['file'] == file:
+                        insert_node(self.layout, "MaltStructNode", name.replace('_', ' '), settings={
+                            'struct_type' : repr(name)
+                        })
+
+        menu_type = type(file_to_class_name, (bpy.types.Menu,), {
+            "bl_space_type": 'NODE_EDITOR',
+            "bl_label": file_to_label,
+            "draw": draw,
+        })
+        bpy.utils.register_class(menu_type)
+
+        __STRUCT_MENUES.append(file_to_class_name)
+    
+    return file_to_class_name
+
+
 class MALT_MT_NodeFunctions(bpy.types.Menu):
     
     bl_label = "Malt Node Functions Menu"
 
     def draw(self, context):
-        layout = self.layout
         graph = get_pipeline_graph(context)
         if graph:
+            files = set()
             library_functions = context.space_data.node_tree.get_library()['functions']
-            for name in sorted(chain(graph.functions, library_functions)):
-                insert_node(self.layout, "MaltFunctionNode", name, settings={
-                    'function_type' : repr(name)
-                })
+            for name, function in chain(graph.functions.items(), library_functions.items()):
+                files.add(function['file'])
+            for file in sorted(files):
+                self.layout.menu(get_functions_menu(file))
 
 class MALT_MT_NodeStructs(bpy.types.Menu):
     
     bl_label = "Malt Node Structs Menu"
 
     def draw(self, context):
-        layout = self.layout
         graph = get_pipeline_graph(context)
         if graph:
+            files = set()
             library_structs = context.space_data.node_tree.get_library()['structs']
-            for name in sorted(chain(graph.structs,library_structs)):
-                insert_node(self.layout, "MaltStructNode", name, settings={
-                    'struct_type' : repr(name)
-                })
+            for name, struct in chain(graph.structs.items(), library_structs.items()):
+                files.add(struct['file'])
+            for file in sorted(files):
+                self.layout.menu(get_structs_menu(file))
 
 class MALT_MT_NodeInputs(bpy.types.Menu):
     
@@ -677,9 +751,29 @@ def setup_node_trees():
     for tree in bpy.data.node_groups:
         if tree.bl_idname == 'MaltTree':
             tree.update()
+    
+    graphs = MaltPipeline.get_bridge().graphs
+    for name, graph in graphs.items():
+        files = set()
+        for name, function in graph.functions.items():
+            files.add(function['file'])
+        for file in files:
+            get_functions_menu(file)
+        
+        files = set()
+        for name, struct in graph.structs.items():
+            files.add(struct['file'])
+        for file in files:
+            get_structs_menu(file)
 
 def add_node_ui(self, context):
     if context.space_data.tree_type != 'MaltTree':
+        return
+    if context.space_data.node_tree is None:
+        self.layout.label(text='No active node tree')
+        return
+    if context.space_data.node_tree.graph_type == '':
+        self.layout.label(text='No graph type selected')
         return
     graph = get_pipeline_graph(context)
     if graph:
@@ -690,7 +784,7 @@ def add_node_ui(self, context):
         self.layout.menu("MALT_MT_NodeOther", text='Other')
 
 def node_header_ui(self, context):
-    if context.space_data.tree_type != 'MaltTree':
+    if context.space_data.tree_type != 'MaltTree' or context.space_data.node_tree is None:
         return
     self.layout.prop(context.space_data.node_tree, 'library_source')
     self.layout.prop_search(context.space_data.node_tree, 'graph_type', context.scene.world.malt, 'graph_types',text='')

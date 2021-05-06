@@ -92,8 +92,8 @@ class NPR_Pipeline(Pipeline):
         self.setup_graphs()
     
     def setup_graphs(self):
-        functions = GLSL_Reflection.reflect_functions(self.default_shader['MAIN_PASS'].pixel_source)
-        structs = GLSL_Reflection.reflect_structs(self.default_shader['MAIN_PASS'].pixel_source)
+        functions = GLSL_Reflection.reflect_functions(self.default_shader['MAIN_PASS'].pixel_source, SHADER_DIR)
+        structs = GLSL_Reflection.reflect_structs(self.default_shader['MAIN_PASS'].pixel_source, SHADER_DIR)
         graph_functions = {
             'COMMON_PIXEL_SHADER': functions['COMMON_PIXEL_SHADER']
         }

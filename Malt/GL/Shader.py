@@ -1,6 +1,6 @@
 # Copyright (c) 2020 BlenderNPR and contributors. MIT license.
 
-import ctypes
+import ctypes, os
 
 from Malt.GL.GL import *
 from Malt.Utils import log
@@ -397,19 +397,30 @@ class GLSL_Reflection(object):
     STRUCT_DEF.ignore(pyparsing.dblSlashComment)
 
     @classmethod
-    def get_file_path(cls, code, position):
+    def get_file_path(cls, code, position, root_path = None):
         line_directive_start = code.rfind('#line', 0, position)
+        if line_directive_start == -1:
+            return ''
         path_start = code.find('"', line_directive_start)
-        path_end = code.find('"', path_start+1)
-        return code[path_start:path_end]
+        if path_start == -1:
+            return ''
+        path_start+=1
+        path_end = code.find('"', path_start)
+        if path_end == -1:
+            return ''
+        path = code[path_start:path_end]
+        if root_path:
+            return os.path.relpath(path, root_path)
+        else:
+            return path
     
     @classmethod
-    def reflect_structs(cls, code):
+    def reflect_structs(cls, code, root_path = None):
         structs = {}
         for struct, start, end in cls.STRUCT_DEF.scanString(code):
             dictionary = {
                 'name' : struct.name,
-                'file' : cls.get_file_path(code, start),
+                'file' : cls.get_file_path(code, start, root_path),
                 'members' : []
             }
             for member in struct.members:
@@ -442,13 +453,13 @@ class GLSL_Reflection(object):
 
 
     @classmethod
-    def reflect_functions(cls, code):
+    def reflect_functions(cls, code, root_path = None):
         functions = {}
         for function, start, end in cls.FUNCTION.scanString(code):
             dictionary = {
                 'name' : function.name,
                 'type' : function.type,
-                'file' : cls.get_file_path(code, start),
+                'file' : cls.get_file_path(code, start, root_path),
                 'parameters' : []
             }
             for parameter in function.parameters:

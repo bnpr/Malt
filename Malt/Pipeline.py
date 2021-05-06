@@ -13,6 +13,7 @@ from Malt.Parameter import *
 #Workaround for handling multiple OpenGL contexts
 MAIN_CONTEXT = True
 
+SHADER_DIR = path.join(path.dirname(__file__), 'Shaders')
 
 class Pipeline(object):
 
@@ -35,9 +36,8 @@ class Pipeline(object):
 
         self.graphs = {}
 
-        shader_dir = path.join(path.dirname(__file__), 'Shaders')
-        if shader_dir not in Pipeline.SHADER_INCLUDE_PATHS:
-            Pipeline.SHADER_INCLUDE_PATHS.append(shader_dir)
+        if SHADER_DIR not in Pipeline.SHADER_INCLUDE_PATHS:
+            Pipeline.SHADER_INCLUDE_PATHS.append(SHADER_DIR)
 
         self.resolution = None
         self.sample_count = 0
