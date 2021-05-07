@@ -276,6 +276,9 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
             name = names[-1]
 
             def make_row(label_only = False):
+                if is_node_socket:
+                    return layout
+                
                 is_override = False
                 label = name
                 if '@' in name:
@@ -289,9 +292,6 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                     result.alignment = 'RIGHT'
                 result.label(text=label)
                 
-                if is_node_socket:
-                    return result
-
                 if is_override:
                     delete_op = row.operator('wm.malt_delete_override', text='', icon='X')
                     delete_op.properties_path = to_json_rna_path(self)
@@ -313,12 +313,12 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                 row = layout.row()
                 if self.textures[key].texture:
                     row = row.split(factor=0.8)
-                row.template_ID(self.textures[key], "texture", new="image.new", open="image.open")
+                row.column().template_ID(self.textures[key], "texture", new="image.new", open="image.open")
                 if self.textures[key].texture:
                     row.prop(self.textures[key].texture.colorspace_settings, 'name', text='')
             elif rna[key]['type'] == Type.GRADIENT:
                 make_row(True)
-                layout.template_color_ramp(get_color_ramp(self.id_data, key), 'color_ramp')
+                layout.column().template_color_ramp(get_color_ramp(self.id_data, key), 'color_ramp')
             elif rna[key]['type'] == Type.MATERIAL:
                 make_row(True)
                 row = layout.row(align=True)

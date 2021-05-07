@@ -242,7 +242,7 @@ class MaltSocket(bpy.types.NodeSocket):
             return link.to_socket if self.is_output else link.from_socket
     
     def draw(self, context, layout, node, text):
-        text + ' : ' + self.data_type
+        text = '{}   ( {} )'.format(text, self.data_type)
         node.draw_socket(context, layout, self, text)
     
     def draw_color(self, context, node):
@@ -275,14 +275,13 @@ class MaltNode():
     def draw_socket(self, context, layout, socket, text):
         material = context.active_object.active_material
         tree = self.id_data
+        layout.label(text=text)
         if material and material.malt.shader_nodes is tree:
             uniform = socket.get_glsl_uniform()
             rna = material.malt.parameters.get_rna()
             if uniform in rna.keys() and rna[uniform]['active']:
                 material.malt.parameters.draw_ui(layout, mask=[uniform], is_node_socket=True)
-                return
 
-        layout.label(text=text)
 
     @classmethod
     def poll(cls, ntree):
@@ -623,17 +622,16 @@ from itertools import chain
 __FUNCTION_MENUES = []
 
 def get_functions_menu(file):
-    print('file : ', file)
     global __FUNCTION_MENUES
     file_to_class_name = 'MALT_MT_functions_' + file.replace('\\', '_').replace('/', '_').replace('.glsl', '').replace(' ', '')
-    file_to_label = file.replace('\\', '/').replace('/', ' - ').replace('.glsl', '')
+    file_to_label = file.replace('\\', '/').replace('/', ' - ').replace('.glsl', '').replace('_',' ')
 
     if file_to_class_name not in __FUNCTION_MENUES:
         def draw(self, context):
             graph = get_pipeline_graph(context)
             if graph:
                 library_functions = context.space_data.node_tree.get_library()['functions']
-                for name, function in sorted(chain(graph.functions.items(), library_functions.items())):
+                for name, function in chain(graph.functions.items(), library_functions.items()):
                     if function['file'] == file:
                         insert_node(self.layout, "MaltFunctionNode", name.replace('_', ' '), settings={
                             'function_type' : repr(name)
@@ -655,14 +653,14 @@ __STRUCT_MENUES = []
 def get_structs_menu(file):
     global __STRUCT_MENUES
     file_to_class_name = 'MALT_MT_structs_' + file.replace('\\', '_').replace('/', '_').replace('.glsl', '').replace(' ', '')
-    file_to_label = file.replace('\\', '/').replace('/', ' - ').replace('.glsl', '')
+    file_to_label = file.replace('\\', '/').replace('/', ' - ').replace('.glsl', '').replace('_',' ')
 
     if file_to_class_name not in __STRUCT_MENUES:
         def draw(self, context):
             graph = get_pipeline_graph(context)
             if graph:
                 library_structs = context.space_data.node_tree.get_library()['structs']
-                for name, struct in sorted(chain(graph.structs.items(), library_structs.items())):
+                for name, struct in chain(graph.structs.items(), library_structs.items()):
                     if struct['file'] == file:
                         insert_node(self.layout, "MaltStructNode", name.replace('_', ' '), settings={
                             'struct_type' : repr(name)
@@ -689,7 +687,7 @@ class MALT_MT_NodeFunctions(bpy.types.Menu):
         if graph:
             files = set()
             library_functions = context.space_data.node_tree.get_library()['functions']
-            for name, function in chain(graph.functions.items(), library_functions.items()):
+            for name, function in chain(library_functions.items(), graph.functions.items()):
                 files.add(function['file'])
             for file in sorted(files):
                 self.layout.menu(get_functions_menu(file))
@@ -703,7 +701,7 @@ class MALT_MT_NodeStructs(bpy.types.Menu):
         if graph:
             files = set()
             library_structs = context.space_data.node_tree.get_library()['structs']
-            for name, struct in chain(graph.structs.items(), library_structs.items()):
+            for name, struct in chain(library_structs.items(), graph.structs.items()):
                 files.add(struct['file'])
             for file in sorted(files):
                 self.layout.menu(get_structs_menu(file))
