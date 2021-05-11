@@ -104,6 +104,22 @@ class Preferences(bpy.types.AddonPreferences):
         layout.prop(self, "malt_library_path")
         layout.prop(self, "debug_mode")
 
+class VIEW3D_PT_Malt_Stats(bpy.types.Panel):
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'UI'
+    bl_category = "View"
+    bl_label = "Malt Stats"
+
+    @classmethod
+    def poll(cls, context):
+        return context.scene.render.engine == 'MALT'
+
+    def draw(self, context):
+        import pprint
+        from . import MaltPipeline
+        stats = MaltPipeline.get_bridge().get_stats()
+        for line in stats.splitlines():
+            self.layout.label(text=line)
 
 _VS_CODE_SETTINGS = '''
 {{
@@ -143,6 +159,7 @@ def setup_vs_code(dummy):
 classes=[
     Preferences,
     OT_MaltPrintError,
+    VIEW3D_PT_Malt_Stats,
 ]
 
 def register():
