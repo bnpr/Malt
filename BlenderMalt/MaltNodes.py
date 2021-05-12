@@ -174,11 +174,11 @@ class MaltTree(bpy.types.NodeTree):
     def update(self):
         if self.get_pipeline_graph() is None:
             return
-        '''
+        
         for link in self.links:
             if link.from_socket.data_type != link.to_socket.data_type:
                 self.links.remove(link)
-        '''
+        
         source = self.get_generated_source()
         source_dir = bpy.path.abspath(self.get_generated_source_dir())
         source_path = bpy.path.abspath(self.get_generated_source_path())
