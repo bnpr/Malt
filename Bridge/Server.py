@@ -1,6 +1,6 @@
 # Copyright (c) 2020 BlenderNPR and contributors. MIT license. 
 
-import ctypes, os, copy
+import ctypes, os, copy, time
 import glfw
 
 from Malt.GL import GL
@@ -175,7 +175,6 @@ class Viewport(object):
     
     def render(self):
         if self.needs_more_samples:
-            import time
             result = self.pipeline.render(self.resolution, self.scene, self.is_final_render, self.is_new_frame)
             self.is_new_frame = False
             self.needs_more_samples = self.pipeline.needs_more_samples()
@@ -318,7 +317,7 @@ def main(pipeline_path, connection_addresses, shared_dic, log_path, debug_mode):
                 msg_log = copy.copy(msg)
                 msg_log['data'] = None
                 log.debug('LOAD MESH : {}'.format(msg_log))
-                load_mesh(msg)
+                Bridge.Mesh.load_mesh(msg)
             
             while connections['TEXTURE'].poll():
                 msg = connections['TEXTURE'].recv()
