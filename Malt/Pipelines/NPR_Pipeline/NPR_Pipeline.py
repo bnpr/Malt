@@ -43,6 +43,7 @@ class NPR_Pipeline(Pipeline):
         super().__init__()
 
         self.sampling_grid_size = 2
+        self.samples = None
 
         self.parameters.world['Background.Color'] = Parameter((0.5,0.5,0.5,1), Type.FLOAT, 4)
         self.parameters.scene['Line.Max Width'] = Parameter(10, Type.INT)
@@ -143,12 +144,15 @@ class NPR_Pipeline(Pipeline):
         self.fbo_accumulate = RenderTarget([self.t_color_accumulate])
 
     def get_samples(self, width=1.0):
-        return Sampling.get_RGSS_samples(self.sampling_grid_size, width)
-        return Sampling.get_random_samples(self.sampling_grid_size, width)
-    
+        if self.samples is None:
+            self.samples = Sampling.get_RGSS_samples(self.sampling_grid_size, width)
+        return self.samples
+
     def do_render(self, resolution, scene, is_final_render, is_new_frame):
         #SETUP SAMPLING
-        self.sampling_grid_size = scene.parameters['Samples.Grid Size']
+        if self.sampling_grid_size != scene.parameters['Samples.Grid Size']:
+            self.sampling_grid_size = scene.parameters['Samples.Grid Size']
+            self.samples = None
 
         if is_new_frame:
             self.fbo_accumulate.clear([(0,0,0,0)])
