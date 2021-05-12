@@ -172,9 +172,6 @@ class MaltTree(bpy.types.NodeTree):
         })
 
     def update(self):
-        if MaltPipeline.is_initialized() == False:
-            #Blender can call this before fully initializing the blend file. <(T_T)>
-            return
         if self.get_pipeline_graph() is None:
             return
         '''
