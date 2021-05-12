@@ -35,7 +35,7 @@ Malt is software agnostic, but Blender is the only integration planned right now
 
 ## Install
  
-- Go to [the latest Release page](https://github.com/bnpr/Malt/releases/tag/v1-beta).
+- Go to [the latest Release page](https://github.com/bnpr/Malt/releases/tag/stable).
 - Download the *BlenderMalt* version that matches your OS and the *Shader Examples*.
 - Open Blender. Go to *Preferences > Addons*, click on the *Install...* button and select *BlenderMalt.zip* from your downloads. *(It will take a few seconds)*
 - Tick the box in the *BlenderMalt* panel to enable it.
