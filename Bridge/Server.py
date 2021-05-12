@@ -129,14 +129,17 @@ class Viewport(object):
 
         self.stat_max_frame_latency = 0
         self.stat_cpu_frame_time = 0
+        self.stat_time_start = 0
+        self.stat_render_time = 0
     
     def get_print_stats(self):
         return '\n'.join((
             'Resolution : {}'.format(self.resolution),
             'Sample : {} / {}'.format(self.pipeline.sample_count, len(self.pipeline.get_samples())),
-            'CPU Render : {:.3f} ms'.format(self.stat_cpu_frame_time * 1000),
+            'Sample Time : {:.3f} ms'.format((self.stat_render_time * 1000) / self.pipeline.sample_count),
+            'Total Time : {:.3f} s'.format(self.stat_render_time),
             'Latency : {} frames'.format(len(self.pbos_active)),
-            'Max Latency : {} frames'.format(self.stat_max_frame_latency)
+            'Max Latency : {} frames'.format(self.stat_max_frame_latency),
         ))
     
     def setup(self, buffers, resolution, scene, scene_update):
@@ -150,6 +153,8 @@ class Viewport(object):
         self.sample_index = 0
         self.is_new_frame = True
         self.needs_more_samples = True
+
+        self.stat_time_start = time.perf_counter()
         
         if scene_update or self.scene is None:
             for mesh in scene.meshes:
@@ -174,9 +179,7 @@ class Viewport(object):
     def render(self):
         if self.needs_more_samples:
             import time
-            start_time = time.perf_counter()
             result = self.pipeline.render(self.resolution, self.scene, self.is_final_render, self.is_new_frame)
-            self.stat_cpu_frame_time = time.perf_counter() - start_time
             self.is_new_frame = False
             self.needs_more_samples = self.pipeline.needs_more_samples()
             
@@ -194,7 +197,7 @@ class Viewport(object):
                     pbos[key].setup(texture, self.buffers[key])
             
             self.pbos_active.append(pbos)
-
+            
         if len(self.pbos_active) > 0:
             for i, pbos in reversed(list(enumerate(self.pbos_active))):
                 is_ready = True
@@ -209,9 +212,10 @@ class Viewport(object):
                         self.read_resolution = self.resolution
                     break
             
+            self.stat_render_time = time.perf_counter() - self.stat_time_start
             self.stat_max_frame_latency = max(len(self.pbos_active), self.stat_max_frame_latency)
         
-        return self.needs_more_samples or len(self.pbos_active) > 0
+        return self.needs_more_samples == False and len(self.pbos_active) == 0
 
 import os, sys, time
 import cProfile, pstats, io
@@ -357,22 +361,25 @@ def main(pipeline_path, connection_addresses, shared_dic, log_path, debug_mode):
                 shared_dic[(viewport_id, 'FINISHED')] = False
             
             active_viewports = {}
+            render_finished = True
             for v_id, v in viewports.items():
-                need_more_samples = v.render()
-                if need_more_samples:
+                if v.needs_more_samples:
                     active_viewports[v_id] = v
+                has_finished = v.render()
+                if has_finished == False:
+                    render_finished = False
                 shared_dic[(v_id, 'READ_RESOLUTION')] = v.read_resolution
-                if need_more_samples == False and shared_dic[(v_id, 'FINISHED')] == False:
+                if has_finished and shared_dic[(v_id, 'FINISHED')] == False:
                     shared_dic[(v_id, 'FINISHED')] = True
             
-            if len(active_viewports) == 0:
+            if render_finished:
                 glfw.swap_interval(1)
             else:
                 glfw.swap_interval(0)
             glfw.swap_buffers(window)
 
             if len(active_viewports) > 0:
-                stats = 'Frame Time : {:.3f} ms\n\n'.format((time.perf_counter() - start_time) * 1000)
+                stats = ''
                 for v_id, v in active_viewports.items():
                     stats += "Viewport ({}):\n{}\n\n".format(v_id, v.get_print_stats())
                 shared_dic['STATS'] = stats
