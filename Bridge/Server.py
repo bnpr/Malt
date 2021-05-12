@@ -1,6 +1,6 @@
 # Copyright (c) 2020 BlenderNPR and contributors. MIT license. 
 
-import ctypes, os
+import ctypes, os, copy
 import glfw
 
 from Malt.GL import GL
@@ -123,6 +123,21 @@ class Viewport(object):
         self.is_new_frame = True
         self.needs_more_samples = True
         self.is_final_render = is_final_render
+
+        self.stat_max_frame_latency = 0
+        self.stat_cpu_frame_time = 0
+        self.stat_time_start = 0
+        self.stat_render_time = 0
+    
+    def get_print_stats(self):
+        return '\n'.join((
+            'Resolution : {}'.format(self.resolution),
+            'Sample : {} / {}'.format(self.pipeline.sample_count, len(self.pipeline.get_samples())),
+            'Sample Time : {:.3f} ms'.format((self.stat_render_time * 1000) / self.pipeline.sample_count),
+            'Total Time : {:.3f} s'.format(self.stat_render_time),
+            'Latency : {} frames'.format(len(self.pbos_active)),
+            'Max Latency : {} frames'.format(self.stat_max_frame_latency),
+        ))
     
     def setup(self, buffers, resolution, scene, scene_update):
         if self.resolution != resolution:
@@ -135,6 +150,8 @@ class Viewport(object):
         self.sample_index = 0
         self.is_new_frame = True
         self.needs_more_samples = True
+
+        self.stat_time_start = time.perf_counter()
         
         if scene_update or self.scene is None:
             for mesh in scene.meshes:
@@ -159,9 +176,7 @@ class Viewport(object):
     def render(self):
         if self.needs_more_samples:
             import time
-            start_time = time.perf_counter()
             result = self.pipeline.render(self.resolution, self.scene, self.is_final_render, self.is_new_frame)
-            log.debug('RENDER TIME: {} RESOLUTION: {}'.format(time.perf_counter() - start_time, self.resolution))
             self.is_new_frame = False
             self.needs_more_samples = self.pipeline.needs_more_samples()
             
@@ -179,7 +194,7 @@ class Viewport(object):
                     pbos[key].setup(texture, self.buffers[key])
             
             self.pbos_active.append(pbos)
-
+            
         if len(self.pbos_active) > 0:
             for i, pbos in reversed(list(enumerate(self.pbos_active))):
                 is_ready = True
@@ -193,9 +208,11 @@ class Viewport(object):
                         self.pbos_active = self.pbos_active[i+1:]
                         self.read_resolution = self.resolution
                     break
-            log.debug('{} PBOs active'.format(len(self.pbos_active)))
+            
+            self.stat_render_time = time.perf_counter() - self.stat_time_start
+            self.stat_max_frame_latency = max(len(self.pbos_active), self.stat_max_frame_latency)
         
-        return self.needs_more_samples or len(self.pbos_active) > 0
+        return self.needs_more_samples == False and len(self.pbos_active) == 0
 
 import os, sys, time
 import cProfile, pstats, io
@@ -252,6 +269,8 @@ def main(pipeline_path, connection_addresses, shared_dic, log_path, debug_mode):
     connections['PARAMS'].send((params, graphs))
 
     viewports = {}
+    last_exception = ''
+    repeated_exception = 0
 
     while glfw.window_should_close(window) == False:
         
@@ -296,8 +315,10 @@ def main(pipeline_path, connection_addresses, shared_dic, log_path, debug_mode):
             
             while connections['MESH'].poll():
                 msg = connections['MESH'].recv()
-                log.debug('LOAD MESH : {}'.format(msg))
-                Bridge.Mesh.load_mesh(msg)
+                msg_log = copy.copy(msg)
+                msg_log['data'] = None
+                log.debug('LOAD MESH : {}'.format(msg_log))
+                load_mesh(msg)
             
             while connections['TEXTURE'].poll():
                 msg = connections['TEXTURE'].recv()
@@ -316,7 +337,9 @@ def main(pipeline_path, connection_addresses, shared_dic, log_path, debug_mode):
             
             while connections['GRADIENT'].poll():
                 msg = connections['GRADIENT'].recv()
-                log.debug('LOAD GRADIENT : {}'.format(msg))
+                msg_log = copy.copy(msg)
+                msg_log['pixels'] = None
+                log.debug('LOAD GRADIENT : {}'.format(msg_log))
                 name = msg['name']
                 pixels = msg['pixels']
                 nearest = msg['nearest']
@@ -355,22 +378,30 @@ def main(pipeline_path, connection_addresses, shared_dic, log_path, debug_mode):
                 viewports[viewport_id].setup(buffers, resolution, scene, scene_update)
                 shared_dic[(viewport_id, 'FINISHED')] = False
             
-            active_viewports = False
+            active_viewports = {}
+            render_finished = True
             for v_id, v in viewports.items():
-                need_more_samples = v.render()
+                if v.needs_more_samples:
+                    active_viewports[v_id] = v
+                has_finished = v.render()
+                if has_finished == False:
+                    render_finished = False
                 shared_dic[(v_id, 'READ_RESOLUTION')] = v.read_resolution
-                if need_more_samples == False and shared_dic[(v_id, 'FINISHED')] == False:
+                if has_finished and shared_dic[(v_id, 'FINISHED')] == False:
                     shared_dic[(v_id, 'FINISHED')] = True
-                active_viewports = active_viewports or need_more_samples
             
-            if not active_viewports:
+            if render_finished:
                 glfw.swap_interval(1)
             else:
                 glfw.swap_interval(0)
             glfw.swap_buffers(window)
 
-            if active_viewports:
-                log.debug('FRAME TIME: {} '.format(time.perf_counter() - start_time))
+            if len(active_viewports) > 0:
+                stats = ''
+                for v_id, v in active_viewports.items():
+                    stats += "Viewport ({}):\n{}\n\n".format(v_id, v.get_print_stats())
+                shared_dic['STATS'] = stats
+                log.debug('STATS: {} '.format(stats))
             
             if PROFILE:
                 profiler.disable()
@@ -385,7 +416,15 @@ def main(pipeline_path, connection_addresses, shared_dic, log_path, debug_mode):
             break
         except:
             import traceback
-            log.error(traceback.format_exc())
+            exception = traceback.format_exc()
+            if exception != last_exception:
+                log.error(exception)
+                repeated_exception = 0
+                last_exception = exception
+            else:
+                if repeated_exception in (1,10,100,1000,10000,100000):
+                    log.error('(Repeated {}+ times)'.format(repeated_exception))
+                repeated_exception += 1
 
     glfw.terminate()
 

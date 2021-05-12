@@ -92,6 +92,13 @@ class Bridge(object):
     
     def get_parameters(self):
         return self.parameters
+    
+    @bridge_method
+    def get_stats(self):
+        if 'STATS' in self.shared_dict and self.shared_dict['STATS']:
+            return self.shared_dict['STATS']
+        else:
+            return ''
 
     @bridge_method
     def compile_material(self, path, search_paths=[]):

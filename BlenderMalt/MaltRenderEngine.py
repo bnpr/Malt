@@ -295,6 +295,10 @@ class MaltRenderEngine(bpy.types.RenderEngine):
             # This avoids visual glitches when the viewport is resizing.
             # The alternative would be locking when writing/reading the pixel buffer.
             return
+        
+        for region in context.area.regions:
+            if region.type == 'UI':
+                region.tag_redraw()
 
         fbo = GL.gl_buffer(GL.GL_INT, 1)
         GL.glGetIntegerv(GL.GL_FRAMEBUFFER_BINDING, fbo)
