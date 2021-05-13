@@ -251,8 +251,11 @@ class MaltSocket(bpy.types.NodeSocket):
             link = self.links[0]
             return link.to_socket if self.is_output else link.from_socket
     
+    def get_ui_label(self):
+        return '{}   ( {} )'.format(self.name, self.data_type)
+    
     def draw(self, context, layout, node, text):
-        text = '{}   ( {} )'.format(text, self.data_type)
+        text = self.get_ui_label()
         node.draw_socket(context, layout, self, text)
     
     def draw_color(self, context, node):
@@ -279,12 +282,12 @@ class MaltNode():
     
     def setup_width(self):
         max_len = len(self.name)
-        for input in self.inputs.keys():
-            max_len = max(max_len, len(input))
-        for output in self.outputs.keys():
-            max_len = max(max_len, len(output))
+        for input in self.inputs.values():
+            max_len = max(max_len, len(input.get_ui_label()))
+        for output in self.outputs.values():
+            max_len = max(max_len, len(output.get_ui_label()))
         #TODO: Measure actual string width
-        self.width = max_len * 10
+        self.width = max(self.width, max_len * 10)
 
     def get_glsl_name(self):
         name = self.name.replace('.','_')
