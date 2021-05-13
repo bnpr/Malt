@@ -201,21 +201,22 @@ class MaltRenderEngine(bpy.types.RenderEngine):
 
         overrides = ['Final Render']
 
-        if self.bridge is not MaltPipeline.get_bridge(depsgraph.scene.world):
-            self.bridge = MaltPipeline.get_bridge()
+        bridge = MaltPipeline.get_bridge(depsgraph.scene.world, True)
+        if self.bridge is not bridge:
+            self.bridge = bridge
             self.bridge_id = self.bridge.get_viewport_id()
         
         MaltMaterial.track_shader_changes(force_update=True, async_compilation=False)
 
         scene = self.get_scene(None, depsgraph, True, overrides)
-        MaltPipeline.get_bridge().render(0, resolution, scene, True)
+        self.bridge.render(0, resolution, scene, True)
 
         buffers = None
         finished = False
 
         import time
         while not finished:
-            buffers, finished, read_resolution = MaltPipeline.get_bridge().render_result(0)
+            buffers, finished, read_resolution = self.bridge.render_result(0)
             time.sleep(0.1)
             if finished: break
         

@@ -151,7 +151,7 @@ def setup_node_trees():
     for name, graph in graphs.items():
         preload_menus(graph.structs, graph.functions)
     
-    track_library_changes(disable_tree_updates=True)
+    track_library_changes(force_update=True, disable_tree_updates=True)
     
     for tree in bpy.data.node_groups:
         if tree.bl_idname == 'MaltTree':

@@ -8,10 +8,10 @@ __BRIDGE = None
 __PIPELINE_PARAMETERS = None
 TIMESTAMP = time.time()
 
-def get_bridge(world=None):
+def get_bridge(world=None, force_creation=False):
     global __BRIDGE
     bridge = __BRIDGE
-    if bridge and bridge.lost_connection:
+    if (bridge and bridge.lost_connection) or (bridge is None and force_creation):
         __BRIDGE = None
         try:
             if world is None:
