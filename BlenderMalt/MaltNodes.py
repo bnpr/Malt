@@ -20,6 +20,11 @@ class MaltTree(bpy.types.NodeTree):
     @classmethod
     def poll(cls, context):
         return context.scene.render.engine == 'MALT'
+    
+    def poll_material(self, material):
+        return material.malt.shader_nodes is self
+
+    edit_material : bpy.props.PointerProperty(name='Edit Material', type=bpy.types.Material, poll=poll_material)
 
     graph_type: bpy.props.StringProperty(name='Type')
 
@@ -315,8 +320,10 @@ class MaltNode():
         return ''
     
     def draw_socket(self, context, layout, socket, text):
-        material = context.active_object.active_material
         tree = self.id_data
+        material = tree.edit_material
+        if material is None:
+            material = context.active_object.active_material
         layout.label(text=text)
         if material and material.malt.shader_nodes is tree:
             uniform = socket.get_glsl_uniform()
@@ -824,8 +831,11 @@ def add_node_ui(self, context):
 def node_header_ui(self, context):
     if context.space_data.tree_type != 'MaltTree' or context.space_data.node_tree is None:
         return
-    self.layout.prop(context.space_data.node_tree, 'library_source')
+    #self.layout.use_property_split=True
+    #self.layout.alignment = 'LEFT'
+    self.layout.prop(context.space_data.node_tree, 'library_source',text='')
     self.layout.prop_search(context.space_data.node_tree, 'graph_type', context.scene.world.malt, 'graph_types',text='')
+    self.layout.prop(context.space_data.node_tree, 'edit_material',text='')
 
     
 classes = (
