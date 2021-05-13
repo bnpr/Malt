@@ -6,13 +6,12 @@ from . import MaltMaterial, MaltMeshes, MaltTextures
 
 __BRIDGE = None
 __PIPELINE_PARAMETERS = None
-__INITIALIZED = False
 TIMESTAMP = time.time()
 
 def get_bridge(world=None):
     global __BRIDGE
     bridge = __BRIDGE
-    if bridge is None or bridge.lost_connection:
+    if bridge and bridge.lost_connection:
         __BRIDGE = None
         try:
             if world is None:
@@ -30,14 +29,6 @@ def set_bridge(bridge):
 def set_pipeline_parameters(parameters):
     global __PIPELINE_PARAMETERS
     __PIPELINE_PARAMETERS = parameters
-
-def set_initialized(initialized):
-    global __INITIALIZED
-    __INITIALIZED = initialized
-
-def is_initialized():
-    global __INITIALIZED
-    return __INITIALIZED
 
 class MaltPipeline(bpy.types.PropertyGroup):
 
@@ -72,7 +63,6 @@ class MaltPipeline(bpy.types.PropertyGroup):
         MaltTextures.reset_textures()
 
         setup_all_ids()
-        set_initialized(True)
     
     pipeline : bpy.props.StringProperty(name="Malt Pipeline", subtype='FILE_PATH', update=update_pipeline)
     graph_types : bpy.props.CollectionProperty(type=bpy.types.PropertyGroup)
@@ -138,15 +128,15 @@ def setup_parameters(ids):
 
 @bpy.app.handlers.persistent
 def depsgraph_update(scene, depsgraph):
-    global __INITIALIZED
+    global __BRIDGE
 
     if scene.render.engine != 'MALT':
         # Don't do anything if Malt is not the active renderer,
         # but make sure we setup all IDs the next time Malt is enabled
-        __INITIALIZED = False
+        __BRIDGE = None
         return
 
-    if __INITIALIZED == False:
+    if __BRIDGE is None:
         scene.world.malt.update_pipeline(bpy.context)
         return
 
@@ -187,10 +177,15 @@ def depsgraph_update(scene, depsgraph):
             for area in screen.areas:
                 area.tag_redraw()
 
+__FIRST_LOAD = True
 @bpy.app.handlers.persistent
 def load_scene(dummy1=None,dummy2=None):
-    global __INITIALIZED
-    __INITIALIZED = False
+    global __BRIDGE, __FIRST_LOAD
+    # Avoid loading the pipeline twice at Blender initialization
+    if __FIRST_LOAD:
+        __FIRST_LOAD = False
+    else:
+        __BRIDGE = None
 
 def track_pipeline_changes():
     if bpy.context.scene.render.engine != 'MALT':
@@ -213,13 +208,13 @@ def register():
     for _class in classes: bpy.utils.register_class(_class)
     bpy.types.World.malt = bpy.props.PointerProperty(type=MaltPipeline)
     bpy.app.handlers.depsgraph_update_post.append(depsgraph_update)
-    bpy.app.handlers.load_post.append(load_scene)
+    bpy.app.handlers.load_pre.append(load_scene)
     bpy.app.timers.register(track_pipeline_changes, persistent=True)
     
 def unregister():
     for _class in reversed(classes): bpy.utils.unregister_class(_class)
     del bpy.types.World.malt
     bpy.app.handlers.depsgraph_update_post.remove(depsgraph_update)
-    bpy.app.handlers.load_post.remove(load_scene)
+    bpy.app.handlers.load_pre.remove(load_scene)
     bpy.app.timers.unregister(track_pipeline_changes)
 

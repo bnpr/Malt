@@ -42,9 +42,9 @@ class MaltTree(bpy.types.NodeTree):
             return get_empty_library()
 
     def get_pipeline_graph(self):
-        graphs = MaltPipeline.get_bridge().graphs
-        if self.graph_type in graphs:
-            return graphs[self.graph_type]
+        bridge = MaltPipeline.get_bridge()
+        if bridge and self.graph_type in bridge.graphs:
+            return bridge.graphs[self.graph_type]
         return None
     
     def get_generated_source_dir(self):
@@ -124,7 +124,7 @@ class MaltTree(bpy.types.NodeTree):
 
         if self.get_pipeline_graph() is None:
             return
-        
+
         self.disable_updates = True
         try:
             for link in self.links:
@@ -147,14 +147,17 @@ class MaltTree(bpy.types.NodeTree):
 
 
 def setup_node_trees():
+    graphs = MaltPipeline.get_bridge().graphs
+    for name, graph in graphs.items():
+        preload_menus(graph.structs, graph.functions)
+    
+    track_library_changes(disable_tree_updates=True)
+    
     for tree in bpy.data.node_groups:
         if tree.bl_idname == 'MaltTree':
             tree.reload_nodes()
             tree.update()
     
-    graphs = MaltPipeline.get_bridge().graphs
-    for name, graph in graphs.items():
-        preload_menus(graph.structs, graph.functions)
 
 __LIBRARIES = {}    
 def get_libraries():
@@ -167,7 +170,7 @@ def get_empty_library():
     }
 __TIMESTAMP = time.time()
 
-def track_library_changes(force_update=False):
+def track_library_changes(force_update=False, disable_tree_updates=False):
     if bpy.context.scene.render.engine != 'MALT' and force_update == False:
         return 1
 
@@ -208,11 +211,12 @@ def track_library_changes(force_update=False):
             __LIBRARIES[path] = reflection
             preload_menus(reflection['structs'], reflection['functions'])
         
-        for tree in bpy.data.node_groups:
-            if isinstance(tree, MaltTree):
-                src_path = tree.get_library_path()
-                if src_path and src_path in needs_update:
-                    tree.update()
+        if disable_tree_updates == False:
+            for tree in bpy.data.node_groups:
+                if isinstance(tree, MaltTree):
+                    src_path = tree.get_library_path()
+                    if src_path and src_path in needs_update:
+                        tree.update()
     
     __TIMESTAMP = start_time
     return 0.1
