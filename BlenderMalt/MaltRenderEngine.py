@@ -251,7 +251,7 @@ class MaltRenderEngine(bpy.types.RenderEngine):
         # Test which datablocks changed
         for update in depsgraph.updates:
             if update.is_updated_geometry:
-                if 'Object' in str(update.id.__class__):
+                if isinstance(update.id, bpy.types.Object):
                     MaltMeshes.unload_mesh(update.id)
 
     # For viewport renders, this method is called whenever Blender redraws

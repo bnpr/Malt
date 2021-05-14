@@ -163,12 +163,12 @@ def depsgraph_update(scene, depsgraph):
     redraw = False
     for update in depsgraph.updates:
         if update.is_updated_geometry:
-            if 'Object' in str(update.id.__class__):
+            if isinstance(update.id, bpy.types.Object):
                 MaltMeshes.unload_mesh(update.id)
-        if update.id.__class__ == bpy.types.Image:
+        if isinstance(update.id, bpy.types.Image):
             MaltTextures.unload_texture(update.id)
             redraw = True
-        elif update.id.__class__ == bpy.types.Material:
+        elif isinstance(update.id, bpy.types.Texture):
             MaltTextures.unload_gradients(update.id)
             redraw = True
     
