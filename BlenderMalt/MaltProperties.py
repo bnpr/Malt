@@ -1,23 +1,18 @@
 # Copyright (c) 2020 BlenderNPR and contributors. MIT license. 
 
 import bpy
-from Malt.Parameter import Type, Parameter
+from Malt.Parameter import Type, Parameter, MaterialParameter
 from Malt import Scene
 from . import MaltTextures
 
 # WORKAROUND: We can't declare color ramps from python,
-# so we store them as nodes inside a material
-def get_color_ramp(material, name):
-    #TODO: Create a node tree for each ID with Malt Properties to store ramps ??? (Node Trees are ID types)
-    if material.use_nodes == False:
-        material.use_nodes = True
-    nodes = material.node_tree.nodes
+# so we use the ones stored inside textures
+class MaltGradientPropertyWrapper(bpy.types.PropertyGroup):
 
-    if name not in nodes:
-       node = nodes.new('ShaderNodeValToRGB')
-       node.name = name
-    
-    return nodes[name]
+    def poll(self, texture):
+        return texture.type == 'NONE' and texture.use_color_ramp
+
+    texture : bpy.props.PointerProperty(type=bpy.types.Texture, poll=poll)
 
 class MaltTexturePropertyWrapper(bpy.types.PropertyGroup):
 
@@ -35,6 +30,7 @@ class MaltBoolPropertyWrapper(bpy.types.PropertyGroup):
 class MaltPropertyGroup(bpy.types.PropertyGroup):
 
     bools : bpy.props.CollectionProperty(type=MaltBoolPropertyWrapper)
+    gradients : bpy.props.CollectionProperty(type=MaltGradientPropertyWrapper)    
     textures : bpy.props.CollectionProperty(type=MaltTexturePropertyWrapper)    
     materials : bpy.props.CollectionProperty(type=MaltMaterialPropertyWrapper)
 
@@ -91,7 +87,14 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                     self.textures.add().name = name
 
             if parameter.type == Type.GRADIENT:
-                get_color_ramp(self.id_data, name)
+                if name not in self.gradients:
+                    self.gradients.add().name = name
+                '''
+                if self.gradients[name].texture is None and False:
+                    self.gradients[name].texture = bpy.data.textures.new('malt_color_ramp', 'NONE')
+                    self.gradients[name].texture.use_color_ramp = True
+                    self.gradients[name].texture.color_ramp.elements[0].alpha = 1.0
+                '''
 
             if parameter.type == Type.MATERIAL:
                 if name not in self.materials:
@@ -204,9 +207,11 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                 else:
                     parameters[result_key] = None
             elif rna[key]['type'] == Type.GRADIENT:
-                #TODO: Only works for materials
-                color_ramp = get_color_ramp(self.id_data, key).color_ramp
-                parameters[result_key] = MaltTextures.get_gradient(color_ramp, self.id_data.name_full, key)
+                texture = self.gradients[key].texture
+                if texture:
+                    parameters[result_key] = MaltTextures.get_gradient(texture)
+                else:
+                    parameters[result_key] = None
             elif rna[key]['type'] == Type.MATERIAL:
                 material = self.materials[key].material
                 extension = self.materials[key].extension
@@ -318,7 +323,14 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                     row.prop(self.textures[key].texture.colorspace_settings, 'name', text='')
             elif rna[key]['type'] == Type.GRADIENT:
                 make_row(True)
-                layout.column().template_color_ramp(get_color_ramp(self.id_data, key), 'color_ramp')
+                row = layout.row(align=True)
+                row.template_ID(self.gradients[key], "texture")
+                texture_path = to_json_rna_path(self.gradients[key])
+                if self.gradients[key].texture:
+                    row.operator('texture.malt_add_gradient', text='', icon='DUPLICATE').texture_path = texture_path
+                    layout.column().template_color_ramp(self.gradients[key].texture, 'color_ramp')
+                else:
+                    row.operator('texture.malt_add_gradient', text='New', icon='ADD').texture_path = texture_path
             elif rna[key]['type'] == Type.MATERIAL:
                 make_row(True)
                 row = layout.row(align=True)
@@ -356,6 +368,24 @@ def from_json_rna_path(prop):
         if class_name in id_type:
             return data[id_name].path_resolve(path)
     return None
+
+class OT_MaltNewGradient(bpy.types.Operator):
+    bl_idname = "texture.malt_add_gradient"
+    bl_label = "Malt Add Gradient"
+    bl_options = {'INTERNAL'}
+
+    texture_path : bpy.props.StringProperty()
+
+    def execute(self, context):
+        gradient_wrapper = from_json_rna_path(self.texture_path)
+        if gradient_wrapper.texture:
+            gradient_wrapper.texture = gradient_wrapper.texture.copy()
+        else:
+            texture = bpy.data.textures.new('malt_color_ramp', 'NONE')
+            texture.use_color_ramp = True
+            texture.color_ramp.elements[0].alpha = 1.0
+            gradient_wrapper.texture = texture
+        return {'FINISHED'}
 
 class OT_MaltNewMaterial(bpy.types.Operator):
     bl_idname = "material.malt_add_material"
@@ -506,10 +536,12 @@ class MALT_PT_Light(MALT_PT_Base):
             owner.malt_parameters.draw_ui(layout)
 
 classes = (
+    MaltGradientPropertyWrapper,
     MaltTexturePropertyWrapper,
     MaltMaterialPropertyWrapper,
     MaltBoolPropertyWrapper,
     MaltPropertyGroup,
+    OT_MaltNewGradient,
     OT_MaltNewMaterial,
     OT_MaltNewOverride,
     OT_MaltDeleteOverride,
