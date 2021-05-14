@@ -60,11 +60,13 @@ class Parameter(object):
         type, size = glsl_type_to_malt_type(glsl_type)
         value = None
         if type is Type.INT:
-            value = tuple([0] * size)
+            value = tuple([1] * size)
         if type is Type.FLOAT:
             value = tuple([1.0] * size)
         if type is Type.BOOL:
             value = tuple([False] * size)
+        if value and len(value) == 1:
+            value = value[0]
         return Parameter(value, type, size)
 
 class MaterialParameter(Parameter):
