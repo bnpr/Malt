@@ -323,12 +323,17 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                     row.prop(self.textures[key].texture.colorspace_settings, 'name', text='')
             elif rna[key]['type'] == Type.GRADIENT:
                 make_row(True)
-                row = layout.row(align=True)
+                column = layout.column()
+                row = column.row(align=True)
                 row.template_ID(self.gradients[key], "texture")
-                texture_path = to_json_rna_path(self.gradients[key])
+                try:
+                    texture_path = to_json_rna_path(self.gradients[key])
+                except:
+                    texture_path = to_json_rna_path_node_workaround(self, 'malt_properties.gradients["{}"]'.format(key))
+                    print(texture_path)
                 if self.gradients[key].texture:
                     row.operator('texture.malt_add_gradient', text='', icon='DUPLICATE').texture_path = texture_path
-                    layout.column().template_color_ramp(self.gradients[key].texture, 'color_ramp')
+                    column.template_color_ramp(self.gradients[key].texture, 'color_ramp')
                 else:
                     row.operator('texture.malt_add_gradient', text='New', icon='ADD').texture_path = texture_path
             elif rna[key]['type'] == Type.MATERIAL:
@@ -345,6 +350,16 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                     row.operator('material.malt_add_material', text='New', icon='ADD').material_path = material_path
 
 import json
+
+# https://developer.blender.org/T51096
+def to_json_rna_path_node_workaround(malt_property_group, path_from_group):
+    tree = malt_property_group.id_data
+    assert(isinstance(tree, bpy.types.NodeTree))
+    for node in tree.nodes:
+        #print(node, node.malt_properties, malt_property_group)
+        if node.malt_properties.as_pointer() == malt_property_group.as_pointer():
+            path = 'nodes["{}"].{}'.format(node.name, path_from_group)
+            return json.dumps(('NodeTree', tree.name_full, path))
 
 def to_json_rna_path(prop):
     blend_id = prop.id_data
@@ -363,6 +378,7 @@ def from_json_rna_path(prop):
         'Material' : bpy.data.materials,
         'World': bpy.data.worlds,
         'Scene': bpy.data.scenes,
+        'NodeTree' : bpy.data.node_groups
     }
     for class_name, data in data_map.items():
         if class_name in id_type:
