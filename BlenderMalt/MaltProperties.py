@@ -10,7 +10,7 @@ from . import MaltTextures
 class MaltGradientPropertyWrapper(bpy.types.PropertyGroup):
 
     def poll(self, texture):
-        return texture.type == 'NONE' and texture.use_color_ramp
+        return texture.type == 'BLEND' and texture.use_color_ramp
 
     texture : bpy.props.PointerProperty(type=bpy.types.Texture, poll=poll)
 
@@ -91,7 +91,7 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                     self.gradients.add().name = name
                 '''
                 if self.gradients[name].texture is None and False:
-                    self.gradients[name].texture = bpy.data.textures.new('malt_color_ramp', 'NONE')
+                    self.gradients[name].texture = bpy.data.textures.new('malt_color_ramp', 'BLEND')
                     self.gradients[name].texture.use_color_ramp = True
                     self.gradients[name].texture.color_ramp.elements[0].alpha = 1.0
                 '''
@@ -150,7 +150,7 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                 rna[key]['soft_min'] = 0.0
                 rna[key]['soft_max'] = 1.0
             else:
-                rna[key]['subtype'] = 'NONE'
+                rna[key]['subtype'] = 'BLEND'
                 rna[key]['use_soft_limits'] = False
 
         # Force a depsgraph update. 
@@ -330,7 +330,6 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                     texture_path = to_json_rna_path(self.gradients[key])
                 except:
                     texture_path = to_json_rna_path_node_workaround(self, 'malt_properties.gradients["{}"]'.format(key))
-                    print(texture_path)
                 if self.gradients[key].texture:
                     row.operator('texture.malt_add_gradient', text='', icon='DUPLICATE').texture_path = texture_path
                     column.template_color_ramp(self.gradients[key].texture, 'color_ramp')
@@ -356,7 +355,6 @@ def to_json_rna_path_node_workaround(malt_property_group, path_from_group):
     tree = malt_property_group.id_data
     assert(isinstance(tree, bpy.types.NodeTree))
     for node in tree.nodes:
-        #print(node, node.malt_properties, malt_property_group)
         if node.malt_properties.as_pointer() == malt_property_group.as_pointer():
             path = 'nodes["{}"].{}'.format(node.name, path_from_group)
             return json.dumps(('NodeTree', tree.name_full, path))
@@ -397,10 +395,12 @@ class OT_MaltNewGradient(bpy.types.Operator):
         if gradient_wrapper.texture:
             gradient_wrapper.texture = gradient_wrapper.texture.copy()
         else:
-            texture = bpy.data.textures.new('malt_color_ramp', 'NONE')
+            texture = bpy.data.textures.new('malt_color_ramp', 'BLEND')
             texture.use_color_ramp = True
             texture.color_ramp.elements[0].alpha = 1.0
             gradient_wrapper.texture = texture
+        gradient_wrapper.id_data.update_tag()
+        gradient_wrapper.texture.update_tag()
         return {'FINISHED'}
 
 class OT_MaltNewMaterial(bpy.types.Operator):
@@ -417,6 +417,7 @@ class OT_MaltNewMaterial(bpy.types.Operator):
         else:
             material_wrapper.material = bpy.data.materials.new('Material')
         material_wrapper.id_data.update_tag()
+        material_wrapper.material.update_tag()
         return {'FINISHED'}
 
 class OT_MaltNewOverride(bpy.types.Operator):

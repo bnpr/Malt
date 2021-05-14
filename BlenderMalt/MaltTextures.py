@@ -64,8 +64,8 @@ def reset_textures():
 def unload_texture(texture):
     __TEXTURES[texture.name_full] = None
 
-def unload_gradients(material):
-    __GRADIENTS[material.name_full] = {}
+def unload_gradients(texture):
+    __GRADIENTS[texture.name_full] = {}
 
 def register():
     pass
