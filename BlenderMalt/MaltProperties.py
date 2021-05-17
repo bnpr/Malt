@@ -34,12 +34,15 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
     textures : bpy.props.CollectionProperty(type=MaltTexturePropertyWrapper)    
     materials : bpy.props.CollectionProperty(type=MaltMaterialPropertyWrapper)
 
+    parent : bpy.props.PointerProperty(type=bpy.types.ID, name="Override From")
+    override_from_parents : bpy.props.CollectionProperty(type=MaltBoolPropertyWrapper)
+
     def get_rna(self):
         if '_RNA_UI' not in self.keys():
             self['_RNA_UI'] = {}
         return self['_RNA_UI']
 
-    def setup(self, parameters, replace_parameters=True):
+    def setup(self, parameters, replace_parameters=True, reset_to_defaults=False):
         rna = self.get_rna()
         
         def setup_parameter(name, parameter):
@@ -48,6 +51,10 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
 
             type_changed = 'type' not in rna[name].keys() or rna[name]['type'] != parameter.type
             size_changed = 'size' in rna[name].keys() and rna[name]['size'] != parameter.size
+
+            if reset_to_defaults:
+                #TODO: Rename
+                type_changed = True
 
             def to_basic_type(value):
                 try: return tuple(value)
@@ -85,10 +92,16 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
             if parameter.type == Type.TEXTURE:
                 if name not in self.textures:
                     self.textures.add().name = name
+                if type_changed or self.textures[name] == rna[name]['default']:
+                    if isinstance(parameter.default_value, bpy.types.Image):
+                        self.textures.texture = parameter.default_value
 
             if parameter.type == Type.GRADIENT:
                 if name not in self.gradients:
                     self.gradients.add().name = name
+                if type_changed or self.gradients[name] == rna[name]['default']:
+                    if isinstance(parameter.default_value, bpy.types.Texture):
+                        self.gradients.texture = parameter.default_value
                 '''
                 if self.gradients[name].texture is None and False:
                     self.gradients[name].texture = bpy.data.textures.new('malt_color_ramp', 'BLEND')
@@ -111,6 +124,9 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                     material = self.materials[name].material
                     if type_changed or (material and rna[name]['default'] == material.malt.shader_source):
                         self.materials[name].material = bpy.data.materials[shader_path]
+
+            if name not in self.override_from_parents:
+                self.override_from_parents.add().name = name
 
             rna[name]['active'] = True
             rna[name]["default"] = parameter.default_value
@@ -159,7 +175,7 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
         for screen in bpy.data.screens:
             for area in screen.areas:
                 area.tag_redraw()
-    
+
     def add_override(self, property_name, override_name):
         main_prop = self.get_rna()[property_name]
         new_name = property_name + ' @ ' + override_name
@@ -186,117 +202,160 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                 continue
             if rna[key]['active'] == False:
                 continue
-            result_key = key
-            for override in reversed(overrides):
-                override_key = key + ' @ ' +  override
-                if override_key in rna.keys():
-                    if rna[override_key]['active']:
-                        key = override_key
-
-            if rna[key]['type'] in (Type.INT, Type.FLOAT):
-                try:
-                    parameters[result_key] = tuple(self[key])
-                except:
-                    parameters[result_key] = self[key]
-            elif rna[key]['type'] == Type.BOOL:
-                parameters[result_key] = bool(self.bools[key].boolean)
-            elif rna[key]['type'] == Type.TEXTURE:
-                texture = self.textures[key].texture
-                if texture:
-                    parameters[result_key] = MaltTextures.get_texture(texture)
-                else:
-                    parameters[result_key] = None
-            elif rna[key]['type'] == Type.GRADIENT:
-                texture = self.gradients[key].texture
-                if texture:
-                    parameters[result_key] = MaltTextures.get_gradient(texture)
-                else:
-                    parameters[result_key] = None
-            elif rna[key]['type'] == Type.MATERIAL:
-                material = self.materials[key].material
-                extension = self.materials[key].extension
-                if material:
-                    materials = resources['materials']
-                    material_name = material.name_full
-                    if material_name not in materials.keys():
-                        shader = {
-                            'path': material.malt.get_source_path(),
-                            'parameters': material.malt.parameters.get_parameters(overrides, resources)
-                        }
-                        material_parameters = material.malt_parameters.get_parameters(overrides, resources)
-                        materials[material_name] = Scene.Material(shader, material_parameters)
-                    parameters[result_key] = materials[material_name]
-                else:
-                    parameters[result_key] = None
+            parameters[key] = self.get_parameter(key, overrides, resources)
         return parameters
+    
+    def get_parameter(self, key, overrides, resources):
+        from BlenderMalt.MaltNodes import MaltTree
+        if self.parent and self.override_from_parents[key].boolean == False:
+            try:
+                return self.parent.malt_parameters.get_parameter(key, overrides, resources)
+            except:
+                pass
+        if key not in self.get_rna().keys():
+            if isinstance(self.id_data, MaltTree) and self.id_data.malt_parameters.as_pointer() == self.as_pointer():
+                for node in self.id_data.nodes:
+                    for input in node.inputs:
+                        if key == input.get_glsl_uniform():
+                            try:
+                                return node.malt_parameters.get_parameter(input.name, overrides, resources)
+                            except:
+                                pass
+            raise Exception()
+
+        rna = self.get_rna()
+        for override in reversed(overrides):
+            override_key = key + ' @ ' +  override
+            if override_key in rna.keys():
+                if rna[override_key]['active']:
+                    key = override_key
+        if rna[key]['active'] == False:
+            raise Exception()
+
+        if rna[key]['type'] in (Type.INT, Type.FLOAT):
+            try:
+                return tuple(self[key])
+            except:
+                return self[key]
+        elif rna[key]['type'] == Type.BOOL:
+            return bool(self.bools[key].boolean)
+        elif rna[key]['type'] == Type.TEXTURE:
+            texture = self.textures[key].texture
+            if texture:
+                return MaltTextures.get_texture(texture)
+            else:
+                return None
+        elif rna[key]['type'] == Type.GRADIENT:
+            texture = self.gradients[key].texture
+            if texture:
+                return MaltTextures.get_gradient(texture)
+            else:
+                return None
+        elif rna[key]['type'] == Type.MATERIAL:
+            material = self.materials[key].material
+            extension = self.materials[key].extension
+            if material:
+                materials = resources['materials']
+                material_name = material.name_full
+                if material_name not in materials.keys():
+                    shader = {
+                        'path': material.malt.get_source_path(),
+                        'parameters': material.malt.parameters.get_parameters(overrides, resources)
+                    }
+                    material_parameters = material.malt_parameters.get_parameters(overrides, resources)
+                    materials[material_name] = Scene.Material(shader, material_parameters)
+                return materials[material_name]
+            else:
+                return None
 
     
-    def draw_ui(self, layout, filter=None, mask=None, is_node_socket=False):
+    def draw_ui(self, layout, filter=None):
+        layout.use_property_decorate = False
+        layout.prop(self, "parent")
+
         if '_RNA_UI' not in self.keys():
             return #Can't modify ID classes from here
         rna = self.get_rna()
 
-        import re
-        def natual_sort_key(k):
-            return [int(c) if c.isdigit() else c for c in re.split('([0-9]+)', k)]
-
+        namespace_stack = [(None, layout)]
+        
         # Most drivers sort the uniforms in alphabetical order anyway, 
         # so there's no point in tracking the actual index since it doesn't follow
         # the declaration order
+        import re
+        def natual_sort_key(k):
+            return [int(c) if c.isdigit() else c for c in re.split('([0-9]+)', k)]
         keys = sorted(rna.keys(), key=natual_sort_key)
-
-        #layout.use_property_split = True
-        layout.use_property_decorate = False
         
-        namespace_stack = [(None, layout)]
-
         for key in keys:
             if rna[key]['active'] == False:
                 continue
+
             if filter and rna[key]['filter'] and rna[key]['filter'] != filter:
                 continue
-            
-            if mask and key not in mask:
-                continue
-            
+
             names = key.replace('_0_','.').replace('_',' ').split('.')
             names = [name for name in names if name.isupper() == False]
-
-            if is_node_socket == False:
-                if len(names) == 1:
-                    namespace_stack = namespace_stack[:1]
-                    layout = namespace_stack[0][1]
-                else:
-                    for i in range(0, len(names) - 1):
-                        name = names[i]
-                        stack_i = i+1
-                        if len(namespace_stack) > stack_i and namespace_stack[stack_i][0] != name:
-                            namespace_stack = namespace_stack[:stack_i]
-                        if len(namespace_stack) < stack_i+1:
-                            box = namespace_stack[stack_i - 1][1].box()
-                            box.label(text=name + " :")
-                            namespace_stack.append((name, box))
-                        layout = namespace_stack[stack_i][1]
-            
+            if len(names) == 1:
+                namespace_stack = namespace_stack[:1]
+                layout = namespace_stack[0][1]
+            else:
+                for i in range(0, len(names) - 1):
+                    name = names[i]
+                    stack_i = i+1
+                    if len(namespace_stack) > stack_i and namespace_stack[stack_i][0] != name:
+                        namespace_stack = namespace_stack[:stack_i]
+                    if len(namespace_stack) < stack_i+1:
+                        box = namespace_stack[stack_i - 1][1].box()
+                        box.label(text=name + " :")
+                        namespace_stack.append((name, box))
+                    layout = namespace_stack[stack_i][1]
             name = names[-1]
 
-            def make_row(label_only = False):
-                if is_node_socket:
-                    return layout
-                
-                is_override = False
-                label = name
-                if '@' in name:
-                    is_override = True
-                    label = '⇲ '+name.split(' @ ')[1]
-                
-                row = layout.row(align=True)
-                result = row.split()
-                if not label_only:
-                    result = result.split(factor=0.66)
-                    result.alignment = 'RIGHT'
-                result.label(text=label)
-                
+            column = layout.column()
+            def draw_callback(layout, property_group):
+                is_self = self.as_pointer() == property_group.as_pointer()
+                if self.parent and (is_self == False or self.override_from_parents[key].boolean == True):
+                    layout.prop(self.override_from_parents[key], 'boolean', text='')
+                if is_self == False:
+                    column.active = False
+            
+            self.draw_parameter(column, key, name, draw_callback=draw_callback)
+
+
+    def draw_parameter(self, layout, key, label, draw_callback=None, is_node_socket=False):
+        from BlenderMalt.MaltNodes import MaltTree
+        if self.parent and self.override_from_parents[key].boolean == False:
+            if self.parent.malt_parameters.draw_parameter(layout, key, label, draw_callback, is_node_socket):
+                return True
+        if key not in self.get_rna().keys():
+            if isinstance(self.id_data, MaltTree) and self.id_data.malt_parameters.as_pointer() == self.as_pointer():
+                for node in self.id_data.nodes:
+                    for input in node.inputs:
+                        if key == input.get_glsl_uniform():
+                            node.malt_parameters.draw_parameter(layout, input.name, label, draw_callback, is_node_socket=True)
+                            return True
+            return False
+        if self.get_rna()[key]['active'] == False:
+            return False
+
+        def make_row(label_only = False):
+            nonlocal label
+            if label is None:
+                return layout
+            is_override = False
+            if '@' in label:
+                is_override = True
+                label = '⇲ '+label.split(' @ ')[1]
+            
+            row = layout.row(align=True)
+            result = row.split()
+            if not label_only:
+                result = result.split(factor=0.66)
+                result.alignment = 'RIGHT'
+            result.label(text=label)
+            
+            if is_node_socket == False:            
                 if is_override:
                     delete_op = row.operator('wm.malt_delete_override', text='', icon='X')
                     delete_op.properties_path = to_json_rna_path(self)
@@ -305,48 +364,54 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                     override_op = row.operator('wm.malt_new_override', text='', icon='DECORATE_OVERRIDE')
                     override_op.properties_path = to_json_rna_path(self)
                     override_op.property = key
-                
-                return result
-                
-            if rna[key]['type'] in (Type.INT, Type.FLOAT):
-                #TODO: add subtype toggle
-                make_row().prop(self, '["'+key+'"]', text='')
-            elif rna[key]['type'] == Type.BOOL:
-                make_row().prop(self.bools[key], 'boolean', text='')
-            elif rna[key]['type'] == Type.TEXTURE:
-                make_row(True)
-                row = layout.row()
-                if self.textures[key].texture:
-                    row = row.split(factor=0.8)
-                row.column().template_ID(self.textures[key], "texture", new="image.new", open="image.open")
-                if self.textures[key].texture:
-                    row.prop(self.textures[key].texture.colorspace_settings, 'name', text='')
-            elif rna[key]['type'] == Type.GRADIENT:
-                make_row(True)
-                column = layout.column()
-                row = column.row(align=True)
-                row.template_ID(self.gradients[key], "texture")
-                try:
-                    texture_path = to_json_rna_path(self.gradients[key])
-                except:
-                    texture_path = to_json_rna_path_node_workaround(self, 'malt_properties.gradients["{}"]'.format(key))
-                if self.gradients[key].texture:
-                    row.operator('texture.malt_add_gradient', text='', icon='DUPLICATE').texture_path = texture_path
-                    column.template_color_ramp(self.gradients[key].texture, 'color_ramp')
-                else:
-                    row.operator('texture.malt_add_gradient', text='New', icon='ADD').texture_path = texture_path
-            elif rna[key]['type'] == Type.MATERIAL:
-                make_row(True)
-                row = layout.row(align=True)
-                row.template_ID(self.materials[key], "material")
-                material_path = to_json_rna_path(self.materials[key])
-                if self.materials[key].material:
-                    extension = self.materials[key].extension
-                    row.operator('material.malt_add_material', text='', icon='DUPLICATE').material_path = material_path
-                    material = self.materials[key].material
-                    material.malt.draw_ui(layout.box(), extension, material.malt_parameters)
-                else:
-                    row.operator('material.malt_add_material', text='New', icon='ADD').material_path = material_path
+            
+            if draw_callback:
+                draw_callback(row, self)
+            
+            return result
+
+        rna = self.get_rna()
+        if rna[key]['type'] in (Type.INT, Type.FLOAT):
+            #TODO: add subtype toggle
+            make_row().prop(self, '["{}"]'.format(key), text='')
+        elif rna[key]['type'] == Type.BOOL:
+            make_row().prop(self.bools[key], 'boolean', text='')
+        elif rna[key]['type'] == Type.TEXTURE:
+            make_row(True)
+            row = layout.row(align=True)
+            if self.textures[key].texture:
+                row = row.split(factor=0.8, align=True)
+            row.template_ID(self.textures[key], "texture", new="image.new", open="image.open")
+            if self.textures[key].texture:
+                row.prop(self.textures[key].texture.colorspace_settings, 'name', text='')
+        elif rna[key]['type'] == Type.GRADIENT:
+            make_row(True)
+            column = layout.column()
+            row = column.row(align=True)
+            row.template_ID(self.gradients[key], "texture")
+            try:
+                texture_path = to_json_rna_path(self.gradients[key])
+            except:
+                texture_path = to_json_rna_path_node_workaround(self, 'malt_parameters.gradients["{}"]'.format(key))
+            if self.gradients[key].texture:
+                row.operator('texture.malt_add_gradient', text='', icon='DUPLICATE').texture_path = texture_path
+                column.template_color_ramp(self.gradients[key].texture, 'color_ramp')
+            else:
+                row.operator('texture.malt_add_gradient', text='New', icon='ADD').texture_path = texture_path
+        elif rna[key]['type'] == Type.MATERIAL:
+            make_row(True)
+            row = layout.row(align=True)
+            row.template_ID(self.materials[key], "material")
+            material_path = to_json_rna_path(self.materials[key])
+            if self.materials[key].material:
+                extension = self.materials[key].extension
+                row.operator('material.malt_add_material', text='', icon='DUPLICATE').material_path = material_path
+                material = self.materials[key].material
+                material.malt.draw_ui(layout.box(), extension, material.malt_parameters)
+            else:
+                row.operator('material.malt_add_material', text='New', icon='ADD').material_path = material_path
+        
+        return True
 
 import json
 
@@ -355,7 +420,7 @@ def to_json_rna_path_node_workaround(malt_property_group, path_from_group):
     tree = malt_property_group.id_data
     assert(isinstance(tree, bpy.types.NodeTree))
     for node in tree.nodes:
-        if node.malt_properties.as_pointer() == malt_property_group.as_pointer():
+        if node.malt_parameters.as_pointer() == malt_property_group.as_pointer():
             path = 'nodes["{}"].{}'.format(node.name, path_from_group)
             return json.dumps(('NodeTree', tree.name_full, path))
 

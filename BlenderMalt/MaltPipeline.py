@@ -160,6 +160,8 @@ def depsgraph_update(scene, depsgraph):
                     ids.append(data[update.id.name])
     setup_parameters(ids)
 
+    from . MaltNodes import MaltTree
+
     redraw = False
     for update in depsgraph.updates:
         if update.is_updated_geometry:
@@ -171,7 +173,8 @@ def depsgraph_update(scene, depsgraph):
         elif isinstance(update.id, bpy.types.Texture):
             MaltTextures.unload_gradients(update.id)
             redraw = True
-    
+        elif isinstance(update.id, MaltTree):
+            redraw = True
     if redraw:
         for screen in bpy.data.screens:
             for area in screen.areas:

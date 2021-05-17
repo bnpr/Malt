@@ -23,7 +23,7 @@ class MaltTree(bpy.types.NodeTree):
     
     def poll_material(self, material):
         return material.malt.shader_nodes is self
-
+    
     edit_material : bpy.props.PointerProperty(name='Edit Material', type=bpy.types.Material, poll=poll_material)
 
     graph_type: bpy.props.StringProperty(name='Type')
@@ -31,6 +31,8 @@ class MaltTree(bpy.types.NodeTree):
     library_source : bpy.props.StringProperty(name="Shader Library", subtype='FILE_PATH')
 
     disable_updates : bpy.props.BoolProperty(name="Disable Updates", default=False)
+
+    malt_parameters : bpy.props.PointerProperty(type=MaltPropertyGroup)
 
     def get_library_path(self):
         if self.library_source != '':
@@ -150,7 +152,6 @@ class MaltTree(bpy.types.NodeTree):
             traceback.print_exc()
         self.disable_updates = False
 
-
 def setup_node_trees():
     graphs = MaltPipeline.get_bridge().graphs
     for name, graph in graphs.items():
@@ -162,7 +163,6 @@ def setup_node_trees():
         if tree.bl_idname == 'MaltTree':
             tree.reload_nodes()
             tree.update()
-    
 
 __LIBRARIES = {}    
 def get_libraries():
@@ -273,7 +273,10 @@ class MaltSocket(bpy.types.NodeSocket):
 
 class MaltNode():
 
+    malt_parameters : bpy.props.PointerProperty(type=MaltPropertyGroup)
+
     def setup_sockets(self, inputs, outputs):
+        from Malt.Parameter import Parameter, Type
         def setup(current, new):
             remove = []
             for e in current.keys():
@@ -288,6 +291,17 @@ class MaltNode():
                 current[name].data_type = type
         setup(self.inputs, inputs)
         setup(self.outputs, outputs)
+        for input in self.inputs.values():
+            parameter = None
+            try:
+                parameter = Parameter.from_glsl_type(input.data_type)
+            except:
+                pass
+            if parameter:
+                self.malt_parameters.setup(
+                    { input.name : parameter }, 
+                    replace_parameters = False
+                )
     
     def setup_width(self):
         max_len = len(self.name)
@@ -320,6 +334,10 @@ class MaltNode():
         return ''
     
     def draw_socket(self, context, layout, socket, text):
+        layout.label(text=text)
+        if socket.is_output == False and socket.is_linked == False:
+            self.malt_parameters.draw_parameter(layout, socket.name, None, is_node_socket=True)
+        return
         tree = self.id_data
         material = tree.edit_material
         if material is None:
@@ -410,7 +428,7 @@ class MaltStructNode(bpy.types.Node, MaltNode):
         return code
     
     def draw_socket(self, context, layout, socket, text):
-        if socket.is_output:
+        if socket.is_output or self.struct_input_is_linked():
             layout.label(text=text)
         else:
             #super() does not work
