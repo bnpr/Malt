@@ -43,9 +43,9 @@ __GRADIENT_RESOLUTION = 256
 
 def get_gradient(texture):
     name = texture.name_full
-    if name not in __GRADIENTS:
+    if name not in __GRADIENTS or __GRADIENTS[name] is None:
         __GRADIENTS[name] = __load_gradient(texture)
-    return __GRADIENTS[name]
+    return name
 
 def __load_gradient(texture):
     pixels = []
@@ -65,7 +65,7 @@ def unload_texture(texture):
     __TEXTURES[texture.name_full] = None
 
 def unload_gradients(texture):
-    __GRADIENTS[texture.name_full] = {}
+    __GRADIENTS[texture.name_full] = None
 
 def register():
     pass
