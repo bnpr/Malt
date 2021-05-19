@@ -410,7 +410,9 @@ class GLSL_Reflection(object):
         if path_end == -1:
             return ''
         path = code[path_start:path_end]
-        if root_path and root_path in path:
+        root_path = os.path.normpath(root_path)
+        path = os.path.normpath(path)
+        if root_path and path.startswith(root_path):
             return os.path.relpath(path, root_path)
         else:
             return path

@@ -707,7 +707,8 @@ __FUNCTION_MENUES = []
 
 def get_functions_menu(file):
     global __FUNCTION_MENUES
-    file_to_class_name = 'MALT_MT_functions_' + file.replace('\\', '_').replace('/', '_').replace('.glsl', '').replace(' ', '')
+    file_to_class_name = 'MALT_MT_functions_' + file.replace('\\', '_').replace('/', '_').replace('.glsl', '').replace(' ', '_')
+    file_to_class_name = ''.join(c for c in file_to_class_name if c == '_' or c.isalnum())
     file_to_label = file.replace('\\', '/').replace('/', ' - ').replace('.glsl', '').replace('_',' ')
 
     if file_to_class_name not in __FUNCTION_MENUES:
