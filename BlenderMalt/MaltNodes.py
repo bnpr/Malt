@@ -853,7 +853,7 @@ def node_header_ui(self, context):
     #self.layout.alignment = 'LEFT'
     self.layout.prop(context.space_data.node_tree, 'library_source',text='')
     self.layout.prop_search(context.space_data.node_tree, 'graph_type', context.scene.world.malt, 'graph_types',text='')
-    self.layout.prop(context.space_data.node_tree, 'edit_material',text='')
+    #self.layout.prop(context.space_data.node_tree, 'edit_material',text='')
 
     
 classes = (

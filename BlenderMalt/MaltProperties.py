@@ -271,7 +271,7 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
     
     def draw_ui(self, layout, filter=None):
         layout.use_property_decorate = False
-        layout.prop(self, "parent")
+        #layout.prop(self, "parent")
 
         if '_RNA_UI' not in self.keys():
             return #Can't modify ID classes from here
