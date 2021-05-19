@@ -175,6 +175,7 @@ def shader_preprocessor(shader_source, include_directories=[], definitions=[]):
                     if include_path not in include_paths:
                         include_paths.append(include_path)
                     line = line.replace(include_path, str(include_paths.index(include_path)))
+                    line = line.replace('\n', ' //{}\n'.format(include_path))
             result += line    
         return result
     

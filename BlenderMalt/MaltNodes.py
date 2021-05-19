@@ -736,7 +736,7 @@ __STRUCT_MENUES = []
 
 def get_structs_menu(file):
     global __STRUCT_MENUES
-    file_to_class_name = 'MALT_MT_structs_' + file.replace('\\', '_').replace('/', '_').replace('.glsl', '').replace(' ', '')
+    file_to_class_name = 'MALT_MT_structs_' + file.replace('\\', '_').replace('/', '_').replace('.glsl', '').replace(' ', '').replace('.','_')
     file_to_label = file.replace('\\', '/').replace('/', ' - ').replace('.glsl', '').replace('_',' ')
 
     if file_to_class_name not in __STRUCT_MENUES:
