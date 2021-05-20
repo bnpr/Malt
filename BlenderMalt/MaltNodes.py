@@ -115,11 +115,9 @@ class MaltTree(bpy.types.NodeTree):
         self.disable_updates = True
         try:
             for node in self.nodes:
-                if hasattr(node, 'setup'):
-                    node.setup()
+                node.setup()
             for node in self.nodes:
-                if isinstance(node, MaltUniformsNode):
-                    node.update()
+                node.update()
         except:
             import traceback
             traceback.print_exc()
@@ -135,7 +133,8 @@ class MaltTree(bpy.types.NodeTree):
         self.disable_updates = True
         try:
             for link in self.links:
-                if link.from_socket.data_type != link.to_socket.data_type:
+                if (link.from_socket.data_type != link.to_socket.data_type or 
+                    link.from_socket.array_size != link.to_socket.array_size):
                     self.links.remove(link)
             
             source = self.get_generated_source()
@@ -242,7 +241,8 @@ class MaltSocket(bpy.types.NodeSocket):
     bl_label = "Malt Node Socket"
 
     data_type: bpy.props.StringProperty()
-    #TODO: Array
+
+    array_size: bpy.props.IntProperty(default=0)
 
     def get_glsl_reference(self):
         return self.node.get_glsl_socket_reference(self)
@@ -250,8 +250,14 @@ class MaltSocket(bpy.types.NodeSocket):
     def get_glsl_uniform(self):
         return 'U_0{}_0_{}'.format(self.node.get_glsl_name(), self.name)
     
+    def get_glsl_declaration(self, name):
+        declaration = '{} {}'.format(self.data_type, name)
+        if self.array_size > 0:
+            declaration += ' [{}]'.format(self.array_size)
+        return declaration
+    
     def get_glsl_uniform_declaration(self):
-        return 'uniform {} {};\n'.format(self.data_type, self.get_glsl_uniform())
+        return 'uniform {};\n'.format(self.get_glsl_declaration(self.get_glsl_uniform()))
     
     def get_linked(self):
         if len(self.links) == 0:
@@ -261,12 +267,34 @@ class MaltSocket(bpy.types.NodeSocket):
             return link.to_socket if self.is_output else link.from_socket
     
     def get_ui_label(self):
-        return '{}   ( {} )'.format(self.name, self.data_type)
+        type = self.data_type
+        if self.array_size > 0:
+            type += '[{}]'.format(self.array_size)
+        return '{}   ( {} )'.format(self.name, type)
     
     def draw(self, context, layout, node, text):
         text = self.get_ui_label()
         node.draw_socket(context, layout, self, text)
     
+    def setup_shape(self):
+        from Malt.Parameter import Parameter
+        base_type = True
+        try:
+            Parameter.from_glsl_type(self.data_type)
+        except:
+            base_type = False
+        array_type = self.array_size > 0
+        if base_type:
+            if array_type:
+                self.display_shape = 'CIRCLE_DOT'
+            else:
+                self.display_shape = 'CIRCLE'
+        else:
+            if array_type:
+                self.display_shape = 'SQUARE_DOT'
+            else:
+                self.display_shape = 'SQUARE'
+
     def draw_color(self, context, node):
         return get_type_color(self.data_type)
     
@@ -274,6 +302,58 @@ class MaltSocket(bpy.types.NodeSocket):
 class MaltNode():
 
     malt_parameters : bpy.props.PointerProperty(type=MaltPropertyGroup)
+
+    disable_updates : bpy.props.BoolProperty(name="Disable Updates", default=False)
+
+    # Blender will trigger update callbacks even before init and update has finished
+    # So we use some wrappers to get a more sane behaviour
+
+    def init(self, context):
+        tree = self.id_data
+        tree.disable_updates = True
+        self.disable_updates = True
+        try:
+            self.malt_init()
+        except:
+            import traceback
+            traceback.print_exc()
+        tree.disable_updates = False
+        self.disable_updates = False
+
+    def setup(self, context=None):
+        tree = self.id_data
+        tree.disable_updates = True
+        self.disable_updates = True
+        try:
+            self.malt_setup()
+        except:
+            import traceback
+            traceback.print_exc()
+        tree.disable_updates = False
+        self.disable_updates = False
+
+    def update(self):
+        if self.disable_updates:
+            return
+        tree = self.id_data
+        tree.disable_updates = True
+        self.disable_updates = True
+        try:
+            self.malt_update()
+        except:
+            import traceback
+            traceback.print_exc()
+        tree.disable_updates = False
+        self.disable_updates = False
+        
+    def malt_init(self):
+        pass
+
+    def malt_setup(self):
+        pass
+    
+    def malt_update(self):
+        pass
 
     def setup_sockets(self, inputs, outputs):
         from Malt.Parameter import Parameter, Type
@@ -285,13 +365,17 @@ class MaltNode():
                     remove.append(e)
             for e in remove:
                 current.remove(e)
-            for name, type in new.items():
+            for name, (type, size) in new.items():
+                #type, size = type_size
                 if name not in current:
                     current.new('MaltSocket', name)
                 current[name].data_type = type
+                current[name].array_size = size
         setup(self.inputs, inputs)
         setup(self.outputs, outputs)
         for input in self.inputs.values():
+            if input.array_size > 0:
+                continue
             parameter = None
             try:
                 parameter = Parameter.from_glsl_type(input.data_type)
@@ -302,6 +386,7 @@ class MaltNode():
                     { input.name : parameter }, 
                     replace_parameters = False
                 )
+        self.setup_socket_shapes()
     
     def setup_width(self):
         max_len = len(self.name)
@@ -333,21 +418,14 @@ class MaltNode():
     def get_glsl_uniforms(self):
         return ''
     
+    def setup_socket_shapes(self):
+        for socket in chain(self.inputs.values(), self.outputs.values()):
+            socket.setup_shape()
+    
     def draw_socket(self, context, layout, socket, text):
         layout.label(text=text)
         if socket.is_output == False and socket.is_linked == False:
             self.malt_parameters.draw_parameter(layout, socket.name, None, is_node_socket=True)
-        return
-        tree = self.id_data
-        material = tree.edit_material
-        if material is None:
-            material = context.active_object.active_material
-        layout.label(text=text)
-        if material and material.malt.shader_nodes is tree:
-            uniform = socket.get_glsl_uniform()
-            rna = material.malt.parameters.get_rna()
-            if uniform in rna.keys() and rna[uniform]['active']:
-                material.malt.parameters.draw_ui(layout, mask=[uniform], is_node_socket=True)
 
     @classmethod
     def poll(cls, ntree):
@@ -361,24 +439,24 @@ class MaltStructNode(bpy.types.Node, MaltNode):
     
     bl_label = "Struct Node"
 
-    def setup(self, context=None):
+    def malt_setup(self, context=None):
         struct = self.get_struct()
         self.name = self.struct_type
 
         inputs = {}
         outputs = {}
 
-        inputs[self.struct_type] = self.struct_type
-        outputs[self.struct_type] = self.struct_type
+        inputs[self.struct_type] = self.struct_type, 0
+        outputs[self.struct_type] = self.struct_type, 0
 
         for member in struct['members']:
-            inputs[member['name']] = member['type']
-            outputs[member['name']] = member['type']
+            inputs[member['name']] = member['type'], member['size']
+            outputs[member['name']] = member['type'], member['size']
         
         self.setup_sockets(inputs, outputs)
         self.setup_width()
 
-    struct_type : bpy.props.StringProperty(update=setup)
+    struct_type : bpy.props.StringProperty(update=MaltNode.setup)
 
     def get_struct(self):
         graph = self.id_data.get_pipeline_graph()
@@ -439,7 +517,7 @@ class MaltFunctionNode(bpy.types.Node, MaltNode):
     
     bl_label = "Function Node"
     
-    def setup(self, context=None):
+    def malt_setup(self):
         function = self.get_function()
         self.name = self.function_type
 
@@ -447,17 +525,17 @@ class MaltFunctionNode(bpy.types.Node, MaltNode):
         outputs = {}
 
         if function['type'] != 'void':
-            outputs['result'] = function['type']
+            outputs['result'] = function['type'], 0 #TODO: Array return type
         for parameter in function['parameters']:
             if parameter['io'] in ['out','inout']:
-                outputs[parameter['name']] = parameter['type']
+                outputs[parameter['name']] = parameter['type'], parameter['size']
             if parameter['io'] in ['','in','inout']:
-                inputs[parameter['name']] = parameter['type']
+                inputs[parameter['name']] = parameter['type'], parameter['size']
         
         self.setup_sockets(inputs, outputs)
         self.setup_width()
 
-    function_type : bpy.props.StringProperty(update=setup)
+    function_type : bpy.props.StringProperty(update=MaltNode.setup)
 
     def get_function(self):
         graph = self.id_data.get_pipeline_graph()
@@ -480,7 +558,7 @@ class MaltFunctionNode(bpy.types.Node, MaltNode):
                 linked = socket.get_linked()
                 if linked:
                     copy_from = linked.get_glsl_renference()
-                code += '{} {} = {};\n'.format(parameter['type'], socket.get_glsl_reference(), copy_from)
+                code += '{} = {};\n'.format(socket.get_glsl_declaration(socket.get_glsl_reference()), copy_from)
                 parameters.append(socket.get_glsl_reference())
             if parameter['io'] in ['','in']:
                 socket = self.inputs[parameter['name']]
@@ -512,7 +590,7 @@ class MaltIONode(bpy.types.Node, MaltNode):
     properties: bpy.props.PointerProperty(type=MaltPropertyGroup)
     is_output: bpy.props.BoolProperty()
 
-    def setup(self, context=None):
+    def malt_setup(self):
         function = self.get_function()
         self.name = self.io_type + (' Output' if self.is_output else ' Input')
 
@@ -520,17 +598,17 @@ class MaltIONode(bpy.types.Node, MaltNode):
         outputs = {}
         
         if function['type'] != 'void' and self.is_output:
-            inputs['result'] = function['type']
+            inputs['result'] = function['type'], 0
         for parameter in function['parameters']:
             if parameter['io'] in ['out','inout'] and self.is_output:
-                inputs[parameter['name']] = parameter['type']
+                inputs[parameter['name']] = parameter['type'], parameter['size']
             if parameter['io'] in ['','in','inout'] and self.is_output == False:
-                outputs[parameter['name']] = parameter['type']
+                outputs[parameter['name']] = parameter['type'], parameter['size']
         
         self.setup_sockets(inputs, outputs)
         self.setup_width()
 
-    io_type : bpy.props.StringProperty(update=setup)
+    io_type : bpy.props.StringProperty(update=MaltNode.setup)
 
     def get_function(self):
         graph = self.id_data.get_pipeline_graph()
@@ -563,11 +641,11 @@ class MaltUniformsNode(bpy.types.Node, MaltNode):
     
     bl_label = "Uniforms Node"
 
-    def init(self, context):
+    def malt_init(self):
         self.name = 'Uniforms'
         self.outputs.new('MaltSocket', 'parameter')
     
-    def update(self):
+    def malt_update(self):
         remove = []
         for i, output in enumerate(self.outputs):
             if output.get_linked() is None:
@@ -581,6 +659,7 @@ class MaltUniformsNode(bpy.types.Node, MaltNode):
             if output.get_linked():
                 linked = output.get_linked()
                 output.data_type = linked.data_type
+                output.array_size = linked.array_size
                 if output.name.startswith(linked.name) == False:
                     name = linked.name
                     #make sure name is unique
@@ -591,6 +670,8 @@ class MaltUniformsNode(bpy.types.Node, MaltNode):
                         else:
                             name = name + '_01'
                     output.name = name
+        
+        self.setup_socket_shapes()
 
     def get_glsl_socket_reference(self, socket):
         return socket.get_glsl_uniform()
@@ -616,13 +697,13 @@ class MaltInlineNode(bpy.types.Node, MaltNode):
 
     code : bpy.props.StringProperty(update=code_update)
 
-    def init(self, context):
+    def malt_init(self):
         self.name = 'Inline Code'
         for input in 'abcdefgh':
             self.inputs.new('MaltSocket', input)
         self.outputs.new('MaltSocket', 'result')
     
-    def update(self):
+    def malt_update(self):
         max = 0
         for i, input in enumerate(self.inputs):
             if input.data_type != '':
@@ -635,6 +716,9 @@ class MaltInlineNode(bpy.types.Node, MaltNode):
             linked = socket.get_linked()
             if linked and linked.data_type != '':
                 socket.data_type = socket.get_linked().data_type
+                socket.array_size = socket.get_linked().array_size
+        
+        self.setup_socket_shapes()
 
     def draw_buttons(self, context, layout):
         layout.prop(self, 'code', text='')
@@ -649,18 +733,60 @@ class MaltInlineNode(bpy.types.Node, MaltNode):
         return '{}_0_{}'.format(self.get_glsl_name(), socket.name)
     
     def get_glsl_code(self):
-        code = '{} {};\n'.format(self.outputs['result'].data_type, self.outputs['result'].get_glsl_reference())
+        result_socket = self.outputs['result']
+        code = '{};\n'.format(result_socket.get_glsl_declaration(result_socket.get_glsl_reference()))
         code += '{\n'
 
         for input in self.inputs:
             if input.get_linked():
-                code += '   {} {} = {};\n'.format(input.data_type, input.name, input.get_linked().get_glsl_reference())
+                code += '   {} = {};\n'.format(input.get_glsl_declaration(input.name), input.get_linked().get_glsl_reference())
         if self.code != '':
             code += '   {} = {};\n'.format(self.outputs['result'].get_glsl_reference(), self.code)
 
         code += '}\n\n'
 
         return code
+
+
+class MaltArrayIndexNode(bpy.types.Node, MaltNode):
+    
+    bl_label = "Array Index Node"
+
+    def malt_init(self):
+        self.name = 'Array Index'
+        self.inputs.new('MaltSocket', 'array').array_size = 0
+        self.inputs.new('MaltSocket', 'index').data_type = 'int'
+        self.outputs.new('MaltSocket', 'element')
+
+    def malt_update(self):
+        array = self.inputs['array']
+        element = self.outputs['element']
+        linked = array.get_linked()
+        if linked and linked.array_size > 0:
+            array.data_type = linked.data_type
+            array.array_size = linked.array_size
+            element.data_type = linked.data_type
+        else:
+            array.data_type = ''
+            array.array_size = 1
+            element.data_type = ''
+
+        self.setup_socket_shapes()
+
+    def get_glsl_socket_reference(self, socket):
+        return '{}_0_{}'.format(self.get_glsl_name(), socket.name)
+    
+    def get_glsl_code(self):
+        array = self.inputs['array']
+        index = self.inputs['index']
+        element = self.outputs['element']
+        initialization = index.get_glsl_uniform()
+        if index.get_linked():
+            initialization = index.get_linked().get_glsl_reference()
+        return '{} = {}[{}];\n'.format(element.get_glsl_declaration(element.get_glsl_reference()), array.get_linked().get_glsl_reference(), initialization)
+    
+    def get_glsl_uniforms(self):
+        return self.inputs['index'].get_glsl_uniform_declaration()
 
 
 class NODE_PT_MaltNodeTree(bpy.types.Panel):
@@ -796,7 +922,6 @@ class MALT_MT_NodeInputs(bpy.types.Menu):
     bl_label = "Malt Node Inputs Menu"
 
     def draw(self, context):
-        layout = self.layout
         graph = get_pipeline_graph(context)
         if graph:
             for name in sorted(graph.graph_IO):
@@ -810,7 +935,6 @@ class MALT_MT_NodeOutputs(bpy.types.Menu):
     bl_label = "Malt Node Outputs Menu"
 
     def draw(self, context):
-        layout = self.layout
         graph = get_pipeline_graph(context)
         if graph:
             for name in sorted(graph.graph_IO):
@@ -824,11 +948,11 @@ class MALT_MT_NodeOther(bpy.types.Menu):
     bl_label = "Malt Node Other Menu"
 
     def draw(self, context):
-        layout = self.layout
         graph = get_pipeline_graph(context)
         if graph:
             insert_node(self.layout, "MaltUniformsNode", 'Uniforms')
             insert_node(self.layout, "MaltInlineNode", 'Inline Code')
+            insert_node(self.layout, "MaltArrayIndexNode", 'Array Index')
 
 def add_node_ui(self, context):
     if context.space_data.tree_type != 'MaltTree':
@@ -867,6 +991,7 @@ classes = (
     MaltIONode,
     MaltUniformsNode,
     MaltInlineNode,
+    MaltArrayIndexNode,
     MALT_MT_NodeFunctions,
     MALT_MT_NodeStructs,
     MALT_MT_NodeInputs,

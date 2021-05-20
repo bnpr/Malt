@@ -38,9 +38,12 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
     override_from_parents : bpy.props.CollectionProperty(type=MaltBoolPropertyWrapper)
 
     def get_rna(self):
-        if '_RNA_UI' not in self.keys():
-            self['_RNA_UI'] = {}
-        return self['_RNA_UI']
+        try:
+            if '_RNA_UI' not in self.keys():
+                self['_RNA_UI'] = {}
+            return self['_RNA_UI']
+        except:
+            return {}
 
     def setup(self, parameters, replace_parameters=True, reset_to_defaults=False):
         rna = self.get_rna()

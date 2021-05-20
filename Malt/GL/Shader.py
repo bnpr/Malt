@@ -430,7 +430,7 @@ class GLSL_Reflection(object):
                 dictionary['members'].append({
                     'name' : member.name,
                     'type' : member.type,
-                    'size' : int(member.array_size) if member.array_size else 1
+                    'size' : int(member.array_size) if member.array_size else 0
                 })
             structs[struct.name] = dictionary
         return structs
@@ -469,7 +469,7 @@ class GLSL_Reflection(object):
                 dictionary['parameters'].append({
                     'name' : parameter.name,
                     'type' : parameter.type,
-                    'size' : int(parameter.array_size) if parameter.array_size else 1,
+                    'size' : int(parameter.array_size) if parameter.array_size else 0,
                     'io' : parameter.io.replace(' ',''),#TODO
                 })
             functions[function.name] = dictionary
