@@ -72,42 +72,45 @@ class MaltTree(bpy.types.NodeTree):
         return None
     
     def get_generated_source(self):
-        output_node = None
+        output_nodes = []
+        linked_nodes = []
+        
         pipeline_graph = self.get_pipeline_graph()
         if pipeline_graph:
             for node in self.nodes:
                 if isinstance(node, MaltIONode) and node.is_output:
-                    output_node = node
-        nodes = []
-        def add_node_inputs(node):
+                    output_nodes.append(node)
+                    linked_nodes.append(node)
+        
+        def add_node_inputs(node, list):
             for input in node.inputs:
                 if input.is_linked:
                     new_node = input.links[0].from_node
-                    if new_node not in nodes:
-                        add_node_inputs(new_node)
-                        nodes.append(new_node)
+                    if new_node not in list:
+                        add_node_inputs(new_node, list)
+                        list.append(new_node)
+                    if new_node not in linked_nodes:
+                        linked_nodes.append(new_node)
         
-        global_scope = ''
-        library_path = self.get_library_path()
-        if library_path:
-            global_scope += '#include "{}"\n'.format(library_path)
-        
-        code = ''
-        if output_node:
-            add_node_inputs(output_node)
-            for node in nodes:
-                global_scope += node.get_glsl_uniforms()
+        def get_source(output):
+            nodes = []
+            add_node_inputs(output, nodes)
+            code = ''
             for node in nodes:
                 code += node.get_glsl_code()
-            code += output_node.get_glsl_code()
-        
-        import textwrap
-        code = textwrap.indent(code,'\t')
+            code += output.get_glsl_code()
+            return code
 
-        return pipeline_graph.generate_source({
-            'GLOBAL': global_scope,
-            'COMMON_PIXEL_SHADER': code,
-        })
+        shader ={}
+        for output in output_nodes:
+            shader[output.io_type] = get_source(output)
+        shader['GLOBAL'] = ''
+        library_path = self.get_library_path()
+        if library_path:
+            shader['GLOBAL'] += '#include "{}"\n'.format(library_path)
+        for node in linked_nodes:
+            shader['GLOBAL'] += node.get_glsl_uniforms()
+        return pipeline_graph.generate_source(shader)
     
     def reload_nodes(self):
         self.disable_updates = True
@@ -605,18 +608,22 @@ class MaltIONode(bpy.types.Node, MaltNode):
             for socket in self.inputs:
                 if socket.name == 'result':
                     continue
+                initialization = socket.get_glsl_uniform()
                 if socket.get_linked():
-                    code += '{} = {};\n'.format(socket.name, socket.get_linked().get_glsl_reference())
+                    initialization = socket.get_linked().get_glsl_reference()
+                code += '{} = {};\n'.format(socket.name, initialization)
 
             if function['type'] != 'void':
-                result = '{}()'.format(function['type'])
+                result = socket.get_glsl_uniform()
                 linked = self.inputs['result'].get_linked()
                 if linked:
                     result = linked.get_glsl_reference()
                 code += 'return {};\n'.format(result)
 
         return code
-
+    
+    def get_glsl_uniforms(self):
+        return self.sockets_to_uniforms(self.inputs)
 
 class MaltInlineNode(bpy.types.Node, MaltNode):
     

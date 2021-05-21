@@ -94,10 +94,10 @@ class Pipeline(object):
                     return full_path
         return None
     
-    def compile_shader_from_source(self, shader_source, include_paths=[], defines=[]):
-        return self.compile_shaders_from_source(shader_source, include_paths, {'shader': defines})['shader']
-        
-    def compile_shaders_from_source(self, shader_source, include_paths=[], shader_defines_map={}):
+    def preprocess_shader_from_source(self, shader_source, include_paths=[], defines=[]):
+        return self.preprocess_shaders_from_source(shader_source, include_paths, [defines])[0]
+    
+    def preprocess_shaders_from_source(self, shader_source, include_paths=[], defines_lists=[]):
         shader_source = Pipeline.GLSL_HEADER + shader_source
         include_paths = include_paths + Pipeline.SHADER_INCLUDE_PATHS
 
@@ -105,20 +105,26 @@ class Pipeline(object):
             return shader_preprocessor(*params)
         
         params = []
+        for defines in defines_lists:
+            params.append((shader_source, include_paths, defines))
 
+        return self.pool.map(preprocess, params)
+    
+    def compile_shader_from_source(self, shader_source, include_paths=[], defines=[]):
+        return self.compile_shaders_from_source(shader_source, include_paths, {'shader': defines})['shader']
+        
+    def compile_shaders_from_source(self, shader_source, include_paths=[], shader_defines_map={}):
+        defines_lists = []
         for defines in shader_defines_map.values():
-            params.append((shader_source, include_paths, ['VERTEX_SHADER'] + defines))
-            params.append((shader_source, include_paths, ['PIXEL_SHADER'] + defines))
-
-        preprocessed_sources = self.pool.map(preprocess, params)
-
+            defines_lists.append(['VERTEX_SHADER']+defines) 
+            defines_lists.append(['PIXEL_SHADER']+defines) 
+        preprocessed_sources = self.preprocess_shaders_from_source(shader_source, include_paths, defines_lists)
+        
         results = {}
-
         for shader in shader_defines_map:
             vertex = preprocessed_sources.pop(0)
             pixel = preprocessed_sources.pop(0)
             results[shader] = Shader(vertex, pixel)
-
         return results
     
     def compile_material_from_source(self, material_type, source, include_paths=[]):
@@ -258,10 +264,12 @@ class Pipeline(object):
                         glCullFace(GL_BACK)  
                     if scale_group == 'normal_scale':
                         glFrontFace(GL_CCW)
-                        shader.uniforms['MIRROR_SCALE'].bind(False)
+                        if 'MIRROR_SCALE' in shader.uniforms:
+                            shader.uniforms['MIRROR_SCALE'].bind(False)
                     else:
                         glFrontFace(GL_CW)
-                        shader.uniforms['MIRROR_SCALE'].bind(True)
+                        if 'MIRROR_SCALE' in shader.uniforms:
+                            shader.uniforms['MIRROR_SCALE'].bind(True)
                 
                     for batch in batches:
                         batch['BATCH_MODELS'].bind(shader.uniform_blocks['BATCH_MODELS'])
