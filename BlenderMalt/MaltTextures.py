@@ -37,6 +37,7 @@ def __load_texture(texture):
     texture.pixels.foreach_get(np_view)
     
     MaltPipeline.get_bridge().load_texture(texture.name_full, (w,h), channels, sRGB)
+    return True
 
 __GRADIENTS = {}
 __GRADIENT_RESOLUTION = 256
@@ -54,6 +55,7 @@ def __load_gradient(texture):
         pixels.extend(pixel)
     nearest = texture.color_ramp.interpolation == 'CONSTANT'
     MaltPipeline.get_bridge().load_gradient(texture.name_full, pixels, nearest)
+    return True
     
 def reset_textures():
     global __TEXTURES
