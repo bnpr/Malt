@@ -514,6 +514,7 @@ class OT_MaltNewOverride(bpy.types.Operator):
     def execute(self, context):
         properties = from_json_rna_path(self.properties_path)
         properties.add_override(self.property, self.override)
+        properties.id_data.update_tag()
         return {'FINISHED'}
 
 class OT_MaltDeleteOverride(bpy.types.Operator):
@@ -527,6 +528,7 @@ class OT_MaltDeleteOverride(bpy.types.Operator):
     def execute(self, context):
         properties = from_json_rna_path(self.properties_path)
         properties.remove_override(self.property)
+        properties.id_data.update_tag()
         return {'FINISHED'}
 
 class MALT_PT_Base(bpy.types.Panel):
