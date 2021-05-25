@@ -16,7 +16,7 @@ from Malt.Render import Sampling
 
 from Malt.Pipelines.NPR_Pipeline import NPR_Lighting
 
-from Malt.Parameter import Parameter, PipelineGraph
+from Malt.Parameter import Parameter, GLSLPipelineGraph
 from Malt.Pipeline import *
 
 
@@ -94,66 +94,12 @@ class NPR_Pipeline(Pipeline):
     
     def setup_graphs(self):
         source = self.preprocess_shader_from_source(_DEFAULT_SHADER_SRC, [], ['IS_MESH_SHADER','VERTEX_SHADER','PIXEL_SHADER','NODES'])
-        functions = GLSL_Reflection.reflect_functions(source, SHADER_DIR)
-        structs = GLSL_Reflection.reflect_structs(source, SHADER_DIR)
-        graph_functions = {
-            'COMMON_PIXEL_SHADER': functions['COMMON_PIXEL_SHADER'],
-            'VERTEX_DISPLACEMENT_SHADER': functions['VERTEX_DISPLACEMENT_SHADER'],
-            'COMMON_VERTEX_SHADER': functions['COMMON_VERTEX_SHADER'],
-        }
-        for name in [*functions.keys()]:
-            if name.startswith('_') or name.isupper() or name == 'main':
-                functions.pop(name)
-        for name in [*structs.keys()]:
-            if name.startswith('_'):
-                structs.pop(name)
-        
-        def generate_source(params):
-            import textwrap
-            for key, src in params.items():
-                if key != 'GLOBAL':
-                    params[key] = textwrap.indent(src,'\t')
-            code = ''
-            if 'VERTEX_DISPLACEMENT_SHADER' in params.keys():
-                code += '#define CUSTOM_VERTEX_DISPLACEMENT\n'
-            if 'COMMON_VERTEX_SHADER' in params.keys():
-                code += '#define CUSTOM_VERTEX_SHADER\n'
-
-            code += '#include "Pipelines/NPR_Pipeline.glsl"\n\n'
-            code += params['GLOBAL']
-            
-            if 'VERTEX_DISPLACEMENT_SHADER' in params.keys():
-                code += textwrap.dedent('''
-
-                vec3 VERTEX_DISPLACEMENT_SHADER(Surface S)
-                {{
-                {}
-                }}
-                
-                ''').format(params['VERTEX_DISPLACEMENT_SHADER'])
-            
-            if 'COMMON_VERTEX_SHADER' in params.keys():
-                code += textwrap.dedent('''
-
-                void COMMON_VERTEX_SHADER(inout Surface S)
-                {{
-                {}
-                }}
-                
-                ''').format(params['COMMON_VERTEX_SHADER'])
-
-            code += textwrap.dedent('''
-            
-            void COMMON_PIXEL_SHADER(Surface S, inout PixelOutput PO)
-            {{
-            {}
-            }}
-            
-            ''').format(params['COMMON_PIXEL_SHADER'])
-
-            return code
-        
-        self.graphs['Mesh Shader'] = PipelineGraph('GLSL','.mesh.glsl', functions, structs, graph_functions, generate_source)
+        self.graphs['Mesh Shader'] = GLSLPipelineGraph('.mesh.glsl', source, SHADER_DIR, {
+            'COMMON_PIXEL_SHADER': (None, 'void COMMON_PIXEL_SHADER(Surface S, inout PixelOutput PO)'),
+            'VERTEX_DISPLACEMENT_SHADER': ('CUSTOM_VERTEX_DISPLACEMENT', 'vec3 VERTEX_DISPLACEMENT_SHADER(Surface S)'),
+            'COMMON_VERTEX_SHADER': ('CUSTOM_VERTEX_SHADER', 'void COMMON_VERTEX_SHADER(inout Surface S)'),
+        }, 
+        '#include "Pipelines/NPR_Pipeline.glsl"')
 
     def compile_material_from_source(self, material_type, source, include_paths=[]):
         if material_type == 'mesh':

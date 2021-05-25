@@ -2,18 +2,46 @@
 
 class PipelineGraph(object):
     
-    def __init__(self, language, file_extension, functions, structs, graph_IO, generate_source_callback):
+    def __init__(self, language, file_extension, functions, structs, graph_IO):
         self.language = language
         self.file_extension = file_extension
         self.functions = functions
         self.structs = structs
         self.graph_IO = graph_IO
-        from Malt.Utils import dump_function
-        self.generate_source_callback = dump_function(generate_source_callback)
     
     def generate_source(self, parameters):
-        from Malt.Utils import load_function
-        return load_function(self.generate_source_callback)(parameters)
+        pass
+
+class GLSLPipelineGraph(PipelineGraph):
+
+    def __init__(self, file_extension, source, root_path, graph_io_map, default_global_scope):
+        from . GL.Shader import GLSL_Reflection
+        functions = GLSL_Reflection.reflect_functions(source, root_path)
+        structs = GLSL_Reflection.reflect_structs(source, root_path)
+        graph_io = {}
+        for name in graph_io_map.keys():
+            graph_io[name] = functions[name]        
+        for name in [*functions.keys()]:
+            if name.startswith('_') or name.isupper() or name == 'main':
+                functions.pop(name)
+        for name in [*structs.keys()]:
+            if name.startswith('_'):
+                structs.pop(name)
+        super().__init__('GLSL', file_extension, functions, structs, graph_io)
+        self.graph_io_map = graph_io_map
+        self.default_global_scope = default_global_scope
+    
+    def generate_source(self, parameters):
+        import textwrap
+        code = ''
+        for graph_function, (define, declaration) in self.graph_io_map.items():
+            if graph_function in parameters.keys() and define:
+                code += '#define {}\n'.format(define)
+        code += '\n\n' + self.default_global_scope + '\n\n' + parameters['GLOBAL'] + '\n\n'
+        for graph_function, (define, declaration) in self.graph_io_map.items():
+            if graph_function in parameters.keys():
+                code += '{}\n{{\n{}\n}}'.format(declaration, textwrap.indent(parameters[graph_function],'\t'))
+        return code
 
 class PipelineParameters(object):
 
