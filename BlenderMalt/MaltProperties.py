@@ -45,7 +45,7 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
         except:
             return {}
 
-    def setup(self, parameters, replace_parameters=True, reset_to_defaults=False):
+    def setup(self, parameters, replace_parameters=True, reset_to_defaults=False, skip_private=True):
         rna = self.get_rna()
         
         def setup_parameter(name, parameter):
@@ -146,7 +146,7 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                     rna[key]['active'] = False
         
         for name, parameter in parameters.items():
-            if name.isupper() or name.startswith('_'):
+            if skip_private and (name.isupper() or name.startswith('_')):
                 # We treat underscored and all caps uniforms as "private"
                 continue
             setup_parameter(name, parameter)

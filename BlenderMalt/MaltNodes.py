@@ -375,7 +375,7 @@ class MaltNode():
                 pass
             if parameter:
                 parameters[input.name] = parameter
-        self.malt_parameters.setup(parameters)
+        self.malt_parameters.setup(parameters, skip_private=False)
         self.setup_socket_shapes()
         self.setup_width()
     
