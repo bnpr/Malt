@@ -248,8 +248,14 @@ class MaltSocket(bpy.types.NodeSocket):
 
     array_size: bpy.props.IntProperty(default=0, update=on_type_update)
 
+    def is_instantiable_type(self):
+        return self.data_type.startswith('sampler') == False
+
     def get_glsl_reference(self):
-        return self.node.get_glsl_socket_reference(self)
+        if not self.is_instantiable_type() and not self.is_output and self.get_linked() is not None:
+            self.get_linked().get_glsl_reference()
+        else:
+            return self.node.get_glsl_socket_reference(self)
     
     def get_glsl_uniform(self):
         return 'U_0{}_0_{}'.format(self.node.get_glsl_name(), self.name)
@@ -530,7 +536,10 @@ class MaltFunctionNode(bpy.types.Node, MaltNode):
             return self.id_data.get_library()['functions'][self.function_type]
 
     def get_glsl_socket_reference(self, socket):
-        return '{}_0_{}'.format(self.get_glsl_name(), socket.name)
+        if socket.name != 'result' or socket.is_instantiable_type():
+            return '{}_0_{}'.format(self.get_glsl_name(), socket.name)
+        else:
+            return self.get_glsl_code().splitlines()[-2].split('=')[-1].split(';')[0]
 
     def get_glsl_code(self):
         code = ''
@@ -552,7 +561,7 @@ class MaltFunctionNode(bpy.types.Node, MaltNode):
                     parameters.append(linked.get_glsl_reference())
                 else:
                     parameters.append(socket.get_glsl_uniform())
-        if function['type'] != 'void':
+        if function['type'] != 'void' and self.outputs['result'].is_instantiable_type():
             code += '{} {} = '.format(function['type'], self.outputs['result'].get_glsl_reference())
         
         code += self.function_type+'('
