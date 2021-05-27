@@ -41,10 +41,15 @@ def __load_texture(texture):
 
 __GRADIENTS = {}
 __GRADIENT_RESOLUTION = 256
+# Blender doesn't trigger depsgraph updates for newly created textures,
+# so we always reload gradients until it's been succesfully unloaded once (TODO)
+__GRADIENTS_WORKAROUND = []
+def add_gradient_workaround(texture):
+    __GRADIENTS_WORKAROUND.append(texture.name_full)
 
 def get_gradient(texture):
     name = texture.name_full
-    if name not in __GRADIENTS or __GRADIENTS[name] is None:
+    if name not in __GRADIENTS or __GRADIENTS[name] is None or name in __GRADIENTS_WORKAROUND:
         __GRADIENTS[name] = __load_gradient(texture)
     return name
 
@@ -68,6 +73,8 @@ def unload_texture(texture):
 
 def unload_gradients(texture):
     __GRADIENTS[texture.name_full] = None
+    if texture.name_full in __GRADIENTS_WORKAROUND:
+        __GRADIENTS_WORKAROUND.remove(texture.name_full)
 
 def register():
     pass

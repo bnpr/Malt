@@ -469,6 +469,8 @@ class OT_MaltNewGradient(bpy.types.Operator):
             gradient_wrapper.texture = texture
         gradient_wrapper.id_data.update_tag()
         gradient_wrapper.texture.update_tag()
+        from . MaltTextures import add_gradient_workaround
+        add_gradient_workaround(gradient_wrapper.texture)
         return {'FINISHED'}
 
 class OT_MaltNewMaterial(bpy.types.Operator):
