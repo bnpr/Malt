@@ -134,7 +134,7 @@ class Bridge(object):
         return results
     
     @bridge_method
-    def reflect_glsl_libraries(self, paths):
+    def reflect_source_libraries(self, paths):
         self.connections['SHADER REFLECTION'].send({'paths': paths})
         return self.connections['SHADER REFLECTION'].recv()
 

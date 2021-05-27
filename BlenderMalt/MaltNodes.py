@@ -1,6 +1,7 @@
 # Copyright (c) 2020 BlenderNPR and contributors. MIT license. 
 
 import os, time
+from textwrap import indent
 from itertools import chain
 import bpy
 from . MaltProperties import MaltPropertyGroup
@@ -33,6 +34,15 @@ class MaltTree(bpy.types.NodeTree):
     disable_updates : bpy.props.BoolProperty(name="Disable Updates", default=False)
 
     malt_parameters : bpy.props.PointerProperty(type=MaltPropertyGroup)
+
+    def get_source_language(self):
+        return 'GLSL'
+
+    def get_transpiler(self):
+        if self.get_source_language() == 'GLSL':
+            return GLSLTranspiler()
+        elif self.get_source_language() == 'Python':
+            return PythonTranspiler()
 
     def get_library_path(self):
         if self.library_source != '':
@@ -92,13 +102,14 @@ class MaltTree(bpy.types.NodeTree):
                     if new_node not in linked_nodes:
                         linked_nodes.append(new_node)
         
+        transpiler = self.get_transpiler()
         def get_source(output):
             nodes = []
             add_node_inputs(output, nodes)
             code = ''
             for node in nodes:
-                code += node.get_glsl_code()
-            code += output.get_glsl_code()
+                code += node.get_source_code(transpiler) + '\n'
+            code += output.get_source_code(transpiler)
             return code
 
         shader ={}
@@ -109,7 +120,7 @@ class MaltTree(bpy.types.NodeTree):
         if library_path:
             shader['GLOBAL'] += '#include "{}"\n'.format(library_path)
         for node in linked_nodes:
-            shader['GLOBAL'] += node.get_glsl_uniforms()
+            shader['GLOBAL'] += node.get_source_global_parameters(transpiler)
         return pipeline_graph.generate_source(shader)
     
     def reload_nodes(self):
@@ -211,7 +222,7 @@ def track_library_changes(force_update=False, disable_tree_updates=False):
                             break
     
     if len(needs_update) > 0:
-        results = MaltPipeline.get_bridge().reflect_glsl_libraries(needs_update)
+        results = MaltPipeline.get_bridge().reflect_source_libraries(needs_update)
         for path, reflection in results.items():
             __LIBRARIES[path] = reflection
             preload_menus(reflection['structs'], reflection['functions'])
@@ -237,6 +248,76 @@ def get_type_color(type):
     return __TYPE_COLORS[type]
 
 
+class SourceTranspiler():
+    
+    def asignment(self, name, asignment):
+        pass
+
+    def declaration(self, type, size, name, initialization=None):
+        pass
+    
+    def global_declaration(self, type, size, name, initialization=None):
+        pass
+
+    def call(self, name, parameters=[], full_statement=False):
+        pass
+
+    def result(self, result):
+        pass
+
+    def scoped(self, code):
+        pass
+
+class GLSLTranspiler(SourceTranspiler):
+
+    def asignment(self, name, asignment):
+        return f'{name} = {asignment};\n'
+
+    def declaration(self, type, size, name, initialization=None):
+        array = '' if size == 0 else f'[{size}]'
+        asignment = f' = {initialization}' if initialization else ''
+        return f'{type} {name}{array}{asignment};\n'
+    
+    def global_declaration(self, type, size, name, initialization=None):
+        return 'uniform ' + self.declaration(type, size, name, initialization)
+
+    def call(self, name, parameters=[], full_statement=False):
+        end = ';\n' if full_statement else ''
+        return f'{name}({",".join(parameters)}){end}'
+
+    def result(self, result):
+        return f'return {result};\n'
+    
+    def scoped(self, code):
+        import textwrap
+        code = textwrap.indent(code, '\t')
+        return f'{{\n{code}}}\n'
+
+class PythonTranspiler(SourceTranspiler):
+
+    def asignment(self, name, asignment):
+        return f'{name} = {asignment}\n'
+
+    def declaration(self, type, size, name, initialization=None):
+        if initialization is None: initialization = 'None'
+        return self.asignment(name, initialization)
+    
+    def global_declaration(self, type, size, name, initialization=None):
+        return self.declaration(type, size, name, initialization)
+
+    def call(self, name, parameters=[], full_statement=False):
+        end = '\n' if full_statement else ''
+        return f'{name}({",".join(parameters)}){end}'
+
+    def result(self, result):
+        return f'return {result}\n'
+    
+    def scoped(self, code):
+        import textwrap
+        code = textwrap.indent(code, '\t')
+        return f'if True:\n{code}'
+        
+
 class MaltSocket(bpy.types.NodeSocket):
     
     bl_label = "Malt Node Socket"
@@ -251,24 +332,15 @@ class MaltSocket(bpy.types.NodeSocket):
     def is_instantiable_type(self):
         return self.data_type.startswith('sampler') == False
 
-    def get_glsl_reference(self):
+    def get_source_reference(self):
         if not self.is_instantiable_type() and not self.is_output and self.get_linked() is not None:
-            self.get_linked().get_glsl_reference()
+            self.get_linked().get_source_reference()
         else:
-            return self.node.get_glsl_socket_reference(self)
+            return self.node.get_source_socket_reference(self)
     
-    def get_glsl_uniform(self):
-        return 'U_0{}_0_{}'.format(self.node.get_glsl_name(), self.name)
-    
-    def get_glsl_declaration(self, name):
-        declaration = '{} {}'.format(self.data_type, name)
-        if self.array_size > 0:
-            declaration += ' [{}]'.format(self.array_size)
-        return declaration
-    
-    def get_glsl_uniform_declaration(self):
-        return 'uniform {};\n'.format(self.get_glsl_declaration(self.get_glsl_uniform()))
-    
+    def get_source_global_reference(self):
+        return 'U_0{}_0_{}'.format(self.node.get_source_name(), self.name)
+
     def get_linked(self):
         if len(self.links) == 0:
             return None
@@ -394,25 +466,31 @@ class MaltNode():
         #TODO: Measure actual string width
         self.width = max(self.width, max_len * 10)
 
-    def get_glsl_name(self):
+    def get_source_name(self):
         name = self.name.replace('.','_')
         name = '_' + ''.join(char for char in name if char.isalnum() or char == '_')
         return name.replace('__','_')
 
-    def get_glsl_code(self):
-        return '/*{} not implemented*/'.format(self)
+    def get_source_code(self, transpiler):
+        if self.get_source_language() == 'GLSL':
+            return '/*{} not implemented*/'.format(self)
+        elif self.get_source_language() == 'Python':
+            return '# {} not implemented'.format(self)
 
-    def get_glsl_socket_reference(self, socket):
-        return '{} /*not implemented*/'.format(socket.name)
+    def get_source_socket_reference(self, socket):
+        if self.get_source_language() == 'GLSL':
+            return '/*{} not implemented*/'.format(socket.name)
+        elif self.get_source_language() == 'Python':
+            return '# {} not implemented'.format(socket.name)
     
-    def sockets_to_uniforms(self, sockets):
+    def sockets_to_global_parameters(self, sockets, transpiler):
         code = ''
         for socket in sockets:
             if socket.data_type != '' and socket.get_linked() is None:
-                code += socket.get_glsl_uniform_declaration()
+                code += transpiler.global_declaration(socket.data_type, socket.array_size, socket.get_source_global_reference())
         return code
     
-    def get_glsl_uniforms(self):
+    def get_source_global_parameters(self, transpiler):
         return ''
     
     def setup_socket_shapes(self):
@@ -461,40 +539,40 @@ class MaltStructNode(bpy.types.Node, MaltNode):
         else:
             return self.id_data.get_library()['structs'][self.struct_type]
 
-    def get_glsl_socket_reference(self, socket):
+    def get_source_socket_reference(self, socket):
         if socket.name == self.struct_type:
-            return self.get_glsl_name()
+            return self.get_source_name()
         else:
-            return '{}.{}'.format(self.get_glsl_name(), socket.name)
+            return '{}.{}'.format(self.get_source_name(), socket.name)
     
     def struct_input_is_linked(self):
         return self.inputs[self.struct_type].get_linked() is not None
 
-    def get_glsl_code(self):
+    def get_source_code(self, transpiler):
         code = ''
-        node_name = self.get_glsl_name()
+        node_name = self.get_source_name()
         struct_linked = self.struct_input_is_linked()
         
+        initialization = None
         if struct_linked:
             linked = self.inputs[self.struct_type].get_linked()
-            initialization = linked.get_glsl_reference()
-            code += '{} {} = {};\n'.format(self.struct_type, node_name, initialization)
-        else:
-            code += '{} {};\n'.format(self.struct_type, node_name)
+            initialization = linked.get_source_reference()
+        code += transpiler.declaration(self.struct_type, 0, node_name, initialization)
         
         for input in self.inputs:
             if input.data_type != self.struct_type:
-                if input.get_linked():
-                    linked = input.get_linked()
-                    code += '{}.{} = {};\n'.format(node_name, input.name, linked.get_glsl_reference())
-                elif struct_linked == False:
-                    code += '{}.{} = {};\n'.format(node_name, input.name, input.get_glsl_uniform())
+                linked = input.get_linked()
+                if linked or struct_linked == False:
+                    initialization = input.get_source_global_reference()
+                    if linked:
+                        initialization = linked.get_source_reference()
+                    code += transpiler.asignment(input.get_source_reference(), initialization)
         
-        return code + '\n'
+        return code
     
-    def get_glsl_uniforms(self):
+    def get_source_global_parameters(self, transpiler):
         if self.struct_input_is_linked() == False:
-            return self.sockets_to_uniforms([s for s in self.inputs if s.data_type != self.struct_type])
+            return self.sockets_to_global_parameters([s for s in self.inputs if s.data_type != self.struct_type], transpiler)
         return ''
     
     def draw_socket(self, context, layout, socket, text):
@@ -535,46 +613,43 @@ class MaltFunctionNode(bpy.types.Node, MaltNode):
         else:
             return self.id_data.get_library()['functions'][self.function_type]
 
-    def get_glsl_socket_reference(self, socket):
+    def get_source_socket_reference(self, socket):
         if socket.name != 'result' or socket.is_instantiable_type():
-            return '{}_0_{}'.format(self.get_glsl_name(), socket.name)
+            return '{}_0_{}'.format(self.get_source_name(), socket.name)
         else:
-            return self.get_glsl_code().splitlines()[-2].split('=')[-1].split(';')[0]
+            return self.get_source_code().splitlines()[-2].split('=')[-1].split(';')[0]
 
-    def get_glsl_code(self):
+    def get_source_code(self, transpiler):
+        transpiler = GLSLTranspiler()
         code = ''
         function = self.get_function()
         parameters = []
         for parameter in function['parameters']:
             if parameter['io'] in ['out','inout']:
                 socket = self.outputs[parameter['name']]
-                copy_from = '{}()'.format(socket.data_type)
                 linked = socket.get_linked()
-                if linked:
-                    copy_from = linked.get_glsl_renference()
-                code += '{} = {};\n'.format(socket.get_glsl_declaration(socket.get_glsl_reference()), copy_from)
-                parameters.append(socket.get_glsl_reference())
+                initialization = linked.get_source_renference() if linked else None
+                code += transpiler.declaration(socket.data_type, socket.array_size, socket.get_source_reference(), initialization)
+                parameters.append(socket.get_source_reference())
             if parameter['io'] in ['','in']:
                 socket = self.inputs[parameter['name']]
                 linked = socket.get_linked()
                 if linked:
-                    parameters.append(linked.get_glsl_reference())
+                    parameters.append(linked.get_source_reference())
                 else:
-                    parameters.append(socket.get_glsl_uniform())
-        if function['type'] != 'void' and self.outputs['result'].is_instantiable_type():
-            code += '{} {} = '.format(function['type'], self.outputs['result'].get_glsl_reference())
+                    parameters.append(socket.get_source_global_reference())
         
-        code += self.function_type+'('
-        for i, parameter in enumerate(parameters):
-            code += parameter
-            if i < len(parameters) - 1:
-                code += ', '
-        code += ');\n\n'
+        if function['type'] != 'void' and self.outputs['result'].is_instantiable_type():
+            socket = self.outputs['result']
+            initialization = transpiler.call(self.function_type, parameters)
+            code += transpiler.declaration(socket.data_type, socket.array_size, socket.get_source_reference(), initialization)
+        else:
+            code += transpiler.call(self.function_type, parameters, full_statement=True)
 
         return code
     
-    def get_glsl_uniforms(self):
-        return self.sockets_to_uniforms(self.inputs)
+    def get_source_global_parameters(self, transpiler):
+        return self.sockets_to_global_parameters(self.inputs, transpiler)
 
 
 class MaltIONode(bpy.types.Node, MaltNode):
@@ -607,32 +682,32 @@ class MaltIONode(bpy.types.Node, MaltNode):
         graph = self.id_data.get_pipeline_graph()
         return graph.graph_IO[self.io_type]
 
-    def get_glsl_socket_reference(self, socket):
+    def get_source_socket_reference(self, socket):
         return socket.name
     
-    def get_glsl_code(self):
+    def get_source_code(self, transpiler):
         code = ''
         if self.is_output:
             function = self.get_function()
             for socket in self.inputs:
                 if socket.name == 'result':
                     continue
-                initialization = socket.get_glsl_uniform()
+                initialization = socket.get_source_global_reference()
                 if socket.get_linked():
-                    initialization = socket.get_linked().get_glsl_reference()
-                code += '{} = {};\n'.format(socket.name, initialization)
+                    initialization = socket.get_linked().get_source_reference()
+                code += transpiler.asignment(socket.name, initialization)
 
             if function['type'] != 'void':
-                result = socket.get_glsl_uniform()
+                result = socket.get_source_global_reference()
                 linked = self.inputs['result'].get_linked()
                 if linked:
-                    result = linked.get_glsl_reference()
-                code += 'return {};\n'.format(result)
+                    result = linked.get_source_reference()
+                code += transpiler.result(result)
 
         return code
     
-    def get_glsl_uniforms(self):
-        return self.sockets_to_uniforms(self.inputs)
+    def get_source_global_parameters(self, transpiler):
+        return self.sockets_to_global_parameters(self.inputs, transpiler)
 
 class MaltInlineNode(bpy.types.Node, MaltNode):
     
@@ -691,29 +766,29 @@ class MaltInlineNode(bpy.types.Node, MaltNode):
         else:
             MaltNode.draw_socket(self, context, layout, socket, socket.name)
 
-    def get_glsl_socket_reference(self, socket):
-        return '{}_0_{}'.format(self.get_glsl_name(), socket.name)
+    def get_source_socket_reference(self, socket):
+        return '{}_0_{}'.format(self.get_source_name(), socket.name)
     
-    def get_glsl_code(self):
+    def get_source_code(self, transpiler):
+        transpiler = GLSLTranspiler()
+        code = ''
         result_socket = self.outputs['result']
-        code = '{};\n'.format(result_socket.get_glsl_declaration(result_socket.get_glsl_reference()))
-        code += '{\n'
+        code += transpiler.declaration(result_socket.data_type, result_socket.array_size, result_socket.get_source_reference())
 
+        scoped_code = ''
         for input in self.inputs:
             if input.data_type != '':
-                initialization = input.get_glsl_uniform()
+                initialization = input.get_source_global_reference()
                 if input.get_linked():
-                    initialization = input.get_linked().get_glsl_reference()
-                code += '   {} = {};\n'.format(input.get_glsl_declaration(input.name), initialization)
+                    initialization = input.get_linked().get_source_reference()
+                scoped_code += transpiler.declaration(input.data_type, input.array_size, input.name, initialization)
         if self.code != '':
-            code += '   {} = {};\n'.format(self.outputs['result'].get_glsl_reference(), self.code)
+            scoped_code += transpiler.asignment(self.outputs['result'].get_source_reference(), self.code)
 
-        code += '}\n\n'
-
-        return code
+        return code + transpiler.scoped(scoped_code)
     
-    def get_glsl_uniforms(self):
-        return self.sockets_to_uniforms(self.inputs)
+    def get_source_global_parameters(self, transpiler):
+        return self.sockets_to_global_parameters(self.inputs, transpiler)
 
 class MaltArrayIndexNode(bpy.types.Node, MaltNode):
     
@@ -735,20 +810,25 @@ class MaltArrayIndexNode(bpy.types.Node, MaltNode):
 
         self.setup_sockets(inputs, outputs)
 
-    def get_glsl_socket_reference(self, socket):
-        return '{}_0_{}'.format(self.get_glsl_name(), socket.name)
+    def get_source_socket_reference(self, socket):
+        return '{}_0_{}'.format(self.get_source_name(), socket.name)
     
-    def get_glsl_code(self):
+    def get_source_code(self, transpiler):
         array = self.inputs['array']
         index = self.inputs['index']
         element = self.outputs['element']
-        initialization = index.get_glsl_uniform()
+        element_reference = index.get_source_global_reference()
         if index.get_linked():
-            initialization = index.get_linked().get_glsl_reference()
-        return '{} = {}[{}];\n'.format(element.get_glsl_declaration(element.get_glsl_reference()), array.get_linked().get_glsl_reference(), initialization)
+            element_reference = index.get_linked().get_source_reference()
+        initialization = '{}[{}]'.format(array.get_linked().get_source_reference(), element_reference)
+        return transpiler.declaration(element.data_type, element.array_size, element.get_source_reference(), initialization)
     
-    def get_glsl_uniforms(self):
-        return self.inputs['index'].get_glsl_uniform_declaration()
+    def get_source_global_parameters(self, transpiler):
+        transpiler = GLSLTranspiler()
+        index = self.inputs['index']
+        if index.get_linked() is None:
+            return transpiler.global_declaration(indent.data_type, index.array_size, index.name)
+        return ''
 
 
 class NODE_PT_MaltNodeTree(bpy.types.Panel):

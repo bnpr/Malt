@@ -219,7 +219,7 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
             if isinstance(self.id_data, MaltTree) and self.id_data.malt_parameters.as_pointer() == self.as_pointer():
                 for node in self.id_data.nodes:
                     for input in node.inputs:
-                        if key == input.get_glsl_uniform():
+                        if key == input.get_source_global_reference():
                             try:
                                 return node.malt_parameters.get_parameter(input.name, overrides, resources)
                             except:
@@ -335,7 +335,7 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
             if isinstance(self.id_data, MaltTree) and self.id_data.malt_parameters.as_pointer() == self.as_pointer():
                 for node in self.id_data.nodes:
                     for input in node.inputs:
-                        if key == input.get_glsl_uniform():
+                        if key == input.get_source_global_reference():
                             node.malt_parameters.draw_parameter(layout, input.name, label, draw_callback, is_node_socket=True)
                             return True
             return False
