@@ -180,15 +180,10 @@ def depsgraph_update(scene, depsgraph):
             for area in screen.areas:
                 area.tag_redraw()
 
-__FIRST_LOAD = True
 @bpy.app.handlers.persistent
 def load_scene(dummy1=None,dummy2=None):
-    global __BRIDGE, __FIRST_LOAD
-    # Avoid loading the pipeline twice at Blender initialization
-    if __FIRST_LOAD:
-        __FIRST_LOAD = False
-    else:
-        __BRIDGE = None
+    global __BRIDGE
+    __BRIDGE = None
 
 def track_pipeline_changes():
     if bpy.context.scene.render.engine != 'MALT':
