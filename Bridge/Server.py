@@ -239,6 +239,7 @@ def main(pipeline_path, connection_addresses, shared_dic, log_path, debug_mode):
         log.info('Name: {} Adress: {}'.format(name, address))
         connections[name] = connection.Client(address)
     
+    glfw.ERROR_REPORTING = True
     glfw.init()
 
     glfw.window_hint(glfw.CONTEXT_VERSION_MAJOR, 4)
