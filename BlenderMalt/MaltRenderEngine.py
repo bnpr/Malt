@@ -446,5 +446,3 @@ def unregister():
         if 'MALT' in panel.COMPAT_ENGINES:
             panel.COMPAT_ENGINES.remove('MALT')
 
-if __name__ == "__main__":
-    register()
