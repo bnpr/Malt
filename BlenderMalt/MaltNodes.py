@@ -1,7 +1,6 @@
 # Copyright (c) 2020 BlenderNPR and contributors. MIT license. 
 
 import os, time
-from textwrap import indent
 from itertools import chain
 import bpy
 from . MaltProperties import MaltPropertyGroup
@@ -617,10 +616,10 @@ class MaltFunctionNode(bpy.types.Node, MaltNode):
         if socket.name != 'result' or socket.is_instantiable_type():
             return '{}_0_{}'.format(self.get_source_name(), socket.name)
         else:
-            return self.get_source_code().splitlines()[-2].split('=')[-1].split(';')[0]
+            source = self.get_source_code(self.id_data.get_transpiler())
+            return source.splitlines()[-1].split('=')[-1].split(';')[0]
 
     def get_source_code(self, transpiler):
-        transpiler = GLSLTranspiler()
         code = ''
         function = self.get_function()
         parameters = []
@@ -770,7 +769,6 @@ class MaltInlineNode(bpy.types.Node, MaltNode):
         return '{}_0_{}'.format(self.get_source_name(), socket.name)
     
     def get_source_code(self, transpiler):
-        transpiler = GLSLTranspiler()
         code = ''
         result_socket = self.outputs['result']
         code += transpiler.declaration(result_socket.data_type, result_socket.array_size, result_socket.get_source_reference())
@@ -824,11 +822,7 @@ class MaltArrayIndexNode(bpy.types.Node, MaltNode):
         return transpiler.declaration(element.data_type, element.array_size, element.get_source_reference(), initialization)
     
     def get_source_global_parameters(self, transpiler):
-        transpiler = GLSLTranspiler()
-        index = self.inputs['index']
-        if index.get_linked() is None:
-            return transpiler.global_declaration(indent.data_type, index.array_size, index.name)
-        return ''
+        return self.sockets_to_global_parameters(self.inputs, transpiler)
 
 
 class NODE_PT_MaltNodeTree(bpy.types.Panel):
