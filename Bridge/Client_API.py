@@ -29,7 +29,7 @@ class IOCapture(io.StringIO):
 
 class Bridge(object):
 
-    def __init__(self, pipeline_path, debug_mode=False, timeout=5):
+    def __init__(self, pipeline_path, debug_mode=False):
         super().__init__()
 
         import sys
@@ -81,9 +81,9 @@ class Bridge(object):
         
         self.connections = bridge_to_malt
 
-        if self.connections['PARAMS'].poll(timeout):
-            self.parameters, self.graphs = self.connections['PARAMS'].recv()
-            self.lost_connection = False
+        self.parameters, self.graphs = self.connections['PARAMS'].recv()
+        self.lost_connection = False
+
     
     def __del__(self):
         if self.process:

@@ -224,16 +224,16 @@ def main(pipeline_path, connection_addresses, shared_dic, log_path, debug_mode):
     setup_logging(log_path, log_level)
     log.info('DEBUG MODE: {}'.format(debug_mode))
 
-    # Trying to change process prioriy in Linux seems to hang Malt for some users
-    if sys.platform == 'win32':
-        import psutil
-        psutil.Process().nice(psutil.REALTIME_PRIORITY_CLASS)
-
     log.info('CONNECTIONS:')
     connections = {}
     for name, address in connection_addresses.items():
         log.info('Name: {} Adress: {}'.format(name, address))
         connections[name] = connection.Client(address)
+    
+    # Trying to change process prioriy in Linux seems to hang Malt for some users
+    if sys.platform == 'win32':
+        import psutil
+        psutil.Process().nice(psutil.REALTIME_PRIORITY_CLASS)
     
     glfw.ERROR_REPORTING = True
     glfw.init()
