@@ -107,7 +107,8 @@ class MaltTree(bpy.types.NodeTree):
             add_node_inputs(output, nodes)
             code = ''
             for node in nodes:
-                code += node.get_source_code(transpiler) + '\n'
+                if isinstance(node, MaltNode):
+                    code += node.get_source_code(transpiler) + '\n'
             code += output.get_source_code(transpiler)
             return code
 
@@ -119,16 +120,19 @@ class MaltTree(bpy.types.NodeTree):
         if library_path:
             shader['GLOBAL'] += '#include "{}"\n'.format(library_path)
         for node in linked_nodes:
-            shader['GLOBAL'] += node.get_source_global_parameters(transpiler)
+            if isinstance(node, MaltNode):
+                shader['GLOBAL'] += node.get_source_global_parameters(transpiler)
         return pipeline_graph.generate_source(shader)
     
     def reload_nodes(self):
         self.disable_updates = True
         try:
             for node in self.nodes:
-                node.setup()
+                if isinstance(node, MaltNode):
+                    node.setup()
             for node in self.nodes:
-                node.update()
+                if isinstance(node, MaltNode):
+                    node.update()
         except:
             import traceback
             traceback.print_exc()
@@ -144,9 +148,12 @@ class MaltTree(bpy.types.NodeTree):
         self.disable_updates = True
         try:
             for link in self.links:
-                if (link.from_socket.data_type != link.to_socket.data_type or 
-                    link.from_socket.array_size != link.to_socket.array_size):
-                    self.links.remove(link)
+                try:
+                    if (link.from_socket.data_type != link.to_socket.data_type or 
+                        link.from_socket.array_size != link.to_socket.array_size):
+                        self.links.remove(link)
+                except:
+                    pass
             
             source = self.get_generated_source()
             source_dir = bpy.path.abspath(self.get_generated_source_dir())
@@ -341,11 +348,20 @@ class MaltSocket(bpy.types.NodeSocket):
         return 'U_0{}_0_{}'.format(self.node.get_source_name(), self.name)
 
     def get_linked(self):
-        if len(self.links) == 0:
-            return None
-        else:
-            link = self.links[0]
-            return link.to_socket if self.is_output else link.from_socket
+        def get_linked_internal(socket):
+            if len(socket.links) == 0:
+                return None
+            else:
+                link = socket.links[0]
+                linked = link.to_socket if socket.is_output else link.from_socket
+                if isinstance(linked.node, bpy.types.NodeReroute):
+                    sockets = linked.node.inputs if linked.is_output else linked.node.outputs
+                    if len(sockets) == 0:
+                        return None
+                    return get_linked_internal(sockets[0])
+                else:
+                    return linked
+        return get_linked_internal(self)
     
     def get_ui_label(self):
         type = self.data_type
@@ -838,7 +854,7 @@ class NODE_PT_MaltNodeTree(bpy.types.Panel):
     
     def draw(self, context):
         layout = self.layout
-        layout.prop(context.space_data.node_tree, 'generated_source')
+        #layout.prop(context.space_data.node_tree, 'generated_source')
 
 
 def preload_menus(structs, functions):

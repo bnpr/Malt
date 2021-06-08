@@ -209,7 +209,7 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
         return parameters
     
     def get_parameter(self, key, overrides, resources):
-        from BlenderMalt.MaltNodes import MaltTree
+        from BlenderMalt.MaltNodes import MaltTree, MaltNode
         if self.parent and self.override_from_parents[key].boolean == False:
             try:
                 return self.parent.malt_parameters.get_parameter(key, overrides, resources)
@@ -218,12 +218,13 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
         if key not in self.get_rna().keys():
             if isinstance(self.id_data, MaltTree) and self.id_data.malt_parameters.as_pointer() == self.as_pointer():
                 for node in self.id_data.nodes:
-                    for input in node.inputs:
-                        if key == input.get_source_global_reference():
-                            try:
-                                return node.malt_parameters.get_parameter(input.name, overrides, resources)
-                            except:
-                                pass
+                    if isinstance(node, MaltNode):
+                        for input in node.inputs:
+                            if key == input.get_source_global_reference():
+                                try:
+                                    return node.malt_parameters.get_parameter(input.name, overrides, resources)
+                                except:
+                                    pass
             raise Exception()
 
         rna = self.get_rna()
@@ -327,17 +328,18 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
 
 
     def draw_parameter(self, layout, key, label, draw_callback=None, is_node_socket=False):
-        from BlenderMalt.MaltNodes import MaltTree
+        from BlenderMalt.MaltNodes import MaltTree, MaltNode
         if self.parent and self.override_from_parents[key].boolean == False:
             if self.parent.malt_parameters.draw_parameter(layout, key, label, draw_callback, is_node_socket):
                 return True
         if key not in self.get_rna().keys():
             if isinstance(self.id_data, MaltTree) and self.id_data.malt_parameters.as_pointer() == self.as_pointer():
                 for node in self.id_data.nodes:
-                    for input in node.inputs:
-                        if key == input.get_source_global_reference():
-                            node.malt_parameters.draw_parameter(layout, input.name, label, draw_callback, is_node_socket=True)
-                            return True
+                    if isinstance(node, MaltNode):
+                        for input in node.inputs:
+                            if key == input.get_source_global_reference():
+                                node.malt_parameters.draw_parameter(layout, input.name, label, draw_callback, is_node_socket=True)
+                                return True
             return False
         if self.get_rna()[key]['active'] == False:
             return False
