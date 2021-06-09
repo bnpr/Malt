@@ -277,7 +277,7 @@ vec3 position_3d = vec3(1,2,3);
 vec3 up_normal = vec3(0,0,1);
 // And colors too
 vec3 green = vec3(0,1,0);
-vec4 semi_transparent_red = vec3(1,0,0,0.5);
+vec4 semi_transparent_red = vec4(1,0,0,0.5);
 
 // We can read their individual properties by typing the vector name followed by a dot (.) and the name of the property
 float x_position = position_3d.x; //1
