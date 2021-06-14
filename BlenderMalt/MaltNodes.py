@@ -35,7 +35,7 @@ class MaltTree(bpy.types.NodeTree):
     malt_parameters : bpy.props.PointerProperty(type=MaltPropertyGroup)
 
     def get_source_language(self):
-        return 'GLSL'
+        return self.get_pipeline_graph().language
 
     def get_transpiler(self):
         if self.get_source_language() == 'GLSL':
@@ -453,19 +453,25 @@ class MaltNode():
             for name, (type, size) in new.items():
                 if name not in current:
                     current.new('MaltSocket', name)
-                current[name].data_type = type
-                current[name].array_size = size
+                if isinstance(type, Parameter):
+                    print('is parameter')
+                    current[name].data_type = type.type_string()
+                    current[name].array_size = 0 #TODO
+                else:
+                    current[name].data_type = type
+                    current[name].array_size = size
         setup(self.inputs, inputs)
         setup(self.outputs, outputs)
         parameters = {}
-        for input in self.inputs.values():
-            if input.array_size > 0:
-                continue
+        for name, input in self.inputs.items():
             parameter = None
-            try:
-                parameter = Parameter.from_glsl_type(input.data_type)
-            except:
-                pass
+            if name in inputs.keys() and isinstance(inputs[name][0], Parameter):
+                parameter = inputs[name][0]
+            elif input.array_size == 0:
+                try:
+                    parameter = Parameter.from_glsl_type(input.data_type)
+                except:
+                    pass
             if parameter:
                 parameters[input.name] = parameter
         self.malt_parameters.setup(parameters, skip_private=False)
@@ -643,7 +649,7 @@ class MaltFunctionNode(bpy.types.Node, MaltNode):
             if parameter['io'] in ['out','inout']:
                 socket = self.outputs[parameter['name']]
                 linked = socket.get_linked()
-                initialization = linked.get_source_renference() if linked else None
+                initialization = linked.get_source_reference() if linked else None
                 code += transpiler.declaration(socket.data_type, socket.array_size, socket.get_source_reference(), initialization)
                 parameters.append(socket.get_source_reference())
             if parameter['io'] in ['','in']:

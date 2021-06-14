@@ -10,7 +10,7 @@ class PipelineGraph(object):
         self.graph_IO = graph_IO
     
     def generate_source(self, parameters):
-        pass
+        return ''
 
 class GLSLPipelineGraph(PipelineGraph):
 
@@ -43,6 +43,27 @@ class GLSLPipelineGraph(PipelineGraph):
                 code += '{}\n{{\n{}\n}}'.format(declaration, textwrap.indent(parameters[graph_function],'\t'))
         return code
 
+class PythonPipelineGraph(PipelineGraph):
+    
+    def __init__(self, function_nodes, graph_io_nodes):
+        functions = {}
+        for node in function_nodes:
+            functions[node['name']] = node
+        graph_io = {}
+        for node in graph_io_nodes:
+            graph_io[node['name']] = node
+        super().__init__('Python', '-render_layer.py', functions, {}, graph_io)
+    
+    def generate_source(self, parameters):
+        src = ''
+        src += parameters['GLOBAL']
+        src += '\n\n'
+        for io in self.graph_IO.keys():
+            if io in parameters.keys():
+                src += parameters[io]
+        return src
+
+
 class PipelineParameters(object):
 
     def __init__(self, scene={}, world={}, camera={}, object={}, material={}, mesh={}, light={}):
@@ -59,11 +80,21 @@ class Type(object):
     INT=1
     FLOAT=2
     STRING=3
+    #???=4
     #ENUM=5 #TODO
     TEXTURE=6
     GRADIENT=7
     MATERIAL=8
     #RENDER_TARGET=9 #TODO
+    OTHER=10
+
+    @classmethod
+    def to_string(cls, type):
+        return ['Bool', 'Int', 'Float', 'String', '???', 'Enum', 'Texture', 'Gradient', 'Material', 'RenderTarget', 'Other'][type]
+    
+    @classmethod
+    def from_string(cls, type):
+        return ['Bool', 'Int', 'Float', 'String', '???', 'Enum', 'Texture', 'Gradient', 'Material', 'RenderTarget', 'Other'].index(type)
 
 class Parameter(object):
     def __init__(self, default_value, type, size=1, filter=None):
@@ -71,6 +102,12 @@ class Parameter(object):
         self.type = type
         self.size = size
         self.filter = filter
+    
+    def type_string(self):
+        if self.type == Type.OTHER:
+            return self.default_value
+        else:
+            return Type.to_string(self.type)
 
     @classmethod
     def from_uniform(cls, uniform):

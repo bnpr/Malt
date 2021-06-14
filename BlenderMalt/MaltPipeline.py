@@ -40,7 +40,7 @@ class MaltPipeline(bpy.types.PropertyGroup):
         pipeline = self.pipeline
         if pipeline == '':
             current_dir = os.path.dirname(os.path.abspath(__file__))
-            default_pipeline = os.path.join(current_dir,'.MaltPath','Malt','Pipelines','NPR_Pipeline','NPR_Pipeline.py')
+            default_pipeline = os.path.join(current_dir,'.MaltPath','Malt','Pipelines','NPR_Pipeline','NPR_Pipeline_Nodes.py')
             pipeline = default_pipeline
 
         debug_mode = bool(bpy.context.preferences.addons['BlenderMalt'].preferences.debug_mode)

@@ -407,7 +407,10 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
             make_row(True)
             row = layout.row(align=True)
             row.template_ID(self.materials[key], "material")
-            material_path = to_json_rna_path(self.materials[key])
+            try:
+                material_path = to_json_rna_path(self.materials[key])
+            except:
+                material_path = to_json_rna_path_node_workaround(self, 'malt_parameters.materials["{}"]'.format(key))
             if self.materials[key].material:
                 extension = self.materials[key].extension
                 row.operator('material.malt_add_material', text='', icon='DUPLICATE').material_path = material_path
