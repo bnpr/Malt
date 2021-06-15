@@ -51,10 +51,11 @@ void SCREEN_SHADER(vec2 uv,
 { }
 '''
 
-class NPR_Pipeline_Nodes(Pipeline):
+class NPR_Pipeline_Nodes(NPR_Pipeline):
 
     def __init__(self):
         super().__init__()
+        self.parameters.world['Render Layer'] = Parameter('Render Layer', Type.GRAPH)
         self.setup_graphs()
     
     def setup_graphs(self):
@@ -101,6 +102,8 @@ class NPR_Pipeline_Nodes(Pipeline):
         return super().do_render(resolution, scene, is_final_render, is_new_frame)
     
     def draw_layer(self, batches, scene, background_color=(0,0,0,0)):
+        print('-'*10)
+        print(scene.world_parameters['Render Layer']['parameters'])
         return super().draw_layer(batches, scene, background_color)
         
 PIPELINE = NPR_Pipeline_Nodes

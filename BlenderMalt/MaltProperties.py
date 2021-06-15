@@ -5,27 +5,29 @@ from Malt.Parameter import Type, Parameter, MaterialParameter
 from Malt import Scene
 from . import MaltTextures
 
+class MaltBoolPropertyWrapper(bpy.types.PropertyGroup):
+    boolean : bpy.props.BoolProperty()
+
 # WORKAROUND: We can't declare color ramps from python,
 # so we use the ones stored inside textures
 class MaltGradientPropertyWrapper(bpy.types.PropertyGroup):
-
     def poll(self, texture):
         return texture.type == 'BLEND' and texture.use_color_ramp
-
     texture : bpy.props.PointerProperty(type=bpy.types.Texture, poll=poll)
 
 class MaltTexturePropertyWrapper(bpy.types.PropertyGroup):
-
     texture : bpy.props.PointerProperty(type=bpy.types.Image)
 
 class MaltMaterialPropertyWrapper(bpy.types.PropertyGroup):
-
+    #TODO:poll
     material : bpy.props.PointerProperty(type=bpy.types.Material)
     extension : bpy.props.StringProperty()
 
-class MaltBoolPropertyWrapper(bpy.types.PropertyGroup):
-
-    boolean : bpy.props.BoolProperty()
+class MaltGraphPropertyWrapper(bpy.types.PropertyGroup):
+    def poll(self, tree):
+        return tree.bl_idname == 'MaltTree' and tree.graph_type == self.type
+    graph : bpy.props.PointerProperty(type=bpy.types.NodeTree, poll=poll)
+    type : bpy.props.StringProperty()
 
 class MaltPropertyGroup(bpy.types.PropertyGroup):
 
@@ -33,6 +35,7 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
     gradients : bpy.props.CollectionProperty(type=MaltGradientPropertyWrapper)    
     textures : bpy.props.CollectionProperty(type=MaltTexturePropertyWrapper)    
     materials : bpy.props.CollectionProperty(type=MaltMaterialPropertyWrapper)
+    graphs : bpy.props.CollectionProperty(type=MaltGraphPropertyWrapper)
 
     parent : bpy.props.PointerProperty(type=bpy.types.ID, name="Override From")
     override_from_parents : bpy.props.CollectionProperty(type=MaltBoolPropertyWrapper)
@@ -127,6 +130,11 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                     material = self.materials[name].material
                     if type_changed or (material and rna[name]['default'] == material.malt.shader_source):
                         self.materials[name].material = bpy.data.materials[shader_path]
+            
+            if parameter.type == Type.GRAPH:
+                if name not in self.graphs:
+                    self.graphs.add().name = name                
+                self.graphs[name].type = parameter.default_value
 
             if name not in self.override_from_parents:
                 self.override_from_parents.add().name = name
@@ -269,6 +277,18 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                     material_parameters = material.malt_parameters.get_parameters(overrides, resources)
                     materials[material_name] = Scene.Material(shader, material_parameters)
                 return materials[material_name]
+            else:
+                return None
+        elif rna[key]['type'] == Type.GRAPH:
+            graph = self.graphs[key].graph
+            type = self.graphs[key].type
+            if graph:
+                result = {}
+                result['source'] = graph.get_generated_source()
+                result['parameters'] = {}
+                for node in graph.nodes:
+                    result['parameters'][node.get_source_name()] = node.malt_parameters.get_parameters(overrides, resources)
+                return result
             else:
                 return None
 
@@ -418,7 +438,11 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                 material.malt.draw_ui(layout.box(), extension, material.malt_parameters)
             else:
                 row.operator('material.malt_add_material', text='New', icon='ADD').material_path = material_path
-        
+        elif rna[key]['type'] == Type.GRAPH:
+            make_row(True)
+            row = layout.row(align=True)
+            row.template_ID(self.graphs[key], "graph")
+            
         return True
 
 import json
@@ -630,10 +654,11 @@ class MALT_PT_Light(MALT_PT_Base):
             owner.malt_parameters.draw_ui(layout)
 
 classes = (
+    MaltBoolPropertyWrapper,
     MaltGradientPropertyWrapper,
     MaltTexturePropertyWrapper,
     MaltMaterialPropertyWrapper,
-    MaltBoolPropertyWrapper,
+    MaltGraphPropertyWrapper,
     MaltPropertyGroup,
     OT_MaltNewGradient,
     OT_MaltNewMaterial,

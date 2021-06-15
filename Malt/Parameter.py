@@ -80,21 +80,24 @@ class Type(object):
     INT=1
     FLOAT=2
     STRING=3
-    #???=4
-    #ENUM=5 #TODO
+    #ENUM=4 #TODO
+    OTHER=5
     TEXTURE=6
     GRADIENT=7
     MATERIAL=8
     #RENDER_TARGET=9 #TODO
-    OTHER=10
+    GRAPH=10
 
     @classmethod
+    def string_list(cls):
+        return ['Bool', 'Int', 'Float', 'String', 'Other', 'Enum', 'Texture', 'Gradient', 'Material', 'RenderTarget', 'Graph']
+    @classmethod
     def to_string(cls, type):
-        return ['Bool', 'Int', 'Float', 'String', '???', 'Enum', 'Texture', 'Gradient', 'Material', 'RenderTarget', 'Other'][type]
+        return cls.string_list()[type]
     
     @classmethod
     def from_string(cls, type):
-        return ['Bool', 'Int', 'Float', 'String', '???', 'Enum', 'Texture', 'Gradient', 'Material', 'RenderTarget', 'Other'].index(type)
+        return cls.string_list().index(type)
 
 class Parameter(object):
     def __init__(self, default_value, type, size=1, filter=None):
@@ -138,6 +141,12 @@ class MaterialParameter(Parameter):
     def __init__(self, default_path, extension, filter=None):
         super().__init__(default_path, Type.MATERIAL, 1, filter)
         self.extension = extension
+
+'''
+class GraphParameter(Parameter):
+    def __init__(self, graph_type, filter=None):
+        super().__init__(graph_type, Type.GRAPH, 1, filter)
+'''
 
 def gl_type_to_malt_type(gl_type):
     from Malt.GL import GL

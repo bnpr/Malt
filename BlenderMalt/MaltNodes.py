@@ -39,9 +39,9 @@ class MaltTree(bpy.types.NodeTree):
 
     def get_transpiler(self):
         if self.get_source_language() == 'GLSL':
-            return GLSLTranspiler()
+            return GLSLTranspiler
         elif self.get_source_language() == 'Python':
-            return PythonTranspiler()
+            return PythonTranspiler
 
     def get_library_path(self):
         if self.library_source != '':
@@ -256,44 +256,98 @@ def get_type_color(type):
 
 class SourceTranspiler():
     
+    @classmethod
     def asignment(self, name, asignment):
         pass
 
+    @classmethod
     def declaration(self, type, size, name, initialization=None):
         pass
+
+    @classmethod
+    def global_reference(self, node_name, parameter_name):
+        pass
     
+    @classmethod
     def global_declaration(self, type, size, name, initialization=None):
         pass
 
+    @classmethod
+    def parameter_reference(self, node_name, parameter_name):
+        pass
+
+    @classmethod
+    def io_parameter_reference(self, parameter_name):
+        return parameter_name
+
+    @classmethod
+    def is_instantiable_type(self, type):
+        return True
+
+    @classmethod
     def call(self, name, parameters=[], full_statement=False):
         pass
 
+    @classmethod
     def result(self, result):
         pass
 
+    @classmethod
     def scoped(self, code):
         pass
 
 class GLSLTranspiler(SourceTranspiler):
 
+    @classmethod
     def asignment(self, name, asignment):
         return f'{name} = {asignment};\n'
 
+    @classmethod
     def declaration(self, type, size, name, initialization=None):
         array = '' if size == 0 else f'[{size}]'
         asignment = f' = {initialization}' if initialization else ''
         return f'{type} {name}{array}{asignment};\n'
-    
+
+    @classmethod    
+    def global_reference(self, node_name, parameter_name):
+        return f'U_0{node_name}_0_{parameter_name}'
+
+    @classmethod
     def global_declaration(self, type, size, name, initialization=None):
         return 'uniform ' + self.declaration(type, size, name, initialization)
 
-    def call(self, name, parameters=[], full_statement=False):
-        end = ';\n' if full_statement else ''
-        return f'{name}({",".join(parameters)}){end}'
+    @classmethod
+    def parameter_reference(self, node_name, parameter_name):
+        return f'{node_name}_0_{parameter_name}'
 
+    @classmethod    
+    def is_instantiable_type(self, type):
+        return type.startswith('sampler') == False
+
+    @classmethod
+    def call(self, function, name, parameters=[]):
+        src = ''
+        for i, parameter in enumerate(function['parameters']):
+            if parameter['io'] in ['out','inout']:
+                initialization = parameters[i]
+                src_reference = self.parameter_reference(name, parameter['name'])
+                src += self.declaration(parameter['type'], parameter['size'], src_reference, initialization)
+                parameters[i] = src_reference
+        
+        initialization = f'{function["name"]}({",".join(parameters)})'
+        
+        if function['type'] != 'void' and self.is_instantiable_type(function['type']):
+            src += self.declaration(function['type'], 0, self.parameter_reference('result'), initialization)
+        else:
+            src += initialization + ';\n'
+        
+        return src
+
+    @classmethod
     def result(self, result):
         return f'return {result};\n'
-    
+
+    @classmethod    
     def scoped(self, code):
         import textwrap
         code = textwrap.indent(code, '\t')
@@ -301,23 +355,50 @@ class GLSLTranspiler(SourceTranspiler):
 
 class PythonTranspiler(SourceTranspiler):
 
+    @classmethod
     def asignment(self, name, asignment):
         return f'{name} = {asignment}\n'
 
+    @classmethod
     def declaration(self, type, size, name, initialization=None):
         if initialization is None: initialization = 'None'
         return self.asignment(name, initialization)
-    
+
+    @classmethod    
+    def global_reference(self, node_name, parameter_name):
+        return f'PARAMETERS["{node_name}"]["{parameter_name}"]'
+
+    @classmethod    
     def global_declaration(self, type, size, name, initialization=None):
+        return ''
         return self.declaration(type, size, name, initialization)
 
-    def call(self, name, parameters=[], full_statement=False):
-        end = '\n' if full_statement else ''
-        return f'{name}({",".join(parameters)}){end}'
+    @classmethod    
+    def parameter_reference(self, node_name, parameter_name):
+        return f'{node_name}_parameters["{parameter_name}"]'
 
+    @classmethod    
+    def io_parameter_reference(self, parameter_name):
+        return f'IO["{parameter_name}"]'
+
+    @classmethod
+    def call(self, function, name, parameters=[]):
+        src = ''
+        src += f'{name}_parameters = {{}}\n'
+        for i, parameter in enumerate(function['parameters']):
+            initialization = parameters[i]
+            if initialization is None:
+                initialization = 'None'
+            parameter_reference = self.parameter_reference(name, parameter['name'])
+            src += f'{parameter_reference} = {initialization}\n'
+        src += f'{function["name"]}({name}_parameters)\n'
+        return src
+
+    @classmethod
     def result(self, result):
         return f'return {result}\n'
-    
+
+    @classmethod    
     def scoped(self, code):
         import textwrap
         code = textwrap.indent(code, '\t')
@@ -345,6 +426,7 @@ class MaltSocket(bpy.types.NodeSocket):
             return self.node.get_source_socket_reference(self)
     
     def get_source_global_reference(self):
+        return self.id_data.get_transpiler().global_reference(self.node.get_source_name(), self.name)
         return 'U_0{}_0_{}'.format(self.node.get_source_name(), self.name)
 
     def get_linked(self):
@@ -454,7 +536,6 @@ class MaltNode():
                 if name not in current:
                     current.new('MaltSocket', name)
                 if isinstance(type, Parameter):
-                    print('is parameter')
                     current[name].data_type = type.type_string()
                     current[name].array_size = 0 #TODO
                 else:
@@ -493,15 +574,15 @@ class MaltNode():
         return name.replace('__','_')
 
     def get_source_code(self, transpiler):
-        if self.get_source_language() == 'GLSL':
+        if self.id_data.get_source_language() == 'GLSL':
             return '/*{} not implemented*/'.format(self)
-        elif self.get_source_language() == 'Python':
+        elif self.id_data.get_source_language() == 'Python':
             return '# {} not implemented'.format(self)
 
     def get_source_socket_reference(self, socket):
-        if self.get_source_language() == 'GLSL':
+        if self.id_data.get_source_language() == 'GLSL':
             return '/*{} not implemented*/'.format(socket.name)
-        elif self.get_source_language() == 'Python':
+        elif self.id_data.get_source_language() == 'Python':
             return '# {} not implemented'.format(socket.name)
     
     def sockets_to_global_parameters(self, sockets, transpiler):
@@ -635,39 +716,29 @@ class MaltFunctionNode(bpy.types.Node, MaltNode):
             return self.id_data.get_library()['functions'][self.function_type]
 
     def get_source_socket_reference(self, socket):
-        if socket.name != 'result' or socket.is_instantiable_type():
-            return '{}_0_{}'.format(self.get_source_name(), socket.name)
+        transpiler = self.id_data.get_transpiler()
+        if transpiler.is_instantiable_type(socket.data_type):
+            return transpiler.parameter_reference(self.get_source_name(), socket.name)
         else:
-            source = self.get_source_code(self.id_data.get_transpiler())
+            source = self.get_source_code(transpiler)
             return source.splitlines()[-1].split('=')[-1].split(';')[0]
 
     def get_source_code(self, transpiler):
-        code = ''
         function = self.get_function()
+        source_name = self.get_source_name()
         parameters = []
         for parameter in function['parameters']:
-            if parameter['io'] in ['out','inout']:
-                socket = self.outputs[parameter['name']]
-                linked = socket.get_linked()
-                initialization = linked.get_source_reference() if linked else None
-                code += transpiler.declaration(socket.data_type, socket.array_size, socket.get_source_reference(), initialization)
-                parameters.append(socket.get_source_reference())
-            if parameter['io'] in ['','in']:
+            initialization = None
+            if parameter['io'] in ['','in','inout']:
                 socket = self.inputs[parameter['name']]
                 linked = socket.get_linked()
                 if linked:
-                    parameters.append(linked.get_source_reference())
+                    initialization = linked.get_source_reference()
                 else:
-                    parameters.append(socket.get_source_global_reference())
-        
-        if function['type'] != 'void' and self.outputs['result'].is_instantiable_type():
-            socket = self.outputs['result']
-            initialization = transpiler.call(self.function_type, parameters)
-            code += transpiler.declaration(socket.data_type, socket.array_size, socket.get_source_reference(), initialization)
-        else:
-            code += transpiler.call(self.function_type, parameters, full_statement=True)
+                    initialization = socket.get_source_global_reference()
+            parameters.append(initialization)
 
-        return code
+        return transpiler.call(function, source_name, parameters)
     
     def get_source_global_parameters(self, transpiler):
         return self.sockets_to_global_parameters(self.inputs, transpiler)
@@ -704,7 +775,7 @@ class MaltIONode(bpy.types.Node, MaltNode):
         return graph.graph_IO[self.io_type]
 
     def get_source_socket_reference(self, socket):
-        return socket.name
+        return self.id_data.get_transpiler().io_parameter_reference(socket.name)
     
     def get_source_code(self, transpiler):
         code = ''
@@ -716,7 +787,7 @@ class MaltIONode(bpy.types.Node, MaltNode):
                 initialization = socket.get_source_global_reference()
                 if socket.get_linked():
                     initialization = socket.get_linked().get_source_reference()
-                code += transpiler.asignment(socket.name, initialization)
+                code += transpiler.asignment(socket.get_source_reference(), initialization)
 
             if function['type'] != 'void':
                 result = socket.get_source_global_reference()
