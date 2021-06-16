@@ -19,25 +19,20 @@ _SCREEN_SHADER_SRC='''
 
 #ifdef PIXEL_SHADER
 
-uniform sampler2D INPUT_0; uniform sampler2D INPUT_1; uniform sampler2D INPUT_2; uniform sampler2D INPUT_3; 
-uniform sampler2D INPUT_4; uniform sampler2D INPUT_5; uniform sampler2D INPUT_6; uniform sampler2D INPUT_7;
+uniform sampler2D INPUT_0; uniform sampler2D INPUT_1; uniform sampler2D INPUT_2; uniform sampler2D INPUT_3;
 
 layout (location = 0) out vec4 OUTPUT_0; layout (location = 1) out vec4 OUTPUT_1;
 layout (location = 2) out vec4 OUTPUT_2; layout (location = 3) out vec4 OUTPUT_3;
-layout (location = 4) out vec4 OUTPUT_4; layout (location = 5) out vec4 OUTPUT_5;
-layout (location = 6) out vec4 OUTPUT_6; layout (location = 7) out vec4 OUTPUT_7;
 
 void SCREEN_SHADER(vec2 uv, 
     sampler2D Input_0, sampler2D Input_1, sampler2D Input_2, sampler2D Input_3,
-    sampler2D Input_4, sampler2D Input_5, sampler2D Input_6, sampler2D Input_7,
-    out vec4 Output_0, out vec4 Output_1, out vec4 Output_2, out vec4 Output_3,
-    out vec4 Output_4, out vec4 Output_5, out vec4 Output_6, out vec4 Output_7);
+    out vec4 Output_0, out vec4 Output_1, out vec4 Output_2, out vec4 Output_3);
 
 void main()
 {
     SCREEN_SHADER(UV[0], 
-        INPUT_0, INPUT_1, INPUT_2, INPUT_3, INPUT_4, INPUT_5, INPUT_6, INPUT_7, 
-        OUTPUT_0, OUTPUT_1, OUTPUT_2, OUTPUT_3, OUTPUT_4, OUTPUT_5, OUTPUT_6, OUTPUT_7
+        INPUT_0, INPUT_1, INPUT_2, INPUT_3, 
+        OUTPUT_0, OUTPUT_1, OUTPUT_2, OUTPUT_3
     );
 }
 
@@ -47,9 +42,7 @@ void main()
 _DEFAULT_SCREEN_SHADER_SRC= _SCREEN_SHADER_SRC + '''
 void SCREEN_SHADER(vec2 uv, 
     sampler2D Input_0, sampler2D Input_1, sampler2D Input_2, sampler2D Input_3,
-    sampler2D Input_4, sampler2D Input_5, sampler2D Input_6, sampler2D Input_7,
-    out vec4 Output_0, out vec4 Output_1, out vec4 Output_2, out vec4 Output_3,
-    out vec4 Output_4, out vec4 Output_5, out vec4 Output_6, out vec4 Output_7)
+    out vec4 Output_0, out vec4 Output_1, out vec4 Output_2, out vec4 Output_3)
 { }
 '''
 
@@ -80,9 +73,7 @@ class NPR_Pipeline_Nodes(NPR_Pipeline):
         self.graphs['Screen Shader'] = GLSLPipelineGraph('.screen.glsl', source, SHADER_DIR, {
             'SCREEN_SHADER': (None, '''void SCREEN_SHADER(vec2 uv, 
             sampler2D Input_0, sampler2D Input_1, sampler2D Input_2, sampler2D Input_3,
-            sampler2D Input_4, sampler2D Input_5, sampler2D Input_6, sampler2D Input_7,
-            out vec4 Output_0, out vec4 Output_1, out vec4 Output_2, out vec4 Output_3,
-            out vec4 Output_4, out vec4 Output_5, out vec4 Output_6, out vec4 Output_7)''')
+            out vec4 Output_0, out vec4 Output_1, out vec4 Output_2, out vec4 Output_3)''')
         },
         _SCREEN_SHADER_SRC)
 
