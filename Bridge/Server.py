@@ -123,6 +123,7 @@ class Viewport(object):
         self.is_new_frame = True
         self.needs_more_samples = True
         self.is_final_render = is_final_render
+        self.result = None
 
         self.stat_max_frame_latency = 0
         self.stat_cpu_frame_time = 0
@@ -175,7 +176,7 @@ class Viewport(object):
     
     def render(self):
         if self.needs_more_samples:
-            result = self.pipeline.render(self.resolution, self.scene, self.is_final_render, self.is_new_frame)
+            self.result = self.pipeline.render(self.resolution, self.scene, self.is_final_render, self.is_new_frame)
             self.is_new_frame = False
             self.needs_more_samples = self.pipeline.needs_more_samples()
             
@@ -186,7 +187,7 @@ class Viewport(object):
             else:
                 pbos = {}
             
-            for key, texture in result.items():
+            for key, texture in self.result.items():
                 if texture and key in self.buffers.keys():
                     if key not in pbos.keys():
                         pbos[key] = PBO()
@@ -269,6 +270,7 @@ def main(pipeline_path, connection_addresses, shared_dic, log_path, debug_mode):
     connections['PARAMS'].send((params, graphs))
 
     viewports = {}
+    active_viewport = None
     last_exception = ''
     repeated_exception = 0
 
@@ -377,6 +379,8 @@ def main(pipeline_path, connection_addresses, shared_dic, log_path, debug_mode):
 
                 viewports[viewport_id].setup(buffers, resolution, scene, scene_update)
                 shared_dic[(viewport_id, 'FINISHED')] = False
+                glfw.set_window_size(window, w, h)
+                active_viewport = viewports[viewport_id]
             
             active_viewports = {}
             render_finished = True
@@ -389,6 +393,16 @@ def main(pipeline_path, connection_addresses, shared_dic, log_path, debug_mode):
                 shared_dic[(v_id, 'READ_RESOLUTION')] = v.read_resolution
                 if has_finished and shared_dic[(v_id, 'FINISHED')] == False:
                     shared_dic[(v_id, 'FINISHED')] = True
+            
+            if active_viewport and active_viewport.result:
+                glEnable(GL_FRAMEBUFFER_SRGB)
+                glDisable(GL_DEPTH_TEST)
+                glDisable(GL_BLEND)
+                GL.glBindFramebuffer(GL.GL_FRAMEBUFFER, 0)
+                pipeline.copy_shader.textures['IN_0'] = active_viewport.result['COLOR']
+                pipeline.copy_shader.bind()
+                pipeline.quad.draw()
+                glDisable(GL_FRAMEBUFFER_SRGB)
             
             if render_finished:
                 glfw.swap_interval(1)
