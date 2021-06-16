@@ -73,7 +73,10 @@ class Pipeline(object):
         return self.parameters
     
     def get_graphs(self):
-        return self.graphs
+        result = {}
+        for name, graph in self.graphs.items():
+            result[name] = graph.get_serializable_copy()
+        return result
     
     def get_samples(self):
         return [(0,0)]

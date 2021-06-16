@@ -119,9 +119,13 @@ class MaltTree(bpy.types.NodeTree):
         library_path = self.get_library_path()
         if library_path:
             shader['GLOBAL'] += '#include "{}"\n'.format(library_path)
+        shader['NODES'] = {}
         for node in linked_nodes:
             if isinstance(node, MaltNode):
                 shader['GLOBAL'] += node.get_source_global_parameters(transpiler)
+                node_class = node.get_node_class()
+                if node_class:
+                    shader['NODES'][node.get_source_name()] = node_class
         return pipeline_graph.generate_source(shader)
     
     def reload_nodes(self):
@@ -253,7 +257,7 @@ def get_type_color(type):
         __TYPE_COLORS[type] = (rand.random(),rand.random(),rand.random(),1.0)
     return __TYPE_COLORS[type]
 
-
+#TODO: Send transpiler along graph types
 class SourceTranspiler():
     
     @classmethod
@@ -337,7 +341,7 @@ class GLSLTranspiler(SourceTranspiler):
         initialization = f'{function["name"]}({",".join(parameters)})'
         
         if function['type'] != 'void' and self.is_instantiable_type(function['type']):
-            src += self.declaration(function['type'], 0, self.parameter_reference('result'), initialization)
+            src += self.declaration(function['type'], 0, self.parameter_reference(name, 'result'), initialization)
         else:
             src += initialization + ';\n'
         
@@ -391,7 +395,7 @@ class PythonTranspiler(SourceTranspiler):
                 initialization = 'None'
             parameter_reference = self.parameter_reference(name, parameter['name'])
             src += f'{parameter_reference} = {initialization}\n'
-        src += f'{function["name"]}({name}_parameters)\n'
+        src += f'run_node("{name}", "{function["name"]}", {name}_parameters)\n'
         return src
 
     @classmethod
@@ -595,6 +599,9 @@ class MaltNode():
     def get_source_global_parameters(self, transpiler):
         return ''
     
+    def get_node_class(self):
+        return None
+    
     def setup_socket_shapes(self):
         for socket in chain(self.inputs.values(), self.outputs.values()):
             socket.setup_shape()
@@ -742,6 +749,9 @@ class MaltFunctionNode(bpy.types.Node, MaltNode):
     
     def get_source_global_parameters(self, transpiler):
         return self.sockets_to_global_parameters(self.inputs, transpiler)
+    
+    def get_node_class(self):
+        return self.function_type
 
 
 class MaltIONode(bpy.types.Node, MaltNode):

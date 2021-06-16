@@ -11,6 +11,10 @@ class PipelineGraph(object):
     
     def generate_source(self, parameters):
         return ''
+    
+    def get_serializable_copy(self):
+        from copy import copy
+        return copy(self)
 
 class GLSLPipelineGraph(PipelineGraph):
 
@@ -45,24 +49,46 @@ class GLSLPipelineGraph(PipelineGraph):
 
 class PythonPipelineGraph(PipelineGraph):
     
-    def __init__(self, function_nodes, graph_io_nodes):
+    def __init__(self, pipeline, function_nodes, graph_io_reflection):
+        self.pipeline = pipeline
+        self.node_instances = {}
+        self.nodes = {}
         functions = {}
-        for node in function_nodes:
-            functions[node['name']] = node
+        for node_class in function_nodes:
+            reflection = node_class.reflect()
+            functions[reflection['name']] = reflection
+            self.nodes[reflection['name']] = node_class
         graph_io = {}
-        for node in graph_io_nodes:
+        for node in graph_io_reflection:
             graph_io[node['name']] = node
         super().__init__('Python', '-render_layer.py', functions, {}, graph_io)
     
     def generate_source(self, parameters):
         src = ''
-        src += parameters['GLOBAL']
-        src += '\n\n'
         for io in self.graph_IO.keys():
             if io in parameters.keys():
                 src += parameters[io]
         return src
-
+    
+    def get_serializable_copy(self):
+        from copy import copy
+        result = copy(self)
+        result.pipeline = None
+        result.nodes = None
+        return result
+    
+    def run_source(self, source, PARAMETERS, IO):
+        try:
+            def run_node(node_name, node_type, parameters):
+                if node_name not in self.node_instances.keys():
+                    node_class = self.nodes[node_type]
+                    self.node_instances[node_name] = node_class(self.pipeline)
+                self.node_instances[node_name].execute(parameters)
+            exec(source)
+        except:
+            import traceback
+            traceback.print_exc()
+            print(source)
 
 class PipelineParameters(object):
 

@@ -40,7 +40,7 @@ class PipelineNode():
     def reflect_outputs(cls):
         return {}
     
-    def execute(self, inputs, outputs):
+    def execute(self, parameters):
         pass
     
 from Malt.Parameter import Parameter, Type, MaterialParameter
@@ -70,31 +70,30 @@ class RenderScreen(PipelineNode):
             outputs[f'Output{i}'] = Parameter('', Type.TEXTURE)
         return outputs
     
-    def execute(self, inputs):
+    def execute(self, parameters):
+        from Malt.GL import GL
         from Malt.GL.Texture import Texture
         from Malt.GL.RenderTarget import RenderTarget
-        
+
         if self.pipeline.resolution != self.resolution:
-            self.resolution = self.pipeline.resolution
             for i in range(self.IO_COUNT):
                 self.texture_targets[i] = Texture(self.pipeline.resolution, GL.GL_RGBA16F)
             self.render_target = RenderTarget(self.texture_targets)
+            self.resolution = self.pipeline.resolution
         
         self.render_target.clear([(0,0,0,0)]*self.IO_COUNT)
 
-        material = inputs['Material']
+        material = parameters['Material']
         if material and material.shader and 'SHADER' in material.shader:
             shader = material.shader['SHADER']
             for i in range(0, self.IO_COUNT):
                 input_name = f'Input{i}'
-                shader.textures[input_name] = input[input_name]
-            self.pipeline.draw_screen_pass(shader, self.render_target, blend = True)
+                texture_name = f'INPUT_{i}'
+                shader.textures[texture_name] = parameters[input_name]
+            self.pipeline.draw_screen_pass(shader, self.render_target, blend = False)
 
-        outputs = {}
         for i in range(0, self.IO_COUNT):
-            outputs[f'Output{i}'] = self.texture_targets[i]
-        
-        return outputs
+            parameters[f'Output{i}'] = self.texture_targets[i]
     
 
 

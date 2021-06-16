@@ -6,6 +6,8 @@ from Malt.Parameter import GLSLPipelineGraph, PythonPipelineGraph
 
 from Malt import PipelineNode
 
+from Malt.PipelineNode import *
+
 _DEFAULT_LIGHT_SHADER_SRC='''
 #include "Pipelines/NPR_Pipeline.glsl"
 
@@ -56,6 +58,7 @@ class NPR_Pipeline_Nodes(NPR_Pipeline):
     def __init__(self):
         super().__init__()
         self.parameters.world['Render Layer'] = Parameter('Render Layer', Type.GRAPH)
+        self.render_layer_nodes = {}
         self.setup_graphs()
     
     def setup_graphs(self):
@@ -79,7 +82,7 @@ class NPR_Pipeline_Nodes(NPR_Pipeline):
             sampler2D Input_0, sampler2D Input_1, sampler2D Input_2, sampler2D Input_3,
             sampler2D Input_4, sampler2D Input_5, sampler2D Input_6, sampler2D Input_7,
             out vec4 Output_0, out vec4 Output_1, out vec4 Output_2, out vec4 Output_3,
-            out vec4 Output_4, out vec4 Output_5, out vec4 Output_6, out vec4 Output_7);''')
+            out vec4 Output_4, out vec4 Output_5, out vec4 Output_6, out vec4 Output_7)''')
         },
         _SCREEN_SHADER_SRC)
 
@@ -91,9 +94,9 @@ class NPR_Pipeline_Nodes(NPR_Pipeline):
         outputs = {
             'Color' : Parameter('', Type.TEXTURE),
         }
-        self.graphs['Render Layer'] = PythonPipelineGraph(
-            [PipelineNode.RenderScreen.reflect()],
-            [PipelineNode.PipelineNode.static_reflect('Render Layer', inputs, outputs)])
+        self.graphs['Render Layer'] = PythonPipelineGraph(self,
+            [RenderScreen],
+            [PipelineNode.static_reflect('Render Layer', inputs, outputs)])
 
     def setup_render_targets(self, resolution):
         super().setup_render_targets(resolution)
@@ -102,8 +105,16 @@ class NPR_Pipeline_Nodes(NPR_Pipeline):
         return super().do_render(resolution, scene, is_final_render, is_new_frame)
     
     def draw_layer(self, batches, scene, background_color=(0,0,0,0)):
-        print('-'*10)
-        print(scene.world_parameters['Render Layer']['parameters'])
-        return super().draw_layer(batches, scene, background_color)
+        result = super().draw_layer(batches, scene, background_color)
+        IO = {
+            'Color' : result,
+            'Normal_Depth' : self.t_prepass_normal_depth,
+            'ID' : self.t_prepass_id,
+        }
+        graph = scene.world_parameters['Render Layer']
+        if graph:
+            self.graphs['Render Layer'].run_source(graph['source'], graph['parameters'], IO)
+        return IO['Color']
+
         
 PIPELINE = NPR_Pipeline_Nodes
