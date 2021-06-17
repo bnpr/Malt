@@ -168,6 +168,10 @@ class MaltTree(bpy.types.NodeTree):
             import traceback
             traceback.print_exc()
         self.disable_updates = False
+        
+        # Force a depsgraph update. 
+        # Otherwise these will be outddated in scene_eval
+        self.update_tag()
 
 def setup_node_trees():
     graphs = MaltPipeline.get_bridge().graphs
