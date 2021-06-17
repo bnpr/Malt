@@ -396,6 +396,7 @@ class GLSL_Reflection(object):
 
     STRUCT_DEF.ignore(pyparsing.cStyleComment)
     STRUCT_DEF.ignore(pyparsing.dblSlashComment)
+    STRUCT_DEF.parseWithTabs() #Otherwise star-end indices don't match
 
     @classmethod
     def get_file_path(cls, code, position, root_path = None):
@@ -453,7 +454,7 @@ class GLSL_Reflection(object):
 
     FUNCTION.ignore(pyparsing.cStyleComment)
     FUNCTION.ignore(pyparsing.dblSlashComment)
-
+    FUNCTION.parseWithTabs() #Otherwise star-end indices don't match
 
     @classmethod
     def reflect_functions(cls, code, root_path = None):
