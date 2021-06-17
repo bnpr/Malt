@@ -3,7 +3,6 @@
 import os
 import bpy
 from . MaltProperties import MaltPropertyGroup
-from . MaltNodes import MaltTree
 
 _MATERIALS = {}
 
@@ -27,7 +26,7 @@ class MaltMaterial(bpy.types.PropertyGroup):
         return object.bl_idname == 'MaltTree'
         
     shader_source : bpy.props.StringProperty(name="Shader Source", subtype='FILE_PATH', update=update_source)
-    shader_nodes : bpy.props.PointerProperty(name="Node Tree", type=MaltTree, update=update_nodes, poll=poll_tree)
+    shader_nodes : bpy.props.PointerProperty(name="Node Tree", type=bpy.types.NodeTree, update=update_nodes, poll=poll_tree)
     compiler_error : bpy.props.StringProperty(name="Compiler Error")
 
     parameters : bpy.props.PointerProperty(type=MaltPropertyGroup, name="Shader Parameters")

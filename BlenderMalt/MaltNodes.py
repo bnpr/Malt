@@ -24,8 +24,6 @@ class MaltTree(bpy.types.NodeTree):
     def poll_material(self, material):
         return material.malt.shader_nodes is self
     
-    edit_material : bpy.props.PointerProperty(name='Edit Material', type=bpy.types.Material, poll=poll_material)
-
     graph_type: bpy.props.StringProperty(name='Type')
 
     library_source : bpy.props.StringProperty(name="Shader Library", subtype='FILE_PATH')
