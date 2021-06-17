@@ -20,7 +20,7 @@ from Malt.Pipeline import *
 
 _DEFAULT_SHADER = None
 
-DEFAULT_SHADER_SRC='''
+_DEFAULT_SHADER_SRC='''
 #include "Pipelines/NPR_Pipeline.glsl"
 
 void COMMON_PIXEL_SHADER(Surface S, inout PixelOutput PO)
@@ -71,7 +71,7 @@ class NPR_Pipeline(Pipeline):
         self.parameters.material['Light Groups.Shadow'] = Parameter([1,0,0,0], Type.INT, 4, 'mesh')
 
         global _DEFAULT_SHADER
-        if _DEFAULT_SHADER is None: _DEFAULT_SHADER = self.compile_material_from_source('mesh', DEFAULT_SHADER_SRC)
+        if _DEFAULT_SHADER is None: _DEFAULT_SHADER = self.compile_material_from_source('mesh', _DEFAULT_SHADER_SRC)
         self.default_shader = _DEFAULT_SHADER
 
         global _BLEND_TRANSPARENCY_SHADER

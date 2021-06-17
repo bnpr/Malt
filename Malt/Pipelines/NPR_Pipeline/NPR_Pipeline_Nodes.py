@@ -8,14 +8,30 @@ from Malt import PipelineNode
 
 from Malt.PipelineNode import *
 
-_DEFAULT_LIGHT_SHADER_SRC='''
+_MESH_SHADER_HEADER='''
 #include "Pipelines/NPR_Pipeline.glsl"
+#include "Node Utils/node_utils.glsl"
+'''
 
+_MESH_SHADER_REFLECTION_SRC = _MESH_SHADER_HEADER + '''
+void COMMON_PIXEL_SHADER(Surface S, inout PixelOutput PO)
+{
+    PO.color.rgb = vec3(1,1,0);
+}
+'''
+
+_LIGHT_SHADER_HEADER = '''
+#include "Pipelines/NPR_Pipeline.glsl"
+#include "Node Utils/node_utils.glsl"
+'''
+
+_LIGHT_SHADER_REFLECTION_SRC=_LIGHT_SHADER_HEADER + '''
 void LIGHT_SHADER(LightShaderInput I, inout LightShaderOutput O) { }
 '''
 
-_SCREEN_SHADER_SRC='''
+_SCREEN_SHADER_HEADER='''
 #include "Pipelines/NPR_Pipeline.glsl"
+#include "Node Utils/node_utils.glsl"
 
 #ifdef PIXEL_SHADER
 
@@ -39,7 +55,7 @@ void main()
 #endif //PIXEL_SHADER
 '''
 
-_DEFAULT_SCREEN_SHADER_SRC= _SCREEN_SHADER_SRC + '''
+_SCREEN_SHADER_REFLECTION_SRC= _SCREEN_SHADER_HEADER + '''
 void SCREEN_SHADER(vec2 uv, 
     sampler2D Input_0, sampler2D Input_1, sampler2D Input_2, sampler2D Input_3,
     out vec4 Output_0, out vec4 Output_1, out vec4 Output_2, out vec4 Output_3)
@@ -55,27 +71,27 @@ class NPR_Pipeline_Nodes(NPR_Pipeline):
         self.setup_graphs()
     
     def setup_graphs(self):
-        source = self.preprocess_shader_from_source(DEFAULT_SHADER_SRC, [], ['IS_MESH_SHADER','VERTEX_SHADER','PIXEL_SHADER','NODES'])
+        source = self.preprocess_shader_from_source(_MESH_SHADER_REFLECTION_SRC, [], ['IS_MESH_SHADER','VERTEX_SHADER','PIXEL_SHADER','NODES'])
         self.graphs['Mesh Shader'] = GLSLPipelineGraph('.mesh.glsl', source, SHADER_DIR, {
             'COMMON_PIXEL_SHADER': (None, 'void COMMON_PIXEL_SHADER(Surface S, inout PixelOutput PO)'),
             'VERTEX_DISPLACEMENT_SHADER': ('CUSTOM_VERTEX_DISPLACEMENT', 'vec3 VERTEX_DISPLACEMENT_SHADER(Surface S)'),
             'COMMON_VERTEX_SHADER': ('CUSTOM_VERTEX_SHADER', 'void COMMON_VERTEX_SHADER(inout Surface S)'),
         }, 
-        '#include "Pipelines/NPR_Pipeline.glsl"')
+        _MESH_SHADER_HEADER)
 
-        source = self.preprocess_shader_from_source(_DEFAULT_LIGHT_SHADER_SRC, [], ['IS_LIGHT_SHADER','PIXEL_SHADER','NODES'])
+        source = self.preprocess_shader_from_source(_LIGHT_SHADER_REFLECTION_SRC, [], ['IS_LIGHT_SHADER','PIXEL_SHADER','NODES'])
         self.graphs['Light Shader'] = GLSLPipelineGraph('.light.glsl', source, SHADER_DIR, {
             'LIGHT_SHADER': (None, 'void LIGHT_SHADER(LightShaderInput I, inout LightShaderOutput O)')
         },
-        '#include "Pipelines/NPR_Pipeline.glsl"')
+        _LIGHT_SHADER_HEADER)
 
-        source = self.preprocess_shader_from_source(_DEFAULT_SCREEN_SHADER_SRC, [], ['IS_SCREEN_SHADER','PIXEL_SHADER','NODES'])
+        source = self.preprocess_shader_from_source(_SCREEN_SHADER_REFLECTION_SRC, [], ['IS_SCREEN_SHADER','PIXEL_SHADER','NODES'])
         self.graphs['Screen Shader'] = GLSLPipelineGraph('.screen.glsl', source, SHADER_DIR, {
             'SCREEN_SHADER': (None, '''void SCREEN_SHADER(vec2 uv, 
             sampler2D Input_0, sampler2D Input_1, sampler2D Input_2, sampler2D Input_3,
             out vec4 Output_0, out vec4 Output_1, out vec4 Output_2, out vec4 Output_3)''')
         },
-        _SCREEN_SHADER_SRC)
+        _SCREEN_SHADER_HEADER)
 
         inputs = {
             'Color' : Parameter('', Type.TEXTURE),
