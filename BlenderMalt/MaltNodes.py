@@ -119,13 +119,9 @@ class MaltTree(bpy.types.NodeTree):
         library_path = self.get_library_path()
         if library_path:
             shader['GLOBAL'] += '#include "{}"\n'.format(library_path)
-        shader['NODES'] = {}
         for node in linked_nodes:
             if isinstance(node, MaltNode):
                 shader['GLOBAL'] += node.get_source_global_parameters(transpiler)
-                node_class = node.get_node_class()
-                if node_class:
-                    shader['NODES'][node.get_source_name()] = node_class
         return pipeline_graph.generate_source(shader)
     
     def reload_nodes(self):
@@ -599,9 +595,6 @@ class MaltNode():
     def get_source_global_parameters(self, transpiler):
         return ''
     
-    def get_node_class(self):
-        return None
-    
     def setup_socket_shapes(self):
         for socket in chain(self.inputs.values(), self.outputs.values()):
             socket.setup_shape()
@@ -749,9 +742,6 @@ class MaltFunctionNode(bpy.types.Node, MaltNode):
     
     def get_source_global_parameters(self, transpiler):
         return self.sockets_to_global_parameters(self.inputs, transpiler)
-    
-    def get_node_class(self):
-        return self.function_type
 
 
 class MaltIONode(bpy.types.Node, MaltNode):
