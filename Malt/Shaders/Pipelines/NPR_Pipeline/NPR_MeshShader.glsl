@@ -379,7 +379,7 @@ float get_line_simple(float width, float depth_threshold, float normal_threshold
         LineOutput lo = line_ex(
             POSITION,
             get_normal(),
-            width,
+            1,
             1,
             LINE_DEPTH_MODE_NEAR,
             screen_uv(),
@@ -394,7 +394,7 @@ float get_line_simple(float width, float depth_threshold, float normal_threshold
                     lo.delta_distance > depth_threshold ||
                     lo.delta_angle > normal_threshold;
         
-        return float(line);
+        return float(line) * width;
     }
     #else
     {
