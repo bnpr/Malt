@@ -16,7 +16,7 @@ struct LightShaderInput
 
 struct LightShaderOutput
 {
-    vec4 color;
+    vec3 color;
 };
 
 #ifdef VERTEX_SHADER
@@ -33,7 +33,7 @@ void main()
 
 uniform sampler2D IN_DEPTH;
 
-layout (location = 0) out vec4 RESULT;
+layout (location = 0) out vec3 RESULT;
 
 void LIGHT_SHADER(LightShaderInput I, inout LightShaderOutput O);
 
@@ -75,7 +75,7 @@ void main()
     I.light_uv = light_uv;
 
     LightShaderOutput O;
-    O.color.rgb = LS.light_color;
+    O.color = LS.light_color;
 
     LIGHT_SHADER(I,O);
     
