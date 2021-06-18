@@ -61,6 +61,26 @@ vec4 gaussian_blur(sampler2D input_texture, vec2 uv, float radius, float sigma)
     return result / total_weight;
 }
 
+#include "Common/Math.glsl"
+
+vec4 fast_blur(sampler2D input_texture, vec2 uv, float radius, float distribution_exponent, int samples)
+{
+    vec2 resolution = textureSize(input_texture, 0);
+    vec4 result = vec4(0);
+
+    for(int i = 0; i < samples;  i++)
+    {
+        float angle = random_per_pixel(i) * PI * 2;
+        float length = random_per_pixel(1e2 + i);
+        length = pow(length, distribution_exponent) * radius;
+        float x = cos(angle) * length;
+        float y = sin(angle) * length;
+        vec2 offset = vec2(x,y) / resolution;
+        result += texture(input_texture, uv + offset) / samples;
+    }
+
+    return result;
+}
 
 #endif //BLUR_GLSL
 
