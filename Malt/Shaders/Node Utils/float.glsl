@@ -1,4 +1,6 @@
-// float 
+#ifndef FLOAT_GLSL
+#define FLOAT_GLSL
+
 float float_property(float f) { return f; }
 
 float float_add(float a, float b){ return a+b; }
@@ -44,3 +46,4 @@ float float_if_else(bool condition, float a, float b){ return condition ? a : b;
 
 float float_from_int(int i) { return float(i); }
 
+#endif //FLOAT_GLSL

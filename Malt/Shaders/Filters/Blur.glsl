@@ -26,14 +26,14 @@ vec4 box_blur(sampler2D input_texture, vec2 uv, float radius, bool circular)
     return result / total_weight;
 }
 
-float gaussian_weight(float x, float sigma)
+float _gaussian_weight(float x, float sigma)
 {
     float sigma2 = sigma * sigma;
 
     return (1.0 / sqrt(2*PI*sigma2)) * exp(-(x*x, 2.0*sigma2));
 }
 
-float gaussian_weight_2d(vec2 v, float sigma)
+float _gaussian_weight_2d(vec2 v, float sigma)
 {
     float sigma2 = sigma * sigma;
 
@@ -52,7 +52,7 @@ vec4 gaussian_blur(sampler2D input_texture, vec2 uv, float radius, float sigma)
         for(float y = -radius; y <= radius; y++)
         {
             vec2 offset = vec2(x,y);
-            float weight = gaussian_weight_2d(offset, sigma);
+            float weight = _gaussian_weight_2d(offset, sigma);
             result += texture(input_texture, uv + offset / resolution) * weight;
             total_weight += weight;
         }   

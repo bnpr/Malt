@@ -8,10 +8,12 @@ from Malt import PipelineNode
 
 from Malt.PipelineNode import *
 
-_MESH_SHADER_HEADER='''
+_COMMON_HEADER = '''
 #include "Pipelines/NPR_Pipeline.glsl"
 #include "Node Utils/node_utils.glsl"
 '''
+
+_MESH_SHADER_HEADER = _COMMON_HEADER
 
 _MESH_SHADER_REFLECTION_SRC = _MESH_SHADER_HEADER + '''
 void COMMON_PIXEL_SHADER(Surface S, inout PixelOutput PO)
@@ -20,19 +22,13 @@ void COMMON_PIXEL_SHADER(Surface S, inout PixelOutput PO)
 }
 '''
 
-_LIGHT_SHADER_HEADER = '''
-#include "Pipelines/NPR_Pipeline.glsl"
-#include "Node Utils/node_utils.glsl"
-'''
+_LIGHT_SHADER_HEADER = _COMMON_HEADER
 
 _LIGHT_SHADER_REFLECTION_SRC=_LIGHT_SHADER_HEADER + '''
 void LIGHT_SHADER(LightShaderInput I, inout LightShaderOutput O) { }
 '''
 
-_SCREEN_SHADER_HEADER='''
-#include "Pipelines/NPR_Pipeline.glsl"
-#include "Node Utils/node_utils.glsl"
-
+_SCREEN_SHADER_HEADER= _COMMON_HEADER + '''
 #ifdef PIXEL_SHADER
 
 uniform sampler2D INPUT_0; uniform sampler2D INPUT_1; uniform sampler2D INPUT_2; uniform sampler2D INPUT_3;

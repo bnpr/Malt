@@ -1,4 +1,6 @@
-// bool
+#ifndef BOOL_GLSL
+#define BOOL_GLSL
+
 bool bool_property(bool b) { return b; }
 bool bool_true() { return true; } 
 bool bool_false() { return false; }
@@ -12,3 +14,4 @@ bool bool_not_equal(bool a, bool b){ return a != b; }
 
 bool if_else(bool condition, bool a, bool b){ return condition ? a : b; }
 
+#endif //BOOL_GLSL

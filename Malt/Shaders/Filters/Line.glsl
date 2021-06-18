@@ -10,7 +10,7 @@
 #define LINE_QUALITY_MODE_PREVIEW 0
 #define LINE_QUALITY_MODE_RENDER  1
 
-void sampling_pattern(out vec2 samples[4])
+void _sampling_pattern(out vec2 samples[4])
 {
     samples = vec2[4](
         vec2(-1,-1),
@@ -30,7 +30,7 @@ void sampling_pattern(out vec2 samples[4])
 bool line_id_ex(sampler2D depth_texture, int depth_channel, sampler2D id_texture, int id_channel, vec2 uv, float pixel_width, int LINE_DEPTH_MODE)
 {
     vec2 offsets[4];
-    sampling_pattern(offsets);
+    _sampling_pattern(offsets);
 
     vec2 offset = vec2(pixel_width) / vec2(textureSize(id_texture, 0));
     float id = texture(id_texture, uv)[id_channel];
@@ -62,7 +62,7 @@ bool line_id_ex(sampler2D depth_texture, int depth_channel, sampler2D id_texture
 float line_normal_ex(sampler2D depth_texture, int depth_channel, sampler2D normal_texture, vec2 uv, float pixel_width, int LINE_DEPTH_MODE)
 {
     vec2 offsets[4];
-    sampling_pattern(offsets);
+    _sampling_pattern(offsets);
 
     vec2 offset = vec2(pixel_width) / vec2(textureSize(normal_texture, 0));
     vec3 normal = texture(normal_texture, uv).xyz;
@@ -91,7 +91,7 @@ float line_normal_ex(sampler2D depth_texture, int depth_channel, sampler2D norma
 float line_depth_ex(sampler2D depth_texture, int channel, vec2 uv, float pixel_width, int LINE_DEPTH_MODE)
 {
     vec2 offsets[4];
-    sampling_pattern(offsets);
+    _sampling_pattern(offsets);
 
     vec2 offset = vec2(pixel_width) / vec2(textureSize(depth_texture, 0));
     float depth = texture(depth_texture, uv)[channel];
@@ -144,7 +144,7 @@ LineOutput line_ex(
     result.id_boundary = false;
 
     vec2 offsets[4];
-    sampling_pattern(offsets);
+    _sampling_pattern(offsets);
     vec2 offset = vec2(line_width) / RESOLUTION;
 
    // vec3 normal = texture(normal_texture, uv).xyz;

@@ -1,4 +1,6 @@
-// vec4
+#ifndef VEC4_GLSL
+#define VEC4_GLSL
+
 vec4 vec4_property(vec4 v) { return v; }
 
 vec4 vec4_add(vec4 a, vec4 b){ return a+b; }
@@ -40,3 +42,4 @@ vec4 vec4_from_float(float f) { return vec4(f); }
 vec4 vec4_from_vec2(vec2 v, float b, float a) { return vec4(v, b, a); }
 vec4 vec4_from_vec3(vec3 v, float a) { return vec4(v, a); }
 
+#endif //VEC4_GLSL

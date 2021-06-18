@@ -1,4 +1,6 @@
-// vec3
+#ifndef VEC3_GLSL
+#define VEC3_GLSL
+
 vec3 vec3_property(vec3 v) { return v; }
 
 vec3 vec3_add(vec3 a, vec3 b){ return a+b; }
@@ -40,3 +42,5 @@ void vec3_split(vec3 v, out float x, out float y, out float z){ x=v.x; y=v.y; z=
 vec3 vec3_from_float(float f) { return vec3(f); }
 vec3 vec3_from_vec2(vec2 v, float z) { return vec3(v, z); }
 vec3 vec3_from_vec4(vec4 v) { return v.xyz; }
+
+#endif //VEC3_GLSL

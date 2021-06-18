@@ -1,4 +1,6 @@
-// vec2 
+#ifndef VEC2_GLSL
+#define VEC2_GLSL
+
 vec2 vec2_property(vec2 v) { return v; }
 
 vec2 vec2_add(vec2 a, vec2 b){ return a+b; }
@@ -40,3 +42,4 @@ vec2 vec2_from_float(float f) { return vec2(f); }
 vec2 vec2_from_vec3(vec2 v, float z) { return v.xy; }
 vec2 vec2_from_vec4(vec4 v) { return v.xy; }
 
+#endif //VEC2_GLSL

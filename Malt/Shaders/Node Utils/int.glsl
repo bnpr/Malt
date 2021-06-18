@@ -1,4 +1,6 @@
-// int 
+#ifndef INT_GLSL
+#define INT_GLSL
+
 int int_property(int i) { return i; }
 
 int int_add(int a, int b){ return a+b; }
@@ -25,3 +27,4 @@ int int_if_else(bool condition, int a, int b){ return condition ? a : b; }
 
 int int_from_float(float f) { return int(f); }
 
+#endif //INT_GLSL
