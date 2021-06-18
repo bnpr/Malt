@@ -39,7 +39,7 @@ vec2 vec2_if_else(bool condition, vec2 a, vec2 b){ return condition ? a : b; }
 vec2 vec2_join(float x, float y) { return vec2(x,y);}
 void vec2_split(vec2 v, out float x, out float y){ x=v.x; y=v.y; }
 vec2 vec2_from_float(float f) { return vec2(f); }
-vec2 vec2_from_vec3(vec2 v, float z) { return v.xy; }
+vec2 vec2_from_vec3(vec3 v) { return v.xy; }
 vec2 vec2_from_vec4(vec4 v) { return v.xy; }
 
 #endif //VEC2_GLSL
