@@ -94,7 +94,9 @@ class NPR_LightShaders(object):
                 pipeline.lights_buffer.bind(shader.uniform_blocks['SCENE_LIGHTS'])
                 shader.textures['IN_DEPTH'] = depth_texture
                 if 'LIGHT_INDEX' in shader.uniforms:
-                    shader.uniforms['LIGHT_INDEX'].set_value(i)
+                    light_index = scene.lights.index(light)
+                    print('set light index ', i, light_index)
+                    shader.uniforms['LIGHT_INDEX'].set_value(light_index)
                 pipeline.draw_screen_pass(shader, self.fbos[i])
     
     def shader_callback(self, shader):
