@@ -66,7 +66,9 @@ If you find a bug you can [open a new issue](https://github.com/bnpr/Malt/issues
 - A **.blend file** and a **list of steps** to reproduce the error.
 
 ## Developer Documentation
- 
-Developer documentation is best viewed directly in Github, most folders in the source code have relevant documentation.  
-The [Malt folder documentation](https://github.com/bnpr/Malt/tree/master/Malt#malt) is a good starting point.
+
+[How to setup BlenderMalt for Development.](docs/Setup-BlenderMalt-for-Development.md)
+
+Developer documentation is best viewed directly in [Github](https://github.com/bnpr/Malt/tree/Development#developer-documentation), most folders in the source code have relevant documentation.  
+The [Malt folder documentation](Malt#malt) is a good starting point.
 
