@@ -30,7 +30,7 @@ jobs:
         tag_name: ${{ env.BRANCH_NAME }}-latest
         release_name: ${{ env.BRANCH_NAME }}
         draft: false
-        prerelease: ${{ env.BRANCH_NAME != 'stable' }}
+        prerelease: ${{ env.BRANCH_NAME != 'Release' }}
         body_path: SPONSORS.md
     
     - uses: actions/checkout@v2
