@@ -77,8 +77,8 @@ jobs:
       with:
         python-version: '3.9'
     
-    - name: package_blender_addon.py
-      run: python package_blender_addon.py
+    - name: setup_blender_addon.py
+      run: python setup_blender_addon.py --copy-modules
       working-directory: ${{ github.workspace }}/scripts
     
     - name: Zip Addon
