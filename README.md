@@ -33,12 +33,16 @@ Malt is software agnostic, but Blender is the only integration planned right now
 
 > While Malt itself works on Mac, the built-in render pipeline does not due to limits in the Mac OpenGL drivers.
 
+> On Linux distributions not based on Ubuntu, you may have to compile and package BlenderMalt yourself. See [How to setup BlenderMalt for Development](docs/Setup-BlenderMalt-for-Development.md) for instructions.
+
 ## Install
  
-- Go to [the latest Release page](https://github.com/bnpr/Malt/releases/tag/stable).
+- Go to [the latest Release page](https://github.com/bnpr/Malt/releases/tag/Release-latest).
 - Download the *BlenderMalt* version that matches your OS and the *Shader Examples*.
 - Open Blender. Go to *Preferences > Addons*, click on the *Install...* button and select *BlenderMalt.zip* from your downloads. *(It will take a few seconds)*
 - Tick the box in the *BlenderMalt* panel to enable it.
+
+> Altenatively, you can download the [Development version](https://github.com/bnpr/Malt/releases/tag/Development-latest) to test the latest features. Keep in mind this version is only intended for testing and your scenes may break often.
 
 #### Uninstall
 
