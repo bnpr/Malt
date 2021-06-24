@@ -2,18 +2,18 @@ name: BLENDERMALT_PACKAGE_AND_RELEASE
 
 on:
   push:
-    #branches: [ master ]
 
 jobs:
   release:
     runs-on: ubuntu-latest
     steps:
+    - uses: nelonoel/branch-name@v1.0.1
     
     - name: Rollback Release
       uses: author/action-rollback@stable
       continue-on-error: true
       with:
-        tag: 'v1-beta'
+        tag: ${{ env.BRANCH_NAME }}-latest
         delete_orphan_tag: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -27,10 +27,10 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        tag_name: v1-beta
-        release_name: v1-beta
+        tag_name: ${{ env.BRANCH_NAME }}-latest
+        release_name: ${{ env.BRANCH_NAME }}
         draft: false
-        prerelease: true
+        prerelease: ${{ env.BRANCH_NAME != 'stable' }}
         body_path: SPONSORS.md
     
     - uses: actions/checkout@v2
