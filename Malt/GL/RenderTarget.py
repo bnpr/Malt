@@ -63,6 +63,8 @@ class RenderTarget(object):
                 GL_FLOAT : glClearBufferfv,
             }
             target = self.targets[i]
+            if target is None:
+                continue
             if isinstance(color, ctypes.Array) == False:
                 size = 1
                 try: size = len(color)
