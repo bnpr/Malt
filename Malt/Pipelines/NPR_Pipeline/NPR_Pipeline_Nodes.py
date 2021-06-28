@@ -13,10 +13,44 @@ _COMMON_HEADER = '''
 #include "Node Utils/node_utils.glsl"
 '''
 
-_MESH_SHADER_HEADER = _COMMON_HEADER
+_MESH_SHADER_HEADER = _COMMON_HEADER + '''
+#ifdef PIXEL_SHADER
+#ifdef MAIN_PASS
+
+layout (location = 4) out vec4 OUTPUT_0;
+layout (location = 5) out vec4 OUTPUT_1;
+layout (location = 6) out vec4 OUTPUT_2;
+layout (location = 7) out vec4 OUTPUT_3;
+
+#endif
+#endif
+
+void NODES_COMMON_PIXEL_SHADER(Surface S, inout PixelOutput PO,
+    out vec4 Output_0, out vec4 Output_1, out vec4 Output_2, out vec4 Output_3);
+
+void COMMON_PIXEL_SHADER(Surface S, inout PixelOutput PO)
+{
+    vec4 custom_outputs[4];
+
+    NODES_COMMON_PIXEL_SHADER(S, PO, custom_outputs[0], custom_outputs[1], custom_outputs[2], custom_outputs[3]);
+
+    #ifdef PIXEL_SHADER
+    #ifdef MAIN_PASS
+    {
+        OUTPUT_0 = custom_outputs[0];
+        OUTPUT_1 = custom_outputs[1];
+        OUTPUT_2 = custom_outputs[2];
+        OUTPUT_3 = custom_outputs[3];
+    }
+    #endif
+    #endif
+}
+
+'''
 
 _MESH_SHADER_REFLECTION_SRC = _MESH_SHADER_HEADER + '''
-void COMMON_PIXEL_SHADER(Surface S, inout PixelOutput PO)
+void NODES_COMMON_PIXEL_SHADER(Surface S, inout PixelOutput PO,
+    out vec4 Output_0, out vec4 Output_1, out vec4 Output_2, out vec4 Output_3)
 {
     PO.color.rgb = vec3(1,1,0);
 }
@@ -69,11 +103,18 @@ class NPR_Pipeline_Nodes(NPR_Pipeline):
     def setup_graphs(self):
         source = self.preprocess_shader_from_source(_MESH_SHADER_REFLECTION_SRC, [], ['IS_MESH_SHADER','VERTEX_SHADER','PIXEL_SHADER','NODES'])
         self.graphs['Mesh Shader'] = GLSLPipelineGraph('.mesh.glsl', source, SHADER_DIR, {
-            'COMMON_PIXEL_SHADER': (None, 'void COMMON_PIXEL_SHADER(Surface S, inout PixelOutput PO)'),
+            'NODES_COMMON_PIXEL_SHADER': (None, '''void NODES_COMMON_PIXEL_SHADER(Surface S, inout PixelOutput PO,
+            out vec4 Output_0, out vec4 Output_1, out vec4 Output_2, out vec4 Output_3)'''),
             'VERTEX_DISPLACEMENT_SHADER': ('CUSTOM_VERTEX_DISPLACEMENT', 'vec3 VERTEX_DISPLACEMENT_SHADER(Surface S)'),
             'COMMON_VERTEX_SHADER': ('CUSTOM_VERTEX_SHADER', 'void COMMON_VERTEX_SHADER(inout Surface S)'),
         }, 
         _MESH_SHADER_HEADER)
+        #Remap NODES_COMMON_PIXEL_SHADER to COMMON_PIXEL_SHADER
+        self.graphs['Mesh Shader'].graph_IO['COMMON_PIXEL_SHADER'] = self.graphs['Mesh Shader'].graph_IO['NODES_COMMON_PIXEL_SHADER']
+        self.graphs['Mesh Shader'].graph_IO.pop('NODES_COMMON_PIXEL_SHADER')
+        self.graphs['Mesh Shader'].graph_io_map['COMMON_PIXEL_SHADER'] = self.graphs['Mesh Shader'].graph_io_map['NODES_COMMON_PIXEL_SHADER']
+        self.graphs['Mesh Shader'].graph_io_map.pop('NODES_COMMON_PIXEL_SHADER')
+        
 
         source = self.preprocess_shader_from_source(_LIGHT_SHADER_REFLECTION_SRC, [], ['IS_LIGHT_SHADER','PIXEL_SHADER','NODES'])
         self.graphs['Light Shader'] = GLSLPipelineGraph('.light.glsl', source, SHADER_DIR, {
@@ -93,6 +134,10 @@ class NPR_Pipeline_Nodes(NPR_Pipeline):
             'Color' : Parameter('', Type.TEXTURE),
             'Normal_Depth' : Parameter('', Type.TEXTURE),
             'ID' : Parameter('ID Texture', Type.OTHER),
+            'Input 0' : Parameter('', Type.TEXTURE),
+            'Input 1' : Parameter('', Type.TEXTURE),
+            'Input 2' : Parameter('', Type.TEXTURE),
+            'Input 3' : Parameter('', Type.TEXTURE),
         }
         outputs = {
             'Color' : Parameter('', Type.TEXTURE),
@@ -104,15 +149,27 @@ class NPR_Pipeline_Nodes(NPR_Pipeline):
     def setup_render_targets(self, resolution):
         super().setup_render_targets(resolution)
 
+        self.t_main_output_0 = Texture(resolution, GL_RGBA16F)
+        self.t_main_output_1 = Texture(resolution, GL_RGBA16F)
+        self.t_main_output_2 = Texture(resolution, GL_RGBA16F)
+        self.t_main_output_3 = Texture(resolution, GL_RGBA16F)
+        self.fbo_main = RenderTarget([self.t_main_color, self.t_line_color, self.t_line_data, None,
+        self.t_main_output_0, self.t_main_output_1, self.t_main_output_2, self.t_main_output_3], self.t_depth)
+
     def do_render(self, resolution, scene, is_final_render, is_new_frame):
         return super().do_render(resolution, scene, is_final_render, is_new_frame)
     
     def draw_layer(self, batches, scene, background_color=(0,0,0,0)):
+        self.fbo_main.clear([background_color, (0,0,0,1), (-1,-1,-1,-1), (0)*4, (0)*4, (0)*4, (0)*4, (0)*4])
         result = super().draw_layer(batches, scene, background_color)
         IO = {
             'Color' : result,
             'Normal_Depth' : self.t_prepass_normal_depth,
             'ID' : self.t_prepass_id,
+            'Input 0' : self.t_main_output_0,
+            'Input 1' : self.t_main_output_1,
+            'Input 2' : self.t_main_output_2,
+            'Input 3' : self.t_main_output_3,
         }
         graph = scene.world_parameters['Render Layer']
         if graph:
