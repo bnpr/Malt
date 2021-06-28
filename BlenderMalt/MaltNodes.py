@@ -960,15 +960,15 @@ def insert_node(layout, type, label, settings = {}):
         item.value = value
     return operator
 
-__FUNCTION_MENUES = []
+__FUNCTION_MENUES = {}
 
 def get_functions_menu(file):
     global __FUNCTION_MENUES
-    file_to_class_name = 'MALT_MT_functions_' + file.replace('\\', '_').replace('/', '_').replace('.glsl', '').replace(' ', '_')
-    file_to_class_name = ''.join(c for c in file_to_class_name if c == '_' or c.isalnum())
-    file_to_label = file.replace('\\', '/').replace('/', ' - ').replace('.glsl', '').replace('_',' ')
 
-    if file_to_class_name not in __FUNCTION_MENUES:
+    if file not in __FUNCTION_MENUES.keys():
+        file_to_label = file.replace('\\', '/').replace('/', ' - ').replace('.glsl', '').replace('_',' ')
+        class_name = 'MALT_MT_functions_' + str(len(__FUNCTION_MENUES))
+        
         def draw(self, context):
             graph = get_pipeline_graph(context)
             if graph:
@@ -979,25 +979,26 @@ def get_functions_menu(file):
                             'function_type' : repr(name)
                         })
 
-        menu_type = type(file_to_class_name, (bpy.types.Menu,), {
+        menu_type = type(class_name, (bpy.types.Menu,), {
             "bl_space_type": 'NODE_EDITOR',
             "bl_label": file_to_label,
             "draw": draw,
         })
         bpy.utils.register_class(menu_type)
 
-        __FUNCTION_MENUES.append(file_to_class_name)
+        __FUNCTION_MENUES[file] = class_name
     
-    return file_to_class_name
+    return __FUNCTION_MENUES[file]
 
-__STRUCT_MENUES = []
+__STRUCT_MENUES = {}
 
 def get_structs_menu(file):
     global __STRUCT_MENUES
-    file_to_class_name = 'MALT_MT_structs_' + file.replace('\\', '_').replace('/', '_').replace('.glsl', '').replace(' ', '').replace('.','_')
-    file_to_label = file.replace('\\', '/').replace('/', ' - ').replace('.glsl', '').replace('_',' ')
 
-    if file_to_class_name not in __STRUCT_MENUES:
+    if file not in __STRUCT_MENUES:
+        file_to_label = file.replace('\\', '/').replace('/', ' - ').replace('.glsl', '').replace('_',' ')
+        class_name = 'MALT_MT_structs_' + str(len(__STRUCT_MENUES))
+
         def draw(self, context):
             graph = get_pipeline_graph(context)
             if graph:
@@ -1008,16 +1009,16 @@ def get_structs_menu(file):
                             'struct_type' : repr(name)
                         })
 
-        menu_type = type(file_to_class_name, (bpy.types.Menu,), {
+        menu_type = type(class_name, (bpy.types.Menu,), {
             "bl_space_type": 'NODE_EDITOR',
             "bl_label": file_to_label,
             "draw": draw,
         })
         bpy.utils.register_class(menu_type)
 
-        __STRUCT_MENUES.append(file_to_class_name)
+        __STRUCT_MENUES[file] = class_name
     
-    return file_to_class_name
+    return __STRUCT_MENUES[file]
 
 
 class MALT_MT_NodeFunctions(bpy.types.Menu):
