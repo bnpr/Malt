@@ -105,6 +105,7 @@ def setup_all_ids():
     setup_parameters(bpy.data.materials)
     setup_parameters(bpy.data.meshes)
     setup_parameters(bpy.data.curves)
+    setup_parameters(bpy.data.metaballs)
     setup_parameters(bpy.data.lights)
     MaltMaterial.track_shader_changes(force_update=True)
 
@@ -120,6 +121,7 @@ def setup_parameters(ids):
         bpy.types.Material : pipeline_parameters.material,
         bpy.types.Mesh : pipeline_parameters.mesh,
         bpy.types.Curve : pipeline_parameters.mesh,
+        bpy.types.MetaBall : pipeline_parameters.mesh,
         bpy.types.Light : pipeline_parameters.light,
     }
 
@@ -152,6 +154,7 @@ def depsgraph_update(scene, depsgraph):
         bpy.types.Material : bpy.data.materials,
         bpy.types.Mesh : bpy.data.meshes,
         bpy.types.Curve : bpy.data.curves,
+        bpy.types.MetaBall : bpy.data.metaballs,
         bpy.types.Light : bpy.data.lights,
     }
     for update in depsgraph.updates:

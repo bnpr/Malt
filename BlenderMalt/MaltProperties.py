@@ -476,7 +476,7 @@ class MALT_PT_Mesh(MALT_PT_Base):
     bl_context = "data"
     @classmethod
     def get_malt_property_owner(cls, context):
-        if context.object and context.object.data and context.object.type in ('MESH', 'CURVE', 'SURFACE','FONT'):
+        if context.object and context.object.data and context.object.type in ('MESH', 'CURVE', 'SURFACE', 'META', 'FONT'):
             return context.object.data
 
 class MALT_PT_Light(MALT_PT_Base):
@@ -530,6 +530,7 @@ def register():
     bpy.types.Material.malt_parameters = bpy.props.PointerProperty(type=MaltPropertyGroup)
     bpy.types.Mesh.malt_parameters = bpy.props.PointerProperty(type=MaltPropertyGroup)
     bpy.types.Curve.malt_parameters = bpy.props.PointerProperty(type=MaltPropertyGroup)
+    bpy.types.MetaBall.malt_parameters = bpy.props.PointerProperty(type=MaltPropertyGroup)
     bpy.types.Light.malt_parameters = bpy.props.PointerProperty(type=MaltPropertyGroup)
 
 

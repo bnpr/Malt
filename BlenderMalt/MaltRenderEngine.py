@@ -92,7 +92,7 @@ class MaltRenderEngine(bpy.types.RenderEngine):
 
         #Objects
         def add_object(obj, matrix):
-            if obj.display_type in ['TEXTURED','SOLID'] and obj.type in ('MESH','CURVE','SURFACE','FONT'):
+            if obj.display_type in ['TEXTURED','SOLID'] and obj.type in ('MESH','CURVE','SURFACE','META', 'FONT'):
                 name = MaltMeshes.get_mesh_name(obj)
                 if depsgraph.mode == 'RENDER':
                     name = '___F12___' + name
