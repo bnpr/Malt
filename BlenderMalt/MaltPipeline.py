@@ -51,6 +51,12 @@ class MaltPipeline(bpy.types.PropertyGroup):
         import logging as log
         log.info('Blender {} {} {}'.format(bpy.app.version_string, bpy.app.build_branch, bpy.app.build_hash))
         params = bridge.get_parameters()
+        
+        #BlenderMalt parameters
+        from Malt import Parameter
+        params.world['Viewport.Resolution Scale'] = Parameter.Parameter(1.0 , Parameter.Type.FLOAT)
+        params.world['Viewport.Smooth Interpolation'] = Parameter.Parameter(True , Parameter.Type.BOOL)
+
         set_bridge(bridge)
         set_pipeline_parameters(params)
         

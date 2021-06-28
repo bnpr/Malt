@@ -279,7 +279,16 @@ class MaltRenderEngine(bpy.types.RenderEngine):
             overrides.append('Preview')
 
         scene = self.get_scene(context, depsgraph, self.request_scene_update, overrides)
-        resolution = context.region.width, context.region.height
+        viewport_resolution = context.region.width, context.region.height
+        resolution = viewport_resolution
+
+        resolution_scale = scene.world_parameters['Viewport.Resolution Scale']
+        mag_filter = GL.GL_LINEAR
+        if resolution_scale != 1.0:
+            w,h = resolution
+            resolution = round(w*resolution_scale), round(h*resolution_scale)
+            smooth_interpolation = scene.world_parameters['Viewport.Smooth Interpolation']
+            mag_filter = GL.GL_LINEAR if smooth_interpolation else GL.GL_NEAREST
 
         if self.request_new_frame:
             self.bridge.render(self.bridge_id, resolution, scene, self.request_scene_update)
@@ -304,13 +313,13 @@ class MaltRenderEngine(bpy.types.RenderEngine):
         fbo = GL.gl_buffer(GL.GL_INT, 1)
         GL.glGetIntegerv(GL.GL_FRAMEBUFFER_BINDING, fbo)
         
-        render_texture = Texture(resolution, GL.GL_RGBA32F, GL.GL_FLOAT, pixels)
+        render_texture = Texture(resolution, GL.GL_RGBA32F, GL.GL_FLOAT, pixels, mag_filter=mag_filter)
         
         self.bind_display_space_shader(depsgraph.scene_eval)
-        if self.display_draw is None or self.display_draw.resolution != resolution:
+        if self.display_draw is None or self.display_draw.resolution != viewport_resolution:
             if self.display_draw:
                 self.display_draw.gl_delete()
-            self.display_draw = DisplayDraw(resolution)
+            self.display_draw = DisplayDraw(viewport_resolution)
         self.display_draw.draw(fbo, render_texture)
         self.unbind_display_space_shader()
 
