@@ -152,8 +152,10 @@ def shader_preprocessor(shader_source, include_directories=[], definitions=[]):
 
     output = StringIO()
     preprocessor = Preprocessor()
+    preprocessor.path = []
     for directory in include_directories:
         preprocessor.add_path(directory)
+    preprocessor.rewrite_paths = []
     for definition in definitions:
         preprocessor.define(definition)
     preprocessor.parse(shader_source)
