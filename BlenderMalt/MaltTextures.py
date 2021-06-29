@@ -61,6 +61,18 @@ def __load_gradient(texture):
     nearest = texture.color_ramp.interpolation == 'CONSTANT'
     MaltPipeline.get_bridge().load_gradient(texture.name_full, pixels, nearest)
     return True
+
+def copy_color_ramp(old, new):
+    new.color_mode = old.color_mode
+    new.hue_interpolation = old.hue_interpolation
+    new.interpolation = old.interpolation
+    while len(new.elements) > len(old.elements):
+        new.elements.remove(new.elements[len(new.elements)-1])
+    for i, o in enumerate(old.elements):
+        n = new.elements[i] if i < len(new.elements) else new.elements.new(o.position) 
+        n.position = o.position
+        n.color = o.color[:]
+        n.alpha = o.alpha
     
 def reset_textures():
     global __TEXTURES

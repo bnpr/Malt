@@ -105,15 +105,19 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
             if parameter.type == Type.GRADIENT:
                 if name not in self.gradients:
                     self.gradients.add().name = name
+                    # Load gradient from material nodes (backward compatibility)
+                    if isinstance(self.id_data, bpy.types.Material):
+                        material = self.id_data
+                        if material.use_nodes and name in material.node_tree.nodes:
+                            self.gradients[name].texture = bpy.data.textures.new('malt_color_ramp', 'BLEND')
+                            self.gradients[name].texture.use_color_ramp = True
+                            old = material.node_tree.nodes[name].color_ramp
+                            new = self.gradients[name].texture.color_ramp
+                            MaltTextures.copy_color_ramp(old, new)
+                            self.gradients[name].texture.update_tag()
                 if type_changed or self.gradients[name] == rna[name]['default']:
                     if isinstance(parameter.default_value, bpy.types.Texture):
                         self.gradients.texture = parameter.default_value
-                '''
-                if self.gradients[name].texture is None and False:
-                    self.gradients[name].texture = bpy.data.textures.new('malt_color_ramp', 'BLEND')
-                    self.gradients[name].texture.use_color_ramp = True
-                    self.gradients[name].texture.color_ramp.elements[0].alpha = 1.0
-                '''
 
             if parameter.type == Type.MATERIAL:
                 if name not in self.materials:
@@ -168,6 +172,8 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                     setup_parameter(key, parameter)
         
         for key, value in rna.items():
+            if rna[key]['active'] == False:
+                continue
             #TODO: for now we assume we want floats as colors
             # ideally it should be opt-in in the UI,
             # so we can give them propper min/max values
