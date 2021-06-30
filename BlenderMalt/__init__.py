@@ -45,6 +45,16 @@ class OT_MaltPrintError(bpy.types.Operator):
         return {'RUNNING_MODAL'}
 
 
+class OT_MaltRunStandalone(bpy.types.Operator):
+    bl_idname = "wm.malt_run_standalone"
+    bl_label = "Run Malt Standalone"
+
+    def execute(self, context):
+        from . import MaltPipeline
+        MaltPipeline.get_bridge().run_standalone()
+        #bpy.ops.wm.quit_blender()
+        return {'FINISHED'}
+    
 class Preferences(bpy.types.AddonPreferences):
     # this must match the addon name
     bl_idname = __package__
@@ -150,6 +160,7 @@ def get_modules():
 classes=[
     Preferences,
     OT_MaltPrintError,
+    OT_MaltRunStandalone,
     VIEW3D_PT_Malt_Stats,
 ]
 

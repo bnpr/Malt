@@ -47,6 +47,7 @@ class Bridge(object):
 
         self.manager = mp.Manager()
         self.shared_dict = self.manager.dict()
+        self.shared_dict['RUN STANDALONE'] = False
         self.connections = {}
         self.process = None
         self.lost_connection = True
@@ -73,7 +74,7 @@ class Bridge(object):
 
         from . import Server
         self.process = mp.Process(target=Server.main, args=[pipeline_path, malt_to_bridge, self.shared_dict, sys.stdout.log_path, debug_mode])
-        self.process.daemon = True
+        self.process.daemon = False
         self.process.start()
 
         for name, listener in listeners.items():
@@ -86,9 +87,8 @@ class Bridge(object):
 
     
     def __del__(self):
-        if self.process:
+        if self.process and self.shared_dict['RUN STANDALONE'] == False:
             self.process.terminate()
-        
     
     def get_parameters(self):
         return self.parameters
@@ -186,6 +186,10 @@ class Bridge(object):
     def free_viewport_id(self, viewport_id):
         self.viewport_ids.remove(viewport_id)
 
+    @bridge_method
+    def run_standalone(self):
+        self.shared_dict['RUN STANDALONE'] = True
+    
     @bridge_method
     def render(self, viewport_id, resolution, scene, scene_update):
         import Bridge.ipc as ipc

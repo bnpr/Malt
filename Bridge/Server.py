@@ -180,20 +180,21 @@ class Viewport(object):
             self.is_new_frame = False
             self.needs_more_samples = self.pipeline.needs_more_samples()
             
-            pbos = None
-            
-            if len(self.pbos_inactive) > 0:
-                pbos = self.pbos_inactive.pop()
-            else:
-                pbos = {}
-            
-            for key, texture in self.result.items():
-                if texture and key in self.buffers.keys():
-                    if key not in pbos.keys():
-                        pbos[key] = PBO()
-                    pbos[key].setup(texture, self.buffers[key])
-            
-            self.pbos_active.append(pbos)
+            if self.buffers is not None:
+                pbos = None
+                
+                if len(self.pbos_inactive) > 0:
+                    pbos = self.pbos_inactive.pop()
+                else:
+                    pbos = {}
+                
+                for key, texture in self.result.items():
+                    if texture and key in self.buffers.keys():
+                        if key not in pbos.keys():
+                            pbos[key] = PBO()
+                        pbos[key].setup(texture, self.buffers[key])
+                
+                self.pbos_active.append(pbos)
             
         if len(self.pbos_active) > 0:
             for i, pbos in reversed(list(enumerate(self.pbos_active))):
@@ -274,6 +275,14 @@ def main(pipeline_path, connection_addresses, shared_dic, log_path, debug_mode):
     last_exception = ''
     repeated_exception = 0
 
+    scene = None
+    standalone = None
+    import pyrr
+    from pyrr import vector, euler, matrix44
+    cam_pos = pyrr.Vector3()
+    cam_rot = pyrr.euler.create()
+    cursor_pos = 0,0
+
     while glfw.window_should_close(window) == False:
         
         try:
@@ -287,135 +296,196 @@ def main(pipeline_path, connection_addresses, shared_dic, log_path, debug_mode):
 
             glfw.poll_events()
 
-            while connections['MATERIAL'].poll():
-                msg = connections['MATERIAL'].recv()
-                log.debug('COMPILE MATERIAL : {}'.format(msg))
-                path = msg['path']
-                search_paths = msg['search_paths']
-                material = Bridge.Material.Material(path, pipeline, search_paths)
-                connections['MATERIAL'].send(material)
-            
-            while connections['SHADER REFLECTION'].poll():
-                msg = connections['SHADER REFLECTION'].recv()
-                log.debug('REFLECT SHADER : {}'.format(msg))
-                paths = msg['paths']
-                results = {}
-                from Malt.GL.Shader import GLSL_Reflection, shader_preprocessor
-                for path in paths:
-                    root_path = os.path.dirname(path)
-                    src = '#include "{}"\n'.format(path)
-                    src = shader_preprocessor(src, [root_path])
-                    reflection = {
-                        'structs':  GLSL_Reflection.reflect_structs(src, root_path),
-                        'functions':  GLSL_Reflection.reflect_functions(src, root_path),
-                        'paths': set([path])
-                    }
-                    for struct in reflection['structs'].values(): reflection['paths'].add(struct['file'])
-                    for function in reflection['functions'].values(): reflection['paths'].add(function['file'])
-                    results[path] = reflection
-                connections['SHADER REFLECTION'].send(results)
-            
-            while connections['MESH'].poll():
-                msg = connections['MESH'].recv()
-                msg_log = copy.copy(msg)
-                msg_log['data'] = None
-                log.debug('LOAD MESH : {}'.format(msg_log))
-                Bridge.Mesh.load_mesh(msg)
-            
-            while connections['TEXTURE'].poll():
-                msg = connections['TEXTURE'].recv()
-                log.debug('LOAD TEXTURE : {}'.format(msg))
-                name = msg['name']
-                resolution = msg['resolution']
-                channels = msg['channels']
-                buffer_name = msg['buffer_name']
-                sRGB = msg['sRGB']
-                w,h = resolution
-                size = w*h*channels
-                buffer = ipc.SharedMemoryRef(buffer_name, size*ctypes.sizeof(ctypes.c_float))
-                float_buffer = (ctypes.c_float*size).from_address(buffer.c.data)
-                Bridge.Texture.load_texture(name, resolution, channels, float_buffer, sRGB)
-                connections['TEXTURE'].send('COMPLETE')
-            
-            while connections['GRADIENT'].poll():
-                msg = connections['GRADIENT'].recv()
-                msg_log = copy.copy(msg)
-                msg_log['pixels'] = None
-                log.debug('LOAD GRADIENT : {}'.format(msg_log))
-                name = msg['name']
-                pixels = msg['pixels']
-                nearest = msg['nearest']
-                Bridge.Texture.load_gradient(name, pixels, nearest)
-            
-            #TODO: Bad workaround to make sure the scene assets are loaded
-            if connections['RENDER'].poll():
-                needs_loading = False
-                for key in ['MATERIAL','MESH','TEXTURE','GRADIENT']:
-                    if connections[key].poll():
-                        needs_loading = True
-                if needs_loading:
-                    continue
-            
-            setup_viewports = {}
-            while connections['RENDER'].poll():
-                msg = connections['RENDER'].recv()
-                log.debug('SETUP RENDER : {}'.format(msg))
-                setup_viewports[msg['viewport_id']] = msg
+            run_standalone = shared_dic['RUN STANDALONE']
 
-            for msg in setup_viewports.values():
-                viewport_id = msg['viewport_id']
-                resolution = msg['resolution']
-                scene = msg['scene']
-                scene_update = msg['scene_update']
-                buffer_names = msg['buffer_names']
-                w,h = resolution
-                buffers = {}
-                for key, buffer_name in buffer_names.items():
-                    if buffer_name:
-                        buffers[key] = ipc.SharedMemoryRef(buffer_name, w*h*4*4)
+            if run_standalone == False:
+                while connections['MATERIAL'].poll():
+                    msg = connections['MATERIAL'].recv()
+                    log.debug('COMPILE MATERIAL : {}'.format(msg))
+                    path = msg['path']
+                    search_paths = msg['search_paths']
+                    material = Bridge.Material.Material(path, pipeline, search_paths)
+                    connections['MATERIAL'].send(material)
+                
+                while connections['SHADER REFLECTION'].poll():
+                    msg = connections['SHADER REFLECTION'].recv()
+                    log.debug('REFLECT SHADER : {}'.format(msg))
+                    paths = msg['paths']
+                    results = {}
+                    from Malt.GL.Shader import GLSL_Reflection, shader_preprocessor
+                    for path in paths:
+                        root_path = os.path.dirname(path)
+                        src = '#include "{}"\n'.format(path)
+                        src = shader_preprocessor(src, [root_path])
+                        reflection = {
+                            'structs':  GLSL_Reflection.reflect_structs(src, root_path),
+                            'functions':  GLSL_Reflection.reflect_functions(src, root_path),
+                            'paths': set([path])
+                        }
+                        for struct in reflection['structs'].values(): reflection['paths'].add(struct['file'])
+                        for function in reflection['functions'].values(): reflection['paths'].add(function['file'])
+                        results[path] = reflection
+                    connections['SHADER REFLECTION'].send(results)
+                
+                while connections['MESH'].poll():
+                    msg = connections['MESH'].recv()
+                    msg_log = copy.copy(msg)
+                    msg_log['data'] = None
+                    log.debug('LOAD MESH : {}'.format(msg_log))
+                    Bridge.Mesh.load_mesh(msg)
+                
+                while connections['TEXTURE'].poll():
+                    msg = connections['TEXTURE'].recv()
+                    log.debug('LOAD TEXTURE : {}'.format(msg))
+                    name = msg['name']
+                    resolution = msg['resolution']
+                    channels = msg['channels']
+                    buffer_name = msg['buffer_name']
+                    sRGB = msg['sRGB']
+                    w,h = resolution
+                    size = w*h*channels
+                    buffer = ipc.SharedMemoryRef(buffer_name, size*ctypes.sizeof(ctypes.c_float))
+                    float_buffer = (ctypes.c_float*size).from_address(buffer.c.data)
+                    Bridge.Texture.load_texture(name, resolution, channels, float_buffer, sRGB)
+                    connections['TEXTURE'].send('COMPLETE')
+                
+                while connections['GRADIENT'].poll():
+                    msg = connections['GRADIENT'].recv()
+                    msg_log = copy.copy(msg)
+                    msg_log['pixels'] = None
+                    log.debug('LOAD GRADIENT : {}'.format(msg_log))
+                    name = msg['name']
+                    pixels = msg['pixels']
+                    nearest = msg['nearest']
+                    Bridge.Texture.load_gradient(name, pixels, nearest)
+                
+                #TODO: Bad workaround to make sure the scene assets are loaded
+                if connections['RENDER'].poll():
+                    needs_loading = False
+                    for key in ['MATERIAL','MESH','TEXTURE','GRADIENT']:
+                        if connections[key].poll():
+                            needs_loading = True
+                    if needs_loading:
+                        continue
+                
+                setup_viewports = {}
+                while connections['RENDER'].poll():
+                    msg = connections['RENDER'].recv()
+                    log.debug('SETUP RENDER : {}'.format(msg))
+                    setup_viewports[msg['viewport_id']] = msg
 
-                if viewport_id not in viewports:
-                    viewports[viewport_id] = Viewport(pipeline_class(), viewport_id == 0)
+                for msg in setup_viewports.values():
+                    viewport_id = msg['viewport_id']
+                    resolution = msg['resolution']
+                    scene = msg['scene']
+                    scene_update = msg['scene_update']
+                    buffer_names = msg['buffer_names']
+                    w,h = resolution
+                    buffers = {}
+                    for key, buffer_name in buffer_names.items():
+                        if buffer_name:
+                            buffers[key] = ipc.SharedMemoryRef(buffer_name, w*h*4*4)
 
-                viewports[viewport_id].setup(buffers, resolution, scene, scene_update)
-                shared_dic[(viewport_id, 'FINISHED')] = False
-                glfw.set_window_size(window, w, h)
-                active_viewport = viewports[viewport_id]
-            
-            active_viewports = {}
-            render_finished = True
-            for v_id, v in viewports.items():
-                if v.needs_more_samples:
-                    active_viewports[v_id] = v
-                has_finished = v.render()
-                if has_finished == False:
-                    render_finished = False
-                shared_dic[(v_id, 'READ_RESOLUTION')] = v.read_resolution
-                if has_finished and shared_dic[(v_id, 'FINISHED')] == False:
-                    shared_dic[(v_id, 'FINISHED')] = True
-            
-            if active_viewport and active_viewport.result:
+                    if viewport_id not in viewports:
+                        viewports[viewport_id] = Viewport(pipeline_class(), viewport_id == 0)
+
+                    viewports[viewport_id].setup(buffers, resolution, scene, scene_update)
+                    shared_dic[(viewport_id, 'FINISHED')] = False
+                    glfw.set_window_size(window, w, h)
+                    active_viewport = viewports[viewport_id]
+                
+                active_viewports = {}
+                render_finished = True
+                for v_id, v in viewports.items():
+                    if v.needs_more_samples:
+                        active_viewports[v_id] = v
+                    has_finished = v.render()
+                    if has_finished == False:
+                        render_finished = False
+                    shared_dic[(v_id, 'READ_RESOLUTION')] = v.read_resolution
+                    if has_finished and shared_dic[(v_id, 'FINISHED')] == False:
+                        shared_dic[(v_id, 'FINISHED')] = True
+                
+                if active_viewport and active_viewport.result:
+                    glEnable(GL_FRAMEBUFFER_SRGB)
+                    glDisable(GL_DEPTH_TEST)
+                    glDisable(GL_BLEND)
+                    GL.glBindFramebuffer(GL.GL_FRAMEBUFFER, 0)
+                    pipeline.copy_shader.textures['IN_0'] = active_viewport.result['COLOR']
+                    pipeline.copy_shader.bind()
+                    pipeline.quad.draw()
+                    glDisable(GL_FRAMEBUFFER_SRGB)
+                
+                if render_finished:
+                    glfw.swap_interval(1)
+                else:
+                    glfw.swap_interval(0)
+                glfw.swap_buffers(window)
+
+                if len(active_viewports) > 0:
+                    stats = ''
+                    for v_id, v in active_viewports.items():
+                        stats += "Viewport ({}):\n{}\n\n".format(v_id, v.get_print_stats())
+                    shared_dic['STATS'] = stats
+                    log.debug('STATS: {} '.format(stats))
+            else:
+                resolution = 1920, 1080
+                needs_setup = False
+                if standalone is None:
+                    standalone = Viewport(pipeline_class(), False)
+                    standalone.setup(None, resolution, scene, True)
+                    glfw.swap_interval(1)
+                    needs_setup = True
+                if standalone.resolution != resolution:
+                    needs_setup = True
+
+                rot_speed = 10
+                x, y = glfw.get_cursor_pos(window)
+                c_x, c_y = cursor_pos
+                d_x = x - c_x
+                d_y = y - c_y
+                cam_rot[2] += d_x * rot_speed
+                cam_rot[1] += d_y * rot_speed
+                rot_mat = pyrr.matrix44.create_from_eulers(cam_rot)
+
+                move_speed = 0.1
+                d_pos = pyrr.Vector3([0]*3)
+                d_pos[1] += glfw.get_key(window, glfw.KEY_W) * move_speed
+                d_pos[1] -= glfw.get_key(window, glfw.KEY_S) * move_speed
+                d_pos[0] -= glfw.get_key(window, glfw.KEY_A) * move_speed
+                d_pos[0] += glfw.get_key(window, glfw.KEY_D) * move_speed
+                d_pos[2] += glfw.get_key(window, glfw.KEY_E) * move_speed
+                d_pos[2] -= glfw.get_key(window, glfw.KEY_Q) * move_speed
+                d_pos = (pyrr.matrix33.create_from_matrix44(rot_mat) * d_pos)[0]
+                cam_pos += d_pos
+                
+                aspect = standalone.resolution[0] / standalone.resolution[1]
+
+                camera_matrix = rot_mat * pyrr.matrix44.create_from_translation(cam_pos)
+                projection_matrix = pyrr.matrix44.create_perspective_projection(90 / aspect, aspect, 0.1, 100)
+                
+                if camera_matrix != scene.camera.camera_matrix:
+                    scene.camera.camera_matrix
+                    needs_setup = True
+                if projection_matrix != scene.camera.projection_matrix:
+                    scene.camera.projection_matrix
+                    needs_setup = True
+                
+                if needs_setup:
+                    standalone.setup(None, resolution, scene, False)
+                
+                standalone.render()
+
                 glEnable(GL_FRAMEBUFFER_SRGB)
                 glDisable(GL_DEPTH_TEST)
                 glDisable(GL_BLEND)
                 GL.glBindFramebuffer(GL.GL_FRAMEBUFFER, 0)
-                pipeline.copy_shader.textures['IN_0'] = active_viewport.result['COLOR']
+                pipeline.copy_shader.textures['IN_0'] = standalone.result['COLOR']
                 pipeline.copy_shader.bind()
                 pipeline.quad.draw()
                 glDisable(GL_FRAMEBUFFER_SRGB)
-            
-            if render_finished:
-                glfw.swap_interval(1)
-            else:
-                glfw.swap_interval(0)
-            glfw.swap_buffers(window)
 
-            if len(active_viewports) > 0:
-                stats = ''
-                for v_id, v in active_viewports.items():
-                    stats += "Viewport ({}):\n{}\n\n".format(v_id, v.get_print_stats())
-                shared_dic['STATS'] = stats
-                log.debug('STATS: {} '.format(stats))
+                glfw.swap_buffers(window)            
             
             if PROFILE:
                 profiler.disable()

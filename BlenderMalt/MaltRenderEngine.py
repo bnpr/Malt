@@ -8,6 +8,7 @@ from Malt import Scene
 from Malt.GL import GL
 from Malt.GL.Texture import Texture
 from . import MaltPipeline, MaltMeshes, MaltMaterial, CBlenderMalt
+import time
 
 PROFILE = False
 
@@ -32,6 +33,7 @@ class MaltRenderEngine(bpy.types.RenderEngine):
         self.profiling_data = io.StringIO()
         self.bridge = MaltPipeline.get_bridge()
         self.bridge_id = self.bridge.get_viewport_id() if self.bridge else None
+        self.last_frame_time = None
 
     def __del__(self):
         try:
@@ -267,6 +269,13 @@ class MaltRenderEngine(bpy.types.RenderEngine):
             if self.request_new_frame:
                 self.profiling_data = io.StringIO()
         
+        current_time = time.process_time()
+        target_time = 1.0 / 30
+        if self.last_frame_time:
+            delta_time = current_time - self.last_frame_time
+            if target_time - delta_time > 0.008:
+                time.sleep(target_time - delta_time)
+        
         if self.bridge is not MaltPipeline.get_bridge():
             #The Bridge has been reset
             self.bridge = MaltPipeline.get_bridge()
@@ -322,6 +331,8 @@ class MaltRenderEngine(bpy.types.RenderEngine):
             self.display_draw = DisplayDraw(viewport_resolution)
         self.display_draw.draw(fbo, render_texture)
         self.unbind_display_space_shader()
+
+        self.last_frame_time = time.process_time() 
 
         if PROFILE:
             profiler.disable()
