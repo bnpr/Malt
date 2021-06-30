@@ -127,6 +127,7 @@ struct LineOutput
 LineOutput line_ex(
     vec3 position,
     vec3 normal,
+    vec3 true_normal,
     float line_width,
     int line_steps,
     int LINE_DEPTH_MODE,
@@ -147,11 +148,9 @@ LineOutput line_ex(
     _sampling_pattern(offsets);
     vec2 offset = vec2(line_width) / RESOLUTION;
 
-   // vec3 normal = texture(normal_texture, uv).xyz;
-    vec3 normal_camera = transform_normal(CAMERA, normal);
+    vec3 true_normal_camera = transform_normal(CAMERA, true_normal);
     float depth = texture(depth_texture, uv)[depth_channel];
     position = transform_point(CAMERA, position);
-    //vec3 position = screen_to_camera(uv, depth);
     float id = texture(id_texture, uv)[id_channel];
 
     for(int i = 0; i < offsets.length(); i++)
@@ -171,7 +170,7 @@ LineOutput line_ex(
             {
                 //TODO: Use ray-plane intersection here too.
                 delta_distance = abs(sampled_position.z - position.z);
-                delta_distance *= dot(normal, view_direction());
+                delta_distance *= dot(true_normal, view_direction());
             }
             else
             {
@@ -183,7 +182,7 @@ LineOutput line_ex(
                 float expected_distance = ray_plane_intersection
                 (
                     ray_origin, ray_direction,
-                    position, normal_camera
+                    position, true_normal_camera
                 );
 
                 delta_distance = abs(distance(sampled_position, ray_origin) - expected_distance);

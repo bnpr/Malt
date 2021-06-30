@@ -378,7 +378,7 @@ float get_line_simple(float width, float depth_threshold, float normal_threshold
     {
         LineOutput lo = line_ex(
             POSITION,
-            get_normal(),
+            get_normal(), true_normal(),
             1,
             1,
             LINE_DEPTH_MODE_NEAR,
@@ -413,7 +413,7 @@ float get_line_advanced(
     {
         LineOutput lo = line_ex(
             POSITION,
-            get_normal(),
+            get_normal(), true_normal(),
             1.0,
             1,
             LINE_DEPTH_MODE_NEAR,
