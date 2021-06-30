@@ -389,6 +389,7 @@ def main(pipeline_path, connection_addresses, shared_dic, log_path, debug_mode):
                     if viewport_id not in viewports:
                         viewports[viewport_id] = Viewport(pipeline_class(), viewport_id == 0)
 
+                    buffers = None
                     viewports[viewport_id].setup(buffers, resolution, scene, scene_update)
                     shared_dic[(viewport_id, 'FINISHED')] = False
                     glfw.set_window_size(window, w, h)

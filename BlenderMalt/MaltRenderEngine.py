@@ -262,19 +262,24 @@ class MaltRenderEngine(bpy.types.RenderEngine):
     # Blender will draw overlays for selection and editing on top of the
     # rendered image automatically.
     def view_draw(self, context, depsgraph):
+        '''
         profiler = cProfile.Profile()
         global PROFILE
         if PROFILE:
             profiler.enable()
             if self.request_new_frame:
                 self.profiling_data = io.StringIO()
+        '''
         
-        current_time = time.process_time()
+        current_time = time.perf_counter()
         target_time = 1.0 / 30
         if self.last_frame_time:
             delta_time = current_time - self.last_frame_time
-            if target_time - delta_time > 0.008:
-                time.sleep(target_time - delta_time)
+            print(f'BLENDER DELTA TIME : {int(delta_time * 1000)} ms')
+            #if target_time - delta_time > 0.008:
+            #    time.sleep(target_time - delta_time)
+        self.last_frame_time = time.perf_counter()
+        
         
         if self.bridge is not MaltPipeline.get_bridge():
             #The Bridge has been reset
@@ -304,6 +309,7 @@ class MaltRenderEngine(bpy.types.RenderEngine):
             self.request_new_frame = False
             self.request_scene_update = False
 
+        return
         buffers, finished, read_resolution = self.bridge.render_result(self.bridge_id)
         pixels = buffers['COLOR']
 
@@ -331,8 +337,6 @@ class MaltRenderEngine(bpy.types.RenderEngine):
             self.display_draw = DisplayDraw(viewport_resolution)
         self.display_draw.draw(fbo, render_texture)
         self.unbind_display_space_shader()
-
-        self.last_frame_time = time.process_time() 
 
         if PROFILE:
             profiler.disable()
