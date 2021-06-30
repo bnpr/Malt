@@ -27,6 +27,17 @@ vec3 transform_normal(mat4 matrix, vec3 normal)
     return normalize(m * normal);
 }
 
+vec3 true_normal()
+{
+    #ifdef PIXEL_SHADER
+    {
+        return normalize(cross(dFdx(POSITION), dFdy(POSITION)));
+    }
+    #endif //PIXEL_SHADER
+    
+    return NORMAL;
+}
+
 //TODO: pass TBN as parameter
 vec3 sample_normal_map_ex(sampler2D normal_texture, int uv_index, vec2 uv)
 {
