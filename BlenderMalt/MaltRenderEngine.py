@@ -1,6 +1,6 @@
 # Copyright (c) 2020 BlenderNPR and contributors. MIT license. 
 
-import ctypes
+import ctypes, time, platform
 import cProfile, pstats, io
 import bpy
 from mathutils import Vector,Matrix,Quaternion
@@ -10,6 +10,18 @@ from Malt.GL.Texture import Texture
 from . import MaltPipeline, MaltMeshes, MaltMaterial, CBlenderMalt
 
 PROFILE = False
+
+WINM = None
+if platform.system() == 'Windows':
+    WINM = ctypes.WinDLL('winmm')
+
+def high_res_sleep(seconds):
+    if WINM:
+        WINM.timeBeginPeriod(1)
+        time.sleep(seconds)
+        WINM.timeEndPeriod(1)
+    else:
+        time.sleep(seconds)
 
 class MaltRenderEngine(bpy.types.RenderEngine):
     # These three members are used by blender to set up the
@@ -32,6 +44,7 @@ class MaltRenderEngine(bpy.types.RenderEngine):
         self.profiling_data = io.StringIO()
         self.bridge = MaltPipeline.get_bridge()
         self.bridge_id = self.bridge.get_viewport_id() if self.bridge else None
+        self.last_frame_time = 0
 
     def __del__(self):
         try:
@@ -294,6 +307,15 @@ class MaltRenderEngine(bpy.types.RenderEngine):
             self.bridge.render(self.bridge_id, resolution, scene, self.request_scene_update)
             self.request_new_frame = False
             self.request_scene_update = False
+        
+        target_fps = context.preferences.addons['BlenderMalt'].preferences.render_fps_cap
+        if target_fps > 0:
+            delta_time = time.perf_counter() - self.last_frame_time
+            target_delta = 1.0 / target_fps
+            if delta_time < target_delta:
+                high_res_sleep(target_delta - delta_time)
+        
+        self.last_frame_time = time.perf_counter() 
 
         buffers, finished, read_resolution = self.bridge.render_result(self.bridge_id)
         pixels = buffers['COLOR']

@@ -53,6 +53,8 @@ class Preferences(bpy.types.AddonPreferences):
     
     malt_library_path : bpy.props.StringProperty(name="Malt Library Path", subtype='DIR_PATH')
     
+    render_fps_cap : bpy.props.IntProperty(name="Max Viewport Render Framerate", default=0)
+    
     def update_debug_mode(self, context):
         if context.scene.render.engine == 'MALT':
             context.scene.world.malt.update_pipeline(context)
@@ -71,6 +73,7 @@ class Preferences(bpy.types.AddonPreferences):
 
         layout.prop(self, "setup_vs_code")
         layout.prop(self, "malt_library_path")
+        layout.prop(self, "render_fps_cap")
         layout.prop(self, "debug_mode")
 
 class VIEW3D_PT_Malt_Stats(bpy.types.Panel):
