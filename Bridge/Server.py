@@ -1,6 +1,9 @@
 # Copyright (c) 2020 BlenderNPR and contributors. MIT license. 
 
-import ctypes, os, copy
+import os, sys, time, ctypes, os, copy
+import cProfile, pstats, io
+import multiprocessing.connection as connection
+
 import glfw
 
 from Malt.GL import GL
@@ -217,9 +220,6 @@ class Viewport(object):
         
         return self.needs_more_samples == False and len(self.pbos_active) == 0
 
-import os, sys, time
-import cProfile, pstats, io
-import multiprocessing.connection as connection
 
 PROFILE = False
 
