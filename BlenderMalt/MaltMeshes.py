@@ -79,9 +79,9 @@ def load_mesh(object, name):
 
         if(object.original.data.malt_parameters.bools['precomputed_tangents'].boolean):
             m.calc_tangents(uvmap=uv_layer.name)
-            #calc_tangents is so slow there's no point in optimizing this
+            #TODO: Optimize
             packed_tangents = [e for l in m.loops for e in (*l.tangent, l.bitangent_sign)]
-            tangents.append(packed_tangents)
+            tangents.append(bytearray(array.array('f', packed_tangents)))
 
     colors = []
     for i, vertex_color in enumerate(m.vertex_colors):
@@ -96,7 +96,7 @@ def load_mesh(object, name):
         'indices_lengths': [l for l in indices_lengths],
         'normals': bytearray(normals),
         'uvs': [bytearray(u) for u in uvs],
-        'tangents': [bytearray(t) for t in tangents],
+        'tangents': tangents,
         'colors': [bytearray(c) for c in colors],
     }
 
