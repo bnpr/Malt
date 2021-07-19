@@ -5,6 +5,8 @@
 
 #include "Common.glsl"
 
+#define FLT_EPSILON 1.192092896e-07F
+
 vec3 transform_point(mat4 matrix, vec3 point)
 {
     return (matrix * vec4(point, 1.0)).xyz;
@@ -55,9 +57,21 @@ vec3 sample_normal_map_ex(sampler2D normal_texture, int uv_index, vec2 uv)
     return normalize(TBN * tangent);
 }
 
-vec3 sample_normal_map(sampler2D normal_texture, int uv_index)
+vec3 sample_normal_map(sampler2D normal_texture, int uv_index, float scale)
 {
-    return sample_normal_map_ex(normal_texture, uv_index, UV[uv_index]);
+    return sample_normal_map_ex(normal_texture, uv_index, UV[uv_index] * scale);
+}
+
+vec3 surfgrad_from_perturbed_normal(vec3 perturbed_normal)
+{
+    vec3 n = NORMAL;
+    float k = dot(n, perturbed_normal);
+    return (k*n - perturbed_normal)/max(FLT_EPSILON, abs(k));
+}
+
+vec3 resolve_normal_from_surface_gradient(vec3 surface_gradient)
+{
+    return normalize(NORMAL - surface_gradient);
 }
 
 vec3 camera_position()
