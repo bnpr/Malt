@@ -207,5 +207,73 @@ LineOutput line_ex(
     return result;
 }
 
+
+struct LineExpandOutput
+{
+    vec4 color;
+    float depth;
+};
+
+LineExpandOutput line_expand(vec2 uv, int max_width, float aa_offset, 
+                             sampler2D line_color_texture, sampler2D line_width_texture, int line_width_channel,
+                             sampler2D depth_texture, int depth_channel, sampler2D id_texture, int id_channel)
+{
+    vec2 resolution = vec2(textureSize(line_color_texture,0));
+
+    int max_half_width = max_width;
+
+    float depth = texture(depth_texture, uv)[depth_channel];
+    float id = texture(id_texture, uv)[id_channel];
+
+    vec4 line_color = vec4(0);
+    float line_depth = 1.0;
+
+    for(int x = -max_half_width; x <= max_half_width; x++)
+    {
+        for(int y = -max_half_width; y <= max_half_width; y++)
+        {
+            vec2 offset = vec2(x,y);
+            float offset_length = length(offset);
+            vec2 offset_uv = uv + offset / resolution;
+
+            float offset_width = texture(line_width_texture, offset_uv)[line_width_channel];
+
+            if(offset_width > 0 && offset_length <= offset_width / 2.0)
+            {
+                vec4 offset_line_color = texture(line_color_texture, offset_uv);
+                float offset_line_depth = texture(depth_texture, offset_uv)[depth_channel];
+                float offset_line_id = texture(id_texture, offset_uv)[id_channel];
+                
+                float alpha = clamp(offset_width / 2.0 - offset_length + aa_offset, 0.0, 1.0);
+
+                bool override = false;
+
+                if (alpha == 1.0 && offset_line_depth < line_depth)
+                {
+                    override = true;
+                }
+                else if(alpha > line_color.a)
+                {
+                    override = true;
+                }
+
+                if(round(offset_line_id) != round(id) && depth < offset_line_depth)
+                {
+                    override = false;
+                }
+
+                if(override)
+                {
+                    line_color = offset_line_color;
+                    line_color.a *= alpha;
+                    line_depth = offset_line_depth;
+                }
+            }
+        }
+    }
+    
+    return LineExpandOutput(line_color, line_depth);
+}
+
 #endif //LINE_GLSL
 
