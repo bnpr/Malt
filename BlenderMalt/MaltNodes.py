@@ -63,15 +63,17 @@ class MaltTree(bpy.types.NodeTree):
     
     def get_generated_source_dir(self):
         import os, tempfile
-        base_path = '//'
-        if bpy.context.blend_data.is_saved == False:
-            base_path = tempfile.gettempdir()
+        base_path = tempfile.gettempdir()
+        if bpy.context.blend_data.is_saved or self.library:
+            base_path = bpy.path.abspath('//', library=self.library)
         return os.path.join(base_path,'malt-shaders')
 
     def get_generated_source_path(self):
         import os
         file_prefix = 'temp'
-        if bpy.context.blend_data.is_saved:  
+        if self.library:
+            file_prefix = bpy.path.basename(self.library.filepath).split('.')[0]
+        elif bpy.context.blend_data.is_saved:  
             file_prefix = bpy.path.basename(bpy.context.blend_data.filepath).split('.')[0]
         pipeline_graph = self.get_pipeline_graph()
         if pipeline_graph:
@@ -154,8 +156,8 @@ class MaltTree(bpy.types.NodeTree):
                     pass
             
             source = self.get_generated_source()
-            source_dir = bpy.path.abspath(self.get_generated_source_dir())
-            source_path = bpy.path.abspath(self.get_generated_source_path())
+            source_dir = self.get_generated_source_dir()
+            source_path = self.get_generated_source_path()
             import pathlib
             pathlib.Path(source_dir).mkdir(parents=True, exist_ok=True)
             with open(source_path,'w') as f:
