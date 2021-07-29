@@ -189,22 +189,29 @@ def shader_preprocessor(shader_source, include_directories=[], definitions=[]):
 
 def compile_gl_program(vertex, fragment):
     status = gl_buffer(GL_INT,1)
-    length = gl_buffer(GL_INT,1)
-    info_log = gl_buffer(GL_BYTE, 1024)
-
     error = ""
 
     def compile_shader (source, shader_type):
         shader = glCreateShader(shader_type)
-        glShaderSource(shader, source)
+
+        source_ascii = source.encode('ascii')
+
+        print("DEBUG SOURCE -------------------")
+        print(source_ascii)
+
+        import ctypes
+        c_shader = GLuint(shader)
+        c_count = GLsizei(1)
+        c_source = (ctypes.c_char_p * 1)(source_ascii)
+        c_length = (GLint * 1)(len(source_ascii))
+
+        glShaderSource.wrappedOperation(c_shader, c_count, c_source, c_length)
+        
         glCompileShader(shader)
 
         glGetShaderiv(shader, GL_COMPILE_STATUS, status)
         if status[0] == GL_FALSE:
-            try: #BGL
-                glGetShaderInfoLog(shader, 1024, length, info_log)
-            except: #PYOPENGL
-                info_log = glGetShaderInfoLog(shader)
+            info_log = glGetShaderInfoLog(shader)
             nonlocal error
             error += 'SHADER COMPILER ERROR :\n' + buffer_to_string(info_log)
         
@@ -223,10 +230,7 @@ def compile_gl_program(vertex, fragment):
     
     glGetProgramiv(program, GL_LINK_STATUS, status)
     if status[0] == GL_FALSE:
-        try: #BGL
-            glGetProgramInfoLog(program, 1024, length, info_log)
-        except: #PYOPENGL
-            info_log = glGetProgramInfoLog(program)
+        info_log = glGetProgramInfoLog(program)
         error += 'SHADER LINKER ERROR :\n' + buffer_to_string(info_log)
 
     return (program, error)
