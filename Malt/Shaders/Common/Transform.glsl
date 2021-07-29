@@ -60,6 +60,18 @@ vec3 sample_normal_map(sampler2D normal_texture, int uv_index)
     return sample_normal_map_ex(normal_texture, uv_index, UV[uv_index]);
 }
 
+vec3 surface_gradient_from_normal(vec3 custom_normal)
+{
+    const float epsilon = 1.192092896e-07f;
+    float NoC = dot(NORMAL, custom_normal);
+    return (NoC * NORMAL - custom_normal) / max(epsilon, abs(NoC));
+}
+
+vec3 normal_from_surface_gradient(vec3 surface_gradient)
+{
+    return normalize(NORMAL - surface_gradient);
+}
+
 vec3 camera_position()
 {
     return transform_point(inverse(CAMERA), vec3(0,0,0));
