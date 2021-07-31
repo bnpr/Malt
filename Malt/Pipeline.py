@@ -17,7 +17,7 @@ SHADER_DIR = path.join(path.dirname(__file__), 'Shaders')
 
 class Pipeline(object):
 
-    GLSL_HEADER = "#version 410 core\n#extension GL_ARB_shading_language_include : enable\n"
+    GLSL_HEADER = "#version 410 core\n"
 
     SHADER_INCLUDE_PATHS = []
 

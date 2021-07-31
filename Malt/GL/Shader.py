@@ -151,7 +151,7 @@ def shader_preprocessor(shader_source, include_directories=[], definitions=[]):
             return True
 
     output = StringIO()
-    preprocessor = Preprocessor()
+    preprocessor = pcpp.Preprocessor()
     preprocessor.path = []
     for directory in include_directories:
         preprocessor.add_path(directory)
@@ -170,6 +170,7 @@ def shader_preprocessor(shader_source, include_directories=[], definitions=[]):
         result = ''
         for line in source.splitlines(keepends=True):
             if line.startswith("#line"):
+                continue
                 if '"' in line:
                     start = line.index('"')
                     end = line.index('"', start + 1)
@@ -181,7 +182,7 @@ def shader_preprocessor(shader_source, include_directories=[], definitions=[]):
             result += line    
         return result
     
-    if hasGLExtension('GL_ARB_shading_language_include') == False:
+    if True:#hasGLExtension('GL_ARB_shading_language_include') == False:
         processed = remove_line_directive_paths(processed)
 
     return processed
@@ -195,9 +196,6 @@ def compile_gl_program(vertex, fragment):
         shader = glCreateShader(shader_type)
 
         source_ascii = source.encode('ascii')
-
-        print("DEBUG SOURCE -------------------")
-        print(source_ascii)
 
         import ctypes
         c_shader = GLuint(shader)
@@ -214,6 +212,12 @@ def compile_gl_program(vertex, fragment):
             info_log = glGetShaderInfoLog(shader)
             nonlocal error
             error += 'SHADER COMPILER ERROR :\n' + buffer_to_string(info_log)
+            import logging
+            logging.error("SHADER ERROR -------------------")
+            logging.error(buffer_to_string(info_log))
+            logging.error("SHADER SOURCE -------------------")
+            logging.error(source_ascii)
+
         
         return shader
 
