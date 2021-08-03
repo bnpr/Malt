@@ -53,7 +53,7 @@ class Preferences(bpy.types.AddonPreferences):
     
     malt_library_path : bpy.props.StringProperty(name="Malt Library Path", subtype='DIR_PATH')
     
-    render_fps_cap : bpy.props.IntProperty(name="Max Viewport Render Framerate", default=0)
+    render_fps_cap : bpy.props.IntProperty(name="Max Viewport Render Framerate", default=30)
     
     def update_debug_mode(self, context):
         if context.scene.render.engine == 'MALT':
