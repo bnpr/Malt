@@ -163,28 +163,25 @@ def shader_preprocessor(shader_source, include_directories=[], definitions=[]):
     processed = output.getvalue()
     #fix LINE directive paths (C:\Path -> C:/Path) to avoid compiler errors/warnings
     processed = processed.replace('\\','/')
-    
-    def remove_line_directive_paths(source):
-        #Paths in line directives are not supported in some drivers, so we replace paths with numbers
-        include_paths = []
-        result = ''
-        for line in source.splitlines(keepends=True):
-            if line.startswith("#line"):
-                if '"' in line:
-                    start = line.index('"')
-                    end = line.index('"', start + 1)
-                    include_path = line[start:end+1]
-                    if include_path not in include_paths:
-                        include_paths.append(include_path)
-                    line = line.replace(include_path, str(include_paths.index(include_path)))
-                    line = line.replace('\n', ' //{}\n'.format(include_path))
-            result += line    
-        return result
-    
-    if hasGLExtension('GL_ARB_shading_language_include') == False:
-        processed = remove_line_directive_paths(processed)
 
     return processed
+
+
+def remove_line_directive_paths(source):
+    #Paths in line directives are not supported in some drivers, so we replace paths with numbers
+    include_paths = []
+    result = ''
+    for line in source.splitlines(keepends=True):
+        if line.startswith("#line"):
+            if '"' in line:
+                start = line.index('"')
+                end = line.index('"', start + 1)
+                include_path = line[start:end+1]
+                if include_path not in include_paths:
+                    include_paths.append(include_path)
+                line = line.replace(include_path, str(include_paths.index(include_path)))
+        result += line    
+    return result
 
 
 def compile_gl_program(vertex, fragment):
@@ -195,16 +192,16 @@ def compile_gl_program(vertex, fragment):
     error = ""
 
     def compile_shader (source, shader_type):
+        if hasGLExtension('GL_ARB_shading_language_include') == False:
+            source = remove_line_directive_paths(source)
+        
         shader = glCreateShader(shader_type)
         glShaderSource(shader, source)
         glCompileShader(shader)
 
         glGetShaderiv(shader, GL_COMPILE_STATUS, status)
         if status[0] == GL_FALSE:
-            try: #BGL
-                glGetShaderInfoLog(shader, 1024, length, info_log)
-            except: #PYOPENGL
-                info_log = glGetShaderInfoLog(shader)
+            info_log = glGetShaderInfoLog(shader)
             nonlocal error
             error += 'SHADER COMPILER ERROR :\n' + buffer_to_string(info_log)
         
@@ -223,10 +220,7 @@ def compile_gl_program(vertex, fragment):
     
     glGetProgramiv(program, GL_LINK_STATUS, status)
     if status[0] == GL_FALSE:
-        try: #BGL
-            glGetProgramInfoLog(program, 1024, length, info_log)
-        except: #PYOPENGL
-            info_log = glGetProgramInfoLog(program)
+        info_log = glGetProgramInfoLog(program)
         error += 'SHADER LINKER ERROR :\n' + buffer_to_string(info_log)
 
     return (program, error)
