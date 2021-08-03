@@ -281,7 +281,7 @@ class SourceTranspiler():
         pass
 
     @classmethod
-    def io_parameter_reference(self, parameter_name):
+    def io_parameter_reference(self, parameter_name, io_type):
         return parameter_name
 
     @classmethod
@@ -382,8 +382,11 @@ class PythonTranspiler(SourceTranspiler):
         return f'{node_name}_parameters["{parameter_name}"]'
 
     @classmethod    
-    def io_parameter_reference(self, parameter_name):
-        return f'IO["{parameter_name}"]'
+    def io_parameter_reference(self, parameter_name, io_type):
+        if io_type == 'out':
+            return f'OUT["{parameter_name}"]'
+        else:
+            return f'IN["{parameter_name}"]'
 
     @classmethod
     def call(self, function, name, parameters=[]):
@@ -779,7 +782,8 @@ class MaltIONode(bpy.types.Node, MaltNode):
         return graph.graph_IO[self.io_type]
 
     def get_source_socket_reference(self, socket):
-        return self.id_data.get_transpiler().io_parameter_reference(socket.name)
+        io = 'out' if self.is_output else 'in'
+        return self.id_data.get_transpiler().io_parameter_reference(socket.name, io)
     
     def get_source_code(self, transpiler):
         code = ''

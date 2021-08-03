@@ -77,7 +77,7 @@ class PythonPipelineGraph(PipelineGraph):
         result.nodes = None
         return result
     
-    def run_source(self, source, PARAMETERS, IO):
+    def run_source(self, source, PARAMETERS, IN, OUT):
         try:
             def run_node(node_name, node_type, parameters):
                 if node_name not in self.node_instances.keys():

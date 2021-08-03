@@ -4,6 +4,7 @@
 #include "bool.glsl"
 #include "float.glsl"
 #include "int.glsl"
+#include "packing.glsl"
 #include "sampler.glsl"
 #include "vec2.glsl"
 #include "vec3.glsl"

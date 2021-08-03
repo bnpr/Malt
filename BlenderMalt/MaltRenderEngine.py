@@ -201,8 +201,15 @@ class MaltRenderEngine(bpy.types.RenderEngine):
         return scene
     
     def update_render_passes(self, scene=None, renderlayer=None):
-        self.register_pass(scene, renderlayer, "Combined", 4, "RGBA", 'COLOR')
-        self.register_pass(scene, renderlayer, "Depth", 1, "R", 'VALUE')
+        render_outputs = self.bridge.render_outputs
+        if 'COLOR' in render_outputs.keys():
+            self.register_pass(scene, renderlayer, "Combined", 4, "RGBA", 'COLOR')
+        if 'DEPTH' in render_outputs.keys():
+            self.register_pass(scene, renderlayer, "Depth", 1, "R", 'VALUE')
+        for output, format in render_outputs.items():
+            if output not in ('COLOR', 'DEPTH'):
+                #TODO: 'COLOR' vs 'VECTOR' ???
+                self.register_pass(scene, renderlayer, output, 4, "RGBA", 'COLOR')
 
     def render(self, depsgraph):
         scene = depsgraph.scene_eval
@@ -235,18 +242,20 @@ class MaltRenderEngine(bpy.types.RenderEngine):
         
         size = self.size_x * self.size_y
 
+        for output, format in self.bridge.render_outputs.items():
+            if output not in ('COLOR', 'DEPTH'):
+                self.add_pass(output, 4, 'RGBA')
+        
+
         result = self.begin_result(0, 0, self.size_x, self.size_y, layer=depsgraph.view_layer.name)
         passes = result.layers[0].passes
-
-        if 'Combined' in passes:
-            combined_pass = passes['Combined']
-            rect_ptr = CBlenderMalt.get_rect_ptr(combined_pass.as_pointer())
-            ctypes.memmove(rect_ptr, buffers['COLOR'], size*4*4)
-
-        if 'Depth' in passes:
-            depth_pass = passes['Depth']
-            rect_ptr = CBlenderMalt.get_rect_ptr(depth_pass.as_pointer())
-            ctypes.memmove(rect_ptr, buffers['DEPTH'], size*4)
+        
+        for key, value in passes.items():
+            buffer_name = key
+            if key == 'Combined': buffer_name = 'COLOR'
+            if key == 'Depth': buffer_name = 'DEPTH'
+            rect_ptr = CBlenderMalt.get_rect_ptr(value.as_pointer())
+            ctypes.memmove(rect_ptr, buffers[buffer_name], size*4*value.channels)
         
         self.end_result(result)
         # Delete the scene. Otherwise we get memory leaks.

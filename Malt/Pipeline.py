@@ -69,6 +69,8 @@ class Pipeline(object):
         
         self.default_shader = None
 
+        self.is_final_render = None
+
     def get_parameters(self):
         return self.parameters
     
@@ -77,6 +79,12 @@ class Pipeline(object):
         for name, graph in self.graphs.items():
             result[name] = graph.get_serializable_copy()
         return result
+    
+    def get_render_outputs(self):
+        return {
+            'COLOR' : GL_RGBA32F,
+            'DEPTH' : GL_R32F,
+        }
     
     def get_samples(self):
         return [(0,0)]
@@ -281,6 +289,7 @@ class Pipeline(object):
 
 
     def render(self, resolution, scene, is_final_render, is_new_frame):
+        self.is_final_render = is_final_render
         if self.resolution != resolution:
             self.resolution = resolution
             self.setup_render_targets(resolution)

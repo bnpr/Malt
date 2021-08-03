@@ -61,6 +61,7 @@ class RenderTarget(object):
                 GL_INT : glClearBufferiv,
                 GL_UNSIGNED_INT : glClearBufferuiv,
                 GL_FLOAT : glClearBufferfv,
+                GL_UNSIGNED_BYTE : glClearBufferfv,
             }
             target = self.targets[i]
             if target is None:

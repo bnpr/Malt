@@ -52,6 +52,7 @@ class Bridge(object):
         self.lost_connection = True
         self.parameters = {}
         self.graphs = {}
+        self.render_outputs = {}
         self.render_buffers = {}
         self.id = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
 
@@ -81,7 +82,7 @@ class Bridge(object):
         
         self.connections = bridge_to_malt
 
-        self.parameters, self.graphs = self.connections['PARAMS'].recv()
+        self.parameters, self.graphs, self.render_outputs = self.connections['PARAMS'].recv()
         self.lost_connection = False
 
     
@@ -196,27 +197,22 @@ class Bridge(object):
         if viewport_id not in self.render_buffers.keys():
             self.render_buffers[viewport_id] = {}
 
-        color_buffer_name = 'MALT_RENDER_BUFFER_' + str(viewport_id) + '_COLOR_' + self.id
-        self.render_buffers[viewport_id]['COLOR'] = ipc.load_shared_buffer(color_buffer_name, ctypes.c_float, w*h*4)
-        color_buffer_full_name = ipc.get_shared_buffer_full_name(color_buffer_name)
-        
-        depth_buffer_full_name = None
-        if viewport_id == 0: #F12 render
-            depth_buffer_name = 'MALT_RENDER_BUFFER_' + str(viewport_id) + '_DEPTH_' + self.id
-            self.render_buffers[viewport_id]['DEPTH'] = ipc.load_shared_buffer(depth_buffer_name, ctypes.c_float, w*h*4)
-            depth_buffer_full_name = ipc.get_shared_buffer_full_name(depth_buffer_name)
-        
+        buffer_names = {}
+        for key, texture_format in self.render_outputs.items():
+            buffer_name = f'MALT_RENDER_BUFFER_{viewport_id}_{key}_{self.id}'
+            self.render_buffers[viewport_id][key] = ipc.load_shared_buffer(buffer_name, ctypes.c_float, w*h*4)
+            buffer_names[key] = ipc.get_shared_buffer_full_name(buffer_name)
+            if viewport_id != 0: #viewport render
+                #we only need the color buffer
+                break
+    
         self.shared_dict[(viewport_id, 'FINISHED')] = None
         self.connections['RENDER'].send({
             'viewport_id': viewport_id,
             'resolution': resolution,
             'scene': scene,
             'scene_update': scene_update,
-            #TODO: Arbitrary render passes
-            'buffer_names': {
-                'COLOR': color_buffer_full_name,
-                'DEPTH': depth_buffer_full_name
-            }
+            'buffer_names': buffer_names
         })
 
     @bridge_method

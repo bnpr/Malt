@@ -6,14 +6,14 @@ from Malt.GL import Mesh
 
 class Texture(object):
 
-    def __init__(self, resolution, internal_format=GL_RGB32F, data_format = GL_FLOAT, data = NULL, 
+    def __init__(self, resolution, internal_format=GL_RGB32F, data_format = None, data = NULL, 
         wrap=GL_CLAMP_TO_EDGE, min_filter=GL_LINEAR, mag_filter=GL_LINEAR, pixel_format=None, 
         build_mipmaps = False, anisotropy = False):
         
         self.resolution = resolution
         self.internal_format = internal_format
         self.format = pixel_format or internal_format_to_format(internal_format)
-        self.data_format = data_format
+        self.data_format = data_format or internal_format_to_data_format(internal_format)
 
         self.texture = gl_buffer(GL_INT, 1)
         glGenTextures(1, self.texture)
@@ -188,6 +188,34 @@ class Gradient(object):
             #TODO: Make sure GL objects are deleted in the correct context
             pass
 
+def internal_format_to_data_format(internal_format):
+    name = GL_ENUMS[internal_format]
+    table = {
+        'F' : GL_FLOAT,
+        'UI' : GL_UNSIGNED_INT,
+        'I' : GL_INT,
+    }
+    for key, value in table.items():
+        if name.endswith(key):
+            return value
+    return GL_UNSIGNED_BYTE
+
+def internal_format_to_sampler_type(internal_format):
+    table = {
+        GL_UNSIGNED_BYTE : 'sampler2D',
+        GL_FLOAT : 'sampler2D',
+        GL_INT : 'isampler2D',
+        GL_UNSIGNED_INT : 'usampler2D'
+    }
+    return table[internal_format_to_data_format(internal_format)]
+
+def internal_format_to_vector_type(internal_format):
+    table = {
+        'sampler2D' : 'vec4',
+        'isampler2D' : 'ivec4',
+        'usampler2D' : 'uvec4',
+    }
+    return table[internal_format_to_sampler_type(internal_format)]
 
 def internal_format_to_format(internal_format):
     name = GL_ENUMS[internal_format]

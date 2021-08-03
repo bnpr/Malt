@@ -266,7 +266,8 @@ def main(pipeline_path, connection_addresses, shared_dic, log_path, debug_mode):
 
     params = pipeline.get_parameters()
     graphs = pipeline.get_graphs()
-    connections['PARAMS'].send((params, graphs))
+    outputs = pipeline.get_render_outputs()
+    connections['PARAMS'].send((params, graphs, outputs))
 
     viewports = {}
     last_exception = ''
