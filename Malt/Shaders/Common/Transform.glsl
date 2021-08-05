@@ -127,7 +127,7 @@ ivec2 screen_pixel()
 
 vec3 screen_to_camera(vec2 uv, float depth)
 {
-    vec3 clip_position = vec3(uv, depth) * 2.0 - 1.0;
+    vec3 clip_position = vec3(uv - (SAMPLE_OFFSET / RESOLUTION), depth) * 2.0 - 1.0;
     vec4 camera_position = inverse(PROJECTION) * vec4(clip_position, 1.0);
     camera_position /= camera_position.w;
 
