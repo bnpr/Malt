@@ -2,7 +2,6 @@
 
 import math
 import ctypes
-import copy
 
 import pyrr
 
@@ -10,8 +9,6 @@ from Malt.GL.GL import *
 from Malt.GL.Shader import UBO
 from Malt.GL.Texture import TextureArray, CubeMapArray
 from Malt.GL.RenderTarget import ArrayLayerTarget, RenderTarget
-
-from Malt.Render import Common
 
 from Malt import Pipeline
 
@@ -271,40 +268,34 @@ def make_projection_matrix(fov, aspect_ratio, near, far):
 def get_sun_cascades(sun_from_world_matrix, projection_matrix, view_from_world_matrix, cascades_count, cascades_distribution_scalar, cascades_max_distance):
     cascades = []
     splits = []
-    
-    #if is ortho
-    if projection_matrix[3][3] == 1.0:
-        for i in range(cascades_count):
-            split = -1.0 + (2.0 / cascades_count) * (i+1)
-            splits.append(split)
-    #is perspective
-    else:
-        clip_start = projection_matrix.inverse * pyrr.Vector4([0,0,0,1])
-        clip_start /= clip_start.w
-        clip_start = clip_start.z
-        
-        def lerp(a,b,f):
-            f = max(0,min(f,1))
-            return a * (1.0 - f) + b * f
-        
-        n = clip_start
-        f = -cascades_max_distance
-        m = cascades_count
-        
-        for i in range(1, cascades_count+1):
-            split_log = n * pow(f/n, i/m)
-            split_uniform = n + (f-n) * (i/m)
-            split = lerp(split_uniform, split_log, cascades_distribution_scalar)
 
-            projected = projection_matrix * pyrr.Vector4([0,0,split,1])
-            projected = (projected / projected.w) * (1.0 if projected.w >= 0 else -1.0)
-            depth = projected.z
-            splits.append(depth)
+    n,f = 0,0    
+    if projection_matrix[3][3] == 1.0:
+        # ortho
+        n = cascades_max_distance / 2
+        f = -cascades_max_distance / 2
+    else:
+        # perspective
+        clip_start = projection_matrix.inverse * pyrr.Vector4([0,0,-1,1])
+        clip_start /= clip_start.w
+        n = clip_start.z
+        f = -cascades_max_distance
+
+    def lerp(a,b,f):
+        f = max(0,min(f,1))
+        return a * (1.0 - f) + b * f
+
+    for i in range(cascades_count+1):
+        split_log = n * pow(f/n, i/cascades_count)
+        split_uniform = n + (f-n) * (i/cascades_count)
+        split = lerp(split_uniform, split_log, cascades_distribution_scalar)
+
+        projected = projection_matrix * pyrr.Vector4([0,0,split,1])
+        projected = (projected / projected.w) * (1.0 if projected.w >= 0 else -1.0)
+        splits.append(projected.z)
         
-    for i in range(len(splits)):
-        near = -1
-        if i > 0:
-            near = splits[i-1]
+    for i in range(1, len(splits)):
+        near = splits[i-1]
         far = splits[i]
         cascades.append(sun_shadowmap_matrix(sun_from_world_matrix, view_from_world_matrix, near, far))
     
