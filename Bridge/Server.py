@@ -126,6 +126,7 @@ class Viewport(object):
         self.is_new_frame = True
         self.needs_more_samples = True
         self.is_final_render = is_final_render
+        self.renderdoc_capture = False
 
         self.stat_max_frame_latency = 0
         self.stat_cpu_frame_time = 0
@@ -142,7 +143,7 @@ class Viewport(object):
             'Max Latency : {} frames'.format(self.stat_max_frame_latency),
         ))
     
-    def setup(self, buffers, resolution, scene, scene_update):
+    def setup(self, buffers, resolution, scene, scene_update, renderdoc_capture):
         if self.resolution != resolution:
             self.pbos_inactive.extend(self.pbos_active)
             self.pbos_active = []
@@ -153,6 +154,8 @@ class Viewport(object):
         self.sample_index = 0
         self.is_new_frame = True
         self.needs_more_samples = True
+
+        self.renderdoc_capture = renderdoc_capture
 
         self.stat_time_start = time.perf_counter()
         
@@ -177,6 +180,10 @@ class Viewport(object):
             self.scene.frame = scene.frame
     
     def render(self):
+        from . import renderdoc
+        if self.renderdoc_capture:
+            renderdoc.capture_start()
+
         if self.needs_more_samples:
             result = self.pipeline.render(self.resolution, self.scene, self.is_final_render, self.is_new_frame)
             self.is_new_frame = False
@@ -213,6 +220,10 @@ class Viewport(object):
             
             self.stat_render_time = time.perf_counter() - self.stat_time_start
             self.stat_max_frame_latency = max(len(self.pbos_active), self.stat_max_frame_latency)
+        
+        if self.renderdoc_capture:
+            renderdoc.capture_end()
+            self.renderdoc_capture = False
         
         return self.needs_more_samples == False and len(self.pbos_active) == 0
 
@@ -368,6 +379,7 @@ def main(pipeline_path, connection_addresses, shared_dic, log_path, debug_mode):
                 scene = msg['scene']
                 scene_update = msg['scene_update']
                 buffer_names = msg['buffer_names']
+                renderdoc_capture = msg['renderdoc_capture']
                 w,h = resolution
                 buffers = {}
                 for key, buffer_name in buffer_names.items():
@@ -377,7 +389,7 @@ def main(pipeline_path, connection_addresses, shared_dic, log_path, debug_mode):
                 if viewport_id not in viewports:
                     viewports[viewport_id] = Viewport(pipeline_class(), viewport_id == 0)
 
-                viewports[viewport_id].setup(buffers, resolution, scene, scene_update)
+                viewports[viewport_id].setup(buffers, resolution, scene, scene_update, renderdoc_capture)
                 shared_dic[(viewport_id, 'FINISHED')] = False
             
             active_viewports = {}

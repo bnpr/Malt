@@ -51,6 +51,8 @@ class Preferences(bpy.types.AddonPreferences):
 
     setup_vs_code : bpy.props.BoolProperty(name="Auto setup VSCode", default=True, description="Setups a VSCode project on your .blend file folder")
     
+    renderdoc_path : bpy.props.StringProperty(name="RenderDoc Path", subtype='FILE_PATH')
+    
     malt_library_path : bpy.props.StringProperty(name="Malt Library Path", subtype='DIR_PATH')
     
     render_fps_cap : bpy.props.IntProperty(name="Max Viewport Render Framerate", default=30)
@@ -72,10 +74,21 @@ class Preferences(bpy.types.AddonPreferences):
             row.operator('wm.path_open', text="Open Session Log")
 
         layout.prop(self, "setup_vs_code")
+        layout.prop(self, "renderdoc_path")
         layout.prop(self, "malt_library_path")
         layout.prop(self, "render_fps_cap")
         layout.prop(self, "debug_mode")
 
+class OT_MaltRenderDocCapture(bpy.types.Operator):
+    bl_idname = "wm.malt_renderdoc_capture"
+    bl_label = "RenderDoc Capture"
+
+    def execute(self, context):
+        from . import MaltRenderEngine
+        MaltRenderEngine.CAPTURE = True
+        context.area.tag_redraw()
+        return {'FINISHED'}
+    
 class VIEW3D_PT_Malt_Stats(bpy.types.Panel):
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
@@ -87,8 +100,8 @@ class VIEW3D_PT_Malt_Stats(bpy.types.Panel):
         return context.scene.render.engine == 'MALT'
 
     def draw(self, context):
-        import pprint
         from . import MaltPipeline
+        self.layout.operator("wm.malt_renderdoc_capture")
         stats = MaltPipeline.get_bridge().get_stats()
         for line in stats.splitlines():
             self.layout.label(text=line)
@@ -153,6 +166,7 @@ def get_modules():
 classes=[
     Preferences,
     OT_MaltPrintError,
+    OT_MaltRenderDocCapture,
     VIEW3D_PT_Malt_Stats,
 ]
 

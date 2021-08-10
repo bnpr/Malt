@@ -44,10 +44,11 @@ class MaltPipeline(bpy.types.PropertyGroup):
             pipeline = default_pipeline
 
         debug_mode = bool(bpy.context.preferences.addons['BlenderMalt'].preferences.debug_mode)
+        renderdoc_path = bpy.context.preferences.addons['BlenderMalt'].preferences.renderdoc_path
         
         path = bpy.path.abspath(pipeline, library=self.id_data.library)
         import Bridge
-        bridge = Bridge.Client_API.Bridge(path, debug_mode)
+        bridge = Bridge.Client_API.Bridge(path, debug_mode, renderdoc_path)
         import logging as log
         log.info('Blender {} {} {}'.format(bpy.app.version_string, bpy.app.build_branch, bpy.app.build_hash))
         params = bridge.get_parameters()

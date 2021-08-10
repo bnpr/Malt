@@ -23,6 +23,7 @@ def build_lib(path):
 
 build_lib(os.path.join(blender_malt_folder, 'CBlenderMalt'))
 build_lib(os.path.join(bridge_folder, 'ipc'))
+build_lib(os.path.join(bridge_folder, 'renderdoc'))
 
 subprocess.check_call([sys.executable, os.path.join(current_dir, 'install_dependencies.py')])
 

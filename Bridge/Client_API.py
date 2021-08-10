@@ -29,7 +29,7 @@ class IOCapture(io.StringIO):
 
 class Bridge(object):
 
-    def __init__(self, pipeline_path, debug_mode=False):
+    def __init__(self, pipeline_path, debug_mode=False, renderdoc_path=None):
         super().__init__()
 
         import sys
@@ -73,7 +73,7 @@ class Bridge(object):
         for name in ['PARAMS','MESH','MATERIAL','SHADER REFLECTION','TEXTURE','GRADIENT','RENDER']: add_connection(name)
 
         from . import start_server
-        self.process = mp.Process(target=start_server, args=[pipeline_path, malt_to_bridge, self.shared_dict, sys.stdout.log_path, debug_mode])
+        self.process = mp.Process(target=start_server, args=[pipeline_path, malt_to_bridge, self.shared_dict, sys.stdout.log_path, debug_mode, renderdoc_path])
         self.process.daemon = True
         self.process.start()
 
@@ -188,7 +188,7 @@ class Bridge(object):
         self.viewport_ids.remove(viewport_id)
 
     @bridge_method
-    def render(self, viewport_id, resolution, scene, scene_update):
+    def render(self, viewport_id, resolution, scene, scene_update, renderdoc_capture=False):
         import Bridge.ipc as ipc
         w,h = resolution
 
@@ -212,7 +212,8 @@ class Bridge(object):
             'resolution': resolution,
             'scene': scene,
             'scene_update': scene_update,
-            'buffer_names': buffer_names
+            'buffer_names': buffer_names,
+            'renderdoc_capture' : renderdoc_capture,
         })
 
     @bridge_method

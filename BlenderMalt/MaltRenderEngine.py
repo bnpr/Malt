@@ -10,6 +10,7 @@ from Malt.GL.Texture import Texture
 from . import MaltPipeline, MaltMeshes, MaltMaterial, CBlenderMalt
 
 PROFILE = False
+CAPTURE = False
 
 WINM = None
 if platform.system() == 'Windows':
@@ -296,6 +297,10 @@ class MaltRenderEngine(bpy.types.RenderEngine):
             self.request_new_frame = True
             self.request_scene_update = True
         
+        global CAPTURE
+        if CAPTURE:
+            self.request_new_frame = True
+        
         overrides = []
         if context.space_data.shading.type == 'MATERIAL':
             overrides.append('Preview')
@@ -313,7 +318,8 @@ class MaltRenderEngine(bpy.types.RenderEngine):
             mag_filter = GL.GL_LINEAR if smooth_interpolation else GL.GL_NEAREST
 
         if self.request_new_frame:
-            self.bridge.render(self.bridge_id, resolution, scene, self.request_scene_update)
+            self.bridge.render(self.bridge_id, resolution, scene, self.request_scene_update, CAPTURE)
+            CAPTURE = False
             self.request_new_frame = False
             self.request_scene_update = False
         
