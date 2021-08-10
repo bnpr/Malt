@@ -72,8 +72,8 @@ class Bridge(object):
 
         for name in ['PARAMS','MESH','MATERIAL','SHADER REFLECTION','TEXTURE','GRADIENT','RENDER']: add_connection(name)
 
-        from . import Server
-        self.process = mp.Process(target=Server.main, args=[pipeline_path, malt_to_bridge, self.shared_dict, sys.stdout.log_path, debug_mode])
+        from . import start_server
+        self.process = mp.Process(target=start_server, args=[pipeline_path, malt_to_bridge, self.shared_dict, sys.stdout.log_path, debug_mode])
         self.process.daemon = True
         self.process.start()
 

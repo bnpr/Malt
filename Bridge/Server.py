@@ -240,6 +240,7 @@ def main(pipeline_path, connection_addresses, shared_dic, log_path, debug_mode):
 
     glfw.window_hint(glfw.CONTEXT_VERSION_MAJOR, 4)
     glfw.window_hint(glfw.CONTEXT_VERSION_MINOR, 1)
+    glfw.window_hint(glfw.OPENGL_PROFILE, glfw.OPENGL_CORE_PROFILE)
     
     window = glfw.create_window(256, 256, 'Malt', None, None)
     glfw.make_context_current(window)
