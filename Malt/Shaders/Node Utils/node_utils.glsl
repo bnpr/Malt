@@ -21,6 +21,7 @@
 #include "Filters/Blur.glsl"
 #include "Filters/Curvature.glsl"
 #include "Filters/Line.glsl"
+#include "Procedural/Noise.glsl"
 #include "Shading/Rim.glsl"
 #include "Shading/ShadingModels.glsl"
 
