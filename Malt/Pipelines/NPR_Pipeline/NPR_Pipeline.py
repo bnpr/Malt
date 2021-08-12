@@ -88,6 +88,8 @@ class NPR_Pipeline(Pipeline):
 
         self.composite_depth = DepthToCompositeDepth.CompositeDepth()
 
+        self.layer_query = None
+
     def compile_material_from_source(self, material_type, source, include_paths=[]):
         if material_type == 'mesh':
             return self.compile_shaders_from_source(source, include_paths, {
@@ -236,6 +238,8 @@ class NPR_Pipeline(Pipeline):
         self.fbo_last_layer_id.clear([0])
 
         for i in range(scene.parameters['Transparency.Layers']):
+            if i > 0:
+                glBeginConditionalRender(self.layer_query[0], GL_QUERY_WAIT)
             result = self.draw_layer(transparent_batches, scene)
             self.copy_textures(self.fbo_last_layer_id, [self.t_prepass_id])
 
@@ -244,6 +248,8 @@ class NPR_Pipeline(Pipeline):
             self.draw_screen_pass(self.blend_transparency_shader, self.fbo_color)
             
             self.copy_textures(self.fbo_transparent, [self.t_color], self.t_depth)
+            if i > 0:
+                glEndConditionalRender()
 
         self.blend_transparency_shader.textures['IN_BACK'] = self.t_opaque_color
         self.blend_transparency_shader.textures['IN_FRONT'] = self.t_transparent_color
@@ -281,7 +287,14 @@ class NPR_Pipeline(Pipeline):
             'IN_LAST_ID': self.t_last_layer_id,
         }
         self.fbo_prepass.clear([(0,0,1,1), (0,0,0,0)], 1, 0)
+
+        if self.layer_query:
+            glDeleteQueries(1, self.layer_query)
+        self.layer_query = gl_buffer(GL_UNSIGNED_INT, 1)
+        glGenQueries(1, self.layer_query)
+        glBeginQuery(GL_ANY_SAMPLES_PASSED, self.layer_query[0])
         self.draw_scene_pass(self.fbo_prepass, batches, 'PRE_PASS', self.default_shader['PRE_PASS'], UBOS, {}, textures, callbacks)
+        glEndQuery(GL_ANY_SAMPLES_PASSED)
 
         #CUSTOM LIGHT SHADING
         self.custom_light_shading.load(self, self.t_depth, scene)
