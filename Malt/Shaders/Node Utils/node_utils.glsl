@@ -13,6 +13,8 @@
 // Basic common API
 #include "Common/Color.glsl"
 #include "Common/Math.glsl"
+#include "Common/Matrix.glsl"
+#include "Common/Quaternion.glsl"
 #include "Common/Transform.glsl"
 #include "Filters/AO.glsl"
 #include "Filters/Blur.glsl"
