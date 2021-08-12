@@ -35,4 +35,4 @@ mat4 mat4_scale(vec3 s)
     return mat4(mat3(s.x,0,0, 0,s.y,0, 0,0,s.z));
 }
 
-#endif COMMON_MATRIX_GLSL
+#endif // COMMON_MATRIX_GLSL
