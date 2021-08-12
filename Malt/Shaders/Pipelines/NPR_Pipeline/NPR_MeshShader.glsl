@@ -177,6 +177,10 @@ void main()
     {
         discard;
     }
+    else if(!Settings.Transparency)
+    {
+        PO.color.a = 1.0;
+    }
 
     {
     if(Settings.Transparency && Settings.Transparency_Single_Layer)
