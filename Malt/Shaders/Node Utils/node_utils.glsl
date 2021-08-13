@@ -10,6 +10,8 @@
 #include "vec3.glsl"
 #include "vec4.glsl"
 
+#include "common.glsl"
+
 // Basic common API
 #include "Common/Color.glsl"
 #include "Common/Hash.glsl"
