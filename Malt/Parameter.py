@@ -25,9 +25,10 @@ class GLSLPipelineGraph(PipelineGraph):
         graph_io = {}
         for name in graph_io_map.keys():
             graph_io[name] = functions[name]        
-        for name in [*functions.keys()]:
+        for key in [*functions.keys()]:
+            name = functions[key]['name']
             if name.startswith('_') or name.isupper() or name == 'main':
-                functions.pop(name)
+                functions.pop(key)
         for name in [*structs.keys()]:
             if name.startswith('_'):
                 structs.pop(name)

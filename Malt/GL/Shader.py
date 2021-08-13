@@ -415,6 +415,10 @@ class GLSL_Reflection(object):
             return path
     
     @classmethod
+    def remove_extra_white_spaces(cls, str):
+        return ' '.join(str.split())
+    
+    @classmethod
     def reflect_structs(cls, code, root_path = None):
         structs = {}
         for struct, start, end in cls.STRUCT_DEF.scanString(code):
@@ -441,11 +445,14 @@ class GLSL_Reflection(object):
 
     PARAMETERS = pyparsing.delimitedList(PARAMETER)("parameter*")
 
-    FUNCTION = (
+    DECLARATION = pyparsing.Group(
         pyparsing.Optional(PRECISION)("precision") +
         TYPE("type") + IDENTIFIER("name") +
-        LPAREN + pyparsing.Optional(PARAMETERS)("parameters") + RPAREN +
-        pyparsing.originalTextFor(pyparsing.nestedExpr("{", "}"))("code")
+        LPAREN + pyparsing.Optional(PARAMETERS)("parameters") + RPAREN
+    )
+
+    FUNCTION = (
+        pyparsing.locatedExpr(DECLARATION)("declaration") + pyparsing.originalTextFor(pyparsing.nestedExpr("{", "}"))("body")
     )
 
     FUNCTION.ignore(pyparsing.cStyleComment)
@@ -455,21 +462,33 @@ class GLSL_Reflection(object):
     @classmethod
     def reflect_functions(cls, code, root_path = None):
         functions = {}
+        overloaded = set()
         for function, start, end in cls.FUNCTION.scanString(code):
+            declaration = function.declaration.value
             dictionary = {
-                'name' : function.name,
-                'type' : function.type,
+                'name' : declaration.name,
+                'type' : declaration.type,
                 'file' : cls.get_file_path(code, start, root_path),
+                'signature' : cls.remove_extra_white_spaces(code[function.declaration.locn_start:function.declaration.locn_end]),
                 'parameters' : []
             }
-            for parameter in function.parameters:
+            for parameter in declaration.parameters:
                 dictionary['parameters'].append({
                     'name' : parameter.name,
                     'type' : parameter.type,
                     'size' : int(parameter.array_size) if parameter.array_size else 0,
                     'io' : parameter.io.replace(' ',''),#TODO
                 })
-            functions[function.name] = dictionary
+            def overload_key(function):
+                return f"{function['name']} - {function['signature']}"
+            key = declaration.name
+            if key in functions:
+                functions[overload_key(functions[key])] = functions[key]
+                functions.pop(key)
+                overloaded.add(key)
+            if key in overloaded:
+                key = overload_key(dictionary)
+            functions[key] = dictionary
         return functions
 
 
