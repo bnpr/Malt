@@ -23,6 +23,7 @@
 #include "Filters/Line.glsl"
 #include "Procedural/Noise.glsl"
 #include "Procedural/Cell_Noise.glsl"
+#include "Procedural/Fractal_Noise.glsl"
 #include "Shading/Rim.glsl"
 #include "Shading/ShadingModels.glsl"
 
