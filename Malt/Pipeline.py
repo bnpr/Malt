@@ -281,6 +281,8 @@ class Pipeline(object):
                         glFrontFace(GL_CW)
                         if 'MIRROR_SCALE' in shader.uniforms:
                             shader.uniforms['MIRROR_SCALE'].bind(True)
+                    if 'PRECOMPUTED_TANGENTS' in shader.uniforms:
+                        shader.uniforms['PRECOMPUTED_TANGENTS'].bind(mesh.parameters['precomputed_tangents'])
                 
                     for batch in batches:
                         batch['BATCH_MODELS'].bind(shader.uniform_blocks['BATCH_MODELS'])

@@ -38,20 +38,68 @@ vec3 true_normal()
     return NORMAL;
 }
 
+vec4 compute_tangent(vec2 uv)
+{
+    // Copyright (c) 2020 mmikk. MIT License
+    // http://jcgt.org/published/0009/03/04/
+    #ifdef PIXEL_SHADER
+    {
+        vec3 normal = normalize(NORMAL);
+        
+        vec3 position_dx = dFdx(POSITION);
+        vec3 position_dy = dFdy(POSITION);
+
+        vec3 sigma_x = position_dx - dot(position_dx, normal) * normal;
+        vec3 sigma_y = position_dy - dot(position_dy, normal) * normal;
+
+        float flip_sign = dot(position_dy, cross(normal, position_dx)) < 0 ? -1 : 1;
+        
+        vec2 uv_dx = dFdx(uv);
+        vec2 uv_dy = dFdy(uv);
+
+        float determinant = dot(uv_dx, vec2(uv_dy.y, -uv_dy.x));
+        float determinant_sign = determinant < 0.0 ? -1.0 : 1.0;
+    
+        // inverse represents (dXds, dYds), but we don't divide
+        // by the determinant. Instead, we scale by the sign.
+        vec2 inverse = determinant_sign * vec2(uv_dy.y, -uv_dx.y); 
+        
+        vec3 tangent = sigma_x * inverse.x + sigma_y * inverse.y;
+        if (abs(determinant) > 0.0)
+        {
+            tangent = normalize(tangent);
+        }
+
+        return vec4(tangent, (determinant_sign * flip_sign));
+    }
+    #endif
+
+    return vec4(0);
+}
+
 //TODO: pass TBN as parameter
 vec3 sample_normal_map_ex(sampler2D normal_texture, int uv_index, vec2 uv)
 {
-    vec3 tangent = texture(normal_texture, uv).xyz;
-    tangent = tangent * 2.0 - 1.0;
-    mat3 TBN = mat3(TANGENT[uv_index], BITANGENT[uv_index], NORMAL);
+    mat3 TBN;
+    if(PRECOMPUTED_TANGENTS)
+    {
+        TBN = mat3(TANGENT[uv_index], BITANGENT[uv_index], NORMAL);
+    }
+    else
+    {
+        vec4 T = compute_tangent(uv);
+        TBN = mat3(T.xyz, normalize(cross(NORMAL, T.xyz) * T.w), NORMAL);
+    }
     #ifdef PIXEL_SHADER
     {
         if(!gl_FrontFacing)
         {
-            TBN = mat3(TANGENT[uv_index], BITANGENT[uv_index], -NORMAL);
+            TBN[2] *= -1;
         }
     }
     #endif //PIXEL_SHADER
+    vec3 tangent = texture(normal_texture, uv).xyz;
+    tangent = tangent * 2.0 - 1.0;
     return normalize(TBN * tangent);
 }
 
@@ -62,6 +110,8 @@ vec3 sample_normal_map(sampler2D normal_texture, int uv_index)
 
 vec3 surface_gradient_from_normal(vec3 custom_normal)
 {
+    // Copyright (c) 2020 mmikk. MIT License
+    // http://jcgt.org/published/0009/03/04/
     const float epsilon = 1.192092896e-07f;
     float NoC = dot(NORMAL, custom_normal);
     return (NoC * NORMAL - custom_normal) / max(epsilon, abs(NoC));
@@ -69,6 +119,8 @@ vec3 surface_gradient_from_normal(vec3 custom_normal)
 
 vec3 normal_from_surface_gradient(vec3 surface_gradient)
 {
+    // Copyright (c) 2020 mmikk. MIT License
+    // http://jcgt.org/published/0009/03/04/
     return normalize(NORMAL - surface_gradient);
 }
 

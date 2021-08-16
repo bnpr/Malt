@@ -61,6 +61,7 @@ uniform BATCH_IDS
 };
 
 uniform bool MIRROR_SCALE = false;
+uniform bool PRECOMPUTED_TANGENTS = false;
 
 layout(std140) uniform COMMON_UNIFORMS
 {
@@ -95,34 +96,19 @@ void DEFAULT_VERTEX_SHADER()
     POSITION = transform_point(MODEL, in_position);
     NORMAL = transform_normal(MODEL, in_normal);
 
-    if(in_tangent0.xyz == vec3(0)) //No precomputed tangents
+    if(PRECOMPUTED_TANGENTS)
     {
-        vec3 axis = vec3(0,0,1);
-        axis = abs(dot(axis, in_normal)) < 0.99 ? axis : vec3(1,0,0);
-        vec3 tangent = normalize(cross(axis, in_normal));
-        tangent = transform_normal(MODEL, tangent);
-        
-        for(int i = 0; i < 4; i++) TANGENT[i] = tangent;
-    }
-    else
-    {
-        TANGENT[0]= transform_normal(MODEL, in_tangent0.xyz);
-        TANGENT[1]= transform_normal(MODEL, in_tangent1.xyz);
-        TANGENT[2]= transform_normal(MODEL, in_tangent2.xyz);
-        TANGENT[3]= transform_normal(MODEL, in_tangent3.xyz);
-    }
+        TANGENT[0] = transform_normal(MODEL, in_tangent0.xyz);
+        TANGENT[1] = transform_normal(MODEL, in_tangent1.xyz);
+        TANGENT[2] = transform_normal(MODEL, in_tangent2.xyz);
+        TANGENT[3] = transform_normal(MODEL, in_tangent3.xyz);
 
-    BITANGENT[0]= normalize(cross(NORMAL, TANGENT[0]) * in_tangent0.w);
-    BITANGENT[1]= normalize(cross(NORMAL, TANGENT[1]) * in_tangent1.w);
-    BITANGENT[2]= normalize(cross(NORMAL, TANGENT[2]) * in_tangent2.w);
-    BITANGENT[3]= normalize(cross(NORMAL, TANGENT[3]) * in_tangent3.w);
+        float mirror_scale = MIRROR_SCALE ? -1 : 1;
 
-    if(MIRROR_SCALE)
-    {
-        for(int i = 0; i < 4; i++)
-        {
-            BITANGENT[i] *= -1;
-        }
+        BITANGENT[0] = normalize(cross(NORMAL, TANGENT[0]) * in_tangent0.w) * mirror_scale;
+        BITANGENT[1] = normalize(cross(NORMAL, TANGENT[1]) * in_tangent1.w) * mirror_scale;
+        BITANGENT[2] = normalize(cross(NORMAL, TANGENT[2]) * in_tangent2.w) * mirror_scale;
+        BITANGENT[3] = normalize(cross(NORMAL, TANGENT[3]) * in_tangent3.w) * mirror_scale;
     }
 
     UV[0]=in_uv0;
@@ -137,20 +123,6 @@ void DEFAULT_VERTEX_SHADER()
 
     VERTEX_SETUP_OUTPUT();
 }
-
-#define VERTEX_DISPLACEMENT(displacement_function, tangent_offset)\
-{\
-    vec3 displaced_position = displacement_function(POSITION);\
-    for(int i = 0; i < TANGENT.length(); i++)\
-    {\
-        vec3 displaced_tangent = displacement_function(POSITION + TANGENT[i] * (tangent_offset));\
-        vec3 displaced_bitangent = displacement_function(POSITION + BITANGENT[i] * (tangent_offset));\
-        TANGENT[i] = normalize(displaced_tangent - displaced_position);\
-        BITANGENT[i] = normalize(displaced_bitangent - displaced_position);\
-    }\
-    POSITION = displaced_position;\
-    NORMAL = normalize(cross(TANGENT[0], BITANGENT[0]));\
-}\
 
 #endif //VERTEX_SHADER
 

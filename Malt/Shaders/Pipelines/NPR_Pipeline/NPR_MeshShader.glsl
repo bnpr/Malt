@@ -84,8 +84,20 @@ void main()
     #ifdef CUSTOM_VERTEX_DISPLACEMENT
     {
         vec3 displaced_position = POSITION + VERTEX_DISPLACEMENT_SHADER(S);
+        
+        if(!PRECOMPUTED_TANGENTS)
+        {
+            vec3 axis = vec3(0,0,1);
+            axis = abs(dot(axis, NORMAL)) < 0.99 ? axis : vec3(1,0,0);
+            vec3 tangent = normalize(cross(axis, NORMAL));
+            TANGENT[0] = tangent;
+            BITANGENT[0] = normalize(cross(NORMAL, tangent));
+        }
+        
         for(int i = 0; i < TANGENT.length(); i++)
         {
+            if(!PRECOMPUTED_TANGENTS && i != 0) break;
+            
             Surface s = S;
 
             s.position = POSITION + TANGENT[i] * Settings.Vertex_Displacement_Offset;
@@ -98,6 +110,12 @@ void main()
         }
         POSITION = displaced_position;
         NORMAL = normalize(cross(TANGENT[0], BITANGENT[0]));
+        
+        if(!PRECOMPUTED_TANGENTS)
+        {
+            TANGENT[0] = vec3(0);
+            BITANGENT[0] = vec3(0);
+        }
     }
     #endif
     
