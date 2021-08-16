@@ -490,6 +490,8 @@ class MaltNode():
     malt_parameters : bpy.props.PointerProperty(type=MaltPropertyGroup)
 
     disable_updates : bpy.props.BoolProperty(name="Disable Updates", default=False)
+    
+    first_setup : bpy.props.BoolProperty(default=True)
 
     # Blender will trigger update callbacks even before init and update has finished
     # So we use some wrappers to get a more sane behaviour
@@ -511,6 +513,7 @@ class MaltNode():
         
     def setup(self, context=None):
         self._disable_updates_wrapper(self.malt_setup)
+        self.first_setup = False
 
     def update(self):
         if self.disable_updates:
@@ -564,7 +567,8 @@ class MaltNode():
                 parameters[input.name] = parameter
         self.malt_parameters.setup(parameters, skip_private=False)
         self.setup_socket_shapes()
-        self.setup_width()
+        if self.first_setup:
+            self.setup_width()
     
     def setup_width(self):
         max_len = len(self.name)
@@ -625,7 +629,8 @@ class MaltStructNode(bpy.types.Node, MaltNode):
 
     def malt_setup(self, context=None):
         struct = self.get_struct()
-        self.name = self.struct_type
+        if self.first_setup:
+            self.name = self.struct_type
 
         inputs = {}
         outputs = {}
@@ -698,7 +703,8 @@ class MaltFunctionNode(bpy.types.Node, MaltNode):
     
     def malt_setup(self):
         function = self.get_function()
-        self.name = self.function_type
+        if self.first_setup:
+            self.name = self.function_type
 
         inputs = {}
         outputs = {}
@@ -760,7 +766,8 @@ class MaltIONode(bpy.types.Node, MaltNode):
 
     def malt_setup(self):
         function = self.get_function()
-        self.name = self.io_type + (' Output' if self.is_output else ' Input')
+        if self.first_setup:
+            self.name = self.io_type + (' Output' if self.is_output else ' Input')
 
         inputs = {}
         outputs = {}
@@ -824,7 +831,11 @@ class MaltInlineNode(bpy.types.Node, MaltNode):
         self.id_data.update()
 
     def malt_init(self):
-        self.name = 'Inline Code'
+        self.setup()
+
+    def malt_setup(self):
+        if self.first_setup:
+            self.name = 'Inline Code'
         self.malt_update()
     
     def malt_update(self):
@@ -894,7 +905,11 @@ class MaltArrayIndexNode(bpy.types.Node, MaltNode):
     bl_label = "Array Index Node"
 
     def malt_init(self):
-        self.name = 'Array Index'
+        self.setup()
+        
+    def malt_setup(self):
+        if self.first_setup:
+            self.name = 'Array Index'
         self.setup_sockets( { 'array' : ('', 1), 'index' : ('int', 0) },
             { 'element' : ('', 0) } )
         
