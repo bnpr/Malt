@@ -78,8 +78,6 @@ void SCREEN_SHADER(vec2 uv,
 { }
 '''
 
-CACHED_GRAPHS = None
-
 class NPR_Pipeline_Nodes(NPR_Pipeline):
 
     def __init__(self):
@@ -136,11 +134,6 @@ class NPR_Pipeline_Nodes(NPR_Pipeline):
         return header, common_pixel_signature
 
     def setup_graphs(self):
-        global CACHED_GRAPHS
-        if CACHED_GRAPHS:
-            self.graphs = CACHED_GRAPHS
-            return
-
         mesh_header, mesh_pixel_signature = self.get_mesh_shader_generated_source()
         mesh_reflection_src = mesh_header + mesh_pixel_signature + "{}\n"
         source = self.preprocess_shader_from_source(mesh_reflection_src, [], ['IS_MESH_SHADER','VERTEX_SHADER','PIXEL_SHADER','NODES'])
@@ -195,8 +188,6 @@ class NPR_Pipeline_Nodes(NPR_Pipeline):
         self.graphs['Render Layer'] = PythonPipelineGraph(self,
             [RenderScreen, Unpack8bitTextures],
             [PipelineNode.static_reflect('Render Layer', inputs, outputs)])
-        
-        CACHED_GRAPHS = self.graphs
 
     def get_render_outputs(self):
         outputs = super().get_render_outputs()
