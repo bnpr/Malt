@@ -5,6 +5,8 @@
 
 #include "Common/Transform.glsl"
 
+// SDF functions adapted from https://www.iquilezles.org/www/articles/distfunctions/distfunctions.htm
+
 float sdf_box(vec3 p, vec3 size)
 {
     vec3 q = abs(p) - (size / 2.0);
@@ -105,6 +107,7 @@ RayMarchResult raymarch_scene(vec3 ray_start, vec3 ray_end, int max_steps, float
     r.position = ray_start + r.depth * ray;
     float projected_depth = project_point(PROJECTION * CAMERA, r.position).z;
     float offset_scale = pixel_world_size_at(projected_depth);
+    // https://www.iquilezles.org/www/articles/normalsSDF/normalsSDF.htm
     vec2 k = vec2(1,-1);
     r.normal = normalize
     (
