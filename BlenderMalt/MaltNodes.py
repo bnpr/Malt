@@ -704,7 +704,7 @@ class MaltFunctionNode(bpy.types.Node, MaltNode):
     def malt_setup(self):
         function = self.get_function()
         if self.first_setup:
-            self.name = self.function_type
+            self.name = function['name']
 
         inputs = {}
         outputs = {}
