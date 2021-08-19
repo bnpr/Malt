@@ -14,12 +14,8 @@ bridge_folder = os.path.join(main_dir, 'Bridge')
 malt_folder = os.path.join(main_dir, 'Malt')
 
 def build_lib(path):
-    try:
-        subprocess.check_call([sys.executable, 'build.py'], cwd=path)
-        shutil.rmtree(os.path.join(path, '.build'))
-    except:
-        import traceback
-        traceback.print_exc()
+    subprocess.check_call([sys.executable, 'build.py'], cwd=path)
+    shutil.rmtree(os.path.join(path, '.build'))
 
 build_lib(os.path.join(blender_malt_folder, 'CBlenderMalt'))
 build_lib(os.path.join(bridge_folder, 'ipc'))
