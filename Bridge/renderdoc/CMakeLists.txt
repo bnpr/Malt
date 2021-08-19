@@ -9,5 +9,9 @@ SET(BUILD_SHARED_LIBS ON)
 
 add_library(renderdoc_wrapper renderdoc_wrapper.c)
 
+if(NOT WIN32)
+    target_link_libraries(renderdoc_wrapper dl)
+endif()
+
 install(TARGETS renderdoc_wrapper CONFIGURATIONS Release DESTINATION ${PROJECT_SOURCE_DIR})
 

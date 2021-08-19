@@ -1,4 +1,5 @@
 #include "renderdoc_app.h"
+#include <stddef.h>
 
 #ifdef _WIN32
 #define EXPORT __declspec( dllexport )
@@ -22,10 +23,11 @@ void init()
     }
 }
 #else
+#include <dlfcn.h>
 void init()
 {
     if (API) return;
-    void* module = dlopen("librenderdoc.so", RTLD_NOW | RTLD_NOLOAD)
+    void* module = dlopen("librenderdoc.so", RTLD_NOW | RTLD_NOLOAD);
     if (module)
     {
         pRENDERDOC_GetAPI RENDERDOC_GetAPI = (pRENDERDOC_GetAPI)dlsym(module, "RENDERDOC_GetAPI");
