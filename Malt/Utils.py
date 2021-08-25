@@ -35,7 +35,7 @@ def profile_function(function):
         profiling_data = io.StringIO()
         profiler.enable()
 
-        function(*args, **kwargs)
+        result = function(*args, **kwargs)
 
         profiler.disable()
         stats = pstats.Stats(profiler, stream=profiling_data)
@@ -43,6 +43,8 @@ def profile_function(function):
         stats.sort_stats(pstats.SortKey.CUMULATIVE)
         stats.print_stats()
         print(profiling_data.getvalue())
+
+        return result
     
     return profiled_function
 
