@@ -53,47 +53,52 @@ def load_mesh(object, name):
     indices_ptrs = (ctypes.c_void_p * material_count)()
     for i in range(material_count):
         indices.append(get_load_buffer('indices'+str(i), ctypes.c_uint32, (loop_tri_count * 3)))
-        indices_ptrs[i] = ctypes.cast(indices[i], ctypes.c_void_p)
+        indices_ptrs[i] = ctypes.cast(indices[i].buffer(), ctypes.c_void_p)
     
-    #Create a new one each time so we don't have to care about zeroing the previous results
     indices_lengths = (ctypes.c_uint32 * material_count)()
 
     CBlenderMalt.retrieve_mesh_data(verts_ptr, loops_ptr, loop_count, loop_tris_ptr, loop_tri_count, polys_ptr,
-        positions, normals, indices_ptrs, indices_lengths)
+        positions.buffer(), normals.buffer(), indices_ptrs, indices_lengths)
 
     if needs_split_normals and use_split_faces == False:
         #TODO: Find a way to get a direct pointer to custom normals
-        normals = retrieve_array(m.loops, 'normal', 'f', ctypes.c_float, [0.0,0.0,0.0])    
+        normals = get_load_buffer('custom_normals', ctypes.c_float, (loop_count * 3))
+        m.loops.foreach_get('normal', normals.as_np_array())
 
-    uvs = []
-    tangents = []
+    uvs_list = []
+    tangents_list = []
     for i, uv_layer in enumerate(m.uv_layers):
         uv_ptr = ctypes.c_void_p(uv_layer.data[0].as_pointer())
         uv = get_load_buffer('uv'+str(i), ctypes.c_float, loop_count * 2)
-        CBlenderMalt.retrieve_mesh_uv(uv_ptr, loop_count, uv)
-        uvs.append(uv)
-
+        CBlenderMalt.retrieve_mesh_uv(uv_ptr, loop_count, uv.buffer())
+        uvs_list.append(uv)
         if(object.original.data.malt_parameters.bools['precomputed_tangents'].boolean):
             m.calc_tangents(uvmap=uv_layer.name)
-            #TODO: Optimize
-            packed_tangents = [e for l in m.loops for e in (*l.tangent, l.bitangent_sign)]
-            tangents.append(bytearray(array.array('f', packed_tangents)))
-
-    colors = []
+            #TODO: Find a way to get a direct pointer
+            tangents = get_load_buffer('tangents'+str(i), ctypes.c_float, (loop_count * 3))
+            bitangent_signs = get_load_buffer('bitangent_signs'+str(i), ctypes.c_float, loop_count)
+            m.loops.foreach_get('tangent', tangents.as_np_array())
+            m.loops.foreach_get('bitangent_sign', bitangent_signs.as_np_array())
+            packed_tangents = get_load_buffer('packed_tangents'+str(i), ctypes.c_float, (loop_count * 4))
+            CBlenderMalt.pack_tangents(tangents.buffer(), bitangent_signs.buffer(), loop_count, packed_tangents.buffer())
+            tangents_list.append(packed_tangents)
+    
+    colors_list = []
     for i, vertex_color in enumerate(m.vertex_colors):
-        #Colors are already contiguous in memory, so we pass them directly to OpenGL
         color = (ctypes.c_uint8 * (loop_count * 4)).from_address(vertex_color.data[0].as_pointer())
-        colors.append(color)
+        color_buffer = get_load_buffer('colors'+str(i), ctypes.c_uint8, loop_count*4)
+        ctypes.memmove(color_buffer.buffer(), color, color_buffer.size_in_bytes())
+        colors_list.append(color_buffer)
     
     #TODO: Optimize. Create load buffers from bytearrays and retrieve them later
     mesh_data = {
-        'positions': bytearray(positions),
-        'indices': [bytearray(i) for i in indices],
+        'positions': positions,
+        'indices': indices,
         'indices_lengths': [l for l in indices_lengths],
-        'normals': bytearray(normals),
-        'uvs': [bytearray(u) for u in uvs],
-        'tangents': tangents,
-        'colors': [bytearray(c) for c in colors],
+        'normals': normals,
+        'uvs': uvs_list,
+        'tangents': tangents_list,
+        'colors': colors_list,
     }
 
     from . import MaltPipeline
@@ -101,20 +106,9 @@ def load_mesh(object, name):
 
     return [name for i in range(material_count)]
 
-#Reuse load buffers to avoid new allocations
-buffers = {}
 def get_load_buffer(name, ctype, size):
-    if name not in buffers or size > len(buffers[name]):
-        buffers[name] = (ctype * size)()
-    assert(buffers[name]._type_ == ctype)
-    return (ctype * size).from_address(ctypes.addressof(buffers[name]))
-
-def retrieve_array(bpy_array, property_name, array_format, ctype_format, default_value):
-    #foreach_get only uses memcpy on python array.array, so even with the allocation cost they are faster than ctypes arrays
-    result = array.array(array_format, [default_value[0]]) * (len(bpy_array)*len(default_value))
-    bpy_array.foreach_get(property_name, result)
-    result = (ctype_format*len(result)).from_buffer(result)
-    return result
+    from Bridge.Client_API import SharedBuffer
+    return SharedBuffer(ctype, size)
 
 def unload_mesh(object):
     MESHES[get_mesh_name(object)] = None

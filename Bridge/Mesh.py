@@ -7,17 +7,16 @@ from Malt.GL.GL import *
 MESHES = {}
 
 def load_mesh(msg):
+    print('LOAD MESH')
     name = msg['name']
     data = msg['data']
     MESHES[name] = []
 
     def load_VBO(data):
-        #Cast from bytearray to ctypes, otherwise it breaks on Linux. IDKW
-        data = (ctypes.c_float * (len(data)//4)).from_buffer(data)
         VBO = gl_buffer(GL_INT, 1)
         glGenBuffers(1, VBO)
         glBindBuffer(GL_ARRAY_BUFFER, VBO[0])
-        glBufferData(GL_ARRAY_BUFFER, len(data)*4, data, GL_STATIC_DRAW)
+        glBufferData(GL_ARRAY_BUFFER, data.size_in_bytes(), data.buffer(), GL_STATIC_DRAW)
         glBindBuffer(GL_ARRAY_BUFFER, 0)
         return VBO
 
@@ -34,12 +33,10 @@ def load_mesh(msg):
         glGenVertexArrays(1, result.VAO)
         glBindVertexArray(result.VAO[0])
         
-        #Cast from bytearray to ctypes, otherwise it breaks on Linux. IDKW
-        indices = (ctypes.c_uint32 * (len(indices)//4)).from_buffer(indices)
         result.EBO = gl_buffer(GL_INT, 1)
         glGenBuffers(1, result.EBO)
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, result.EBO[0])
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, len(indices)*4, indices, GL_STATIC_DRAW)
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size_in_bytes(), indices.buffer(), GL_STATIC_DRAW)
         
         result.index_count = data['indices_lengths'][i]
 
@@ -55,7 +52,7 @@ def load_mesh(msg):
             glVertexAttribPointer(index, element_size, gl_type, gl_normalize, 0, None)
         
         bind_VBO(result.position, 0, 3)
-        if len(data['positions']) == len(data['normals']):
+        if data['positions'].size_in_bytes() == data['normals'].size_in_bytes():
             bind_VBO(result.normal, 1, 3)
         else:
             bind_VBO(result.normal, 1, 3, GL_SHORT, GL_TRUE)

@@ -1,6 +1,7 @@
 # Copyright (c) 2020 BlenderNPR and contributors. MIT license. 
 
 import ctypes, logging as log, io
+from Bridge.ipc import SharedBuffer
 
 def bridge_method(function):
     def result(*args, **kwargs):
@@ -138,6 +139,14 @@ class Bridge(object):
     def reflect_source_libraries(self, paths):
         self.connections['SHADER REFLECTION'].send({'paths': paths})
         return self.connections['SHADER REFLECTION'].recv()
+    
+    @bridge_method
+    def get_shared_buffer(self, ctype, size):
+        import random, string
+        name = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
+        import Bridge.ipc as ipc
+        buffer = ipc.load_shared_buffer(name, ctype, size*ctypes.sizeof(ctype))
+        full_name = ipc.get_shared_buffer_full_name(name)
 
     @bridge_method
     def load_mesh(self, name, mesh_data):
@@ -230,4 +239,5 @@ class Bridge(object):
             return self.render_buffers[viewport_id], finished, read_resolution
         else:
             return None, finished, read_resolution
+
 

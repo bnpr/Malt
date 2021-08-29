@@ -27,6 +27,10 @@ retrieve_mesh_uv = CBlenderMalt['retrieve_mesh_uv']
 retrieve_mesh_uv.argtypes = [ctypes.c_void_p, ctypes.c_int, ctypes.POINTER(ctypes.c_float)]
 retrieve_mesh_uv.restype = None
 
+pack_tangents = CBlenderMalt['pack_tangents']
+pack_tangents.argtypes = [ctypes.POINTER(ctypes.c_float), ctypes.POINTER(ctypes.c_float), ctypes.c_int, ctypes.POINTER(ctypes.c_float)]
+pack_tangents.restype = None
+
 has_flat_polys = CBlenderMalt['has_flat_polys']
 has_flat_polys.argtypes = [ctypes.c_void_p, ctypes.c_int]
 has_flat_polys.restype = ctypes.c_bool

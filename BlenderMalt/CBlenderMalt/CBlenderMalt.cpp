@@ -91,6 +91,17 @@ EXPORT void retrieve_mesh_uv(void* in_uvs, int loop_count, float* out_uvs)
     }
 }
 
+EXPORT void pack_tangents(float* in_tangents, float* in_bitangent_signs, int loop_count, float* out_tangents)
+{
+    for(int i = 0; i < loop_count; i++)
+    {
+        out_tangents[i*4+0] = in_tangents[i*3+0];
+        out_tangents[i*4+1] = in_tangents[i*3+1];
+        out_tangents[i*4+2] = in_tangents[i*3+2];
+        out_tangents[i*4+3] = in_bitangent_signs[i];
+    }
+}
+
 EXPORT bool has_flat_polys(void* in_polys, int polys_count)
 {
     BPoly* polys = (BPoly*)in_polys;
