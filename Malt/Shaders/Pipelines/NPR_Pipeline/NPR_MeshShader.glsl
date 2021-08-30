@@ -257,6 +257,7 @@ void main()
 #include "NPR_Shading.glsl"
 #include "Shading/Rim.glsl"
 #include "Filters/AO.glsl"
+#include "Filters/Bevel.glsl"
 #include "Filters/Curvature.glsl"
 #include "Filters/Line.glsl"
 
@@ -358,6 +359,36 @@ float get_surface_curvature(float depth_range /*0.5*/)
         return 0.5;
     }
     #endif
+}
+
+vec3 get_soft_bevel(int samples, float radius, float distribution_pow, bool only_self)
+{
+    #if defined(PIXEL_SHADER) && defined(MAIN_PASS)
+    {
+        int id = int(round(texture(IN_ID, screen_uv())[0]));
+        return bevel_ex(
+            IN_NORMAL_DEPTH, IN_NORMAL_DEPTH, 3,
+            id, only_self, IN_ID, 0,
+            samples, radius, distribution_pow,
+            false, 1);
+    }
+    #endif
+    return NORMAL;
+}
+
+vec3 get_hard_bevel(int samples, float radius, float distribution_pow, bool only_self, float max_dot)
+{
+    #if defined(PIXEL_SHADER) && defined(MAIN_PASS)
+    {
+        int id = int(round(texture(IN_ID, screen_uv())[0]));
+        return bevel_ex(
+            IN_NORMAL_DEPTH, IN_NORMAL_DEPTH, 3,
+            id, only_self, IN_ID, 0,
+            samples, radius, distribution_pow,
+            true, max_dot);
+    }
+    #endif
+    return NORMAL;
 }
 
 bool get_is_front_facing()

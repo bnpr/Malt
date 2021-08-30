@@ -20,6 +20,7 @@
 #include "Common/Quaternion.glsl"
 #include "Common/Transform.glsl"
 #include "Filters/AO.glsl"
+#include "Filters/Bevel.glsl"
 #include "Filters/Blur.glsl"
 #include "Filters/Curvature.glsl"
 #include "Filters/Line.glsl"
