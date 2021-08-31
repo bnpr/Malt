@@ -25,8 +25,6 @@ uniform sampler2DArray TRANSPARENT_SHADOWMAPS_COLOR_SPOT;
 uniform sampler2DArray TRANSPARENT_SHADOWMAPS_COLOR_SUN;
 uniform samplerCubeArray TRANSPARENT_SHADOWMAPS_COLOR_POINT;
 
-uniform ivec4 MATERIAL_LIGHT_GROUPS;
-
 uniform LIGHT_GROUPS
 {
     int LIGHT_GROUP_INDEX[MAX_LIGHTS];
@@ -39,26 +37,9 @@ uniform LIGHTS_CUSTOM_SHADING
 
 uniform sampler2DArray IN_LIGHT_CUSTOM_SHADING;
 
-LitSurface NPR_lit_surface(vec3 position, vec3 normal, float id, Light light, int light_index)
+LitSurface NPR_lit_surface(vec3 position, vec3 normal, float id, Light light, int light_index, bool self_shadows)
 {
     LitSurface S = lit_surface(position, normal, light, false);
-
-    if
-    (
-        MATERIAL_LIGHT_GROUPS.x != LIGHT_GROUP_INDEX[light_index] &&
-        MATERIAL_LIGHT_GROUPS.y != LIGHT_GROUP_INDEX[light_index] &&
-        MATERIAL_LIGHT_GROUPS.z != LIGHT_GROUP_INDEX[light_index] &&
-        MATERIAL_LIGHT_GROUPS.w != LIGHT_GROUP_INDEX[light_index]
-    )
-    {
-        S.P = 0;
-        S.light_color = vec3(0);
-        S.shadow = false;
-        S.shadow_multiply = vec3(1);
-
-        return S;
-    }
-
 
     S.light_color = light.color * S.P;
 
@@ -124,7 +105,7 @@ LitSurface NPR_lit_surface(vec3 position, vec3 normal, float id, Light light, in
 
         S.shadow = shadow.shadow;
 
-        if(Settings.Self_Shadow == false && round(id) == round(shadow_id))
+        if(self_shadows == false && round(id) == round(shadow_id))
         {
             S.shadow = false;
         }
@@ -133,7 +114,7 @@ LitSurface NPR_lit_surface(vec3 position, vec3 normal, float id, Light light, in
 
         if(!S.shadow && t_shadow.shadow)
         {
-            if(Settings.Self_Shadow == false && round(id) == round(t_shadow_id))
+            if(self_shadows == false && round(id) == round(t_shadow_id))
             {
                 t_shadow.shadow = false;
             }

@@ -39,6 +39,8 @@ struct NPR_Settings
 
 uniform NPR_Settings Settings = NPR_Settings(true, false, false, 0.001);
 
+uniform ivec4 MATERIAL_LIGHT_GROUPS;
+
 #ifdef VERTEX_SHADER
 
 void COMMON_VERTEX_SHADER(inout Surface S);
@@ -276,42 +278,82 @@ vec3 get_normal()
 
 vec3 get_diffuse()
 {
-    return scene_diffuse(POSITION, get_normal());
+    vec3 result = vec3(0);
+    for(int i = 0; i < 4; i++)
+    {
+        result += scene_diffuse(POSITION, get_normal(), MATERIAL_LIGHT_GROUPS[i], Settings.Self_Shadow);
+    }
+    return result;
 }
 
 vec3 get_diffuse_half()
 {
-    return scene_diffuse_half(POSITION, get_normal());
+    vec3 result = vec3(0);
+    for(int i = 0; i < 4; i++)
+    {
+        result += scene_diffuse_half(POSITION, get_normal(), MATERIAL_LIGHT_GROUPS[i], Settings.Self_Shadow);
+    }
+    return result;
 }
 
 vec3 get_diffuse_gradient(sampler1D gradient_texture)
 {
-    return scene_diffuse_gradient(POSITION, get_normal(), gradient_texture);
+    vec3 result = vec3(0);
+    for(int i = 0; i < 4; i++)
+    {
+        result += scene_diffuse_gradient(POSITION, get_normal(), gradient_texture, MATERIAL_LIGHT_GROUPS[i], Settings.Self_Shadow);
+    }
+    return result;
 }
 
 vec3 get_specular(float roughness)
 {
-    return scene_specular(POSITION, get_normal(), roughness);
+    vec3 result = vec3(0);
+    for(int i = 0; i < 4; i++)
+    {
+        result += scene_specular(POSITION, get_normal(), roughness, MATERIAL_LIGHT_GROUPS[i], Settings.Self_Shadow);
+    }
+    return result;
 }
 
 vec3 get_specular_gradient(sampler1D gradient_texture, float roughness)
 {
-    return scene_specular_gradient(POSITION, get_normal(), roughness, gradient_texture);
+    vec3 result = vec3(0);
+    for(int i = 0; i < 4; i++)
+    {
+        result += scene_specular_gradient(POSITION, get_normal(), roughness, gradient_texture, MATERIAL_LIGHT_GROUPS[i], Settings.Self_Shadow);
+    }
+    return result;
 }
 
 vec3 get_specular_anisotropic(float roughness, float anisotropy, vec3 tangent)
 {
-    return scene_specular_anisotropic(POSITION, get_normal(), tangent, anisotropy, roughness);
+    vec3 result = vec3(0);
+    for(int i = 0; i < 4; i++)
+    {
+        result += scene_specular_anisotropic(POSITION, get_normal(), tangent, anisotropy, roughness, MATERIAL_LIGHT_GROUPS[i], Settings.Self_Shadow);
+    }
+    return result;
 }
 
 vec3 get_specular_anisotropic_gradient(sampler1D gradient_texture, float roughness, float anisotropy, vec3 tangent)
 {
-    return scene_specular_anisotropic_gradient(POSITION, get_normal(), tangent, anisotropy, roughness, gradient_texture);
+    vec3 result = vec3(0);
+    for(int i = 0; i < 4; i++)
+    {
+        result += scene_specular_anisotropic_gradient(POSITION, get_normal(), tangent, anisotropy, roughness, gradient_texture, MATERIAL_LIGHT_GROUPS[i], Settings.Self_Shadow);
+    }
+    return result;
 }
 
 vec3 get_toon(float size, float gradient_size, float specularity, float offset)
 {
-    return scene_toon(POSITION, get_normal(), size, gradient_size, specularity, offset);
+    vec3 result = vec3(0);
+    for(int i = 0; i < 4; i++)
+    {
+        result += scene_toon(POSITION, get_normal(), size, gradient_size, specularity, offset, MATERIAL_LIGHT_GROUPS[i], Settings.Self_Shadow);
+    }
+    return result;
 }
 
 float get_ao(int samples, float radius)
