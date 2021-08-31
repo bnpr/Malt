@@ -31,13 +31,14 @@ struct PixelOutput
 // Global material settings. Can be modified in the material panel UI
 struct NPR_Settings
 {
+    bool Receive_Shadow;
     bool Self_Shadow;
     bool Transparency;
     bool Transparency_Single_Layer;
     float Vertex_Displacement_Offset;
 };
 
-uniform NPR_Settings Settings = NPR_Settings(true, false, false, 0.001);
+uniform NPR_Settings Settings = NPR_Settings(true, true, false, false, 0.001);
 
 uniform ivec4 MATERIAL_LIGHT_GROUPS;
 
@@ -281,7 +282,7 @@ vec3 get_diffuse()
     vec3 result = vec3(0);
     for(int i = 0; i < 4; i++)
     {
-        result += scene_diffuse(POSITION, get_normal(), MATERIAL_LIGHT_GROUPS[i], Settings.Self_Shadow);
+        result += scene_diffuse(POSITION, get_normal(), MATERIAL_LIGHT_GROUPS[i], Settings.Receive_Shadow, Settings.Self_Shadow);
     }
     return result;
 }
@@ -291,7 +292,7 @@ vec3 get_diffuse_half()
     vec3 result = vec3(0);
     for(int i = 0; i < 4; i++)
     {
-        result += scene_diffuse_half(POSITION, get_normal(), MATERIAL_LIGHT_GROUPS[i], Settings.Self_Shadow);
+        result += scene_diffuse_half(POSITION, get_normal(), MATERIAL_LIGHT_GROUPS[i], Settings.Receive_Shadow, Settings.Self_Shadow);
     }
     return result;
 }
@@ -301,7 +302,7 @@ vec3 get_diffuse_gradient(sampler1D gradient_texture)
     vec3 result = vec3(0);
     for(int i = 0; i < 4; i++)
     {
-        result += scene_diffuse_gradient(POSITION, get_normal(), gradient_texture, MATERIAL_LIGHT_GROUPS[i], Settings.Self_Shadow);
+        result += scene_diffuse_gradient(POSITION, get_normal(), gradient_texture, MATERIAL_LIGHT_GROUPS[i], Settings.Receive_Shadow, Settings.Self_Shadow);
     }
     return result;
 }
@@ -311,7 +312,7 @@ vec3 get_specular(float roughness)
     vec3 result = vec3(0);
     for(int i = 0; i < 4; i++)
     {
-        result += scene_specular(POSITION, get_normal(), roughness, MATERIAL_LIGHT_GROUPS[i], Settings.Self_Shadow);
+        result += scene_specular(POSITION, get_normal(), roughness, MATERIAL_LIGHT_GROUPS[i], Settings.Receive_Shadow, Settings.Self_Shadow);
     }
     return result;
 }
@@ -321,7 +322,7 @@ vec3 get_specular_gradient(sampler1D gradient_texture, float roughness)
     vec3 result = vec3(0);
     for(int i = 0; i < 4; i++)
     {
-        result += scene_specular_gradient(POSITION, get_normal(), roughness, gradient_texture, MATERIAL_LIGHT_GROUPS[i], Settings.Self_Shadow);
+        result += scene_specular_gradient(POSITION, get_normal(), roughness, gradient_texture, MATERIAL_LIGHT_GROUPS[i], Settings.Receive_Shadow, Settings.Self_Shadow);
     }
     return result;
 }
@@ -331,7 +332,7 @@ vec3 get_specular_anisotropic(float roughness, float anisotropy, vec3 tangent)
     vec3 result = vec3(0);
     for(int i = 0; i < 4; i++)
     {
-        result += scene_specular_anisotropic(POSITION, get_normal(), tangent, anisotropy, roughness, MATERIAL_LIGHT_GROUPS[i], Settings.Self_Shadow);
+        result += scene_specular_anisotropic(POSITION, get_normal(), tangent, anisotropy, roughness, MATERIAL_LIGHT_GROUPS[i], Settings.Receive_Shadow, Settings.Self_Shadow);
     }
     return result;
 }
@@ -341,7 +342,7 @@ vec3 get_specular_anisotropic_gradient(sampler1D gradient_texture, float roughne
     vec3 result = vec3(0);
     for(int i = 0; i < 4; i++)
     {
-        result += scene_specular_anisotropic_gradient(POSITION, get_normal(), tangent, anisotropy, roughness, gradient_texture, MATERIAL_LIGHT_GROUPS[i], Settings.Self_Shadow);
+        result += scene_specular_anisotropic_gradient(POSITION, get_normal(), tangent, anisotropy, roughness, gradient_texture, MATERIAL_LIGHT_GROUPS[i], Settings.Receive_Shadow, Settings.Self_Shadow);
     }
     return result;
 }
@@ -351,7 +352,7 @@ vec3 get_toon(float size, float gradient_size, float specularity, float offset)
     vec3 result = vec3(0);
     for(int i = 0; i < 4; i++)
     {
-        result += scene_toon(POSITION, get_normal(), size, gradient_size, specularity, offset, MATERIAL_LIGHT_GROUPS[i], Settings.Self_Shadow);
+        result += scene_toon(POSITION, get_normal(), size, gradient_size, specularity, offset, MATERIAL_LIGHT_GROUPS[i], Settings.Receive_Shadow, Settings.Self_Shadow);
     }
     return result;
 }

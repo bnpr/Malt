@@ -94,55 +94,55 @@ vec3 lit_toon(LitSurface LS, float size, float gradient_size, float specularity,
     return min(LS.shadow ? color_at_05 : 1.0, value) * LS.light_color;
 }
 
-#define _LIT_SCENE_MACRO(callback, light_group, self_shadows)\
+#define _LIT_SCENE_MACRO(callback, light_group, shadows, self_shadows)\
     vec3 result = vec3(0,0,0);\
     for (int i = 0; i < LIGHTS.lights_count; i++)\
     {\
         if(LIGHT_GROUP_INDEX[i] != light_group) continue;\
         Light L = LIGHTS.lights[i];\
-        LitSurface LS = NPR_lit_surface(position, normal, ID, L, i, self_shadows);\
+        LitSurface LS = NPR_lit_surface(position, normal, ID, L, i, shadows, self_shadows);\
         result += (callback);\
     }\
     return result;\
 
-vec3 scene_diffuse(vec3 position, vec3 normal, int light_group, bool self_shadows) 
+vec3 scene_diffuse(vec3 position, vec3 normal, int light_group, bool shadows, bool self_shadows) 
 { 
-    _LIT_SCENE_MACRO(lit_diffuse(LS), light_group, self_shadows);
+    _LIT_SCENE_MACRO(lit_diffuse(LS), light_group, shadows, self_shadows);
 }
 
-vec3 scene_diffuse_half(vec3 position, vec3 normal, int light_group, bool self_shadows) 
+vec3 scene_diffuse_half(vec3 position, vec3 normal, int light_group, bool shadows, bool self_shadows) 
 { 
-    _LIT_SCENE_MACRO(lit_diffuse_half(LS), light_group, self_shadows);
+    _LIT_SCENE_MACRO(lit_diffuse_half(LS), light_group, shadows, self_shadows);
 }
 
-vec3 scene_diffuse_gradient(vec3 position, vec3 normal, sampler1D gradient, int light_group, bool self_shadows)
+vec3 scene_diffuse_gradient(vec3 position, vec3 normal, sampler1D gradient, int light_group, bool shadows, bool self_shadows)
 {
-    _LIT_SCENE_MACRO(lit_diffuse_gradient(LS, gradient), light_group, self_shadows);
+    _LIT_SCENE_MACRO(lit_diffuse_gradient(LS, gradient), light_group, shadows, self_shadows);
 }
 
-vec3 scene_specular(vec3 position, vec3 normal, float roughness, int light_group, bool self_shadows) 
+vec3 scene_specular(vec3 position, vec3 normal, float roughness, int light_group, bool shadows, bool self_shadows) 
 {
-    _LIT_SCENE_MACRO(lit_specular(LS, roughness), light_group, self_shadows);
+    _LIT_SCENE_MACRO(lit_specular(LS, roughness), light_group, shadows, self_shadows);
 }
 
-vec3 scene_specular_gradient(vec3 position, vec3 normal, float roughness, sampler1D gradient, int light_group, bool self_shadows)
+vec3 scene_specular_gradient(vec3 position, vec3 normal, float roughness, sampler1D gradient, int light_group, bool shadows, bool self_shadows)
 {
-    _LIT_SCENE_MACRO(lit_specular_gradient(LS, roughness, gradient), light_group, self_shadows);
+    _LIT_SCENE_MACRO(lit_specular_gradient(LS, roughness, gradient), light_group, shadows, self_shadows);
 }
 
-vec3 scene_specular_anisotropic(vec3 position, vec3 normal, vec3 tangent, float anisotropy, float roughness, int light_group, bool self_shadows)
+vec3 scene_specular_anisotropic(vec3 position, vec3 normal, vec3 tangent, float anisotropy, float roughness, int light_group, bool shadows, bool self_shadows)
 {
-    _LIT_SCENE_MACRO(lit_specular_anisotropic(LS, tangent, anisotropy, roughness), light_group, self_shadows);
+    _LIT_SCENE_MACRO(lit_specular_anisotropic(LS, tangent, anisotropy, roughness), light_group, shadows, self_shadows);
 }
 
-vec3 scene_specular_anisotropic_gradient(vec3 position, vec3 normal, vec3 tangent, float anisotropy, float roughness, sampler1D gradient, int light_group, bool self_shadows)
+vec3 scene_specular_anisotropic_gradient(vec3 position, vec3 normal, vec3 tangent, float anisotropy, float roughness, sampler1D gradient, int light_group, bool shadows, bool self_shadows)
 {
-    _LIT_SCENE_MACRO(lit_specular_anisotropic_gradient(LS, tangent, anisotropy, roughness, gradient), light_group, self_shadows);
+    _LIT_SCENE_MACRO(lit_specular_anisotropic_gradient(LS, tangent, anisotropy, roughness, gradient), light_group, shadows, self_shadows);
 }
 
-vec3 scene_toon(vec3 position, vec3 normal, float size, float gradient_size, float specularity, float offset, int light_group, bool self_shadows)
+vec3 scene_toon(vec3 position, vec3 normal, float size, float gradient_size, float specularity, float offset, int light_group, bool shadows, bool self_shadows)
 {
-    _LIT_SCENE_MACRO(lit_toon(LS, size, gradient_size, specularity, offset), light_group, self_shadows);
+    _LIT_SCENE_MACRO(lit_toon(LS, size, gradient_size, specularity, offset), light_group, shadows, self_shadows);
 }
 
 #endif //NPR_SHADING_GLSL

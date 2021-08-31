@@ -37,7 +37,7 @@ uniform LIGHTS_CUSTOM_SHADING
 
 uniform sampler2DArray IN_LIGHT_CUSTOM_SHADING;
 
-LitSurface NPR_lit_surface(vec3 position, vec3 normal, float id, Light light, int light_index, bool self_shadows)
+LitSurface NPR_lit_surface(vec3 position, vec3 normal, float id, Light light, int light_index, bool shadows, bool self_shadows)
 {
     LitSurface S = lit_surface(position, normal, light, false);
 
@@ -47,6 +47,11 @@ LitSurface NPR_lit_surface(vec3 position, vec3 normal, float id, Light light, in
     if(custom_shading_index >= 0)
     {
         S.light_color = texelFetch(IN_LIGHT_CUSTOM_SHADING, ivec3(screen_pixel(), custom_shading_index), 0).rgb;
+    }
+
+    if(!shadows)
+    {
+        return S;
     }
 
     if(light.type_index >= 0)
