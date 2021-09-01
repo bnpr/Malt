@@ -430,7 +430,7 @@ float get_surface_curvature(float depth_range /*0.5*/)
     #endif
 }
 
-vec3 get_soft_bevel(int samples, float radius, float distribution_pow, bool only_self)
+vec3 get_soft_bevel(int samples, float radius, float distribution_exponent, bool only_self)
 {
     #if defined(PIXEL_SHADER) && defined(MAIN_PASS)
     {
@@ -438,14 +438,14 @@ vec3 get_soft_bevel(int samples, float radius, float distribution_pow, bool only
         return bevel_ex(
             IN_NORMAL_DEPTH, IN_NORMAL_DEPTH, 3,
             id, only_self, IN_ID, 0,
-            samples, radius, distribution_pow,
+            samples, radius, distribution_exponent,
             false, 1);
     }
     #endif
     return NORMAL;
 }
 
-vec3 get_hard_bevel(int samples, float radius, float distribution_pow, bool only_self, float max_dot)
+vec3 get_hard_bevel(int samples, float radius, float distribution_exponent, bool only_self, float max_dot)
 {
     #if defined(PIXEL_SHADER) && defined(MAIN_PASS)
     {
@@ -453,7 +453,7 @@ vec3 get_hard_bevel(int samples, float radius, float distribution_pow, bool only
         return bevel_ex(
             IN_NORMAL_DEPTH, IN_NORMAL_DEPTH, 3,
             id, only_self, IN_ID, 0,
-            samples, radius, distribution_pow,
+            samples, radius, distribution_exponent,
             true, max_dot);
     }
     #endif
