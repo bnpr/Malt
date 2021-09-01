@@ -35,6 +35,17 @@ _BLEND_TRANSPARENCY_SHADER_SRC='''
 #include "Passes/BlendTransparency.glsl"
 '''
 
+_BEVEL_SHADER = None
+
+_BEVEL_SHADER_SRC='''
+#include "Pipelines/NPR_Pipeline/Passes/Bevel.glsl"
+'''
+
+Pipeline.GLSL_HEADER = '''
+#version 450 core
+#extension GL_ARB_shading_language_include : enable
+'''
+
 class NPR_Pipeline(Pipeline):
 
     def __init__(self):
@@ -69,6 +80,13 @@ class NPR_Pipeline(Pipeline):
         
         self.parameters.material['Light Groups.Light'] = Parameter([1,0,0,0], Type.INT, 4, 'mesh')
         self.parameters.material['Light Groups.Shadow'] = Parameter([1,0,0,0], Type.INT, 4, 'mesh')
+        
+        self.parameters.world['Bevel.Enable'] = Parameter(True, Type.BOOL)
+        self.bevel_enabled = True
+        global _BEVEL_SHADER
+        if _BEVEL_SHADER is None: _BEVEL_SHADER = self.compile_shader_from_source(_BEVEL_SHADER_SRC)
+        self.bevel_shader = _BEVEL_SHADER
+        print(self.bevel_shader.error)
 
         global _DEFAULT_SHADER
         if _DEFAULT_SHADER is None: _DEFAULT_SHADER = self.compile_material_from_source('mesh', _DEFAULT_SHADER_SRC)
@@ -113,7 +131,16 @@ class NPR_Pipeline(Pipeline):
         
         self.t_prepass_normal_depth = Texture(resolution, GL_RGBA32F)
         self.t_prepass_id = Texture(resolution, GL_R32F, min_filter=GL_NEAREST, mag_filter=GL_NEAREST)
+        self.t_prepass_bevel_data = Texture(resolution, GL_RG32UI)
         self.fbo_prepass = RenderTarget([self.t_prepass_normal_depth, self.t_prepass_id], self.t_depth)
+
+        if self.bevel_enabled:
+            self.fbo_prepass = RenderTarget([self.t_prepass_normal_depth, self.t_prepass_id, self.t_prepass_bevel_data], self.t_depth)
+            self.t_beveled_normals_depth = Texture(resolution, GL_RGBA32F)
+            self.fbo_beveled_normals_depth = RenderTarget([self.t_beveled_normals_depth])
+        else :
+            self.t_beveled_normals_depth = None
+            self.fbo_beveled_normals_depth = None
         
         self.t_last_layer_id = Texture(resolution, GL_R32F, min_filter=GL_NEAREST, mag_filter=GL_NEAREST)
         self.fbo_last_layer_id = RenderTarget([self.t_last_layer_id])
@@ -152,6 +179,10 @@ class NPR_Pipeline(Pipeline):
             self.fbo_accumulate.clear([(0,0,0,0)])
         self.fbo_opaque.clear([(0,0,0,0)])
         self.fbo_color.clear([(0,0,0,0)])
+        
+        if self.bevel_enabled != scene.world_parameters['Bevel.Enable']:
+            self.bevel_enabled = scene.world_parameters['Bevel.Enable']
+            self.setup_render_targets(resolution)
         
         sample_offset = self.get_samples(scene.parameters['Samples.Width'])[self.sample_count]
 
@@ -286,7 +317,11 @@ class NPR_Pipeline(Pipeline):
             'IN_TRANSPARENT_DEPTH': self.t_transparent_depth,
             'IN_LAST_ID': self.t_last_layer_id,
         }
-        self.fbo_prepass.clear([(0,0,1,1), (0,0,0,0)], 1, 0)
+        
+        if self.bevel_enabled:
+            self.fbo_prepass.clear([(0,0,1,1), (0,0,0,0), (0,0)], 1, 0)
+        else:
+            self.fbo_prepass.clear([(0,0,1,1), (0,0,0,0)], 1, 0)
 
         if self.layer_query:
             glDeleteQueries(1, self.layer_query)
@@ -295,6 +330,11 @@ class NPR_Pipeline(Pipeline):
         glBeginQuery(GL_ANY_SAMPLES_PASSED, self.layer_query[0])
         self.draw_scene_pass(self.fbo_prepass, batches, 'PRE_PASS', self.default_shader['PRE_PASS'], UBOS, {}, textures, callbacks)
         glEndQuery(GL_ANY_SAMPLES_PASSED)
+
+        if self.bevel_enabled:
+            self.bevel_shader.textures['IN_NORMAL_DEPTH'] = self.t_prepass_normal_depth
+            self.bevel_shader.textures['IN_BEVEL_DATA'] = self.t_prepass_bevel_data
+            self.draw_screen_pass(self.bevel_shader, self.fbo_beveled_normals_depth)
 
         #CUSTOM LIGHT SHADING
         self.custom_light_shading.load(self, self.t_depth, scene)
@@ -310,6 +350,10 @@ class NPR_Pipeline(Pipeline):
             'IN_TRANSPARENT_DEPTH': self.t_transparent_depth,
             'IN_LAST_ID': self.t_last_layer_id,
         }
+
+        if self.bevel_enabled:
+            textures['IN_NORMAL_DEPTH'] = self.t_beveled_normals_depth
+
         self.fbo_main.clear([background_color, (0,0,0,1), (-1,-1,-1,-1)])
         self.draw_scene_pass(self.fbo_main, batches, 'MAIN_PASS', self.default_shader['MAIN_PASS'], UBOS, {}, textures, callbacks)        
         

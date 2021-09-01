@@ -6,10 +6,18 @@
 #include "Common/Math.glsl"
 #include "Common/Transform.glsl"
 
+#ifndef BEVEL_ID_SAMPLER
+    #define BEVEL_ID_SAMPLER sampler2D
+#endif
+
+#ifndef BEVEL_FETCH_ID
+    #define BEVEL_FETCH_ID(texture, texel, channel) int(round(texelFetch(texture, texel, 0)[channel]))
+#endif
+
 vec3 bevel_ex
 (
     sampler2D normal_texture, sampler2D depth_texture, int depth_channel,
-    int id, bool filter_by_id, sampler2D id_texture, int id_channel,
+    int id, bool filter_by_id, BEVEL_ID_SAMPLER id_texture, int id_channel,
     int samples, float radius, float distribution_pow,
     bool hard_bevel, float hard_bevel_max_dot
 )
@@ -45,7 +53,7 @@ vec3 bevel_ex
 
         if(filter_by_id)
         {
-            int offset_id = int(round(texelFetch(id_texture, offset_texel, 0)[id_channel]));
+            int offset_id = BEVEL_FETCH_ID(id_texture, offset_texel, id_channel);
             if (offset_id != id)
             {
                 continue;

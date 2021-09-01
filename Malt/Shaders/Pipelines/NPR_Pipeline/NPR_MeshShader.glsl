@@ -17,6 +17,16 @@ struct Surface
     float id;
 };
 
+struct BevelSettings
+{
+    float radius;
+    float distribution_exponent;
+    uint samples;
+    uint bevel_group;
+    bool hard_mode;
+    float hard_mode_max_dot;
+};
+
 // The result of the pixel shader.
 struct PixelOutput
 {
@@ -26,6 +36,7 @@ struct PixelOutput
     vec4 line_color;
     float line_width;
     vec4 shadow_color; // Only for transparent objects
+    BevelSettings bevel_settings;
 };
 
 // Global material settings. Can be modified in the material panel UI
@@ -142,6 +153,7 @@ layout (location = 1) out vec3 OUT_SHADOW_COLOR;
 #ifdef PRE_PASS
 layout (location = 0) out vec4 OUT_NORMAL_DEPTH;
 layout (location = 1) out float OUT_ID;
+layout (location = 2) out uvec4 OUT_BEVEL_DATA;
 #endif //PRE_PASS
 
 #ifdef MAIN_PASS
@@ -174,6 +186,12 @@ void main()
     PO.id = ID;
     PO.line_color = vec4(0,0,0,1);
     PO.line_width = 0;
+    PO.bevel_settings.radius = 0;
+    PO.bevel_settings.distribution_exponent = 1;
+    PO.bevel_settings.samples = 0;
+    PO.bevel_settings.bevel_group = 0;
+    PO.bevel_settings.hard_mode = false;
+    PO.bevel_settings.hard_mode_max_dot = 0.9;
 
     if(Settings.Transparency)
     {
@@ -236,6 +254,14 @@ void main()
         OUT_NORMAL_DEPTH.xyz = PO.normal;
         OUT_NORMAL_DEPTH.w = gl_FragCoord.z;
         OUT_ID = PO.id;
+
+        OUT_BEVEL_DATA.x = packHalf2x16(vec2(PO.bevel_settings.radius, PO.bevel_settings.distribution_exponent));
+        uint packed_data = 0;
+        packed_data = bitfieldInsert(packed_data, PO.bevel_settings.samples, 0, 8);
+        packed_data = bitfieldInsert(packed_data, PO.bevel_settings.bevel_group, 8, 8);
+        packed_data = bitfieldInsert(packed_data, PO.bevel_settings.hard_mode ? 1 : 0, 16, 8);
+        packed_data = bitfieldInsert(packed_data, packSnorm4x8(vec4(0,0,0, PO.bevel_settings.hard_mode_max_dot)), 24, 8);
+        OUT_BEVEL_DATA.y = packed_data;
     }
     #endif
 
