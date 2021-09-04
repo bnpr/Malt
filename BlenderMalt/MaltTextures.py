@@ -1,7 +1,6 @@
 # Copyright (c) 2020 BlenderNPR and contributors. MIT license. 
 
 import ctypes
-import numpy as np
 from . import MaltPipeline
 
 __TEXTURES = {}
@@ -12,17 +11,10 @@ def get_texture(texture):
         __TEXTURES[name] = __load_texture(texture)
     return name
 
-def __load_texture(texture):
-    # https://numpy.org/doc/stable/reference/arrays.interface.html
-    class ArrayInterface(object):
-        def __init__(self, typestr, length, address):
-            self.__array_interface__={
-                'shape':(length,),
-                'data':(address, False),
-                'typestr':typestr,
-                'version':3,
-            }
+from Malt.Utils import profile_function
 
+#@profile_function
+def __load_texture(texture):
     w,h = texture.size
     channels = int(texture.channels)
     size = w*h*channels
@@ -30,13 +22,10 @@ def __load_texture(texture):
     if size == 0:
         return True
 
-    buffer = MaltPipeline.get_bridge().get_texture_buffer(size)
-    array_interface = ArrayInterface('<f4', size, ctypes.addressof(buffer))
-    #np_view = np.empty(size, dtype=np.float32)
-    np_view = np.array(array_interface, copy=False)
-    texture.pixels.foreach_get(np_view)
+    buffer = MaltPipeline.get_bridge().get_shared_buffer(ctypes.c_float, size)
+    texture.pixels.foreach_get(buffer.as_np_array())
     
-    MaltPipeline.get_bridge().load_texture(texture.name_full, (w,h), channels, sRGB)
+    MaltPipeline.get_bridge().load_texture(texture.name_full, buffer, (w,h), channels, sRGB)
     return True
 
 __GRADIENTS = {}

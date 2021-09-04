@@ -1,6 +1,6 @@
 # Copyright (c) 2020 BlenderNPR and contributors. MIT license. 
 
-import ctypes, array
+import ctypes
 import bpy
 
 MESHES = {}
@@ -107,8 +107,8 @@ def load_mesh(object, name):
     return [name for i in range(material_count)]
 
 def get_load_buffer(name, ctype, size):
-    from Bridge.Client_API import SharedBuffer
-    return SharedBuffer(ctype, size)
+    from . import MaltPipeline
+    return MaltPipeline.get_bridge().get_shared_buffer(ctype, size)
 
 def unload_mesh(object):
     MESHES[get_mesh_name(object)] = None

@@ -1,3 +1,4 @@
+import copy
 import subprocess
 import os
 import ctypes
@@ -44,23 +45,49 @@ class Array_Interface():
 
 class SharedBuffer():
 
+    _GARBAGE = []
+    _REF_COUNT = None
+    _LOCK = None
+
+    @classmethod
+    def setup_class(cls, shared_dict, lock):
+        cls._REF_COUNT = shared_dict
+        cls._LOCK = lock
+        cls.GC()
+    
+    @classmethod
+    def GC(cls):
+        from copy import copy
+        with cls._LOCK:
+            for buffer in copy(cls._GARBAGE):
+                if buffer.name not in cls._REF_COUNT.keys() or cls._REF_COUNT[buffer.name] == 0:
+                    print('GC ', buffer.name)
+                    close_shared_memory(buffer)
+                    cls._GARBAGE.remove(buffer)
+                    cls._REF_COUNT.pop(buffer.name, None)
+
     def __init__(self, ctype, size):
-        import random, string, Bridge.ipc as ipc
+        import random, string
         self._ctype = ctype
         self._size = size
-        self._name = 'MALT_' + ''.join(random.choices(string.ascii_letters + string.digits, k=16))
-        self._name = self._name.encode('ascii')
-        self._buffer = ipc.create_shared_memory(self._name, self.size_in_bytes())
+        name = 'MALT_SHARED_' + ''.join(random.choices(string.ascii_letters + string.digits, k=16))
+        self._buffer = create_shared_memory(name.encode('ascii'), self.size_in_bytes())
+        self._name = self._buffer.name
+        with self._LOCK:
+            self._REF_COUNT[self._name] = 1
     
     def __getstate__(self):
+        print('GET ', self._name, self)
+        with self._LOCK:
+            self._REF_COUNT[self._name] += 1
         state = self.__dict__.copy()
         state['_buffer'] = None
         return state
 
     def __setstate__(self, state):
-        import Bridge.ipc as ipc
         self.__dict__.update(state)
-        self._buffer = ipc.open_shared_memory(self._name, self.size_in_bytes())
+        self._buffer = open_shared_memory(self._name, self.size_in_bytes())
+        print('SET ', self._name, self)
     
     def size_in_bytes(self):
         return ctypes.sizeof(self._ctype) * self._size
@@ -82,8 +109,14 @@ class SharedBuffer():
         return np.array(self.as_array_interface(), copy=False)
 
     def __del__(self):
-        import Bridge.ipc as ipc
-        ipc.close_shared_memory(self._buffer)
+        print('DEL ', self._name, self)
+        with self._LOCK:
+            self._REF_COUNT[self._name] -= 1
+        copy = C_SharedMemory()
+        ctypes.memmove(ctypes.addressof(copy), ctypes.addressof(self._buffer), ctypes.sizeof(C_SharedMemory))
+        self._GARBAGE.append(copy)
+        self.GC() 
+
 
 __BUFFERS = {}
 class SharedMemory(object):

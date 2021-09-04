@@ -48,6 +48,8 @@ class Bridge(object):
 
         self.manager = mp.Manager()
         self.shared_dict = self.manager.dict()
+        self.lock = self.manager.Lock()
+        SharedBuffer.setup_class(self.shared_dict, self.lock)
         self.connections = {}
         self.process = None
         self.lost_connection = True
@@ -74,7 +76,7 @@ class Bridge(object):
         for name in ['PARAMS','MESH','MATERIAL','SHADER REFLECTION','TEXTURE','GRADIENT','RENDER']: add_connection(name)
 
         from . import start_server
-        self.process = mp.Process(target=start_server, args=[pipeline_path, malt_to_bridge, self.shared_dict, sys.stdout.log_path, debug_mode, renderdoc_path])
+        self.process = mp.Process(target=start_server, args=[pipeline_path, malt_to_bridge, self.shared_dict, self.lock, sys.stdout.log_path, debug_mode, renderdoc_path])
         self.process.daemon = True
         self.process.start()
 
@@ -142,11 +144,8 @@ class Bridge(object):
     
     @bridge_method
     def get_shared_buffer(self, ctype, size):
-        import random, string
-        name = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
-        import Bridge.ipc as ipc
-        buffer = ipc.load_shared_buffer(name, ctype, size*ctypes.sizeof(ctype))
-        full_name = ipc.get_shared_buffer_full_name(name)
+        from . import ipc
+        return ipc.SharedBuffer(ctype, size)
 
     @bridge_method
     def load_mesh(self, name, mesh_data):
@@ -156,24 +155,14 @@ class Bridge(object):
         })
     
     @bridge_method
-    def get_texture_buffer(self, pixels_times_channels):
-        buffer_name = 'MALT_TEXTURE_BUFFER_' + self.id
-        import Bridge.ipc as ipc
-        return ipc.load_shared_buffer(buffer_name, ctypes.c_float, pixels_times_channels)
-    
-    @bridge_method
-    def load_texture(self, name, resolution, channels, sRGB):
-        buffer_name = 'MALT_TEXTURE_BUFFER_' + self.id
-        import Bridge.ipc as ipc
+    def load_texture(self, name, buffer, resolution, channels, sRGB):
         self.connections['TEXTURE'].send({
-            'buffer_name': ipc.get_shared_buffer_full_name(buffer_name),
+            'buffer': buffer,
             'name': name,
             'resolution': resolution,
             'channels': channels,
             'sRGB' : sRGB,
         })
-        #TODO: Recv at the beginning, so it only locks when needed
-        self.connections['TEXTURE'].recv()
 
     @bridge_method
     def load_gradient(self, name, pixels, nearest):
