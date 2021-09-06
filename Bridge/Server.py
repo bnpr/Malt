@@ -106,7 +106,7 @@ class PBO(object):
             glBindBuffer(GL_PIXEL_PACK_BUFFER, self.handle[0])
             result = glMapBuffer(GL_PIXEL_PACK_BUFFER, GL_READ_ONLY)
             if result:
-                ctypes.memmove(self.buffer.c.data, result, self.size)
+                ctypes.memmove(self.buffer.buffer(), result, self.size)
                 glUnmapBuffer(GL_PIXEL_PACK_BUFFER)
             glBindBuffer(GL_PIXEL_PACK_BUFFER, 0)
             return True
@@ -143,12 +143,13 @@ class Viewport(object):
             'Max Latency : {} frames'.format(self.stat_max_frame_latency),
         ))
     
-    def setup(self, buffers, resolution, scene, scene_update, renderdoc_capture):
+    def setup(self, new_buffers, resolution, scene, scene_update, renderdoc_capture):
         if self.resolution != resolution:
             self.pbos_inactive.extend(self.pbos_active)
             self.pbos_active = []
         
-        self.buffers = buffers
+        if new_buffers:
+            self.buffers = new_buffers
         self.resolution = resolution
 
         self.sample_index = 0
@@ -240,8 +241,6 @@ def main(pipeline_path, connection_addresses, shared_dic, lock, log_path, debug_
     for name, address in connection_addresses.items():
         log.info('Name: {} Adress: {}'.format(name, address))
         connections[name] = connection.Client(address)
-    
-    ipc.SharedBuffer.setup_class(shared_dic, lock)
     
     glfw.ERROR_REPORTING = True
     glfw.init()
@@ -362,18 +361,13 @@ def main(pipeline_path, connection_addresses, shared_dic, lock, log_path, debug_
                 resolution = msg['resolution']
                 scene = msg['scene']
                 scene_update = msg['scene_update']
-                buffer_names = msg['buffer_names']
+                new_buffers = msg['new_buffers']
                 renderdoc_capture = msg['renderdoc_capture']
-                w,h = resolution
-                buffers = {}
-                for key, buffer_name in buffer_names.items():
-                    if buffer_name:
-                        buffers[key] = ipc.SharedMemoryRef(buffer_name, w*h*4*4)
 
                 if viewport_id not in viewports:
                     viewports[viewport_id] = Viewport(pipeline_class(), viewport_id == 0)
 
-                viewports[viewport_id].setup(buffers, resolution, scene, scene_update, renderdoc_capture)
+                viewports[viewport_id].setup(new_buffers, resolution, scene, scene_update, renderdoc_capture)
                 shared_dic[(viewport_id, 'FINISHED')] = False
             
             active_viewports = {}

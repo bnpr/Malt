@@ -9,7 +9,6 @@ from Malt.GL import GL
 from Malt.GL.Texture import Texture
 from . import MaltPipeline, MaltMeshes, MaltMaterial, CBlenderMalt
 
-PROFILE = False
 CAPTURE = False
 
 WINM = None
@@ -23,6 +22,8 @@ def high_res_sleep(seconds):
         WINM.timeEndPeriod(1)
     else:
         time.sleep(seconds)
+
+from Malt.Utils import profile_function
 
 class MaltRenderEngine(bpy.types.RenderEngine):
     # These three members are used by blender to set up the
@@ -256,7 +257,7 @@ class MaltRenderEngine(bpy.types.RenderEngine):
             if key == 'Combined': buffer_name = 'COLOR'
             if key == 'Depth': buffer_name = 'DEPTH'
             rect_ptr = CBlenderMalt.get_rect_ptr(value.as_pointer())
-            ctypes.memmove(rect_ptr, buffers[buffer_name], size*4*value.channels)
+            ctypes.memmove(rect_ptr, buffers[buffer_name].buffer(), size*4*value.channels)
         
         self.end_result(result)
         # Delete the scene. Otherwise we get memory leaks.
@@ -283,13 +284,10 @@ class MaltRenderEngine(bpy.types.RenderEngine):
     # Blender will draw overlays for selection and editing on top of the
     # rendered image automatically.
     def view_draw(self, context, depsgraph):
-        profiler = cProfile.Profile()
-        global PROFILE
-        if PROFILE:
-            profiler.enable()
-            if self.request_new_frame:
-                self.profiling_data = io.StringIO()
-        
+        self.view_draw_wrap(context, depsgraph)
+    
+    #@profile_function
+    def view_draw_wrap(self, context, depsgraph):
         if self.bridge is not MaltPipeline.get_bridge():
             #The Bridge has been reset
             self.bridge = MaltPipeline.get_bridge()
@@ -350,7 +348,7 @@ class MaltRenderEngine(bpy.types.RenderEngine):
         fbo = GL.gl_buffer(GL.GL_INT, 1)
         GL.glGetIntegerv(GL.GL_FRAMEBUFFER_BINDING, fbo)
         
-        render_texture = Texture(resolution, GL.GL_RGBA32F, GL.GL_FLOAT, pixels, mag_filter=mag_filter)
+        render_texture = Texture(resolution, GL.GL_RGBA32F, GL.GL_FLOAT, pixels.buffer(), mag_filter=mag_filter)
         
         self.bind_display_space_shader(depsgraph.scene_eval)
         if self.display_draw is None or self.display_draw.resolution != viewport_resolution:
@@ -359,16 +357,6 @@ class MaltRenderEngine(bpy.types.RenderEngine):
             self.display_draw = DisplayDraw(viewport_resolution)
         self.display_draw.draw(fbo, render_texture)
         self.unbind_display_space_shader()
-
-        if PROFILE:
-            profiler.disable()
-            stats = pstats.Stats(profiler, stream=self.profiling_data)
-            stats.strip_dirs()
-            stats.sort_stats(pstats.SortKey.CUMULATIVE)
-            stats.print_stats()
-            print('PROFILE BEGIN--------------------------------------')
-            print(self.profiling_data.getvalue())
-            print('PROFILE END--------------------------------------')
 
 #Boilerplate code to draw an OpenGL texture to the viewport using Blender color management
 class DisplayDraw(object):

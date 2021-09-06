@@ -7,7 +7,6 @@ from Malt.GL.GL import *
 MESHES = {}
 
 def load_mesh(msg):
-    print('LOAD MESH')
     name = msg['name']
     data = msg['data']
     MESHES[name] = []

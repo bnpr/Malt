@@ -1,9 +1,4 @@
-import copy
-import subprocess
-import os
-import ctypes
-
-import platform
+import os, ctypes, platform
 
 src_dir = os.path.abspath(os.path.dirname(__file__))
 
@@ -46,48 +41,36 @@ class Array_Interface():
 class SharedBuffer():
 
     _GARBAGE = []
-    _REF_COUNT = None
-    _LOCK = None
-
-    @classmethod
-    def setup_class(cls, shared_dict, lock):
-        cls._REF_COUNT = shared_dict
-        cls._LOCK = lock
-        cls.GC()
     
     @classmethod
     def GC(cls):
         from copy import copy
-        with cls._LOCK:
-            for buffer in copy(cls._GARBAGE):
-                if buffer.name not in cls._REF_COUNT.keys() or cls._REF_COUNT[buffer.name] == 0:
-                    print('GC ', buffer.name)
-                    close_shared_memory(buffer)
-                    cls._GARBAGE.remove(buffer)
-                    cls._REF_COUNT.pop(buffer.name, None)
+        for buffer, release_flag in copy(cls._GARBAGE):
+            if ctypes.c_bool.from_address(release_flag.data).value == True:
+                close_shared_memory(buffer)
+                close_shared_memory(release_flag)
+                cls._GARBAGE.remove((buffer, release_flag))
 
     def __init__(self, ctype, size):
         import random, string
         self._ctype = ctype
         self._size = size
-        name = 'MALT_SHARED_' + ''.join(random.choices(string.ascii_letters + string.digits, k=16))
-        self._buffer = create_shared_memory(name.encode('ascii'), self.size_in_bytes())
-        self._name = self._buffer.name
-        with self._LOCK:
-            self._REF_COUNT[self._name] = 1
+        self.id = ''.join(random.choices(string.ascii_letters + string.digits, k=16))
+        self._buffer = create_shared_memory(('MALT_SHARED_'+self.id).encode('ascii'), self.size_in_bytes())
+        self._release_flag = create_shared_memory(('MALT_FLAG_'+self.id).encode('ascii'), ctypes.sizeof(ctypes.c_bool))
     
     def __getstate__(self):
-        print('GET ', self._name, self)
-        with self._LOCK:
-            self._REF_COUNT[self._name] += 1
+        assert(ctypes.c_bool.from_address(self._release_flag.data).value == False)
         state = self.__dict__.copy()
         state['_buffer'] = None
+        state['_release_flag'] = None
         return state
 
     def __setstate__(self, state):
         self.__dict__.update(state)
-        self._buffer = open_shared_memory(self._name, self.size_in_bytes())
-        print('SET ', self._name, self)
+        self._buffer = open_shared_memory(('MALT_SHARED_'+self.id).encode('ascii'), self.size_in_bytes())
+        self._release_flag = open_shared_memory(('MALT_FLAG_'+self.id).encode('ascii'), ctypes.sizeof(ctypes.c_bool))
+        ctypes.c_bool.from_address(self._release_flag.data).value = True
     
     def size_in_bytes(self):
         return ctypes.sizeof(self._ctype) * self._size
@@ -109,49 +92,15 @@ class SharedBuffer():
         return np.array(self.as_array_interface(), copy=False)
 
     def __del__(self):
-        print('DEL ', self._name, self)
-        with self._LOCK:
-            self._REF_COUNT[self._name] -= 1
-        copy = C_SharedMemory()
-        ctypes.memmove(ctypes.addressof(copy), ctypes.addressof(self._buffer), ctypes.sizeof(C_SharedMemory))
-        self._GARBAGE.append(copy)
-        self.GC() 
-
-
-__BUFFERS = {}
-class SharedMemory(object):
-    def __init__(self, name, size, gen):
-        self.name = ('MALT_SHARED_MEM_' + name + '_GEN_' + str(gen)).encode('ascii')
-        self.size = size
-        self.gen = gen
-        self.c = create_shared_memory(self.name, self.size)
-    
-    def __del__(self):
-        close_shared_memory(self.c)
-
-class SharedMemoryRef(object):
-    def __init__(self, full_name, size):
-        self.name = full_name
-        self.size = size
-        self.c = open_shared_memory(self.name, self.size)
-    
-    def __del__(self):
-        #TODO: Investigate. Seems like Windows ref counts but Linux doesn't?
-        if platform.system() == 'Windows':
-            close_shared_memory(self.c)
-
-def load_shared_buffer(name, ctype, size):
-    total_size = ctypes.sizeof(ctype) * size
-    if name not in __BUFFERS:
-        __BUFFERS[name] = SharedMemory(name, total_size, 0)
-    elif total_size > __BUFFERS[name].size:
-        old = __BUFFERS[name]
-        __BUFFERS[name] = SharedMemory(name, total_size, old.gen + 1)
-        del old
-    
-    return (ctype * size).from_address(__BUFFERS[name].c.data)
-
-def get_shared_buffer_full_name(name):
-    return __BUFFERS[name].name
+        if ctypes.c_bool.from_address(self._release_flag.data).value == True:
+            close_shared_memory(self._buffer)
+            close_shared_memory(self._release_flag)
+        else:
+            buffer_copy = C_SharedMemory()
+            ctypes.memmove(ctypes.addressof(buffer_copy), ctypes.addressof(self._buffer), ctypes.sizeof(C_SharedMemory))
+            flag_copy = C_SharedMemory()
+            ctypes.memmove(ctypes.addressof(flag_copy), ctypes.addressof(self._release_flag), ctypes.sizeof(C_SharedMemory))
+            self._GARBAGE.append((buffer_copy, flag_copy))
+            self.GC()
 
 

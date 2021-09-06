@@ -48,8 +48,8 @@ class Bridge(object):
 
         self.manager = mp.Manager()
         self.shared_dict = self.manager.dict()
-        self.lock = self.manager.Lock()
-        SharedBuffer.setup_class(self.shared_dict, self.lock)
+        self.lock = None
+        #SharedBuffer.setup_class(self.manager)
         self.connections = {}
         self.process = None
         self.lost_connection = True
@@ -187,30 +187,27 @@ class Bridge(object):
 
     @bridge_method
     def render(self, viewport_id, resolution, scene, scene_update, renderdoc_capture=False):
-        import Bridge.ipc as ipc
-        w,h = resolution
-
         assert(viewport_id in self.viewport_ids or viewport_id == 0)
 
-        if viewport_id not in self.render_buffers.keys():
-            self.render_buffers[viewport_id] = {}
+        new_buffers = None
+        if viewport_id not in self.render_buffers.keys() or self.render_buffers[viewport_id]['__resolution'] != resolution:
+            print('CREATE NEW BUFFERS')
+            self.render_buffers[viewport_id] = {'__resolution' : resolution}
+            for key, texture_format in self.render_outputs.items():
+                w,h = resolution
+                self.render_buffers[viewport_id][key] = self.get_shared_buffer(ctypes.c_float, w*h*4)
+                if viewport_id != 0: #viewport render
+                    #we only need the color buffer
+                    break
+            new_buffers = self.render_buffers[viewport_id]
 
-        buffer_names = {}
-        for key, texture_format in self.render_outputs.items():
-            buffer_name = f'MALT_RENDER_BUFFER_{viewport_id}_{key}_{self.id}'
-            self.render_buffers[viewport_id][key] = ipc.load_shared_buffer(buffer_name, ctypes.c_float, w*h*4)
-            buffer_names[key] = ipc.get_shared_buffer_full_name(buffer_name)
-            if viewport_id != 0: #viewport render
-                #we only need the color buffer
-                break
-    
         self.shared_dict[(viewport_id, 'FINISHED')] = None
         self.connections['RENDER'].send({
             'viewport_id': viewport_id,
             'resolution': resolution,
             'scene': scene,
             'scene_update': scene_update,
-            'buffer_names': buffer_names,
+            'new_buffers': new_buffers,
             'renderdoc_capture' : renderdoc_capture,
         })
 
