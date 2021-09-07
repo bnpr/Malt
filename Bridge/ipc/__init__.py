@@ -44,7 +44,6 @@ class SharedBuffer():
     
     @classmethod
     def GC(cls):
-        print('GARBAGE : ', len(cls._GARBAGE))
         from copy import copy
         for buffer, release_flag in copy(cls._GARBAGE):
             if ctypes.c_bool.from_address(release_flag.data).value == True:

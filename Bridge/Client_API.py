@@ -57,6 +57,7 @@ class Bridge(object):
         self.graphs = {}
         self.render_outputs = {}
         self.render_buffers = {}
+        self.shared_buffers = []
         self.id = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
 
         self.viewport_ids = []
@@ -145,7 +146,27 @@ class Bridge(object):
     @bridge_method
     def get_shared_buffer(self, ctype, size):
         from . import ipc
-        return ipc.SharedBuffer(ctype, size)
+        #return ipc.SharedBuffer(ctype, size)
+        requested_size = ctypes.sizeof(ctype) * size
+        reuse_buffer = None
+        for buffer in self.shared_buffers:
+            release_flag = ctypes.c_bool.from_address(buffer._release_flag.data)
+            if release_flag.value == True:
+                if buffer._buffer.size >= requested_size:
+                    if reuse_buffer is None or buffer._buffer.size < reuse_buffer._buffer.size:
+                        reuse_buffer = buffer
+        
+        if reuse_buffer is None:
+            min_size = 1024*1024
+            new_size = max(requested_size * 2, min_size)
+            reuse_buffer = ipc.SharedBuffer(ctypes.c_byte, new_size)
+            self.shared_buffers.append(reuse_buffer)
+        
+        if reuse_buffer:
+            ctypes.c_bool.from_address(reuse_buffer._release_flag.data).value = False
+            reuse_buffer._ctype = ctype
+            reuse_buffer._size = size
+            return reuse_buffer
 
     @bridge_method
     def load_mesh(self, name, mesh_data):
@@ -191,7 +212,6 @@ class Bridge(object):
 
         new_buffers = None
         if viewport_id not in self.render_buffers.keys() or self.render_buffers[viewport_id]['__resolution'] != resolution:
-            print('CREATE NEW BUFFERS')
             self.render_buffers[viewport_id] = {'__resolution' : resolution}
             for key, texture_format in self.render_outputs.items():
                 w,h = resolution
