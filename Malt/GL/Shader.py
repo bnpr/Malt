@@ -167,33 +167,6 @@ def shader_preprocessor(shader_source, include_directories=[], definitions=[]):
     return result
 
 
-def _shader_preprocessor(shader_source, include_directories=[], definitions=[]):
-    import pcpp
-    from io import StringIO
-    from os import path
-
-    class Preprocessor(pcpp.Preprocessor):
-        def on_comment(self,token):
-            #Don't remove comments
-            return True
-
-    output = StringIO()
-    preprocessor = Preprocessor()
-    preprocessor.path = []
-    for directory in include_directories:
-        preprocessor.add_path(directory)
-    preprocessor.rewrite_paths = []
-    for definition in definitions:
-        preprocessor.define(definition)
-    preprocessor.parse(shader_source)
-    preprocessor.write(output)
-    processed = output.getvalue()
-    #fix LINE directive paths (C:\Path -> C:/Path) to avoid compiler errors/warnings
-    processed = processed.replace('\\','/')
-
-    return processed
-
-
 def remove_line_directive_paths(source):
     #Paths in line directives are not supported in some drivers, so we replace paths with numbers
     include_paths = []
