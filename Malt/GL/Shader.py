@@ -142,6 +142,32 @@ class UBO(object):
 
 
 def shader_preprocessor(shader_source, include_directories=[], definitions=[]):
+    import tempfile, subprocess
+    shader_source = shader_source.replace('GL_ARB_shading_language_include', 'GL_GOOGLE_include_directive', 1)
+    shader_source += '\n'
+
+    glslang = os.path.join(os.path.dirname(__file__), '.glslang')
+    
+    tmp = tempfile.NamedTemporaryFile(delete=False)
+    tmp.write(shader_source.encode('utf-8'))
+    tmp.close()
+
+    args = [glslang, '-E', '-S', 'frag']
+    for directory in include_directories:
+        args.append('-I'+directory)
+    for definition in definitions:
+        args.extend(('--define-macro', definition))
+    args.append(tmp.name)
+    
+    result = subprocess.check_output(args).decode('utf-8')
+    result = result.replace('GL_GOOGLE_include_directive', 'GL_ARB_shading_language_include', 1) 
+    
+    os.remove(tmp.name)
+
+    return result
+
+
+def _shader_preprocessor(shader_source, include_directories=[], definitions=[]):
     import pcpp
     from io import StringIO
     from os import path
@@ -357,17 +383,17 @@ def reflect_program_uniform_blocks(program):
 USE_GLSLANG_VALIDATOR = False
 
 def glsl_reflection(code, root_path = None):
-    import tempfile, subprocess, json, random, string
+    import tempfile, subprocess, json
     GLSLParser = os.path.join(os.path.dirname(__file__), 'GLSLParser', '.bin', 'GLSLParser')
     root_path = os.path.normpath(root_path)
     
-    file_path = os.path.join(tempfile.gettempdir(), ''.join(random.choices(string.ascii_letters, k=8))+'.glsl')
-    with open(file_path, 'w') as file:
-        file.write(code)
+    tmp = tempfile.NamedTemporaryFile(delete=False)
+    tmp.write(code.encode('utf-8'))
+    tmp.close()
     
-    json_string = subprocess.check_output([GLSLParser, file_path])    
+    json_string = subprocess.check_output([GLSLParser, tmp.name])
     
-    os.remove(file_path)
+    os.remove(tmp.name)
     
     reflection = json.loads(json_string)
 
