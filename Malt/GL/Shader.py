@@ -1,6 +1,7 @@
 # Copyright (c) 2020 BlenderNPR and contributors. MIT license.
 
 import ctypes, os
+import subprocess
 
 from Malt.GL.GL import *
 from Malt.Utils import log
@@ -354,6 +355,34 @@ def reflect_program_uniform_blocks(program):
     return blocks
 
 USE_GLSLANG_VALIDATOR = False
+
+def glsl_reflection(code, root_path = None):
+    import tempfile, subprocess, json, random, string
+    GLSLParser = os.path.join(os.path.dirname(__file__), 'GLSLParser', '.bin', 'GLSLParser')
+    root_path = os.path.normpath(root_path)
+    
+    file_path = os.path.join(tempfile.gettempdir(), ''.join(random.choices(string.ascii_letters, k=8))+'.glsl')
+    with open(file_path, 'w') as file:
+        file.write(code)
+    
+    json_string = subprocess.check_output([GLSLParser, file_path])    
+    
+    os.remove(file_path)
+    
+    reflection = json.loads(json_string)
+
+    def fix_paths(dic):
+        for e in dic.values():
+            path = e["file"]
+            path = os.path.normpath(path)
+            try: path = os.path.relpath(path, root_path)
+            except: pass
+            e["file"] = path
+    
+    fix_paths(reflection["structs"])
+    fix_paths(reflection["functions"])
+
+    return reflection
 
 import pyparsing
 

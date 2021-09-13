@@ -46,7 +46,8 @@ struct STRUCT_DEF : seq<STRUCT, _s_, IDENTIFIER, _s_, LBRACE, _s_, opt<MEMBERS>,
 
 struct PARAMETER : seq<opt<IO>, _s_, opt<PRECISION>, _s_, TYPE, _s_, IDENTIFIER, _s_, opt<ARRAY_SIZE>> {};
 struct PARAMETERS : list<seq<_s_, PARAMETER, _s_>, seq<_s_, COMMA, _s_>> {};
-struct FUNCTION_DEC : seq<TYPE, _s_, IDENTIFIER, _s_, LPAREN, _s_, PARAMETERS, _s_, RPAREN, _s_, LBRACE> {}; 
+struct FUNCTION_SIG : seq<TYPE, _s_, IDENTIFIER, _s_, LPAREN, _s_, PARAMETERS, _s_, RPAREN> {}; 
+struct FUNCTION_DEC : seq<FUNCTION_SIG, _s_, LBRACE> {}; 
 
 struct GLSL_GRAMMAR : star<sor<LINE_DIRECTIVE, STRUCT_DEF, FUNCTION_DEC, any>> {};
 
@@ -68,6 +69,7 @@ using selector = parse_tree::selector
         STRUCT_DEF,
         PARAMETER,
         PARAMETERS,
+        FUNCTION_SIG,
         FUNCTION_DEC
     >
 >;
@@ -101,10 +103,31 @@ parse_tree::node* get(parse_tree::node* parent)
     return nullptr;
 }
 
+std::string remove_extra_whitespace(const std::string& str)
+{
+    int len = str.length();
+	std::string result;
+    result.reserve(len);
+    bool was_space = false;
+    for(int i=0; i < len; i++)
+    {
+        bool is_space = isspace(str[i]);
+        if(is_space)
+        {
+            if(!was_space) result += " ";
+        }
+        else
+        {
+            result += str[i];
+        }
+        was_space = is_space;
+    }
+    return result;
+}
+
 int main(int argc, char* argv[])
 {
     if(argc < 2) return 1;
-
     const char* path = argv[1];
 
     file_input input(path);
@@ -113,22 +136,18 @@ int main(int argc, char* argv[])
     {
         const std::size_t issues = analyze<GLSL_GRAMMAR>();
         if(issues) return issues;
-
-        standard_trace<GLSL_GRAMMAR>(input);
-        input.restart();
     }
     #endif
+
+    //standard_trace<GLSL_GRAMMAR>(input);
+    //input.restart();
     
     auto root = parse_tree::parse<GLSL_GRAMMAR, selector>(input);
     input.restart();
     if(!root) return 1;
 
-    #ifdef _DEBUG
-    {
-        print_nodes(*root);
-        parse_tree::print_dot(std::cout, *root);
-    }
-    #endif
+    //print_nodes(*root);
+    //parse_tree::print_dot(std::cout, *root);
 
     using namespace rapidjson;
 
@@ -155,6 +174,8 @@ int main(int argc, char* argv[])
             Value& struct_def = structs[name.c_str()];
             struct_def.AddMember("name", Value(name.c_str(), json.GetAllocator()), json.GetAllocator());
             struct_def.AddMember("file", Value(current_file.c_str(), json.GetAllocator()), json.GetAllocator());
+            struct_def.AddMember("members", Value(kArrayType), json.GetAllocator());
+            Value& members_array = struct_def["members"];
 
             parse_tree::node* members = get<MEMBERS>(child.get());
             if(!members) continue;
@@ -172,30 +193,36 @@ int main(int argc, char* argv[])
                     array_size = std::stoi(size);
                 }
 
-                struct_def.AddMember(Value(name.c_str(), json.GetAllocator()), Value(kObjectType), json.GetAllocator());
-                Value& member_def = struct_def[name.c_str()];
+                Value& member_def = Value(kObjectType);
                 member_def.AddMember("name", Value(name.c_str(), json.GetAllocator()), json.GetAllocator());
                 member_def.AddMember("type", Value(type.c_str(), json.GetAllocator()), json.GetAllocator());
                 member_def.AddMember("size", Value(array_size), json.GetAllocator());
+                members_array.PushBack(member_def, json.GetAllocator());
             }
         }
         else if(child->is_type<FUNCTION_DEC>())
         {
-            std::string name = std::string(get<IDENTIFIER>(child.get())->string_view());
+            parse_tree::node* signature = get<FUNCTION_SIG>(child.get());
+            std::string name = std::string(get<IDENTIFIER>(signature)->string_view());
+            std::string signature_str = std::string(signature->string_view());
+            signature_str = remove_extra_whitespace(signature_str);
             std::string key_name = name;
             if(functions.HasMember(key_name.c_str()))
             {
-                key_name = std::string(child->string_view());
+                key_name += " - " + signature_str;
             }
-            std::string type = std::string(get<TYPE>(child.get())->string_view());
+            std::string type = std::string(get<TYPE>(signature)->string_view());
             
             functions.AddMember(Value(key_name.c_str(), json.GetAllocator()), Value(kObjectType), json.GetAllocator());
             Value& function_dec = functions[key_name.c_str()];
             function_dec.AddMember("name", Value(name.c_str(), json.GetAllocator()), json.GetAllocator());
             function_dec.AddMember("type", Value(type.c_str(), json.GetAllocator()), json.GetAllocator());
             function_dec.AddMember("file", Value(current_file.c_str(), json.GetAllocator()), json.GetAllocator());
+            function_dec.AddMember("signature", Value(signature_str.c_str(), json.GetAllocator()), json.GetAllocator());
+            function_dec.AddMember("parameters", Value(kArrayType), json.GetAllocator());
+            Value& parameters_array = function_dec["parameters"];
 
-            parse_tree::node* parameters = get<PARAMETERS>(child.get());
+            parse_tree::node* parameters = get<PARAMETERS>(signature);
             if(!parameters) continue;
 
             for(auto& parameter : parameters->children)
@@ -218,12 +245,12 @@ int main(int argc, char* argv[])
                     io = std::string(io_node->string_view());
                 }
 
-                function_dec.AddMember(Value(name.c_str(), json.GetAllocator()), Value(kObjectType), json.GetAllocator());
-                Value& parameter_dec = function_dec[name.c_str()];
+                Value& parameter_dec = Value(kObjectType);
                 parameter_dec.AddMember("name", Value(name.c_str(), json.GetAllocator()), json.GetAllocator());
                 parameter_dec.AddMember("type", Value(type.c_str(), json.GetAllocator()), json.GetAllocator());
                 parameter_dec.AddMember("size", Value(array_size), json.GetAllocator());
                 parameter_dec.AddMember("io", Value(io.c_str(), json.GetAllocator()), json.GetAllocator());
+                parameters_array.PushBack(parameter_dec, json.GetAllocator());
             }
         }
     }

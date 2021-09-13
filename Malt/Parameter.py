@@ -19,9 +19,10 @@ class PipelineGraph(object):
 class GLSLPipelineGraph(PipelineGraph):
 
     def __init__(self, file_extension, source, root_path, graph_io_map, default_global_scope):
-        from . GL.Shader import GLSL_Reflection
-        functions = GLSL_Reflection.reflect_functions(source, root_path)
-        structs = GLSL_Reflection.reflect_structs(source, root_path)
+        from . GL.Shader import glsl_reflection
+        reflection = glsl_reflection(source, root_path)
+        functions = reflection["functions"]
+        structs = reflection["structs"]
         graph_io = {}
         for name in graph_io_map.keys():
             graph_io[name] = functions[name]        

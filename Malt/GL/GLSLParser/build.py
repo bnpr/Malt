@@ -16,7 +16,3 @@ else: #Single-config generators
     subprocess.check_call(['cmake', '--build', '.'], cwd=build_dir)
 
 #subprocess.check_call(['cmake', '--install', '.', '--prefix', '.'], cwd=build_dir)
-from distutils.dir_util import copy_tree
-copy_tree(os.path.join(current_dir, 'bin', 'Release'), current_dir)
-
-

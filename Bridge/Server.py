@@ -311,16 +311,13 @@ def main(pipeline_path, connection_addresses, shared_dic, log_path, debug_mode):
                 log.debug('REFLECT SHADER : {}'.format(msg))
                 paths = msg['paths']
                 results = {}
-                from Malt.GL.Shader import GLSL_Reflection, shader_preprocessor
+                from Malt.GL.Shader import glsl_reflection, shader_preprocessor
                 for path in paths:
                     root_path = os.path.dirname(path)
                     src = '#include "{}"\n'.format(path)
                     src = shader_preprocessor(src, [root_path])
-                    reflection = {
-                        'structs':  GLSL_Reflection.reflect_structs(src, root_path),
-                        'functions':  GLSL_Reflection.reflect_functions(src, root_path),
-                        'paths': set([path])
-                    }
+                    reflection = glsl_reflection(src, root_path)
+                    reflection['paths'] = set([path])
                     for struct in reflection['structs'].values(): reflection['paths'].add(struct['file'])
                     for function in reflection['functions'].values(): reflection['paths'].add(function['file'])
                     results[path] = reflection
