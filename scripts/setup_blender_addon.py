@@ -18,6 +18,7 @@ def build_lib(path):
     shutil.rmtree(os.path.join(path, '.build'))
 
 build_lib(os.path.join(blender_malt_folder, 'CBlenderMalt'))
+build_lib(os.path.join(malt_folder, 'GL', 'GLSLParser'))
 build_lib(os.path.join(bridge_folder, 'ipc'))
 build_lib(os.path.join(bridge_folder, 'renderdoc'))
 
