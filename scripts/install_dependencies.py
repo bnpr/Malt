@@ -24,3 +24,6 @@ for e in os.listdir(malt_dependencies_path):
     if e.startswith('numpy') or e == 'bin':
         shutil.rmtree(os.path.join(malt_dependencies_path, e))
 
+
+subprocess.check_call([sys.executable, os.path.join(current_dir, 'get_glslang.py')])
+
