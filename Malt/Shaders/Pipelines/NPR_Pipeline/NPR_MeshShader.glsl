@@ -572,4 +572,42 @@ float get_random(float seed)
     return get_random_vector(seed).x;
 }
 
+bool is_shadow_pass()
+{
+    #ifdef SHADOW_PASS
+    {
+        return true;
+    }
+    #else
+    {
+        return false;
+    }
+    #endif
+}
+
+bool is_pre_pass()
+{
+    #ifdef PRE_PASS
+    {
+        return true;
+    }
+    #else
+    {
+        return false;
+    }
+    #endif
+}
+
+bool is_main_pass()
+{
+    #ifdef MAIN_PASS
+    {
+        return true;
+    }
+    #else
+    {
+        return false;
+    }
+    #endif
+}
 
