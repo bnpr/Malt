@@ -193,7 +193,7 @@ int main(int argc, char* argv[])
                     array_size = std::stoi(size);
                 }
 
-                Value& member_def = Value(kObjectType);
+                Value member_def = Value(kObjectType);
                 member_def.AddMember("name", Value(name.c_str(), json.GetAllocator()), json.GetAllocator());
                 member_def.AddMember("type", Value(type.c_str(), json.GetAllocator()), json.GetAllocator());
                 member_def.AddMember("size", Value(array_size), json.GetAllocator());
@@ -245,7 +245,7 @@ int main(int argc, char* argv[])
                     io = std::string(io_node->string_view());
                 }
 
-                Value& parameter_dec = Value(kObjectType);
+                Value parameter_dec = Value(kObjectType);
                 parameter_dec.AddMember("name", Value(name.c_str(), json.GetAllocator()), json.GetAllocator());
                 parameter_dec.AddMember("type", Value(type.c_str(), json.GetAllocator()), json.GetAllocator());
                 parameter_dec.AddMember("size", Value(array_size), json.GetAllocator());
