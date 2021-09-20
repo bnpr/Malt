@@ -27,8 +27,9 @@ EXPORT ipc_sharedmemory open_shared_memory(char* name, size_t size)
     return mem;
 }
 
-EXPORT void close_shared_memory(ipc_sharedmemory  mem)
+EXPORT void close_shared_memory(ipc_sharedmemory  mem, bool release)
 {
-    ipc_mem_close(&mem);
+    ipc_mem_close(&mem, release);
 }
+
 

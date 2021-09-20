@@ -106,6 +106,8 @@ TROUBLESHOOTING
 #ifndef IPC_H_INCLUDE_GUARD
 #define IPC_H_INCLUDE_GUARD
 
+#include <stdbool.h>
+
 typedef void* HANDLE;
 #ifndef _WIN32
 #include <semaphore.h>
@@ -127,7 +129,7 @@ typedef struct ipc_sharedmemory_
 extern void ipc_mem_init(ipc_sharedmemory *mem, char *name, size_t size);
 extern int ipc_mem_open_existing(ipc_sharedmemory *mem);
 extern int ipc_mem_create(ipc_sharedmemory *mem);
-extern void ipc_mem_close(ipc_sharedmemory *mem);
+extern void ipc_mem_close(ipc_sharedmemory *mem, bool unlink);
 extern unsigned char *ipc_mem_access(ipc_sharedmemory *mem);
 
 typedef struct ipc_sharedsemaphore_
@@ -264,7 +266,7 @@ int ipc_mem_create(ipc_sharedmemory *mem)
 
 }
 
-void ipc_mem_close(ipc_sharedmemory *mem)
+void ipc_mem_close(ipc_sharedmemory *mem, bool unlink)
 {
     if (mem->data != NULL)
     {
@@ -344,13 +346,13 @@ int ipc_mem_create(ipc_sharedmemory *mem)
     return 0;
 }
 
-void ipc_mem_close(ipc_sharedmemory *mem)
+void ipc_mem_close(ipc_sharedmemory *mem, bool unlink)
 {
     if (mem->data != NULL)
     {
         munmap(mem->data, mem->size);
         close(mem->fd);
-        shm_unlink(mem->name);
+        if (unlink) shm_unlink(mem->name);
     }
     IPC_FREE(mem->name);
     mem->name = NULL;

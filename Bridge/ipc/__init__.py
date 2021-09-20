@@ -26,7 +26,7 @@ open_shared_memory.argtypes = [ctypes.c_char_p, ctypes.c_size_t]
 open_shared_memory.restype = C_SharedMemory
 
 close_shared_memory = Ipc['close_shared_memory']
-close_shared_memory.argtypes = [C_SharedMemory]
+close_shared_memory.argtypes = [C_SharedMemory, ctypes.c_bool]
 close_shared_memory.restype = None
 
 # https://numpy.org/doc/stable/reference/arrays.interface.html
@@ -44,11 +44,12 @@ class SharedBuffer():
     
     @classmethod
     def GC(cls):
+        print('GARBAGE : ', len(cls._GARBAGE))
         from copy import copy
         for buffer, release_flag in copy(cls._GARBAGE):
             if ctypes.c_bool.from_address(release_flag.data).value == True:
-                close_shared_memory(buffer)
-                close_shared_memory(release_flag)
+                close_shared_memory(buffer, True)
+                close_shared_memory(release_flag, True)
                 cls._GARBAGE.remove((buffer, release_flag))
 
     def __init__(self, ctype, size):
@@ -58,8 +59,11 @@ class SharedBuffer():
         self.id = ''.join(random.choices(string.ascii_letters + string.digits, k=16))
         self._buffer = create_shared_memory(('MALT_SHARED_'+self.id).encode('ascii'), self.size_in_bytes())
         self._release_flag = create_shared_memory(('MALT_FLAG_'+self.id).encode('ascii'), ctypes.sizeof(ctypes.c_bool))
+        ctypes.c_bool.from_address(self._release_flag.data).value = False
+        self._is_owner = True
     
     def __getstate__(self):
+        assert(self._is_owner)
         assert(ctypes.c_bool.from_address(self._release_flag.data).value == False)
         state = self.__dict__.copy()
         state['_buffer'] = None
@@ -68,9 +72,9 @@ class SharedBuffer():
 
     def __setstate__(self, state):
         self.__dict__.update(state)
+        self._is_owner = False
         self._buffer = open_shared_memory(('MALT_SHARED_'+self.id).encode('ascii'), self.size_in_bytes())
         self._release_flag = open_shared_memory(('MALT_FLAG_'+self.id).encode('ascii'), ctypes.sizeof(ctypes.c_bool))
-        ctypes.c_bool.from_address(self._release_flag.data).value = True
     
     def size_in_bytes(self):
         return ctypes.sizeof(self._ctype) * self._size
@@ -92,9 +96,10 @@ class SharedBuffer():
         return np.array(self.as_array_interface(), copy=False)
 
     def __del__(self):
-        if ctypes.c_bool.from_address(self._release_flag.data).value == True:
-            close_shared_memory(self._buffer)
-            close_shared_memory(self._release_flag)
+        if self._is_owner == False or ctypes.c_bool.from_address(self._release_flag.data).value == True:
+            ctypes.c_bool.from_address(self._release_flag.data).value = True
+            close_shared_memory(self._buffer, self._is_owner)
+            close_shared_memory(self._release_flag, self._is_owner)
         else:
             buffer_copy = C_SharedMemory()
             ctypes.memmove(ctypes.addressof(buffer_copy), ctypes.addressof(self._buffer), ctypes.sizeof(C_SharedMemory))

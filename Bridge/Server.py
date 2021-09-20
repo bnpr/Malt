@@ -77,6 +77,7 @@ class PBO(object):
         render_target = RenderTarget([texture])
         w,h = texture.resolution
         size = w*h*4*4
+        assert(buffer.size_in_bytes() == size)
         if self.size != size:
             self.size = size
             glDeleteBuffers(1, self.handle)
@@ -145,12 +146,13 @@ class Viewport(object):
     
     def setup(self, new_buffers, resolution, scene, scene_update, renderdoc_capture):
         if self.resolution != resolution:
+            self.resolution = resolution
             self.pbos_inactive.extend(self.pbos_active)
             self.pbos_active = []
+            assert(new_buffers is not None)
         
         if new_buffers:
             self.buffers = new_buffers
-        self.resolution = resolution
 
         self.sample_index = 0
         self.is_new_frame = True
@@ -341,22 +343,18 @@ def main(pipeline_path, connection_addresses, shared_dic, lock, log_path, debug_
                 nearest = msg['nearest']
                 Bridge.Texture.load_gradient(name, pixels, nearest)
             
-            #TODO: Bad workaround to make sure the scene assets are loaded
-            if connections['RENDER'].poll():
+            needs_loading = False
+
+            while connections['RENDER'].poll():
                 needs_loading = False
                 for key in ['MATERIAL','MESH','TEXTURE','GRADIENT']:
                     if connections[key].poll():
                         needs_loading = True
                 if needs_loading:
-                    continue
-            
-            setup_viewports = {}
-            while connections['RENDER'].poll():
+                    break
+
                 msg = connections['RENDER'].recv()
                 log.debug('SETUP RENDER : {}'.format(msg))
-                setup_viewports[msg['viewport_id']] = msg
-
-            for msg in setup_viewports.values():
                 viewport_id = msg['viewport_id']
                 resolution = msg['resolution']
                 scene = msg['scene']
@@ -369,6 +367,9 @@ def main(pipeline_path, connection_addresses, shared_dic, lock, log_path, debug_
 
                 viewports[viewport_id].setup(new_buffers, resolution, scene, scene_update, renderdoc_capture)
                 shared_dic[(viewport_id, 'FINISHED')] = False
+            
+            if needs_loading:
+                continue
             
             active_viewports = {}
             render_finished = True
