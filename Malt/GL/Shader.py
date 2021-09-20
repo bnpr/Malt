@@ -1,6 +1,7 @@
 # Copyright (c) 2020 BlenderNPR and contributors. MIT license.
 
 import ctypes, os
+import subprocess
 
 from Malt.GL.GL import *
 from Malt.Utils import log
@@ -141,30 +142,29 @@ class UBO(object):
 
 
 def shader_preprocessor(shader_source, include_directories=[], definitions=[]):
-    import pcpp
-    from io import StringIO
-    from os import path
+    import tempfile, subprocess
+    shader_source = shader_source.replace('GL_ARB_shading_language_include', 'GL_GOOGLE_include_directive', 1)
+    shader_source += '\n'
 
-    class Preprocessor(pcpp.Preprocessor):
-        def on_comment(self,token):
-            #Don't remove comments
-            return True
+    glslang = os.path.join(os.path.dirname(__file__), '.glslang')
+    
+    tmp = tempfile.NamedTemporaryFile(delete=False)
+    tmp.write(shader_source.encode('utf-8'))
+    tmp.close()
 
-    output = StringIO()
-    preprocessor = Preprocessor()
-    preprocessor.path = []
+    args = [glslang, '-E', '-S', 'frag']
     for directory in include_directories:
-        preprocessor.add_path(directory)
-    preprocessor.rewrite_paths = []
+        args.append('-I'+directory)
     for definition in definitions:
-        preprocessor.define(definition)
-    preprocessor.parse(shader_source)
-    preprocessor.write(output)
-    processed = output.getvalue()
-    #fix LINE directive paths (C:\Path -> C:/Path) to avoid compiler errors/warnings
-    processed = processed.replace('\\','/')
+        args.extend(('--define-macro', definition))
+    args.append(tmp.name)
+    
+    result = subprocess.check_output(args).decode('utf-8')
+    result = result.replace('GL_GOOGLE_include_directive', 'GL_ARB_shading_language_include', 1) 
+    
+    os.remove(tmp.name)
 
-    return processed
+    return result
 
 
 def remove_line_directive_paths(source):
@@ -355,141 +355,33 @@ def reflect_program_uniform_blocks(program):
 
 USE_GLSLANG_VALIDATOR = False
 
-import pyparsing
-
-class GLSL_Reflection(object):
-    # Based on github.com/rougier/glsl-parser.
-    # Copyright (c) 2014, Nicolas P. Rougier. (new) BSD License.
-    LPAREN = pyparsing.Literal("(").suppress()
-    RPAREN = pyparsing.Literal(")").suppress()
-    LBRACE = pyparsing.Literal("{").suppress()
-    RBRACE = pyparsing.Literal("}").suppress()
-    LBRACKET = pyparsing.Literal("[").suppress()
-    RBRACKET = pyparsing.Literal("]").suppress()
-    END = pyparsing.Literal(";").suppress()
-    STRUCT = pyparsing.Literal("struct").suppress()
-    IDENTIFIER = pyparsing.Word(pyparsing.alphas + '_', pyparsing.alphanums + '_')
-    TYPE = pyparsing.Word(pyparsing.alphas + '_', pyparsing.alphanums + "_")
-    INT = pyparsing.Word(pyparsing.nums)
-    PRECISION = pyparsing.Regex('lowp |mediump |high ')
-    IO = pyparsing.Regex('in |out |inout ')
-
-    ARRAY_SIZE = LBRACKET + INT("array_size") + RBRACKET
-
-    MEMBER = pyparsing.Group(
-        pyparsing.Optional(PRECISION)("precision") +
-        TYPE("type") +
-        IDENTIFIER("name") +
-        pyparsing.Optional(ARRAY_SIZE)
-    )
-
-    MEMBERS = pyparsing.delimitedList(MEMBER, ";")("member*") + END
-
-    STRUCT_DEF = (
-        STRUCT + IDENTIFIER("name") + 
-        LBRACE + pyparsing.Optional(MEMBERS)("members") + RBRACE
-    )
-
-    STRUCT_DEF.ignore(pyparsing.cStyleComment)
-    STRUCT_DEF.ignore(pyparsing.dblSlashComment)
-    STRUCT_DEF.parseWithTabs() #Otherwise star-end indices don't match
-
-    @classmethod
-    def get_file_path(cls, code, position, root_path = None):
-        line_directive_start = code.rfind('#line', 0, position)
-        if line_directive_start == -1:
-            return ''
-        path_start = code.find('"', line_directive_start)
-        if path_start == -1:
-            return ''
-        path_start+=1
-        path_end = code.find('"', path_start)
-        if path_end == -1:
-            return ''
-        path = code[path_start:path_end]
-        root_path = os.path.normpath(root_path)
-        path = os.path.normpath(path)
-        try:
-            return os.path.relpath(path, root_path)
-        except:
-            return path
+def glsl_reflection(code, root_path = None):
+    import tempfile, subprocess, json
+    GLSLParser = os.path.join(os.path.dirname(__file__), 'GLSLParser', '.bin', 'GLSLParser')
+    root_path = os.path.normpath(root_path)
     
-    @classmethod
-    def remove_extra_white_spaces(cls, str):
-        return ' '.join(str.split())
+    tmp = tempfile.NamedTemporaryFile(delete=False)
+    tmp.write(code.encode('utf-8'))
+    tmp.close()
     
-    @classmethod
-    def reflect_structs(cls, code, root_path = None):
-        structs = {}
-        for struct, start, end in cls.STRUCT_DEF.scanString(code):
-            dictionary = {
-                'name' : struct.name,
-                'file' : cls.get_file_path(code, start, root_path),
-                'members' : []
-            }
-            for member in struct.members:
-                dictionary['members'].append({
-                    'name' : member.name,
-                    'type' : member.type,
-                    'size' : int(member.array_size) if member.array_size else 0
-                })
-            structs[struct.name] = dictionary
-        return structs
+    json_string = subprocess.check_output([GLSLParser, tmp.name])
+    
+    os.remove(tmp.name)
+    
+    reflection = json.loads(json_string)
 
-    PARAMETER = pyparsing.Group(
-        pyparsing.Optional(IO)("io") +
-        pyparsing.Optional(PRECISION)("precision") +
-        TYPE("type") + pyparsing.Optional(IDENTIFIER)("name") +
-        pyparsing.Optional(ARRAY_SIZE)
-    )
+    def fix_paths(dic):
+        for e in dic.values():
+            path = e["file"]
+            path = os.path.normpath(path)
+            try: path = os.path.relpath(path, root_path)
+            except: pass
+            e["file"] = path
+    
+    fix_paths(reflection["structs"])
+    fix_paths(reflection["functions"])
 
-    PARAMETERS = pyparsing.delimitedList(PARAMETER)("parameter*")
-
-    DECLARATION = pyparsing.Group(
-        pyparsing.Optional(PRECISION)("precision") +
-        TYPE("type") + IDENTIFIER("name") +
-        LPAREN + pyparsing.Optional(PARAMETERS)("parameters") + RPAREN
-    )
-
-    FUNCTION = (
-        pyparsing.locatedExpr(DECLARATION)("declaration") + pyparsing.originalTextFor(pyparsing.nestedExpr("{", "}"))("body")
-    )
-
-    FUNCTION.ignore(pyparsing.cStyleComment)
-    FUNCTION.ignore(pyparsing.dblSlashComment)
-    FUNCTION.parseWithTabs() #Otherwise star-end indices don't match
-
-    @classmethod
-    def reflect_functions(cls, code, root_path = None):
-        functions = {}
-        overloaded = set()
-        for function, start, end in cls.FUNCTION.scanString(code):
-            declaration = function.declaration.value
-            dictionary = {
-                'name' : declaration.name,
-                'type' : declaration.type,
-                'file' : cls.get_file_path(code, start, root_path),
-                'signature' : cls.remove_extra_white_spaces(code[function.declaration.locn_start:function.declaration.locn_end]),
-                'parameters' : []
-            }
-            for parameter in declaration.parameters:
-                dictionary['parameters'].append({
-                    'name' : parameter.name,
-                    'type' : parameter.type,
-                    'size' : int(parameter.array_size) if parameter.array_size else 0,
-                    'io' : parameter.io.replace(' ',''),#TODO
-                })
-            def overload_key(function):
-                return f"{function['name']} - {function['signature']}"
-            key = declaration.name
-            if key in functions:
-                functions[overload_key(functions[key])] = functions[key]
-                functions.pop(key)
-                overloaded.add(key)
-            if key in overloaded:
-                key = overload_key(dictionary)
-            functions[key] = dictionary
-        return functions
+    return reflection
 
 
 def glslang_validator(source, stage):

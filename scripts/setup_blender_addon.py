@@ -15,9 +15,14 @@ malt_folder = os.path.join(main_dir, 'Malt')
 
 def build_lib(path):
     subprocess.check_call([sys.executable, 'build.py'], cwd=path)
-    shutil.rmtree(os.path.join(path, '.build'))
+    import stat
+    def delete_read_only(func, path, exc_info):
+        os.chmod(path, stat.S_IWRITE)
+        os.remove(path)
+    shutil.rmtree(os.path.join(path, '.build'), onerror=delete_read_only)
 
 build_lib(os.path.join(blender_malt_folder, 'CBlenderMalt'))
+build_lib(os.path.join(malt_folder, 'GL', 'GLSLParser'))
 build_lib(os.path.join(bridge_folder, 'ipc'))
 build_lib(os.path.join(bridge_folder, 'renderdoc'))
 

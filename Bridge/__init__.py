@@ -15,9 +15,6 @@ def start_server(pipeline_path, connection_addresses, shared_dic, log_path, debu
     if renderdoc_path and os.path.exists(renderdoc_path):
         import subprocess
         subprocess.call([renderdoc_path, 'inject', '--PID={}'.format(os.getpid())])
-        #leave renderdoc time to perform the injection
-        import time
-        time.sleep(0.5)
 
     from . import Server
     Server.main(pipeline_path, connection_addresses, shared_dic, log_path, debug_mode)
