@@ -157,43 +157,83 @@ def shader_preprocessor(shader_source, include_directories=[], definitions=[]):
         args.append('-I'+directory)
     for definition in definitions:
         args.extend(('--define-macro', definition))
-    args.append(tmp.name)
+    args.append(tmp.name.replace('\\','/'))
     
     result = subprocess.check_output(args).decode('utf-8')
-    result = result.replace('GL_GOOGLE_include_directive', 'GL_ARB_shading_language_include', 1) 
+    result = result.replace('GL_GOOGLE_include_directive', 'GL_ARB_shading_language_include', 1)
     
     os.remove(tmp.name)
 
     return result
 
 
-def remove_line_directive_paths(source):
-    #Paths in line directives are not supported in some drivers, so we replace paths with numbers
+__LINE_DIRECTIVE_SUPPORT = None
+
+def directive_line_support():
+    global __LINE_DIRECTIVE_SUPPORT
+    if __LINE_DIRECTIVE_SUPPORT is not None:
+        return __LINE_DIRECTIVE_SUPPORT
+    def try_compilation (line_directive):
+        src = f'''
+        #version 410 core
+        #extension GL_ARB_shading_language_include : enable
+        {line_directive}
+        layout (location = 0) out vec4 OUT_COLOR;
+        void main() {{ OUT_COLOR = vec4(1); }}
+        '''
+        status = gl_buffer(GL_INT,1)
+        shader = glCreateShader(GL_FRAGMENT_SHADER)
+        glShaderSource(shader, src)
+        glCompileShader(shader)
+        glGetShaderiv(shader, GL_COMPILE_STATUS, status)
+        glDeleteShader(shader)
+        return status[0] != GL_FALSE
+    
+    if try_compilation('#line 1 "test.glsl"'):
+        __LINE_DIRECTIVE_SUPPORT = 'FULL'
+    elif try_compilation('#line 1 1'):
+        __LINE_DIRECTIVE_SUPPORT = 'FILE_NUMBER'
+    elif try_compilation('#line 1'):
+        __LINE_DIRECTIVE_SUPPORT = 'LINE_NUMBER'
+    else:
+        __LINE_DIRECTIVE_SUPPORT = 'NONE'
+    
+    return __LINE_DIRECTIVE_SUPPORT
+
+
+def fix_line_directive_paths(source):
+    support = directive_line_support()
+    if support == 'FULL':
+        return source
     include_paths = []
     result = ''
     for line in source.splitlines(keepends=True):
         if line.startswith("#line"):
-            if '"' in line:
-                start = line.index('"')
-                end = line.index('"', start + 1)
-                include_path = line[start:end+1]
-                if include_path not in include_paths:
-                    include_paths.append(include_path)
-                line = line.replace(include_path, str(include_paths.index(include_path)))
+            if support == 'FILE_NUMBER':
+                if '"' in line:
+                    start = line.index('"')
+                    end = line.index('"', start + 1)
+                    include_path = line[start:end+1]
+                    if include_path not in include_paths:
+                        include_paths.append(include_path)
+                    line = line.replace(include_path, str(include_paths.index(include_path)))
+            elif support == 'LINE_NUMBER':
+                if '"' in line:
+                    line = line.split('"',1)[0]
+            else:
+                line = "\n"
         result += line    
     return result
 
 
 def compile_gl_program(vertex, fragment):
     status = gl_buffer(GL_INT,1)
-    length = gl_buffer(GL_INT,1)
     info_log = gl_buffer(GL_BYTE, 1024)
 
     error = ""
 
     def compile_shader (source, shader_type):
-        if hasGLExtension('GL_ARB_shading_language_include') == False:
-            source = remove_line_directive_paths(source)
+        source = fix_line_directive_paths(source)
         
         shader = glCreateShader(shader_type)
         glShaderSource(shader, source)
