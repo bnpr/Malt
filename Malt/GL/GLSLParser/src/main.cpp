@@ -43,7 +43,8 @@ struct LINE_DIRECTIVE : seq<STRING("#line"), _s_, DIGITS, _s_, QUOTED_FILE_PATH>
 struct PAREN_SCOPE;
 struct PAREN_SCOPE : seq<LPAREN, until<RPAREN, sor<PAREN_SCOPE, any>>> {};
 struct META_PROP : seq<IDENTIFIER, _s_, PAREN_SCOPE> {};
-struct META : seq<STRING("META"), _s_, LPAREN, list<seq<_s_, META_PROP, _s_>, seq<_s_, COMMA, _s_>>, RPAREN> {};
+struct META_PROPS : list<seq<_s_, META_PROP, _s_>, seq<_s_, COMMA, _s_>> {};
+struct META : seq<STRING("META"), _s_, LPAREN, opt<LPAREN>, META_PROPS, RPAREN, opt<RPAREN>> {};
 
 struct MEMBER : seq<opt<PRECISION>, _s_, TYPE, _s_, IDENTIFIER, _s_, opt<ARRAY_SIZE>, _s_, opt<META>, _s_, END> {};
 struct MEMBERS : plus<seq<_s_, MEMBER, _s_>> {};
