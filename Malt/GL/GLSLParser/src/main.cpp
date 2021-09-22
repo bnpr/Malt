@@ -40,11 +40,16 @@ struct FILE_PATH : plus<not_one<'"'>> {};
 struct QUOTED_FILE_PATH : seq<one<'"'>, FILE_PATH, one<'"'>> {};
 struct LINE_DIRECTIVE : seq<STRING("#line"), _s_, DIGITS, _s_, QUOTED_FILE_PATH> {};
 
-struct MEMBER : seq<opt<PRECISION>, _s_, TYPE, _s_, IDENTIFIER, _s_, opt<ARRAY_SIZE>, _s_, END> {};
+struct PAREN_SCOPE;
+struct PAREN_SCOPE : seq<LPAREN, until<RPAREN, sor<PAREN_SCOPE, any>>> {};
+struct META_PROP : seq<IDENTIFIER, _s_, PAREN_SCOPE> {};
+struct META : seq<STRING("META"), _s_, LPAREN, list<seq<_s_, META_PROP, _s_>, seq<_s_, COMMA, _s_>>, RPAREN> {};
+
+struct MEMBER : seq<opt<PRECISION>, _s_, TYPE, _s_, IDENTIFIER, _s_, opt<ARRAY_SIZE>, _s_, opt<META>, _s_, END> {};
 struct MEMBERS : plus<seq<_s_, MEMBER, _s_>> {};
 struct STRUCT_DEF : seq<STRUCT, _s_, IDENTIFIER, _s_, LBRACE, _s_, opt<MEMBERS>, _s_, RBRACE> {};
 
-struct PARAMETER : seq<opt<IO>, _s_, opt<PRECISION>, _s_, TYPE, _s_, IDENTIFIER, _s_, opt<ARRAY_SIZE>> {};
+struct PARAMETER : seq<opt<IO>, _s_, opt<PRECISION>, _s_, TYPE, _s_, IDENTIFIER, _s_, opt<ARRAY_SIZE>, _s_, opt<META>> {};
 struct PARAMETERS : list<seq<_s_, PARAMETER, _s_>, seq<_s_, COMMA, _s_>> {};
 struct FUNCTION_SIG : seq<TYPE, _s_, IDENTIFIER, _s_, LPAREN, _s_, opt<PARAMETERS>, _s_, RPAREN> {}; 
 struct FUNCTION_DEC : seq<FUNCTION_SIG, _s_, LBRACE> {}; 
@@ -64,6 +69,9 @@ using selector = parse_tree::selector
         IO,
         ARRAY_SIZE,
         FILE_PATH,
+        PAREN_SCOPE,
+        META_PROP,
+        META,
         MEMBER,
         MEMBERS,
         STRUCT_DEF,
@@ -197,6 +205,18 @@ int main(int argc, char* argv[])
                 member_def.AddMember("name", Value(name.c_str(), json.GetAllocator()), json.GetAllocator());
                 member_def.AddMember("type", Value(type.c_str(), json.GetAllocator()), json.GetAllocator());
                 member_def.AddMember("size", Value(array_size), json.GetAllocator());
+                Value meta_dic = Value(kObjectType);
+                parse_tree::node* meta = get<META>(member.get());
+                if(meta)
+                {
+                    for(auto& meta_prop : meta->children)
+                    {
+                        std::string name = std::string(get<IDENTIFIER>(meta_prop.get())->string_view());
+                        std::string value = std::string(get<PAREN_SCOPE>(meta_prop.get())->string_view());
+                        meta_dic.AddMember(Value(name.c_str(), json.GetAllocator()), Value(value.c_str(), json.GetAllocator()), json.GetAllocator());
+                    }
+                }
+                member_def.AddMember("meta", meta_dic, json.GetAllocator());
                 members_array.PushBack(member_def, json.GetAllocator());
             }
         }
@@ -250,6 +270,18 @@ int main(int argc, char* argv[])
                 parameter_dec.AddMember("type", Value(type.c_str(), json.GetAllocator()), json.GetAllocator());
                 parameter_dec.AddMember("size", Value(array_size), json.GetAllocator());
                 parameter_dec.AddMember("io", Value(io.c_str(), json.GetAllocator()), json.GetAllocator());
+                Value meta_dic = Value(kObjectType);
+                parse_tree::node* meta = get<META>(parameter.get());
+                if(meta)
+                {
+                    for(auto& meta_prop : meta->children)
+                    {
+                        std::string name = std::string(get<IDENTIFIER>(meta_prop.get())->string_view());
+                        std::string value = std::string(get<PAREN_SCOPE>(meta_prop.get())->string_view());
+                        meta_dic.AddMember(Value(name.c_str(), json.GetAllocator()), Value(value.c_str(), json.GetAllocator()), json.GetAllocator());
+                    }
+                }
+                parameter_dec.AddMember("meta", meta_dic, json.GetAllocator());
                 parameters_array.PushBack(parameter_dec, json.GetAllocator());
             }
         }
