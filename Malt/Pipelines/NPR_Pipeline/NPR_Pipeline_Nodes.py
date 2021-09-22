@@ -136,7 +136,7 @@ class NPR_Pipeline_Nodes(NPR_Pipeline):
     def setup_graphs(self):
         mesh_header, mesh_pixel_signature = self.get_mesh_shader_generated_source()
         mesh_reflection_src = mesh_header + mesh_pixel_signature + "{}\n"
-        source = self.preprocess_shader_from_source(mesh_reflection_src, [], ['IS_MESH_SHADER','VERTEX_SHADER','PIXEL_SHADER','NODES'])
+        source = self.preprocess_shader_from_source(mesh_reflection_src, [], ['IS_MESH_SHADER','VERTEX_SHADER','PIXEL_SHADER','REFLECTION'])
         self.graphs['Mesh Shader'] = GLSLPipelineGraph('.mesh.glsl', source, SHADER_DIR, {
             'NODES_COMMON_PIXEL_SHADER': (None, mesh_pixel_signature),
             'VERTEX_DISPLACEMENT_SHADER': ('CUSTOM_VERTEX_DISPLACEMENT', 'vec3 VERTEX_DISPLACEMENT_SHADER(Surface S)'),
@@ -149,13 +149,13 @@ class NPR_Pipeline_Nodes(NPR_Pipeline):
         self.graphs['Mesh Shader'].graph_io_map['COMMON_PIXEL_SHADER'] = self.graphs['Mesh Shader'].graph_io_map['NODES_COMMON_PIXEL_SHADER']
         self.graphs['Mesh Shader'].graph_io_map.pop('NODES_COMMON_PIXEL_SHADER')
 
-        source = self.preprocess_shader_from_source(_LIGHT_SHADER_REFLECTION_SRC, [], ['IS_LIGHT_SHADER','PIXEL_SHADER','NODES'])
+        source = self.preprocess_shader_from_source(_LIGHT_SHADER_REFLECTION_SRC, [], ['IS_LIGHT_SHADER','PIXEL_SHADER','REFLECTION'])
         self.graphs['Light Shader'] = GLSLPipelineGraph('.light.glsl', source, SHADER_DIR, {
             'LIGHT_SHADER': (None, 'void LIGHT_SHADER(LightShaderInput I, inout LightShaderOutput O)')
         },
         _LIGHT_SHADER_HEADER)
 
-        source = self.preprocess_shader_from_source(_SCREEN_SHADER_REFLECTION_SRC, [], ['IS_SCREEN_SHADER','PIXEL_SHADER','NODES'])
+        source = self.preprocess_shader_from_source(_SCREEN_SHADER_REFLECTION_SRC, [], ['IS_SCREEN_SHADER','PIXEL_SHADER','REFLECTION'])
         self.graphs['Screen Shader'] = GLSLPipelineGraph('.screen.glsl', source, SHADER_DIR, {
             'SCREEN_SHADER': (None, '''void SCREEN_SHADER(vec2 uv, 
             sampler2D Input_0, sampler2D Input_1, sampler2D Input_2, sampler2D Input_3,

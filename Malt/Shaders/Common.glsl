@@ -3,6 +3,8 @@
 #ifndef COMMON_GLSL
 #define COMMON_GLSL
 
+#include "Common/Meta.glsl"
+
 #ifdef VERTEX_SHADER
 
 layout (location = 0) in vec3 in_position;
