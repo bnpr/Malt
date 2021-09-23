@@ -626,7 +626,7 @@ class MaltNode():
     
     def draw_socket(self, context, layout, socket, text):
         layout.label(text=text)
-        if socket.is_output == False and socket.is_linked == False:
+        if socket.is_output == False and socket.is_linked == False and socket.default_initialization == '':
             self.malt_parameters.draw_parameter(layout, socket.name, None, is_node_socket=True)
 
     @classmethod
