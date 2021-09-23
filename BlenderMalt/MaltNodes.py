@@ -819,7 +819,7 @@ class MaltIONode(bpy.types.Node, MaltNode):
                 code += transpiler.asignment(socket.get_source_reference(), initialization)
 
             if function['type'] != 'void':
-                result = socket.get_source_global_reference()
+                result = self.inputs['result'].get_source_global_reference()
                 linked = self.inputs['result'].get_linked()
                 if linked:
                     result = linked.get_source_reference()
