@@ -422,6 +422,8 @@ class MaltSocket(bpy.types.NodeSocket):
     data_type: bpy.props.StringProperty(update=on_type_update)
 
     array_size: bpy.props.IntProperty(default=0, update=on_type_update)
+    
+    default_initialization: bpy.props.StringProperty(default='')
 
     def is_instantiable_type(self):
         return self.data_type.startswith('sampler') == False
@@ -434,7 +436,12 @@ class MaltSocket(bpy.types.NodeSocket):
     
     def get_source_global_reference(self):
         return self.id_data.get_transpiler().global_reference(self.node.get_source_name(), self.name)
-        return 'U_0{}_0_{}'.format(self.node.get_source_name(), self.name)
+    
+    def get_source_default_initialization(self):
+        if self.default_initialization != '':
+            return self.default_initialization
+        else:
+            return self.get_source_global_reference()
 
     def get_linked(self):
         def get_linked_internal(socket):
@@ -542,7 +549,9 @@ class MaltNode():
                     remove.append(current[e])
             for e in remove:
                 current.remove(e)
-            for name, (type, size) in new.items():
+            for name, dic in new.items():
+                type = dic['type']
+                size = dic['size'] if 'size' in dic else 0
                 if name not in current:
                     current.new('MaltSocket', name)
                 if isinstance(type, Parameter):
@@ -551,16 +560,21 @@ class MaltNode():
                 else:
                     current[name].data_type = type
                     current[name].array_size = size
+                try:
+                    current[name].default_initialization = dic['meta']['init']
+                except:
+                    current[name].default_initialization = ''
         setup(self.inputs, inputs)
         setup(self.outputs, outputs)
         parameters = {}
         for name, input in self.inputs.items():
             parameter = None
-            if name in inputs.keys() and isinstance(inputs[name][0], Parameter):
-                parameter = inputs[name][0]
+            if name in inputs.keys() and isinstance(inputs[name]['type'], Parameter):
+                parameter = inputs[name]['type']
             elif input.array_size == 0:
                 try:
                     parameter = Parameter.from_glsl_type(input.data_type)
+                    parameter.default_value = eval(inputs[name]['meta']['value'])
                 except:
                     pass
             if parameter:
@@ -635,12 +649,12 @@ class MaltStructNode(bpy.types.Node, MaltNode):
         inputs = {}
         outputs = {}
 
-        inputs[self.struct_type] = self.struct_type, 0
-        outputs[self.struct_type] = self.struct_type, 0
+        inputs[self.struct_type] = {'type' : self.struct_type}
+        outputs[self.struct_type] = {'type' : self.struct_type}
 
         for member in struct['members']:
-            inputs[member['name']] = member['type'], member['size']
-            outputs[member['name']] = member['type'], member['size']
+            inputs[member['name']] = member
+            outputs[member['name']] = member
         
         self.setup_sockets(inputs, outputs)
 
@@ -677,7 +691,7 @@ class MaltStructNode(bpy.types.Node, MaltNode):
             if input.data_type != self.struct_type:
                 linked = input.get_linked()
                 if linked or struct_linked == False:
-                    initialization = input.get_source_global_reference()
+                    initialization = input.get_source_default_initialization()
                     if linked:
                         initialization = linked.get_source_reference()
                     code += transpiler.asignment(input.get_source_reference(), initialization)
@@ -710,12 +724,12 @@ class MaltFunctionNode(bpy.types.Node, MaltNode):
         outputs = {}
 
         if function['type'] != 'void':
-            outputs['result'] = function['type'], 0 #TODO: Array return type
+            outputs['result'] = {'type': function['type']} #TODO: Array return type
         for parameter in function['parameters']:
             if parameter['io'] in ['out','inout']:
-                outputs[parameter['name']] = parameter['type'], parameter['size']
+                outputs[parameter['name']] = parameter
             if parameter['io'] in ['','in','inout']:
-                inputs[parameter['name']] = parameter['type'], parameter['size']
+                inputs[parameter['name']] = parameter
         
         self.setup_sockets(inputs, outputs)
 
@@ -748,7 +762,7 @@ class MaltFunctionNode(bpy.types.Node, MaltNode):
                 if linked:
                     initialization = linked.get_source_reference()
                 else:
-                    initialization = socket.get_source_global_reference()
+                    initialization = socket.get_source_default_initialization()
             parameters.append(initialization)
 
         return transpiler.call(function, source_name, parameters)
@@ -773,12 +787,12 @@ class MaltIONode(bpy.types.Node, MaltNode):
         outputs = {}
         
         if function['type'] != 'void' and self.is_output:
-            inputs['result'] = function['type'], 0
+            inputs['result'] = {'type': function['type']}
         for parameter in function['parameters']:
             if parameter['io'] in ['out','inout'] and self.is_output:
-                inputs[parameter['name']] = parameter['type'], parameter['size']
+                inputs[parameter['name']] = parameter
             if parameter['io'] in ['','in','inout'] and self.is_output == False:
-                outputs[parameter['name']] = parameter['type'], parameter['size']
+                outputs[parameter['name']] = parameter
         
         self.setup_sockets(inputs, outputs)
 
@@ -799,7 +813,7 @@ class MaltIONode(bpy.types.Node, MaltNode):
             for socket in self.inputs:
                 if socket.name == 'result':
                     continue
-                initialization = socket.get_source_global_reference()
+                initialization = socket.get_source_default_initialization()
                 if socket.get_linked():
                     initialization = socket.get_linked().get_source_reference()
                 code += transpiler.asignment(socket.get_source_reference(), initialization)
@@ -852,9 +866,9 @@ class MaltInlineNode(bpy.types.Node, MaltNode):
                 input = self.inputs[var]
                 linked = self.inputs[var].get_linked()
                 if linked and linked.data_type != '':
-                    inputs[var] = linked.data_type, linked.array_size
+                    inputs[var] = {'type': linked.data_type, 'size': linked.array_size}
                 else:
-                    inputs[var] = input.data_type, input.array_size
+                    inputs[var] = {'type': input.data_type, 'size': input.array_size}
         
         outputs = { 'result' : ('', 0) }
         if 'result' in self.outputs:
@@ -914,13 +928,17 @@ class MaltArrayIndexNode(bpy.types.Node, MaltNode):
             { 'element' : ('', 0) } )
         
     def malt_update(self):
-        inputs = { 'array' : ('', 1), 'index' : ('int', 0) }
-        outputs = { 'element' : ('', 0) }
+        inputs = { 
+            'array' : {'type': '', 'size': 1},
+            'index' : {'type': 'int'}
+        }
+        outputs = { 'element' : {'type': ''} }
         
         linked = self.inputs['array'].get_linked()
         if linked and linked.array_size > 0:
-            inputs['array'] = linked.data_type, linked.array_size
-            outputs['element'] = linked.data_type, 0
+            inputs['array']['type'] = linked.data_type
+            inputs['array']['type'] = linked.array_size
+            outputs['element']['type'] = linked.data_type
 
         self.setup_sockets(inputs, outputs)
 
