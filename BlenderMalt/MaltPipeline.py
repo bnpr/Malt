@@ -1,6 +1,6 @@
 # Copyright (c) 2020 BlenderNPR and contributors. MIT license. 
 
-import os, time
+import os, platform, time
 import bpy
 from . import MaltMaterial, MaltMeshes, MaltTextures
 
@@ -41,6 +41,9 @@ class MaltPipeline(bpy.types.PropertyGroup):
         if pipeline == '':
             current_dir = os.path.dirname(os.path.abspath(__file__))
             default_pipeline = os.path.join(current_dir,'.MaltPath','Malt','Pipelines','NPR_Pipeline','NPR_Pipeline_Nodes.py')
+            if platform.system() == 'Darwin':
+                # The NPR Pipeline doesn't work on OpenGL implementations limited to 16 sampler uniforms
+                default_pipeline = os.path.join(current_dir,'.MaltPath','Malt','Pipelines','MiniPipeline','MiniPipeline.py')
             pipeline = default_pipeline
 
         debug_mode = bool(bpy.context.preferences.addons['BlenderMalt'].preferences.debug_mode)
