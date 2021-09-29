@@ -14,6 +14,8 @@ class Texture(object):
         self.internal_format = internal_format
         self.format = pixel_format or internal_format_to_format(internal_format)
         self.data_format = data_format or internal_format_to_data_format(internal_format)
+        self.channel_count = format_channels(self.format)
+        self.channel_size = data_format_size(self.data_format)
 
         self.texture = gl_buffer(GL_INT, 1)
         glGenTextures(1, self.texture)
@@ -200,6 +202,18 @@ def internal_format_to_data_format(internal_format):
             return value
     return GL_UNSIGNED_BYTE
 
+def data_format_size(data_format):
+    name = GL_ENUMS[data_format]
+    table = {
+        'BYTE' : 1,
+        'SHORT' : 2,
+        'HALF' : 2,
+    }
+    for key, value in table.items():
+        if key in name:
+            return value
+    return 4
+
 def internal_format_to_sampler_type(internal_format):
     table = {
         GL_UNSIGNED_BYTE : 'sampler2D',
@@ -235,7 +249,19 @@ def internal_format_to_format(internal_format):
                 return GL_NAMES[GL_ENUMS[value] + '_INTEGER']
             else:
                 return value
-    
     raise Exception(name, ' Texture format not supported')
+
+def format_channels(format):
+    table = {
+        GL_RGBA : 4,
+        GL_RGB : 3,
+        GL_RG : 2,
+        GL_RED : 1,
+    }
+    if format in table.keys():
+        return table[format]
+    return 1
+
+    
 
 

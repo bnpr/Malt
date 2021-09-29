@@ -347,9 +347,17 @@ class MaltRenderEngine(bpy.types.RenderEngine):
 
         fbo = GL.gl_buffer(GL.GL_INT, 1)
         GL.glGetIntegerv(GL.GL_FRAMEBUFFER_BINDING, fbo)
+
+        data_format = GL.GL_FLOAT
+        texture_format = GL.GL_RGBA32F
+        if self.bridge.viewport_bit_depth == 8:
+            data_format = GL.GL_UNSIGNED_BYTE
+            texture_format = GL.GL_RGBA8
+            if GL.glGetInternalformativ(GL.GL_TEXTURE_2D, texture_format, GL.GL_READ_PIXELS, 1) != GL.GL_ZERO:
+                data_format = GL.glGetInternalformativ(GL.GL_TEXTURE_2D, texture_format, GL.GL_TEXTURE_IMAGE_TYPE, 1)
         
-        render_texture = Texture(resolution, GL.GL_RGBA32F, GL.GL_FLOAT, pixels.buffer(), mag_filter=mag_filter)
-        
+        render_texture = Texture(resolution, texture_format, data_format, pixels.buffer(), mag_filter=mag_filter)
+
         self.bind_display_space_shader(depsgraph.scene_eval)
         if self.display_draw is None or self.display_draw.resolution != viewport_resolution:
             if self.display_draw:
@@ -357,6 +365,7 @@ class MaltRenderEngine(bpy.types.RenderEngine):
             self.display_draw = DisplayDraw(viewport_resolution)
         self.display_draw.draw(fbo, render_texture)
         self.unbind_display_space_shader()
+
 
 #Boilerplate code to draw an OpenGL texture to the viewport using Blender color management
 class DisplayDraw(object):

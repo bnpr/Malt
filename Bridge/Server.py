@@ -9,6 +9,7 @@ import glfw
 from Malt.GL import GL
 from Malt.GL.GL import *
 from Malt.GL.RenderTarget import RenderTarget
+from Malt.GL.Texture import Texture
 
 import Bridge.Mesh, Bridge.Material, Bridge.Texture
 from . import ipc as ipc
@@ -54,6 +55,9 @@ def log_system_info():
 
     log_format_props(GL_RGB8)
     log_format_props(GL_RGBA8)
+    log_format_props(GL_RGBA)
+    log_format_props(GL_SRGB)
+    log_format_props(GL_SRGB_ALPHA)
     log_format_props(GL_RGB16F)
     log_format_props(GL_RGBA16F)
     log_format_props(GL_RGB32F)
@@ -76,8 +80,8 @@ class PBO(object):
         self.buffer = buffer
         render_target = RenderTarget([texture])
         w,h = texture.resolution
-        size = w*h*4*4
-        assert(buffer.size_in_bytes() == size)
+        size = w * h * texture.channel_count * texture.channel_size
+        assert(buffer.size_in_bytes() >= size)
         if self.size != size:
             self.size = size
             glDeleteBuffers(1, self.handle)
@@ -116,12 +120,15 @@ class PBO(object):
 
 class Viewport(object):
 
-    def __init__(self, pipeline, is_final_render):
+    def __init__(self, pipeline, is_final_render, bit_depth):
         self.pipeline = pipeline
         self.buffers = None
         self.resolution = None
         self.read_resolution = None
         self.scene = None
+        self.bit_depth = bit_depth
+        self.final_texture = None
+        self.final_target = None
         self.pbos_active = []
         self.pbos_inactive = []
         self.is_new_frame = True
@@ -150,6 +157,13 @@ class Viewport(object):
             self.pbos_inactive.extend(self.pbos_active)
             self.pbos_active = []
             assert(new_buffers is not None)
+            if self.bit_depth == 8:
+                optimal_format = GL_UNSIGNED_BYTE
+                if glGetInternalformativ(GL_TEXTURE_2D, GL_RGBA8, GL_READ_PIXELS, 1) != GL_ZERO:
+                    optimal_format = glGetInternalformativ(GL_TEXTURE_2D, GL_RGBA8, GL_TEXTURE_IMAGE_TYPE, 1)
+                self.final_texture = Texture(resolution, GL_RGBA8, optimal_format, pixel_format=GL_RGBA)
+                self.final_texture.channel_size = 1
+                self.final_target = RenderTarget([self.final_texture])
         
         if new_buffers:
             self.buffers = new_buffers
@@ -189,6 +203,9 @@ class Viewport(object):
 
         if self.needs_more_samples:
             result = self.pipeline.render(self.resolution, self.scene, self.is_final_render, self.is_new_frame)
+            if self.final_texture:
+                self.pipeline.copy_textures(self.final_target, [result['COLOR']])
+                result = { 'COLOR' : self.final_texture }
             self.is_new_frame = False
             self.needs_more_samples = self.pipeline.needs_more_samples()
             
@@ -233,7 +250,7 @@ class Viewport(object):
 
 PROFILE = False
 
-def main(pipeline_path, connection_addresses, shared_dic, lock, log_path, debug_mode):
+def main(pipeline_path, viewport_bit_depth, connection_addresses, shared_dic, lock, log_path, debug_mode):
     log_level = log.DEBUG if debug_mode else log.INFO
     setup_logging(log_path, log_level)
     log.info('DEBUG MODE: {}'.format(debug_mode))
@@ -363,7 +380,8 @@ def main(pipeline_path, connection_addresses, shared_dic, lock, log_path, debug_
                 renderdoc_capture = msg['renderdoc_capture']
 
                 if viewport_id not in viewports:
-                    viewports[viewport_id] = Viewport(pipeline_class(), viewport_id == 0)
+                    bit_depth = viewport_bit_depth if viewport_id != 0 else 32
+                    viewports[viewport_id] = Viewport(pipeline_class(), viewport_id == 0, bit_depth)
 
                 viewports[viewport_id].setup(new_buffers, resolution, scene, scene_update, renderdoc_capture)
                 shared_dic[(viewport_id, 'FINISHED')] = False

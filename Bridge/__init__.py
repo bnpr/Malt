@@ -6,7 +6,7 @@ def reload():
     for module in [ Client_API, Server, Material, Mesh, Texture ]:
         importlib.reload(module)
 
-def start_server(pipeline_path, connection_addresses, shared_dic, lock, log_path, debug_mode, renderdoc_path):
+def start_server(pipeline_path, viewport_bit_depth, connection_addresses, shared_dic, lock, log_path, debug_mode, renderdoc_path):
     import os, sys
     # Trying to change process prioriy in Linux seems to hang Malt for some users
     if sys.platform == 'win32':
@@ -17,4 +17,4 @@ def start_server(pipeline_path, connection_addresses, shared_dic, lock, log_path
         subprocess.call([renderdoc_path, 'inject', '--PID={}'.format(os.getpid())])
 
     from . import Server
-    Server.main(pipeline_path, connection_addresses, shared_dic, lock, log_path, debug_mode)
+    Server.main(pipeline_path, viewport_bit_depth, connection_addresses, shared_dic, lock, log_path, debug_mode)

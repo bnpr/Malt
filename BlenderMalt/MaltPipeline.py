@@ -51,7 +51,7 @@ class MaltPipeline(bpy.types.PropertyGroup):
         
         path = bpy.path.abspath(pipeline, library=self.id_data.library)
         import Bridge
-        bridge = Bridge.Client_API.Bridge(path, debug_mode, renderdoc_path)
+        bridge = Bridge.Client_API.Bridge(path, int(self.viewport_bit_depth), debug_mode, renderdoc_path)
         import logging as log
         log.info('Blender {} {} {}'.format(bpy.app.version_string, bpy.app.build_branch, bpy.app.build_hash))
         params = bridge.get_parameters()
@@ -75,11 +75,16 @@ class MaltPipeline(bpy.types.PropertyGroup):
         setup_all_ids()
     
     pipeline : bpy.props.StringProperty(name="Malt Pipeline", subtype='FILE_PATH', update=update_pipeline)
+    viewport_bit_depth : bpy.props.EnumProperty(items=[('8', '8', ''),('32', '32', '')], 
+        name="Bit Depth (Viewport)", update=update_pipeline)
     graph_types : bpy.props.CollectionProperty(type=bpy.types.PropertyGroup)
     overrides : bpy.props.StringProperty(name='Pipeline Overrides', default='Preview,Final Render')
 
     def draw_ui(self, layout):
+        layout.use_property_split = True
+        layout.use_property_decorate = False
         layout.prop(self, 'pipeline')
+        layout.prop(self, 'viewport_bit_depth')
 
 
 class MALT_PT_Pipeline(bpy.types.Panel):

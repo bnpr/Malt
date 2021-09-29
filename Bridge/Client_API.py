@@ -30,7 +30,7 @@ class IOCapture(io.StringIO):
 
 class Bridge(object):
 
-    def __init__(self, pipeline_path, debug_mode=False, renderdoc_path=None):
+    def __init__(self, pipeline_path, viewport_bit_depth=8, debug_mode=False, renderdoc_path=None):
         super().__init__()
 
         import sys
@@ -45,6 +45,8 @@ class Bridge(object):
         
         import multiprocessing, random, string
         mp = multiprocessing.get_context('spawn')
+
+        self.viewport_bit_depth = viewport_bit_depth
 
         self.manager = mp.Manager()
         self.shared_dict = self.manager.dict()
@@ -77,7 +79,7 @@ class Bridge(object):
         for name in ['PARAMS','MESH','MATERIAL','SHADER REFLECTION','TEXTURE','GRADIENT','RENDER']: add_connection(name)
 
         from . import start_server
-        self.process = mp.Process(target=start_server, args=[pipeline_path, malt_to_bridge, self.shared_dict, self.lock, sys.stdout.log_path, debug_mode, renderdoc_path])
+        self.process = mp.Process(target=start_server, args=[pipeline_path, viewport_bit_depth, malt_to_bridge, self.shared_dict, self.lock, sys.stdout.log_path, debug_mode, renderdoc_path])
         self.process.daemon = True
         self.process.start()
 
@@ -214,8 +216,11 @@ class Bridge(object):
         if viewport_id not in self.render_buffers.keys() or self.render_buffers[viewport_id]['__resolution'] != resolution:
             self.render_buffers[viewport_id] = {'__resolution' : resolution}
             for key, texture_format in self.render_outputs.items():
+                buffer_type = ctypes.c_float
+                if viewport_id != 0 and self.viewport_bit_depth == 8:
+                    buffer_type = ctypes.c_byte
                 w,h = resolution
-                self.render_buffers[viewport_id][key] = self.get_shared_buffer(ctypes.c_float, w*h*4)
+                self.render_buffers[viewport_id][key] = self.get_shared_buffer(buffer_type, w*h*4)
                 if viewport_id != 0: #viewport render
                     #we only need the color buffer
                     break
