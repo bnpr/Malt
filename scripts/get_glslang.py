@@ -1,4 +1,4 @@
-import os, platform, shutil, zipfile
+import os, stat, platform, shutil, zipfile
 
 current_dir = os.path.dirname(os.path.realpath(__file__))
 gl_folder = os.path.join(current_dir, '..', 'Malt', 'GL')
@@ -24,6 +24,9 @@ urllib.request.urlretrieve(glslang_url, zip_file)
 with zipfile.ZipFile(zip_file) as z:
     with z.open(zipped_path) as zip, open(target_path, 'wb') as unzip:
         shutil.copyfileobj(zip, unzip)
+
+# Set as executable (Needed on Linux)
+os.chmod(target_path, os.stat(target_path).st_mode | stat.S_IEXEC)
 
 os.remove(zip_file)
 
