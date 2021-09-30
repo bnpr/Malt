@@ -189,8 +189,10 @@ def directive_line_support():
         glDeleteShader(shader)
         return status[0] != GL_FALSE
     
-    if try_compilation('#line 1 "test.glsl"'):
+    if try_compilation('#line 1 "/ .A1a1!·$%&/()=?¿|@#~€/test.glsl"'):
         __LINE_DIRECTIVE_SUPPORT = 'FULL'
+    elif try_compilation('#line 1 "/Basic test/test_1.glsl"'):
+        __LINE_DIRECTIVE_SUPPORT = 'BASIC_STRING'
     elif try_compilation('#line 1 1'):
         __LINE_DIRECTIVE_SUPPORT = 'FILE_NUMBER'
     elif try_compilation('#line 1'):
@@ -209,11 +211,15 @@ def fix_line_directive_paths(source):
     result = ''
     for line in source.splitlines(keepends=True):
         if line.startswith("#line"):
-            if support == 'FILE_NUMBER':
-                if '"' in line:
-                    start = line.index('"')
-                    end = line.index('"', start + 1)
-                    include_path = line[start:end+1]
+            include_path = None
+            if '"' in line:
+                start = line.index('"')
+                end = line.index('"', start + 1)
+                include_path = line[start:end+1]
+            if support == 'BASIC_STRING':
+                basic_string = ''.join([c for c in include_path if c.isalnum() or c in '/._ '])
+                line = line.replace(include_path, f'"{basic_string}"')
+            elif support == 'FILE_NUMBER':
                     if include_path not in include_paths:
                         include_paths.append(include_path)
                     line = line.replace(include_path, str(include_paths.index(include_path)))
