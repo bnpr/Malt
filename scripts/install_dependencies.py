@@ -1,4 +1,4 @@
-import os, subprocess, sys, shutil
+import os, subprocess, sys, shutil, stat
 
 current_dir = os.path.dirname(os.path.realpath(__file__))
 
@@ -15,8 +15,14 @@ for dependency in dependencies:
         import traceback
         traceback.print_exc()
 
+
 from distutils.dir_util import copy_tree
 copy_tree(os.path.join(current_dir, 'PatchDependencies'), malt_dependencies_path) 
+
+#make sure mcpp has executable permissions
+for str in ['Linux', 'Darwin']:
+    mcpp = os.path.join(malt_dependencies_path, f'mcpp-{str}')
+    os.chmod(mcpp, os.stat(mcpp).st_mode | stat.S_IEXEC)
 
 #Remove numpy since Blender already ships with it
 #Remove bin to avoid AVs false positives
@@ -25,5 +31,5 @@ for e in os.listdir(malt_dependencies_path):
         shutil.rmtree(os.path.join(malt_dependencies_path, e))
 
 
-subprocess.check_call([sys.executable, os.path.join(current_dir, 'get_glslang.py')])
+#subprocess.check_call([sys.executable, os.path.join(current_dir, 'get_glslang.py')])
 

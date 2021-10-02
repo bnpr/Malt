@@ -47,6 +47,7 @@ class GLSLPipelineGraph(PipelineGraph):
         for graph_function, (define, declaration) in self.graph_io_map.items():
             if graph_function in parameters.keys():
                 code += '{}\n{{\n{}\n}}'.format(declaration, textwrap.indent(parameters[graph_function],'\t'))
+        code += '\n\n'
         return code
 
 class PythonPipelineGraph(PipelineGraph):

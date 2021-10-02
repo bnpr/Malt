@@ -142,25 +142,25 @@ class UBO(object):
 
 
 def shader_preprocessor(shader_source, include_directories=[], definitions=[]):
-    import tempfile, subprocess
-    shader_source = shader_source.replace('GL_ARB_shading_language_include', 'GL_GOOGLE_include_directive', 1)
-    shader_source += '\n'
-
-    glslang = os.path.join(os.path.dirname(__file__), '.glslang')
+    import tempfile, subprocess, sys, platform
     
+    shader_source = shader_source + '\n'
     tmp = tempfile.NamedTemporaryFile(delete=False)
     tmp.write(shader_source.encode('utf-8'))
     tmp.close()
 
-    args = [glslang, '-E', '-S', 'frag']
+    py_version = str(sys.version_info[0])+str(sys.version_info[1])
+    dependencies_path = os.path.join(os.path.dirname(__file__), '..', f'.Dependencies-{py_version}')
+    mcpp = os.path.join(dependencies_path, f'mcpp-{platform.system()}')
+
+    args = [mcpp]
     for directory in include_directories:
         args.append('-I'+directory)
     for definition in definitions:
-        args.extend(('--define-macro', definition))
-    args.append(tmp.name.replace('\\','/'))
-    
+        args.append('-D'+definition)
+    args.append(tmp.name)
+
     result = subprocess.check_output(args).decode('utf-8')
-    result = result.replace('GL_GOOGLE_include_directive', 'GL_ARB_shading_language_include', 1)
     
     os.remove(tmp.name)
 
@@ -210,12 +210,10 @@ def fix_line_directive_paths(source):
     include_paths = []
     result = ''
     for line in source.splitlines(keepends=True):
-        if line.startswith("#line"):
-            include_path = None
-            if '"' in line:
-                start = line.index('"')
-                end = line.index('"', start + 1)
-                include_path = line[start:end+1]
+        if line.startswith("#line") and '"' in line:
+            start = line.index('"')
+            end = line.index('"', start + 1)
+            include_path = line[start:end+1]
             if support == 'BASIC_STRING':
                 basic_string = ''.join([c for c in include_path if c.isalnum() or c in '/._ '])
                 line = line.replace(include_path, f'"{basic_string}"')
@@ -239,6 +237,12 @@ def compile_gl_program(vertex, fragment):
     error = ""
 
     def compile_shader (source, shader_type):
+        import textwrap
+        source = textwrap.dedent('''
+        #version 410 core
+        #extension GL_ARB_shading_language_include : enable
+        #line 1 "src"
+        ''') + source
         source = fix_line_directive_paths(source)
         
         shader = glCreateShader(shader_type)
