@@ -46,7 +46,7 @@ struct STRUCT_DEF : seq<STRUCT, _s_, IDENTIFIER, _s_, LBRACE, _s_, opt<MEMBERS>,
 
 struct PARAMETER : seq<opt<IO>, _s_, opt<PRECISION>, _s_, TYPE, _s_, IDENTIFIER, _s_, opt<ARRAY_SIZE>> {};
 struct PARAMETERS : list<seq<_s_, PARAMETER, _s_>, seq<_s_, COMMA, _s_>> {};
-struct FUNCTION_SIG : seq<TYPE, _s_, IDENTIFIER, _s_, LPAREN, _s_, PARAMETERS, _s_, RPAREN> {}; 
+struct FUNCTION_SIG : seq<TYPE, _s_, IDENTIFIER, _s_, LPAREN, _s_, opt<PARAMETERS>, _s_, RPAREN> {}; 
 struct FUNCTION_DEC : seq<FUNCTION_SIG, _s_, LBRACE> {}; 
 
 struct GLSL_GRAMMAR : star<sor<LINE_DIRECTIVE, STRUCT_DEF, FUNCTION_DEC, any>> {};
