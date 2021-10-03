@@ -198,6 +198,22 @@ def load_scene(dummy1=None,dummy2=None):
     global __BRIDGE
     __BRIDGE = None
 
+@bpy.app.handlers.persistent
+def load_scene_post(dummy1=None,dummy2=None):
+    if bpy.context.scene.render.engine == 'MALT':
+        bpy.context.scene.world.malt.update_pipeline(bpy.context)
+
+__SAVE_PATH = None
+@bpy.app.handlers.persistent
+def save_pre(dummy1=None,dummy2=None):
+    global __SAVE_PATH
+    __SAVE_PATH = bpy.data.filepath
+
+@bpy.app.handlers.persistent
+def save_post(dummy1=None,dummy2=None):
+    if __SAVE_PATH != bpy.data.filepath:
+        load_scene_post()
+
 def track_pipeline_changes():
     if bpy.context.scene.render.engine != 'MALT':
         return 1
@@ -220,6 +236,9 @@ def register():
     bpy.types.World.malt = bpy.props.PointerProperty(type=MaltPipeline)
     bpy.app.handlers.depsgraph_update_post.append(depsgraph_update)
     bpy.app.handlers.load_pre.append(load_scene)
+    bpy.app.handlers.load_post.append(load_scene_post)
+    bpy.app.handlers.save_pre.append(save_pre)
+    bpy.app.handlers.save_post.append(save_post)
     bpy.app.timers.register(track_pipeline_changes, persistent=True)
     
 def unregister():
@@ -227,5 +246,8 @@ def unregister():
     del bpy.types.World.malt
     bpy.app.handlers.depsgraph_update_post.remove(depsgraph_update)
     bpy.app.handlers.load_pre.remove(load_scene)
+    bpy.app.handlers.load_post.remove(load_scene_post)
+    bpy.app.handlers.save_pre.remove(save_pre)
+    bpy.app.handlers.save_post.remove(save_post)
     bpy.app.timers.unregister(track_pipeline_changes)
 
