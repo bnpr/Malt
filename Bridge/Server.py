@@ -209,20 +209,21 @@ class Viewport(object):
             self.is_new_frame = False
             self.needs_more_samples = self.pipeline.needs_more_samples()
             
-            pbos = None
-            
-            if len(self.pbos_inactive) > 0:
-                pbos = self.pbos_inactive.pop()
-            else:
-                pbos = {}
-            
-            for key, texture in result.items():
-                if texture and key in self.buffers.keys():
-                    if key not in pbos.keys():
-                        pbos[key] = PBO()
-                    pbos[key].setup(texture, self.buffers[key])
-            
-            self.pbos_active.append(pbos)
+            if self.is_final_render == False or self.needs_more_samples == False:
+                pbos = None
+                
+                if len(self.pbos_inactive) > 0:
+                    pbos = self.pbos_inactive.pop()
+                else:
+                    pbos = {}
+                
+                for key, texture in result.items():
+                    if texture and key in self.buffers.keys():
+                        if key not in pbos.keys():
+                            pbos[key] = PBO()
+                        pbos[key].setup(texture, self.buffers[key])
+                
+                self.pbos_active.append(pbos)
             
         if len(self.pbos_active) > 0:
             for i, pbos in reversed(list(enumerate(self.pbos_active))):
