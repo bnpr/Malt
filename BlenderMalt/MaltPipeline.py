@@ -64,13 +64,14 @@ class MaltPipeline(bpy.types.PropertyGroup):
         set_bridge(bridge)
         set_pipeline_parameters(params)
         
-        self.graph_types.clear()
-        for graph in bridge.graphs.keys():
-            self.graph_types.add().name = graph
-        
         MaltMaterial.reset_materials()
         MaltMeshes.reset_meshes()
         MaltTextures.reset_textures()
+        
+        #TODO: This can fail depending on the current context, ID classes might not be writeable
+        self.graph_types.clear()
+        for graph in bridge.graphs.keys():
+            self.graph_types.add().name = graph
 
         setup_all_ids()
     
