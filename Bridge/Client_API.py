@@ -226,6 +226,15 @@ class Bridge(object):
                     break
             new_buffers = self.render_buffers[viewport_id]
 
+        if (viewport_id, 'SETUP') in self.shared_dict:
+            import time
+            start = time.perf_counter()
+            while self.shared_dict[(viewport_id, 'SETUP')] == False:
+                # Don't stack multiple render workloads for the same viewport
+                if time.perf_counter() - start > 1:
+                    #But don't stall Blender forever
+                    return
+                
         self.shared_dict[(viewport_id, 'FINISHED')] = None
         self.connections['RENDER'].send({
             'viewport_id': viewport_id,
@@ -235,6 +244,7 @@ class Bridge(object):
             'new_buffers': new_buffers,
             'renderdoc_capture' : renderdoc_capture,
         })
+        self.shared_dict[(viewport_id, 'SETUP')] = False
 
     @bridge_method
     def render_result(self, viewport_id):

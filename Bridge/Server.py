@@ -386,6 +386,7 @@ def main(pipeline_path, viewport_bit_depth, connection_addresses, shared_dic, lo
 
                 viewports[viewport_id].setup(new_buffers, resolution, scene, scene_update, renderdoc_capture)
                 shared_dic[(viewport_id, 'FINISHED')] = False
+                shared_dic[(viewport_id, 'SETUP')] = True
             
             if needs_loading:
                 continue
