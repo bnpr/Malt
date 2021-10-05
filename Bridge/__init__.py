@@ -17,4 +17,8 @@ def start_server(pipeline_path, viewport_bit_depth, connection_addresses, shared
         subprocess.call([renderdoc_path, 'inject', '--PID={}'.format(os.getpid())])
 
     from . import Server
-    Server.main(pipeline_path, viewport_bit_depth, connection_addresses, shared_dic, lock, log_path, debug_mode)
+    try:
+        Server.main(pipeline_path, viewport_bit_depth, connection_addresses, shared_dic, lock, log_path, debug_mode)
+    except:
+        import traceback, logging as log
+        log.error(traceback.format_exc())
