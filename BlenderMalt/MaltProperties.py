@@ -1,5 +1,6 @@
 # Copyright (c) 2020 BlenderNPR and contributors. MIT license. 
 
+import os
 import bpy
 from Malt.Parameter import Type, Parameter, MaterialParameter
 from Malt import Scene
@@ -126,14 +127,15 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                 self.materials[name].extension = parameter.extension
                 shader_path = parameter.default_value
                 if shader_path and shader_path != '':
-                    if shader_path not in bpy.data.materials:
-                        bpy.data.materials.new(shader_path)
-                        material = bpy.data.materials[shader_path]
+                    material_name = name + ' : ' + os.path.basename(shader_path)
+                    if material_name not in bpy.data.materials:
+                        bpy.data.materials.new(material_name)
+                        material = bpy.data.materials[material_name]
                         material.malt.shader_source = shader_path    
                 
                     material = self.materials[name].material
                     if type_changed or (material and rna[name]['default'] == material.malt.shader_source):
-                        self.materials[name].material = bpy.data.materials[shader_path]
+                        self.materials[name].material = bpy.data.materials[material_name]
             
             if parameter.type == Type.GRAPH:
                 if name not in self.graphs:

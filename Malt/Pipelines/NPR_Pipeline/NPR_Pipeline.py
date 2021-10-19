@@ -62,7 +62,8 @@ class NPR_Pipeline(Pipeline):
         self.parameters.scene['Transparency.Layers'] = Parameter(4, Type.INT)
         self.parameters.scene['Transparency.Layers @ Preview'] = Parameter(1, Type.INT)
         
-        self.parameters.world['Material Override'] = MaterialParameter('', 'mesh')
+        default_material_path = os.path.join(os.path.dirname(__file__), 'default.mesh.glsl')
+        self.parameters.world['Material.Default'] = MaterialParameter(default_material_path, 'mesh')
         
         self.parameters.light['Shader'] = MaterialParameter('', 'light')
         self.parameters.light['Light Group'] = Parameter(1, Type.INT)
@@ -155,14 +156,6 @@ class NPR_Pipeline(Pipeline):
         
         sample_offset = self.get_samples(scene.parameters['Samples.Width'])[self.sample_count]
 
-        material_override = scene.world_parameters['Material Override']
-        if material_override:
-            scene.world_parameters['Material Override'] = None
-            scene.materials = [material_override]
-            for object in scene.objects:
-                object.material = material_override
-            scene.batches = self.build_scene_batches(scene.objects)
-        
         #SETUP SCENE BATCHES
         opaque_batches = {}
         transparent_batches = {}

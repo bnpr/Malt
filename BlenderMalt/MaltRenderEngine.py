@@ -73,6 +73,9 @@ class MaltRenderEngine(bpy.types.RenderEngine):
         scene.parameters = depsgraph.scene_eval.malt_parameters.get_parameters(overrides, resources)
         scene.world_parameters = depsgraph.scene_eval.world.malt_parameters.get_parameters(overrides, resources)
 
+        override_material = scene.world_parameters['Material.Override']
+        default_material = scene.world_parameters['Material.Default']
+
         scene.frame = depsgraph.scene_eval.frame_current
         r = depsgraph.scene_eval.render
         fps = r.fps / r.fps_base
@@ -135,7 +138,7 @@ class MaltRenderEngine(bpy.types.RenderEngine):
                 
                 if len(obj.material_slots) > 0:
                     for i, slot in enumerate(obj.material_slots):
-                        material = None
+                        material = default_material
                         if slot.material:
                             material_name = slot.material.name_full
                             if material_name not in materials.keys():
@@ -146,10 +149,13 @@ class MaltRenderEngine(bpy.types.RenderEngine):
                                 parameters = slot.material.malt_parameters.get_parameters(overrides, resources)
                                 materials[material_name] = Scene.Material(shader, parameters)
                             material = materials[material_name]
+                        if override_material: material = override_material
                         result = Scene.Object(matrix, mesh[i], material, obj_parameters, mirror_scale)
                         scene.objects.append(result)
                 else:
-                    result = Scene.Object(matrix, mesh[0], None, obj_parameters, mirror_scale)
+                    material = default_material
+                    if override_material: material = override_material
+                    result = Scene.Object(matrix, mesh[0], material, obj_parameters, mirror_scale)
                     scene.objects.append(result)
            
             elif obj.type == 'LIGHT':

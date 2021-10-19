@@ -31,6 +31,9 @@ class Pipeline(object):
         self.parameters.mesh['double_sided'] = Parameter(False, Type.BOOL)
         self.parameters.mesh['precomputed_tangents'] = Parameter(False, Type.BOOL)
 
+        self.parameters.world['Material.Default'] = MaterialParameter('', 'mesh')
+        self.parameters.world['Material.Override'] = MaterialParameter('', 'mesh')
+
         self.graphs = {}
 
         if SHADER_DIR not in Pipeline.SHADER_INCLUDE_PATHS:
