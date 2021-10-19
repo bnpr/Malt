@@ -25,7 +25,7 @@ struct PixelOutput
     float id;
     vec4 line_color;
     float line_width;
-    vec4 shadow_color; // Only for transparent objects
+    vec4 transparency_shadow_color;
 };
 
 // Global material settings. Can be modified in the material panel UI
@@ -217,13 +217,13 @@ void main()
 
         if(Settings.Transparency)
         {
-            OUT_SHADOW_COLOR = PO.shadow_color.rgb;
+            OUT_SHADOW_COLOR = PO.transparency_shadow_color.rgb;
 
             float a = random_per_pixel(transform_point(CAMERA, POSITION).z);
             float b = random_per_sample(PO.id);
             float c = random_per_sample(transform_point(CAMERA, POSITION).z);
             float pass_through = c;
-            if(pass_through > PO.shadow_color.a)
+            if(pass_through > PO.transparency_shadow_color.a)
             {
                 discard;
             }

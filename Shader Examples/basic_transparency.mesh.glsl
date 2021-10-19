@@ -20,6 +20,6 @@ void COMMON_PIXEL_SHADER(Surface S, inout PixelOutput PO)
 
     PO.color.rgb = color;
     PO.color.a = alpha;
-    PO.shadow_color = diffuse_color;
+    PO.transparency_shadow_color = diffuse_color;
 }
 
