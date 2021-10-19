@@ -31,6 +31,8 @@ class Material(object):
         if self.compiler_error == '':
             global MATERIAL_SHADERS
             MATERIAL_SHADERS[self.path] = compiled_material
+        else:
+            MATERIAL_SHADERS[self.path] = {}
 
 
 def get_shader(path, parameters):
