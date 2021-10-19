@@ -54,18 +54,35 @@ class MaltTree(bpy.types.NodeTree):
             return get_libraries()[library_path]
         else:
             return get_empty_library()
-
+    
+    def get_full_library(self):
+        #TODO: Cache
+        result = get_empty_library()
+        result['functions'].update(self.get_pipeline_graph().functions)
+        result['structs'].update(self.get_pipeline_graph().structs)
+        result['functions'].update(self.get_library()['functions'])
+        result['structs'].update(self.get_library()['structs'])
+        return result
+    
     def get_pipeline_graph(self):
         bridge = MaltPipeline.get_bridge()
         if bridge and self.graph_type in bridge.graphs:
             return bridge.graphs[self.graph_type]
         return None
     
+    def cast(self, from_type, to_type):
+        cast_function = f'{to_type}_from_{from_type}'
+        lib = self.get_full_library()
+        if cast_function in lib['functions']:
+            #TODO: If more than 1 parameter, check if they have default values
+            if len(lib['functions'][cast_function]['parameters']) == 1:
+                return cast_function
+        return None
+    
     def get_struct_type(self, struct_type):
-        if struct_type in self.get_pipeline_graph().structs:
-            return self.get_pipeline_graph().structs[struct_type]
-        if struct_type in self.get_library()['structs']:
-            return self.get_library()['structs'][struct_type]
+        lib = self.get_full_library()
+        if struct_type in lib['structs']:
+            return lib['structs'][struct_type]
         return None
     
     def get_generated_source_dir(self):
@@ -156,8 +173,9 @@ class MaltTree(bpy.types.NodeTree):
         try:
             for link in self.links:
                 try:
-                    if (link.from_socket.data_type != link.to_socket.data_type or 
-                        link.from_socket.array_size != link.to_socket.array_size):
+                    if (link.from_socket.array_size != link.to_socket.array_size or 
+                        (link.from_socket.data_type != link.to_socket.data_type and
+                        self.cast(link.from_socket.data_type, link.to_socket.data_type) is None)):
                         self.links.remove(link)
                 except:
                     pass
@@ -437,11 +455,15 @@ class MaltSocket(bpy.types.NodeSocket):
     def is_instantiable_type(self):
         return self.data_type.startswith('sampler') == False
 
-    def get_source_reference(self):
+    def get_source_reference(self, target_type=None):
         if not self.is_instantiable_type() and not self.is_output and self.get_linked() is not None:
             self.get_linked().get_source_reference()
         else:
-            return self.node.get_source_socket_reference(self)
+            reference = self.node.get_source_socket_reference(self)
+            if target_type and target_type != self.data_type:
+                cast_function = self.node.id_data.cast(self.data_type, target_type)
+                return f'{cast_function}({reference})'
+            return reference
     
     def get_source_global_reference(self):
         return self.id_data.get_transpiler().global_reference(self.node.get_source_name(), self.name)
@@ -460,7 +482,7 @@ class MaltSocket(bpy.types.NodeSocket):
     
     def get_source_initialization(self):
         if self.is_linked:
-            return self.get_linked().get_source_reference()
+            return self.get_linked().get_source_reference(self.data_type)
         elif self.default_initialization != '':
             return self.default_initialization
         elif self.is_struct_member() and (self.get_struct_socket().is_linked or self.get_struct_socket().default_initialization != ''):

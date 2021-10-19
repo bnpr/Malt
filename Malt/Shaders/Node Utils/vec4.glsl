@@ -39,7 +39,9 @@ vec4 vec4_if_else(bool condition, vec4 a, vec4 b){ return condition ? a : b; }
 vec4 vec4_join(float r, float g, float b, float a) { return vec4(r,g,b,a);}
 void vec4_split(vec4 v, out float r, out float g, out float b, out float a){ r=v.r; g=v.g; b=v.b; a=v.a; }
 vec4 vec4_from_float(float f) { return vec4(f); }
+vec4 vec4_from_vec2(vec2 v) { return vec4(v, 0, 1); }
 vec4 vec4_from_vec2(vec2 v, float b, float a) { return vec4(v, b, a); }
+vec4 vec4_from_vec3(vec3 v) { return vec4(v, 1); }
 vec4 vec4_from_vec3(vec3 v, float a) { return vec4(v, a); }
 
 #endif //VEC4_GLSL

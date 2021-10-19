@@ -40,6 +40,7 @@ vec3 vec3_if_else(bool condition, vec3 a, vec3 b){ return condition ? a : b; }
 vec3 vec3_join(float x, float y, float z) { return vec3(x,y,z);}
 void vec3_split(vec3 v, out float x, out float y, out float z){ x=v.x; y=v.y; z=v.z; }
 vec3 vec3_from_float(float f) { return vec3(f); }
+vec3 vec3_from_vec2(vec2 v) { return vec3(v, 0); }
 vec3 vec3_from_vec2(vec2 v, float z) { return vec3(v, z); }
 vec3 vec3_from_vec4(vec4 v) { return v.xyz; }
 
