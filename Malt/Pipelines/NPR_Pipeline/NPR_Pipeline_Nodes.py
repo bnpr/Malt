@@ -23,13 +23,27 @@ _MESH_SHADER_HEADER = _COMMON_HEADER + '''
 #endif
 #endif
 
-void NODES_COMMON_PIXEL_SHADER(Surface S, inout PixelOutput PO {CUSTOM_OUTPUT_SIGNATURE});
+void NODES_COMMON_PIXEL_SHADER(Surface S, 
+    inout vec4 color,
+    inout vec3 normal,
+    inout float id,
+    inout vec4 line_color,
+    inout float line_width,
+    inout vec4 transparency_shadow_color
+    {CUSTOM_OUTPUT_SIGNATURE});
 
 void COMMON_PIXEL_SHADER(Surface S, inout PixelOutput PO)
 {{
     {CUSTOM_OUTPUT_DECLARATION}
 
-    NODES_COMMON_PIXEL_SHADER(S, PO {CUSTOM_OUTPUT_CALL});
+    NODES_COMMON_PIXEL_SHADER(S,
+        PO.color,
+        PO.normal,
+        PO.id,
+        PO.line_color,
+        PO.line_width,
+        PO.transparency_shadow_color
+        {CUSTOM_OUTPUT_CALL});
 
     #ifdef PIXEL_SHADER
     #ifdef MAIN_PASS
@@ -130,7 +144,14 @@ class NPR_Pipeline_Nodes(NPR_Pipeline):
             CUSTOM_OUTPUT_ASIGNMENT = asignment,
         )
 
-        common_pixel_signature = f"void NODES_COMMON_PIXEL_SHADER(Surface S, inout PixelOutput PO {signature})"
+        common_pixel_signature = f"""void NODES_COMMON_PIXEL_SHADER(Surface S,
+        inout vec4 color,
+        inout vec3 normal,
+        inout float id,
+        inout vec4 line_color,
+        inout float line_width,
+        inout vec4 transparency_shadow_color
+        {signature})"""
         return header, common_pixel_signature
 
     def setup_graphs(self):
