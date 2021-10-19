@@ -790,6 +790,9 @@ class MaltIONode(bpy.types.Node, MaltNode):
             inputs['result'] = {'type': function['type']}
         for parameter in function['parameters']:
             if parameter['io'] in ['out','inout'] and self.is_output:
+                if parameter['io'] == 'inout':
+                    if 'meta' not in parameter: parameter['meta'] = {}
+                    parameter['meta']['init'] = parameter['name']
                 inputs[parameter['name']] = parameter
             if parameter['io'] in ['','in','inout'] and self.is_output == False:
                 outputs[parameter['name']] = parameter
