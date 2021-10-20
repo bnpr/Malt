@@ -21,7 +21,7 @@ It's aimed at advanced users and technical artists who want more control over th
 ## Current State
 
 Malt development began on June 2020 and it's still in beta state.   
-We're getting near the 1.0 Release, take a lookt at [Malt 1.0 UX Improvements](https://github.com/bnpr/Malt/discussions/148) and leave your feedback.
+We're getting near the 1.0 Release, take a look at [Malt 1.0 UX Improvements](https://github.com/bnpr/Malt/discussions/148) and leave your feedback.
 
 Malt is software agnostic, but Blender is the only integration planned right now.
 
