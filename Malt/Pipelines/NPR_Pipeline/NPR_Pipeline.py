@@ -112,10 +112,10 @@ class NPR_Pipeline(Pipeline):
         self.t_depth = Texture(resolution, GL_DEPTH_COMPONENT32F)
         
         self.t_prepass_normal_depth = Texture(resolution, GL_RGBA32F)
-        self.t_prepass_id = Texture(resolution, GL_R32F, min_filter=GL_NEAREST, mag_filter=GL_NEAREST)
+        self.t_prepass_id = Texture(resolution, GL_RGBA16UI, min_filter=GL_NEAREST, mag_filter=GL_NEAREST)
         self.fbo_prepass = RenderTarget([self.t_prepass_normal_depth, self.t_prepass_id], self.t_depth)
         
-        self.t_last_layer_id = Texture(resolution, GL_R32F, min_filter=GL_NEAREST, mag_filter=GL_NEAREST)
+        self.t_last_layer_id = Texture(resolution, GL_R16UI, min_filter=GL_NEAREST, mag_filter=GL_NEAREST)
         self.fbo_last_layer_id = RenderTarget([self.t_last_layer_id])
         
         self.t_main_color = Texture(resolution, GL_RGBA16F)
@@ -227,7 +227,7 @@ class NPR_Pipeline(Pipeline):
         self.copy_textures(self.fbo_opaque, [result], self.t_depth)
         
         self.fbo_transparent.clear([(0,0,0,0)], -1)
-        self.fbo_last_layer_id.clear([0])
+        self.fbo_last_layer_id.clear([(0,0,0,0)])
 
         for i in range(scene.world_parameters['Transparency.Layers']):
             if i > 0:

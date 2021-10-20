@@ -27,19 +27,19 @@ void _sampling_pattern(out vec2 samples[4])
     );
 }
 
-bool line_id_ex(sampler2D depth_texture, int depth_channel, sampler2D id_texture, int id_channel, vec2 uv, float pixel_width, int LINE_DEPTH_MODE)
+bool line_id_ex(sampler2D depth_texture, int depth_channel, usampler2D id_texture, int id_channel, vec2 uv, float pixel_width, int LINE_DEPTH_MODE)
 {
     vec2 offsets[4];
     _sampling_pattern(offsets);
 
     vec2 offset = vec2(pixel_width) / vec2(textureSize(id_texture, 0));
-    float id = texture(id_texture, uv)[id_channel];
+    uint id = texture(id_texture, uv)[id_channel];
     float depth = texture(depth_texture, uv)[depth_channel];
     bool line = false;
 
     for(int i = 0; i < offsets.length(); i++)
     {   
-        float sampled_id = texture(id_texture, uv + offsets[i]*offset)[id_channel];
+        uint sampled_id = texture(id_texture, uv + offsets[i]*offset)[id_channel];
         float sampled_depth = texture(depth_texture, uv + offsets[i]*offset)[depth_channel];
 
         if(sampled_id != id)
@@ -135,7 +135,7 @@ LineOutput line_ex(
     sampler2D depth_texture,
     int depth_channel,
     sampler2D normal_texture,
-    sampler2D id_texture,
+    usampler2D id_texture,
     int id_channel
 )
 {
@@ -151,7 +151,7 @@ LineOutput line_ex(
     vec3 true_normal_camera = transform_normal(CAMERA, true_normal);
     float depth = texture(depth_texture, uv)[depth_channel];
     position = transform_point(CAMERA, position);
-    float id = texture(id_texture, uv)[id_channel];
+    uint id = texture(id_texture, uv)[id_channel];
 
     for(int i = 0; i < offsets.length(); i++)
     {   
@@ -162,7 +162,7 @@ LineOutput line_ex(
             vec3 sampled_normal = texture(normal_texture, sample_uv).xyz;
             float sampled_depth = texture(depth_texture, sample_uv)[depth_channel];
             vec3 sampled_position = screen_to_camera(sample_uv, sampled_depth);
-            float sampled_id = texture(id_texture, sample_uv)[id_channel];
+            uint sampled_id = texture(id_texture, sample_uv)[id_channel];
 
             float delta_distance = 0;
 
@@ -197,7 +197,7 @@ LineOutput line_ex(
             {
                 result.delta_distance = max(result.delta_distance, delta_distance);
                 result.delta_angle = min(result.delta_angle, dot(normal, sampled_normal));
-                result.id_boundary = result.id_boundary || round(sampled_id) != round(id);
+                result.id_boundary = result.id_boundary || sampled_id != id;
             }
         }
     }
@@ -216,14 +216,14 @@ struct LineExpandOutput
 
 LineExpandOutput line_expand(vec2 uv, int max_width, float aa_offset, 
                              sampler2D line_color_texture, sampler2D line_width_texture, int line_width_channel,
-                             sampler2D depth_texture, int depth_channel, sampler2D id_texture, int id_channel)
+                             sampler2D depth_texture, int depth_channel, usampler2D id_texture, int id_channel)
 {
     vec2 resolution = vec2(textureSize(line_color_texture,0));
 
     int max_half_width = max_width;
 
     float depth = texture(depth_texture, uv)[depth_channel];
-    float id = texture(id_texture, uv)[id_channel];
+    uint id = texture(id_texture, uv)[id_channel];
 
     vec4 line_color = vec4(0);
     float line_depth = 1.0;
@@ -242,7 +242,7 @@ LineExpandOutput line_expand(vec2 uv, int max_width, float aa_offset,
             {
                 vec4 offset_line_color = texture(line_color_texture, offset_uv);
                 float offset_line_depth = texture(depth_texture, offset_uv)[depth_channel];
-                float offset_line_id = texture(id_texture, offset_uv)[id_channel];
+                uint offset_line_id = texture(id_texture, offset_uv)[id_channel];
                 
                 float alpha = clamp(offset_width / 2.0 - offset_length + aa_offset, 0.0, 1.0);
 
@@ -257,7 +257,7 @@ LineExpandOutput line_expand(vec2 uv, int max_width, float aa_offset,
                     override = true;
                 }
 
-                if(round(offset_line_id) != round(id) && depth < offset_line_depth)
+                if(offset_line_id != id && depth < offset_line_depth)
                 {
                     override = false;
                 }

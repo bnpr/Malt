@@ -105,7 +105,7 @@ class MaltRenderEngine(bpy.types.RenderEngine):
             return scene
 
         #Objects
-        def add_object(obj, matrix):
+        def add_object(obj, matrix, id):
             if obj.display_type in ['TEXTURED','SOLID'] and obj.type in ('MESH','CURVE','SURFACE','META', 'FONT'):
                 name = MaltMeshes.get_mesh_name(obj)
                 if depsgraph.mode == 'RENDER':
@@ -135,6 +135,7 @@ class MaltRenderEngine(bpy.types.RenderEngine):
                 matrix = flatten_matrix(matrix)
 
                 obj_parameters = obj.malt_parameters.get_parameters(overrides, resources)
+                obj_parameters['ID'] = id
                 
                 if len(obj.material_slots) > 0:
                     for i, slot in enumerate(obj.material_slots):
@@ -192,16 +193,14 @@ class MaltRenderEngine(bpy.types.RenderEngine):
 
         for obj in depsgraph.objects:
             if is_f12 or obj.visible_in_viewport_get(context.space_data):
-                add_object(obj, obj.matrix_world)
+                id = abs(hash(obj.name_full)) % (2**16)
+                add_object(obj, obj.matrix_world, id)
 
         for instance in depsgraph.object_instances:
             if instance.instance_object:
                 if is_f12 or instance.parent.visible_in_viewport_get(context.space_data):
-                    add_object(instance.instance_object, instance.matrix_world)
-        
-        #TODO: 
-        for i, obj in enumerate(scene.objects):
-            obj.parameters['ID'] = i+1
+                    id = abs(instance.random_id) % (2**16)
+                    add_object(instance.instance_object, instance.matrix_world, id)
         
         scene.meshes = list(meshes.values())
         scene.materials = list(materials.values())

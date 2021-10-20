@@ -9,7 +9,7 @@
 vec3 bevel_ex
 (
     sampler2D normal_texture, sampler2D depth_texture, int depth_channel,
-    int id, bool filter_by_id, sampler2D id_texture, int id_channel,
+    uint id, bool filter_by_id, usampler2D id_texture, int id_channel,
     int samples, float radius, float distribution_pow,
     bool hard_bevel, float hard_bevel_max_dot
 )
@@ -45,7 +45,7 @@ vec3 bevel_ex
 
         if(filter_by_id)
         {
-            int offset_id = int(round(texelFetch(id_texture, offset_texel, 0)[id_channel]));
+            uint offset_id = texelFetch(id_texture, offset_texel, 0)[id_channel];
             if (offset_id != id)
             {
                 continue;

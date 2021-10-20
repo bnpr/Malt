@@ -9,17 +9,17 @@
 // Combine opaque and transparent ids in the same sampler 
 // and use a single rgba texture for color + depth.
 
-uniform sampler2DArray SHADOWMAPS_ID_SPOT;
-uniform sampler2DArray SHADOWMAPS_ID_SUN;
-uniform samplerCubeArray SHADOWMAPS_ID_POINT;
+uniform usampler2DArray SHADOWMAPS_ID_SPOT;
+uniform usampler2DArray SHADOWMAPS_ID_SUN;
+uniform usamplerCubeArray SHADOWMAPS_ID_POINT;
 
 uniform sampler2DArray TRANSPARENT_SHADOWMAPS_DEPTH_SPOT;
 uniform sampler2DArray TRANSPARENT_SHADOWMAPS_DEPTH_SUN;
 uniform samplerCubeArray TRANSPARENT_SHADOWMAPS_DEPTH_POINT;
 
-uniform sampler2DArray TRANSPARENT_SHADOWMAPS_ID_SPOT;
-uniform sampler2DArray TRANSPARENT_SHADOWMAPS_ID_SUN;
-uniform samplerCubeArray TRANSPARENT_SHADOWMAPS_ID_POINT;
+uniform usampler2DArray TRANSPARENT_SHADOWMAPS_ID_SPOT;
+uniform usampler2DArray TRANSPARENT_SHADOWMAPS_ID_SUN;
+uniform usamplerCubeArray TRANSPARENT_SHADOWMAPS_ID_POINT;
 
 uniform sampler2DArray TRANSPARENT_SHADOWMAPS_COLOR_SPOT;
 uniform sampler2DArray TRANSPARENT_SHADOWMAPS_COLOR_SUN;
@@ -37,7 +37,7 @@ uniform LIGHTS_CUSTOM_SHADING
 
 uniform sampler2DArray IN_LIGHT_CUSTOM_SHADING;
 
-LitSurface NPR_lit_surface(vec3 position, vec3 normal, float id, Light light, int light_index, bool shadows, bool self_shadows)
+LitSurface NPR_lit_surface(vec3 position, vec3 normal, uint id, Light light, int light_index, bool shadows, bool self_shadows)
 {
     LitSurface S = lit_surface(position, normal, light, false);
 
@@ -60,11 +60,11 @@ LitSurface NPR_lit_surface(vec3 position, vec3 normal, float id, Light light, in
 
         //Opaque shadow
         ShadowData shadow;
-        float shadow_id;
+        uint shadow_id;
         //Transparent shadow
         ShadowData t_shadow;
         vec3 t_shadow_multiply;
-        float t_shadow_id;
+        uint t_shadow_id;
         
         if(light.type == LIGHT_SPOT)
         {
@@ -110,7 +110,7 @@ LitSurface NPR_lit_surface(vec3 position, vec3 normal, float id, Light light, in
 
         S.shadow = shadow.shadow;
 
-        if(self_shadows == false && round(id) == round(shadow_id))
+        if(self_shadows == false && id == shadow_id)
         {
             S.shadow = false;
         }
@@ -119,7 +119,7 @@ LitSurface NPR_lit_surface(vec3 position, vec3 normal, float id, Light light, in
 
         if(!S.shadow && t_shadow.shadow)
         {
-            if(self_shadows == false && round(id) == round(t_shadow_id))
+            if(self_shadows == false && id == t_shadow_id)
             {
                 t_shadow.shadow = false;
             }

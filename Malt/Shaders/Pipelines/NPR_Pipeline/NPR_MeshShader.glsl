@@ -14,7 +14,7 @@ struct Surface
     vec3 bitangent[4];
     vec2 uv[4];
     vec4 color[4]; // Vertex colors. Black if unused.
-    float id;
+    uvec4 id;
 };
 
 // The result of the pixel shader.
@@ -22,7 +22,7 @@ struct PixelOutput
 {
     vec4 color;
     vec3 normal;
-    float id;
+    uvec4 id;
     vec4 line_color;
     float line_width;
     vec4 transparency_shadow_color;
@@ -72,7 +72,7 @@ void main()
     S.bitangent = BITANGENT;
     S.uv = UV;
     S.color = COLOR;
-    S.id = ID;
+    S.id.r = ID;
     
     COMMON_VERTEX_SHADER(S);
 
@@ -132,21 +132,21 @@ void main()
 
 uniform sampler2D IN_OPAQUE_DEPTH;
 uniform sampler2D IN_TRANSPARENT_DEPTH;
-uniform sampler2D IN_LAST_ID;
+uniform usampler2D IN_LAST_ID;
 
 #ifdef SHADOW_PASS
-layout (location = 0) out float OUT_ID;
+layout (location = 0) out uint OUT_ID;
 layout (location = 1) out vec3 OUT_SHADOW_COLOR;
 #endif //PRE_PASS
 
 #ifdef PRE_PASS
 layout (location = 0) out vec4 OUT_NORMAL_DEPTH;
-layout (location = 1) out float OUT_ID;
+layout (location = 1) out uvec4 OUT_ID;
 #endif //PRE_PASS
 
 #ifdef MAIN_PASS
 uniform sampler2D IN_NORMAL_DEPTH;
-uniform sampler2D IN_ID;
+uniform usampler2D IN_ID;
 
 layout (location = 0) out vec4 OUT_COLOR;
 layout (location = 1) out vec4 OUT_LINE_COLOR;
@@ -166,12 +166,12 @@ void main()
     S.bitangent = BITANGENT;
     S.uv = UV;
     S.color = COLOR;
-    S.id = ID;
+    S.id.r = ID;
 
     PixelOutput PO;
     PO.color = vec4(0,0,0,1);
     PO.normal = S.normal;
-    PO.id = ID;
+    PO.id.r = ID;
     PO.line_color = vec4(0,0,0,1);
     PO.line_width = 0;
 
@@ -205,7 +205,7 @@ void main()
 
     {
     if(Settings.Transparency && Settings.Transparency_Single_Layer)
-        if(round(PO.id) == round(texelFetch(IN_LAST_ID, ivec2(gl_FragCoord.xy), 0).x))
+        if(PO.id.r == texelFetch(IN_LAST_ID, ivec2(gl_FragCoord.xy), 0).x)
         {
             discard;
         }
@@ -213,14 +213,14 @@ void main()
 
     #ifdef SHADOW_PASS
     {
-        OUT_ID = PO.id;
+        OUT_ID = PO.id.r;
 
         if(Settings.Transparency)
         {
             OUT_SHADOW_COLOR = PO.transparency_shadow_color.rgb;
 
             float a = random_per_pixel(transform_point(CAMERA, POSITION).z);
-            float b = random_per_sample(PO.id);
+            float b = random_per_sample(PO.id.r);
             float c = random_per_sample(transform_point(CAMERA, POSITION).z);
             float pass_through = c;
             if(pass_through > PO.transparency_shadow_color.a)
@@ -235,7 +235,7 @@ void main()
     {
         OUT_NORMAL_DEPTH.xyz = PO.normal;
         OUT_NORMAL_DEPTH.w = gl_FragCoord.z;
-        OUT_ID = PO.id;
+        OUT_ID.x = PO.id.r;
     }
     #endif
 
@@ -408,7 +408,7 @@ vec3 get_soft_bevel(int samples, float radius, float distribution_pow, bool only
 {
     #if defined(PIXEL_SHADER) && defined(MAIN_PASS)
     {
-        int id = int(round(texture(IN_ID, screen_uv())[0]));
+        uint id = texture(IN_ID, screen_uv())[0];
         return bevel_ex(
             IN_NORMAL_DEPTH, IN_NORMAL_DEPTH, 3,
             id, only_self, IN_ID, 0,
@@ -423,7 +423,7 @@ vec3 get_hard_bevel(int samples, float radius, float distribution_pow, bool only
 {
     #if defined(PIXEL_SHADER) && defined(MAIN_PASS)
     {
-        int id = int(round(texture(IN_ID, screen_uv())[0]));
+        uint id = texture(IN_ID, screen_uv())[0];
         return bevel_ex(
             IN_NORMAL_DEPTH, IN_NORMAL_DEPTH, 3,
             id, only_self, IN_ID, 0,

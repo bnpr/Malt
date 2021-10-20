@@ -30,7 +30,7 @@ out vec2 UV[4];
 out vec4 COLOR[4];
 
 out mat4 MODEL;
-out float ID;
+flat out uint ID;
 
 #endif //VERTEX_SHADER
 
@@ -44,7 +44,7 @@ in vec2 UV[4];
 in vec4 COLOR[4];
 
 in mat4 MODEL;
-in float ID;
+flat in uint ID;
 
 #endif //PIXEL_SHADER
 
@@ -59,7 +59,7 @@ layout(std140) uniform BATCH_MODELS
 };
 uniform BATCH_IDS
 {
-    uniform float BATCH_ID[MAX_BATCH_SIZE];
+    uniform uint BATCH_ID[MAX_BATCH_SIZE];
 };
 
 uniform bool MIRROR_SCALE = false;

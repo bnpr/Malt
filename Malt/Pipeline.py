@@ -195,7 +195,7 @@ class Pipeline(object):
         # Assume at least 64kb of UBO storage (d3d11 requirement) and max element size of mat4
         max_instances = 1000
         models = (max_instances * (ctypes.c_float * 16))()
-        ids = (max_instances * ctypes.c_float)()
+        ids = (max_instances * ctypes.c_uint)()
 
         for material, meshes in result.items():
             for mesh, scale_groups in meshes.items():
@@ -216,7 +216,7 @@ class Pipeline(object):
 
                         if i == batch_length or instances_count == max_instances:
                             local_models = ((ctypes.c_float * 16) * instances_count).from_address(ctypes.addressof(models))
-                            local_ids = (ctypes.c_float * instances_count).from_address(ctypes.addressof(ids))
+                            local_ids = (ctypes.c_uint * instances_count).from_address(ctypes.addressof(ids))
 
                             models_UBO = UBO()
                             ids_UBO = UBO()

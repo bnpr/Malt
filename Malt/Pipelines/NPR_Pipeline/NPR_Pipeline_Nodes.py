@@ -26,7 +26,7 @@ _MESH_SHADER_HEADER = _COMMON_HEADER + '''
 void NODES_COMMON_PIXEL_SHADER(Surface S, 
     inout vec4 color,
     inout vec3 normal,
-    inout float id,
+    inout uvec4 id,
     inout vec4 line_color,
     inout float line_width,
     inout vec4 transparency_shadow_color
@@ -147,7 +147,7 @@ class NPR_Pipeline_Nodes(NPR_Pipeline):
         common_pixel_signature = f"""void NODES_COMMON_PIXEL_SHADER(Surface S,
         inout vec4 color,
         inout vec3 normal,
-        inout float id,
+        inout uvec4 id,
         inout vec4 line_color,
         inout float line_width,
         inout vec4 transparency_shadow_color
