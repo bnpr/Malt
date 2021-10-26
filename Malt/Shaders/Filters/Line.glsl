@@ -27,7 +27,7 @@ void _sampling_pattern(out vec2 samples[4])
     );
 }
 
-bool line_id_ex(sampler2D depth_texture, int depth_channel, usampler2D id_texture, int id_channel, vec2 uv, float pixel_width, int LINE_DEPTH_MODE)
+bool line_detection_id(sampler2D depth_texture, int depth_channel, usampler2D id_texture, int id_channel, vec2 uv, float pixel_width, int LINE_DEPTH_MODE)
 {
     vec2 offsets[4];
     _sampling_pattern(offsets);
@@ -59,7 +59,7 @@ bool line_id_ex(sampler2D depth_texture, int depth_channel, usampler2D id_textur
     return line;
 }
 
-float line_normal_ex(sampler2D depth_texture, int depth_channel, sampler2D normal_texture, vec2 uv, float pixel_width, int LINE_DEPTH_MODE)
+float line_detection_normal(sampler2D depth_texture, int depth_channel, sampler2D normal_texture, vec2 uv, float pixel_width, int LINE_DEPTH_MODE)
 {
     vec2 offsets[4];
     _sampling_pattern(offsets);
@@ -88,7 +88,7 @@ float line_normal_ex(sampler2D depth_texture, int depth_channel, sampler2D norma
     return _dot;
 }
 
-float line_depth_ex(sampler2D depth_texture, int channel, vec2 uv, float pixel_width, int LINE_DEPTH_MODE)
+float line_detection_depth(sampler2D depth_texture, int channel, vec2 uv, float pixel_width, int LINE_DEPTH_MODE)
 {
     vec2 offsets[4];
     _sampling_pattern(offsets);
@@ -117,14 +117,14 @@ float line_depth_ex(sampler2D depth_texture, int channel, vec2 uv, float pixel_w
     return delta;
 }
 
-struct LineOutput
+struct LineDetectionOutput
 {
     float delta_distance;
     float delta_angle;
     bvec4 id_boundary;
 };
 
-LineOutput line_ex(
+LineDetectionOutput line_detection(
     vec3 position,
     vec3 normal,
     vec3 true_normal,
@@ -138,7 +138,7 @@ LineOutput line_ex(
     usampler2D id_texture
 )
 {
-    LineOutput result;
+    LineDetectionOutput result;
     result.delta_distance = 0.0;
     result.delta_angle = 1.0;
     result.id_boundary = bvec4(false);
@@ -176,8 +176,6 @@ LineOutput line_ex(
                 vec3 ray_origin = vec3(0);
                 vec3 ray_direction = normalize(sampled_position);
 
-                //TODO: Improve numerical stability
-                //Sometimes the normal is almost perpendicular to the camera so expected distance is very high
                 float expected_distance = ray_plane_intersection
                 (
                     ray_origin, ray_direction,

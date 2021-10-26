@@ -468,13 +468,13 @@ float get_rim_light(float angle, float rim_length, float thickness, float thickn
 
 //TODO: World Space width for curvature
 
-LineOutput get_line_detection()
+LineDetectionOutput get_line_detection()
 {
-    LineOutput result;
+    LineDetectionOutput result;
 
     #if defined(PIXEL_SHADER) && defined(MAIN_PASS)
     {
-        result = line_ex(
+        result = line_detection(
             POSITION,
             get_normal(), true_normal(),
             1,
@@ -496,7 +496,7 @@ float get_line_simple(float width, float depth_threshold, float normal_threshold
 {
     #if defined(PIXEL_SHADER) && defined(MAIN_PASS)
     {
-        LineOutput lo = get_line_detection();
+        LineDetectionOutput lo = get_line_detection();
 
         bool line = any(lo.id_boundary) || 
                     lo.delta_distance > depth_threshold ||
@@ -519,7 +519,7 @@ float get_line_advanced(
 {
     #if defined(PIXEL_SHADER) && defined(MAIN_PASS)
     {
-        LineOutput lo = get_line_detection();
+        LineDetectionOutput lo = get_line_detection();
 
         float line = any(lo.id_boundary) ? id_boundary_width : 0.0;
         

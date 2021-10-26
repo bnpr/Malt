@@ -36,7 +36,7 @@ float surface_curvature(sampler2D normal_texture, sampler2D depth_texture, int d
 {
     float curvature = curvature(normal_texture, uv, width, x, y);
 
-    float delta_depth = line_depth_ex( depth_texture, depth_channel, uv, width, LINE_DEPTH_MODE_ANY);
+    float delta_depth = line_detection_depth(depth_texture, depth_channel, uv, width, LINE_DEPTH_MODE_ANY);
 
     delta_depth /= depth_range;
     delta_depth = clamp(delta_depth, 0, 1);
