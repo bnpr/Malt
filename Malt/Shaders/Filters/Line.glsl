@@ -121,7 +121,7 @@ struct LineOutput
 {
     float delta_distance;
     float delta_angle;
-    bool id_boundary;
+    bvec4 id_boundary;
 };
 
 LineOutput line_ex(
@@ -135,14 +135,13 @@ LineOutput line_ex(
     sampler2D depth_texture,
     int depth_channel,
     sampler2D normal_texture,
-    usampler2D id_texture,
-    int id_channel
+    usampler2D id_texture
 )
 {
     LineOutput result;
     result.delta_distance = 0.0;
     result.delta_angle = 1.0;
-    result.id_boundary = false;
+    result.id_boundary = bvec4(false);
 
     vec2 offsets[4];
     _sampling_pattern(offsets);
@@ -151,7 +150,7 @@ LineOutput line_ex(
     vec3 true_normal_camera = transform_normal(CAMERA, true_normal);
     float depth = texture(depth_texture, uv)[depth_channel];
     position = transform_point(CAMERA, position);
-    uint id = texture(id_texture, uv)[id_channel];
+    uvec4 id = texture(id_texture, uv);
 
     for(int i = 0; i < offsets.length(); i++)
     {   
@@ -162,7 +161,7 @@ LineOutput line_ex(
             vec3 sampled_normal = texture(normal_texture, sample_uv).xyz;
             float sampled_depth = texture(depth_texture, sample_uv)[depth_channel];
             vec3 sampled_position = screen_to_camera(sample_uv, sampled_depth);
-            uint sampled_id = texture(id_texture, sample_uv)[id_channel];
+            uvec4 sampled_id = texture(id_texture, sample_uv);
 
             float delta_distance = 0;
 
@@ -197,7 +196,10 @@ LineOutput line_ex(
             {
                 result.delta_distance = max(result.delta_distance, delta_distance);
                 result.delta_angle = min(result.delta_angle, dot(normal, sampled_normal));
-                result.id_boundary = result.id_boundary || sampled_id != id;
+                for(int i = 0; i < 4; i++)
+                {
+                    result.id_boundary[i] = result.id_boundary[i] || sampled_id[i] != id[i];
+                }
             }
         }
     }
