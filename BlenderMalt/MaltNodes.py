@@ -451,6 +451,8 @@ class MaltSocket(bpy.types.NodeSocket):
     array_size: bpy.props.IntProperty(default=0, update=on_type_update)
     
     default_initialization: bpy.props.StringProperty(default='')
+    
+    show_in_material_panel: bpy.props.BoolProperty(default=True)
 
     def is_instantiable_type(self):
         return self.data_type.startswith('sampler') == False
@@ -516,8 +518,12 @@ class MaltSocket(bpy.types.NodeSocket):
             return f'{self.name} : ({type})'
     
     def draw(self, context, layout, node, text):
-        text = self.get_ui_label()
-        node.draw_socket(context, layout, self, text)
+        if context.region.type != 'UI' or self.get_source_global_reference() == self.get_source_initialization():
+            text = self.get_ui_label()
+            node.draw_socket(context, layout, self, text)
+            if context.region.type == 'UI':
+                icon = 'HIDE_OFF' if self.show_in_material_panel else 'HIDE_ON'
+                layout.prop(self, 'show_in_material_panel', text='', icon=icon)
     
     def setup_shape(self):
         from Malt.Parameter import Parameter

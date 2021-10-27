@@ -328,31 +328,36 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
 
             names = key.replace('_0_','.').replace('_',' ').split('.')
             names = [name for name in names if name.isupper() == False]
-            if len(names) == 1:
-                namespace_stack = namespace_stack[:1]
-                layout = namespace_stack[0][1]
-            else:
-                for i in range(0, len(names) - 1):
-                    name = names[i]
-                    stack_i = i+1
-                    if len(namespace_stack) > stack_i and namespace_stack[stack_i][0] != name:
-                        namespace_stack = namespace_stack[:stack_i]
-                    if len(namespace_stack) < stack_i+1:
-                        box = namespace_stack[stack_i - 1][1].box()
-                        box.label(text=name + " :")
-                        namespace_stack.append((name, box))
-                    layout = namespace_stack[stack_i][1]
             name = names[-1]
 
-            column = layout.column()
+            #defer layout (box) creation until a property is actually drawn
+            def get_layout():
+                nonlocal namespace_stack
+                layout = None
+                if len(names) == 1:
+                    namespace_stack = namespace_stack[:1]
+                    layout = namespace_stack[0][1]
+                else:
+                    for i in range(0, len(names) - 1):
+                        name = names[i]
+                        stack_i = i+1
+                        if len(namespace_stack) > stack_i and namespace_stack[stack_i][0] != name:
+                            namespace_stack = namespace_stack[:stack_i]
+                        if len(namespace_stack) < stack_i+1:
+                            box = namespace_stack[stack_i - 1][1].box()
+                            box.label(text=name + " :")
+                            namespace_stack.append((name, box))
+                        layout = namespace_stack[stack_i][1]
+                return layout.column()
+
             def draw_callback(layout, property_group):
                 is_self = self.as_pointer() == property_group.as_pointer()
                 if self.parent and (is_self == False or self.override_from_parents[key].boolean == True):
                     layout.prop(self.override_from_parents[key], 'boolean', text='')
                 if is_self == False:
-                    column.active = False
+                    layout.active = False
             
-            self.draw_parameter(column, key, name, draw_callback=draw_callback)
+            self.draw_parameter(get_layout, key, name, draw_callback=draw_callback)
 
 
     def draw_parameter(self, layout, key, label, draw_callback=None, is_node_socket=False):
@@ -366,11 +371,18 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                     if isinstance(node, MaltNode):
                         for input in node.inputs:
                             if key == input.get_source_global_reference():
-                                node.malt_parameters.draw_parameter(layout, input.name, label, draw_callback, is_node_socket=True)
+                                if input.show_in_material_panel:
+                                    node.malt_parameters.draw_parameter(layout, input.name, label, draw_callback, is_node_socket=True)
                                 return True
             return False
         if self.get_rna()[key]['active'] == False:
             return False
+        
+        try:
+            layout = layout()
+        except:
+            #not a callback
+            pass
 
         def make_row(label_only = False):
             nonlocal label
