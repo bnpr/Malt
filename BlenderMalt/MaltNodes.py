@@ -61,6 +61,13 @@ class MaltTree(bpy.types.NodeTree):
             return bridge.graphs[self.graph_type]
         return None
     
+    def get_struct_type(self, struct_type):
+        if struct_type in self.get_pipeline_graph().structs:
+            return self.get_pipeline_graph().structs[struct_type]
+        if struct_type in self.get_library()['structs']:
+            return self.get_library()['structs'][struct_type]
+        return None
+    
     def get_generated_source_dir(self):
         import os, tempfile
         base_path = tempfile.gettempdir()
@@ -329,7 +336,7 @@ class GLSLTranspiler(SourceTranspiler):
         return type.startswith('sampler') == False
 
     @classmethod
-    def call(self, function, name, parameters=[]):
+    def call(self, function, name, parameters=[], post_parameter_initialization = ''):
         src = ''
         for i, parameter in enumerate(function['parameters']):
             if parameter['io'] in ['out','inout']:
@@ -337,7 +344,8 @@ class GLSLTranspiler(SourceTranspiler):
                 src_reference = self.parameter_reference(name, parameter['name'])
                 src += self.declaration(parameter['type'], parameter['size'], src_reference, initialization)
                 parameters[i] = src_reference
-        
+        src += post_parameter_initialization
+
         initialization = f'{function["name"]}({",".join(parameters)})'
         
         if function['type'] != 'void' and self.is_instantiable_type(function['type']):
@@ -389,7 +397,7 @@ class PythonTranspiler(SourceTranspiler):
             return f'IN["{parameter_name}"]'
 
     @classmethod
-    def call(self, function, name, parameters=[]):
+    def call(self, function, name, parameters=[], post_parameter_initialization = ''):
         src = ''
         src += f'{name}_parameters = {{}}\n'
         for i, parameter in enumerate(function['parameters']):
@@ -398,6 +406,7 @@ class PythonTranspiler(SourceTranspiler):
                 initialization = 'None'
             parameter_reference = self.parameter_reference(name, parameter['name'])
             src += f'{parameter_reference} = {initialization}\n'
+        src += post_parameter_initialization
         src += f'run_node("{name}", "{function["name"]}", {name}_parameters)\n'
         return src
 
@@ -437,9 +446,25 @@ class MaltSocket(bpy.types.NodeSocket):
     def get_source_global_reference(self):
         return self.id_data.get_transpiler().global_reference(self.node.get_source_name(), self.name)
     
-    def get_source_default_initialization(self):
-        if self.default_initialization != '':
+    def is_struct_member(self):
+        return '.' in self.name
+    
+    def get_struct_socket(self):
+        if self.is_struct_member():
+            struct_socket_name = self.name.split('.')[0]
+            if self.is_output:
+                return self.node.outputs[struct_socket_name]
+            else:
+                return self.node.inputs[struct_socket_name]
+        return None
+    
+    def get_source_initialization(self):
+        if self.is_linked:
+            return self.get_linked().get_source_reference()
+        elif self.default_initialization != '':
             return self.default_initialization
+        elif self.is_struct_member() and self.get_struct_socket().is_linked:
+            return None
         else:
             return self.get_source_global_reference()
 
@@ -462,8 +487,11 @@ class MaltSocket(bpy.types.NodeSocket):
     def get_ui_label(self):
         type = self.data_type
         if self.array_size > 0:
-            type += '[{}]'.format(self.array_size)
-        return '{}   ( {} )'.format(self.name, type)
+            type += f'[{self.array_size}]'
+        if self.is_output:
+            return f'({type}) : {self.name}'
+        else:
+            return f'{self.name} : ({type})'
     
     def draw(self, context, layout, node, text):
         text = self.get_ui_label()
@@ -539,8 +567,20 @@ class MaltNode():
     def on_socket_update(self, socket):
         pass
 
-    def setup_sockets(self, inputs, outputs):
+    def setup_sockets(self, inputs, outputs, expand_structs=True):
         from Malt.Parameter import Parameter, Type
+        def _expand_structs(sockets):
+            result = {}
+            for name, dic in sockets.items():
+                result[name] = dic
+                struct_type = self.id_data.get_struct_type(dic['type'])
+                if struct_type:
+                    for member in struct_type['members']:
+                        result[f"{name}.{member['name']}"] = member
+            return result
+        if expand_structs:
+            inputs = _expand_structs(inputs)
+            outputs = _expand_structs(outputs)
         def setup(current, new):
             remove = []
             for e in current.keys():
@@ -613,12 +653,12 @@ class MaltNode():
     def sockets_to_global_parameters(self, sockets, transpiler):
         code = ''
         for socket in sockets:
-            if socket.data_type != '' and socket.get_linked() is None:
+            if socket.data_type != '' and socket.get_linked() is None and socket.is_struct_member() == False:
                 code += transpiler.global_declaration(socket.data_type, socket.array_size, socket.get_source_global_reference())
         return code
     
     def get_source_global_parameters(self, transpiler):
-        return ''
+        return self.sockets_to_global_parameters(self.inputs, transpiler)
     
     def setup_socket_shapes(self):
         for socket in chain(self.inputs.values(), self.outputs.values()):
@@ -627,6 +667,8 @@ class MaltNode():
     def draw_socket(self, context, layout, socket, text):
         layout.label(text=text)
         if socket.is_output == False and socket.is_linked == False and socket.default_initialization == '':
+            if socket.is_struct_member() and socket.get_struct_socket().is_linked:
+                return
             self.malt_parameters.draw_parameter(layout, socket.name, None, is_node_socket=True)
 
     @classmethod
@@ -642,20 +684,14 @@ class MaltStructNode(bpy.types.Node, MaltNode):
     bl_label = "Struct Node"
 
     def malt_setup(self, context=None):
-        struct = self.get_struct()
         if self.first_setup:
             self.name = self.struct_type
 
         inputs = {}
-        outputs = {}
-
         inputs[self.struct_type] = {'type' : self.struct_type}
+        outputs = {}
         outputs[self.struct_type] = {'type' : self.struct_type}
 
-        for member in struct['members']:
-            inputs[member['name']] = member
-            outputs[member['name']] = member
-        
         self.setup_sockets(inputs, outputs)
 
     struct_type : bpy.props.StringProperty(update=MaltNode.setup)
@@ -671,45 +707,24 @@ class MaltStructNode(bpy.types.Node, MaltNode):
         if socket.name == self.struct_type:
             return self.get_source_name()
         else:
-            return '{}.{}'.format(self.get_source_name(), socket.name)
+            return socket.name.replace(self.struct_type, self.get_source_name())
     
     def struct_input_is_linked(self):
         return self.inputs[self.struct_type].get_linked() is not None
 
     def get_source_code(self, transpiler):
         code = ''
-        node_name = self.get_source_name()
-        struct_linked = self.struct_input_is_linked()
-        
-        initialization = None
-        if struct_linked:
-            linked = self.inputs[self.struct_type].get_linked()
-            initialization = linked.get_source_reference()
-        code += transpiler.declaration(self.struct_type, 0, node_name, initialization)
         
         for input in self.inputs:
-            if input.data_type != self.struct_type:
-                linked = input.get_linked()
-                if linked or struct_linked == False:
-                    initialization = input.get_source_default_initialization()
-                    if linked:
-                        initialization = linked.get_source_reference()
+            initialization = input.get_source_initialization()
+            if input.is_struct_member():
+                if initialization:
                     code += transpiler.asignment(input.get_source_reference(), initialization)
+            else:
+                code += transpiler.declaration(input.data_type, 0, self.get_source_name(), initialization)
         
         return code
     
-    def get_source_global_parameters(self, transpiler):
-        if self.struct_input_is_linked() == False:
-            return self.sockets_to_global_parameters([s for s in self.inputs if s.data_type != self.struct_type], transpiler)
-        return ''
-    
-    def draw_socket(self, context, layout, socket, text):
-        if socket.is_output or self.struct_input_is_linked():
-            layout.label(text=text)
-        else:
-            #super() does not work
-            MaltNode.draw_socket(self, context, layout, socket, text)
-        
 
 class MaltFunctionNode(bpy.types.Node, MaltNode):
     
@@ -753,22 +768,23 @@ class MaltFunctionNode(bpy.types.Node, MaltNode):
     def get_source_code(self, transpiler):
         function = self.get_function()
         source_name = self.get_source_name()
+
+        post_parameter_initialization = ''
+        for input in self.inputs:
+            if input.is_struct_member():
+                initialization = input.get_source_initialization()
+                if initialization:
+                    post_parameter_initialization += transpiler.asignment(input.get_source_reference(), initialization)
+
         parameters = []
         for parameter in function['parameters']:
             initialization = None
             if parameter['io'] in ['','in','inout']:
                 socket = self.inputs[parameter['name']]
-                linked = socket.get_linked()
-                if linked:
-                    initialization = linked.get_source_reference()
-                else:
-                    initialization = socket.get_source_default_initialization()
+                initialization = socket.get_source_initialization()
             parameters.append(initialization)
 
-        return transpiler.call(function, source_name, parameters)
-    
-    def get_source_global_parameters(self, transpiler):
-        return self.sockets_to_global_parameters(self.inputs, transpiler)
+        return transpiler.call(function, source_name, parameters, post_parameter_initialization)
 
 
 class MaltIONode(bpy.types.Node, MaltNode):
@@ -815,23 +831,16 @@ class MaltIONode(bpy.types.Node, MaltNode):
             function = self.get_function()
             for socket in self.inputs:
                 if socket.name == 'result':
-                    continue
-                initialization = socket.get_source_default_initialization()
-                if socket.get_linked():
-                    initialization = socket.get_linked().get_source_reference()
-                code += transpiler.asignment(socket.get_source_reference(), initialization)
+                    code += transpiler.declaration(socket.data_type, socket.array_size, None)
+                initialization = socket.get_source_initialization()
+                if initialization:
+                    code += transpiler.asignment(socket.get_source_reference(), initialization)
 
             if function['type'] != 'void':
-                result = self.inputs['result'].get_source_global_reference()
-                linked = self.inputs['result'].get_linked()
-                if linked:
-                    result = linked.get_source_reference()
-                code += transpiler.result(result)
+                code += transpiler.result(self.inputs['result'].get_source_reference())
 
         return code
-    
-    def get_source_global_parameters(self, transpiler):
-        return self.sockets_to_global_parameters(self.inputs, transpiler)
+
 
 class MaltInlineNode(bpy.types.Node, MaltNode):
     
@@ -905,17 +914,13 @@ class MaltInlineNode(bpy.types.Node, MaltNode):
         scoped_code = ''
         for input in self.inputs:
             if input.data_type != '':
-                initialization = input.get_source_global_reference()
-                if input.get_linked():
-                    initialization = input.get_linked().get_source_reference()
+                initialization = input.get_source_initialization()
                 scoped_code += transpiler.declaration(input.data_type, input.array_size, input.name, initialization)
         if self.code != '':
             scoped_code += transpiler.asignment(self.outputs['result'].get_source_reference(), self.code)
 
         return code + transpiler.scoped(scoped_code)
-    
-    def get_source_global_parameters(self, transpiler):
-        return self.sockets_to_global_parameters(self.inputs, transpiler)
+
 
 class MaltArrayIndexNode(bpy.types.Node, MaltNode):
     
@@ -957,9 +962,7 @@ class MaltArrayIndexNode(bpy.types.Node, MaltNode):
             element_reference = index.get_linked().get_source_reference()
         initialization = '{}[{}]'.format(array.get_linked().get_source_reference(), element_reference)
         return transpiler.declaration(element.data_type, element.array_size, element.get_source_reference(), initialization)
-    
-    def get_source_global_parameters(self, transpiler):
-        return self.sockets_to_global_parameters(self.inputs, transpiler)
+
 
 
 class NODE_PT_MaltNodeTree(bpy.types.Panel):
