@@ -463,7 +463,7 @@ class MaltSocket(bpy.types.NodeSocket):
             return self.get_linked().get_source_reference()
         elif self.default_initialization != '':
             return self.default_initialization
-        elif self.is_struct_member() and self.get_struct_socket().is_linked:
+        elif self.is_struct_member() and (self.get_struct_socket().is_linked or self.get_struct_socket().default_initialization != ''):
             return None
         else:
             return self.get_source_global_reference()
@@ -667,7 +667,7 @@ class MaltNode():
     def draw_socket(self, context, layout, socket, text):
         layout.label(text=text)
         if socket.is_output == False and socket.is_linked == False and socket.default_initialization == '':
-            if socket.is_struct_member() and socket.get_struct_socket().is_linked:
+            if socket.is_struct_member() and (socket.get_struct_socket().is_linked or socket.get_struct_socket().default_initialization != ''):
                 return
             self.malt_parameters.draw_parameter(layout, socket.name, None, is_node_socket=True)
 
