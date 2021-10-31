@@ -118,6 +118,7 @@ _VS_CODE_SETTINGS = '''
     "C_Cpp.default.compilerPath": "",
     "C_Cpp.default.browse.limitSymbolsToIncludedHeaders": true,
     "C_Cpp.errorSquiggles": "Disabled",
+    "python.analysis.extraPaths": ["{}","{}"],
 }}
 '''
 
@@ -130,7 +131,7 @@ def setup_vs_code(dummy):
             intellisense_path = path.join(shaders_path, 'Intellisense', 'intellisense.glsl')
             library_path = bpy.context.preferences.addons['BlenderMalt'].preferences.malt_library_path
 
-            vscode_settings = _VS_CODE_SETTINGS.format(shaders_path, library_path, intellisense_path)
+            vscode_settings = _VS_CODE_SETTINGS.format(shaders_path, library_path, intellisense_path, __MALT_PATH, __MALT_DEPENDENCIES_PATH)
             vscode_settings = vscode_settings.replace('\\','\\\\')
 
             settings_dir = bpy.path.abspath('//.vscode')
