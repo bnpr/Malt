@@ -3,8 +3,8 @@
 
 vec3 surface_position() { return POSITION; }
 vec3 surface_normal() { return NORMAL; }
-vec3 surface_tangent(int index) { return TANGENT[index]; }
-vec3 surface_bitangent(int index) { return BITANGENT[index]; }
+vec3 surface_tangent(int index) { return get_tangent(index); }
+vec3 surface_bitangent(int index) { return get_bitangent(index); }
 vec2 surface_uv(int index) { return UV[index]; }
 vec4 surface_vertex_color(int index) { return COLOR[index]; }
 

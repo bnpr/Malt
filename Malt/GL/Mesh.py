@@ -6,10 +6,10 @@ from Malt.GL.GL import *
 
 class Mesh(object):
 
-    def __init__(self, position, index, normal=None, tangents=[], uvs=[], colors=[]):
+    def __init__(self, position, index, normal=None, tangent=None, uvs=[], colors=[]):
         self.position = None
         self.normal = None
-        self.tangents = []
+        self.tangent = None
         self.uvs = []
         self.colors = []
 
@@ -40,8 +40,8 @@ class Mesh(object):
         self.position = load_VBO(position)
         if normal:
             self.normal = load_VBO(normal)
-        for tangent in tangents:
-            self.tangents.append(load_VBO(tangent))
+        if tangent:
+            self.tangent = load_VBO(tangent)
         for uv in uvs:
             self.uvs.append(load_VBO(uv))
         for color in colors:
@@ -64,14 +64,12 @@ class Mesh(object):
         bind_VBO(self.position, 0, 3)
         if(self.normal):
             bind_VBO(self.normal, 1, 3)
+        if(self.tangent):
+            bind_VBO(self.tangent, 2, 4)
         
         max_uv = 4
-        tangent0_index = 2
-        uv0_index = tangent0_index + max_uv
+        uv0_index = 3
         color0_index = uv0_index + max_uv
-        for i, tangent in enumerate(self.tangents):
-            assert(i < max_uv)
-            bind_VBO(tangent, tangent0_index + i, 4)
         for i, uv in enumerate(self.uvs):
             assert(i < max_uv)
             bind_VBO(uv, uv0_index + i, 2)
@@ -104,6 +102,7 @@ class Mesh(object):
             delete_buffer(self.EBO)
             delete_buffer(self.position)
             delete_buffer(self.normal)
+            delete_buffer(self.tangent)
             for uv in self.uvs:
                 delete_buffer(uv)
             for color in self.colors:

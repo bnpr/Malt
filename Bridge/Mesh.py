@@ -21,8 +21,8 @@ def load_mesh(msg):
 
     positions = load_VBO(data['positions'])
     normals = load_VBO(data['normals'])
+    tangents = load_VBO(data['tangents']) if data['tangents'] else None
     uvs = [load_VBO(e) for e in data['uvs']]
-    tangents = [load_VBO(e) for e in data['tangents']]
     colors = [load_VBO(e) for e in data['colors']]
 
     for i, indices in enumerate(data['indices']):
@@ -56,15 +56,13 @@ def load_mesh(msg):
         else:
             bind_VBO(result.normal, 1, 3, GL_SHORT, GL_TRUE)
         
+        if tangents:
+            bind_VBO(tangents, 2, 4)
+        
         max_uv = 4
         max_vertex_colors = 4
-        tangent0_index = 2
-        uv0_index = tangent0_index + max_uv
+        uv0_index = 3
         color0_index = uv0_index + max_uv
-        for i, tangent in enumerate(result.tangents):
-            if i >= max_uv:
-                break
-            bind_VBO(tangent, tangent0_index + i, 4)
         for i, uv in enumerate(result.uvs):
             if i >= max_uv:
                 log.warning('{} : UV count exceeds max supported UVs ({})'.format(name, max_uv))

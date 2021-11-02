@@ -66,13 +66,13 @@ def load_mesh(object, name):
         m.loops.foreach_get('normal', normals.as_np_array())
 
     uvs_list = []
-    tangents_list = []
+    tangents = None
     for i, uv_layer in enumerate(m.uv_layers):
         uv_ptr = ctypes.c_void_p(uv_layer.data[0].as_pointer())
         uv = get_load_buffer('uv'+str(i), ctypes.c_float, loop_count * 2)
         CBlenderMalt.retrieve_mesh_uv(uv_ptr, loop_count, uv.buffer())
         uvs_list.append(uv)
-        if(object.original.data.malt_parameters.bools['precomputed_tangents'].boolean):
+        if i == 0 and object.original.data.malt_parameters.bools['precomputed_tangents'].boolean:
             m.calc_tangents(uvmap=uv_layer.name)
             #TODO: Find a way to get a direct pointer
             tangents = get_load_buffer('tangents'+str(i), ctypes.c_float, (loop_count * 3))
@@ -81,7 +81,7 @@ def load_mesh(object, name):
             m.loops.foreach_get('bitangent_sign', bitangent_signs.as_np_array())
             packed_tangents = get_load_buffer('packed_tangents'+str(i), ctypes.c_float, (loop_count * 4))
             CBlenderMalt.pack_tangents(tangents.buffer(), bitangent_signs.buffer(), loop_count, packed_tangents.buffer())
-            tangents_list.append(packed_tangents)
+            tangents = packed_tangents
     
     colors_list = []
     for i, vertex_color in enumerate(m.vertex_colors):
@@ -97,7 +97,7 @@ def load_mesh(object, name):
         'indices_lengths': [l for l in indices_lengths],
         'normals': normals,
         'uvs': uvs_list,
-        'tangents': tangents_list,
+        'tangents': tangents,
         'colors': colors_list,
     }
 

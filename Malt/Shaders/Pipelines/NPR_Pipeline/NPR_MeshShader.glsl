@@ -10,8 +10,8 @@ struct Surface
 {
     vec3 position;// Surface position
     vec3 normal;// Surface normal
-    vec3 tangent[4];// Surface tangents, one for each UV. Only available if use_precomputed normals is enabled in the mesh settings panel.
-    vec3 bitangent[4];
+    vec3 tangent;// Surface tangent, one for each UV. Only available if use_precomputed normals is enabled in the mesh settings panel.
+    vec3 bitangent;
     vec2 uv[4];
     vec4 color[4]; // Vertex colors. Black if unused.
     uvec4 id;
@@ -93,31 +93,27 @@ void main()
             vec3 axis = vec3(0,0,1);
             axis = abs(dot(axis, NORMAL)) < 0.99 ? axis : vec3(1,0,0);
             vec3 tangent = normalize(cross(axis, NORMAL));
-            TANGENT[0] = tangent;
-            BITANGENT[0] = normalize(cross(NORMAL, tangent));
+            TANGENT = tangent;
+            BITANGENT = normalize(cross(NORMAL, tangent));
         }
         
-        for(int i = 0; i < TANGENT.length(); i++)
-        {
-            if(!PRECOMPUTED_TANGENTS && i != 0) break;
-            
-            Surface s = S;
+        Surface s = S;
 
-            s.position = POSITION + TANGENT[i] * Settings.Vertex_Displacement_Offset;
-            vec3 displaced_tangent = s.position + VERTEX_DISPLACEMENT_SHADER(s);
-            TANGENT[i] = normalize(displaced_tangent - displaced_position);
+        s.position = POSITION + TANGENT * Settings.Vertex_Displacement_Offset;
+        vec3 displaced_tangent = s.position + VERTEX_DISPLACEMENT_SHADER(s);
+        TANGENT = normalize(displaced_tangent - displaced_position);
 
-            s.position = POSITION + BITANGENT[i] * Settings.Vertex_Displacement_Offset;
-            vec3 displaced_bitangent = s.position + VERTEX_DISPLACEMENT_SHADER(s);
-            BITANGENT[i] = normalize(displaced_bitangent - displaced_position);
-        }
+        s.position = POSITION + BITANGENT * Settings.Vertex_Displacement_Offset;
+        vec3 displaced_bitangent = s.position + VERTEX_DISPLACEMENT_SHADER(s);
+        BITANGENT = normalize(displaced_bitangent - displaced_position);
+        
         POSITION = displaced_position;
-        NORMAL = normalize(cross(TANGENT[0], BITANGENT[0]));
+        NORMAL = normalize(cross(TANGENT, BITANGENT));
         
         if(!PRECOMPUTED_TANGENTS)
         {
-            TANGENT[0] = vec3(0);
-            BITANGENT[0] = vec3(0);
+            TANGENT = vec3(0);
+            BITANGENT = vec3(0);
         }
     }
     #endif

@@ -77,19 +77,22 @@ vec4 compute_tangent(vec2 uv)
     return vec4(0);
 }
 
-//TODO: pass TBN as parameter
-vec3 sample_normal_map_ex(sampler2D normal_texture, int uv_index, vec2 uv)
+vec3 get_tangent(int uv_index)
 {
-    mat3 TBN;
-    if(PRECOMPUTED_TANGENTS)
-    {
-        TBN = mat3(TANGENT[uv_index], BITANGENT[uv_index], NORMAL);
-    }
-    else
-    {
-        vec4 T = compute_tangent(uv);
-        TBN = mat3(T.xyz, normalize(cross(NORMAL, T.xyz) * T.w), NORMAL);
-    }
+    if(PRECOMPUTED_TANGENTS && uv_index == 0) return TANGENT;
+    return compute_tangent(UV[uv_index]).xyz;
+}
+
+vec3 get_bitangent(int uv_index)
+{
+    if(PRECOMPUTED_TANGENTS && uv_index == 0) return BITANGENT;
+    vec4 T = compute_tangent(UV[uv_index]);
+    return normalize(cross(NORMAL, T.xyz) * T.w);
+}
+
+mat3 get_TBN(int uv_index)
+{
+    mat3 TBN = mat3(get_tangent(uv_index), get_bitangent(uv_index), NORMAL);
     #ifdef PIXEL_SHADER
     {
         if(!gl_FrontFacing)
@@ -98,9 +101,15 @@ vec3 sample_normal_map_ex(sampler2D normal_texture, int uv_index, vec2 uv)
         }
     }
     #endif //PIXEL_SHADER
+    return TBN;
+}
+
+//TODO: pass TBN as parameter
+vec3 sample_normal_map_ex(sampler2D normal_texture, int uv_index, vec2 uv)
+{
     vec3 tangent = texture(normal_texture, uv).xyz;
     tangent = tangent * 2.0 - 1.0;
-    return normalize(TBN * tangent);
+    return normalize(get_TBN(uv_index) * tangent);
 }
 
 vec3 sample_normal_map(sampler2D normal_texture, int uv_index)

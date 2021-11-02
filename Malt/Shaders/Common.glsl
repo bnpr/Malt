@@ -9,23 +9,20 @@
 
 layout (location = 0) in vec3 in_position;
 layout (location = 1) in vec3 in_normal;
-layout (location = 2) in vec4 in_tangent0;
-layout (location = 3) in vec4 in_tangent1;
-layout (location = 4) in vec4 in_tangent2;
-layout (location = 5) in vec4 in_tangent3;
-layout (location = 6) in vec2 in_uv0;
-layout (location = 7) in vec2 in_uv1;
-layout (location = 8) in vec2 in_uv2;
-layout (location = 9) in vec2 in_uv3;
-layout (location = 10) in vec4 in_color0;
-layout (location = 11) in vec4 in_color1;
-layout (location = 12) in vec4 in_color2;
-layout (location = 13) in vec4 in_color3;
+layout (location = 2) in vec4 in_tangent;
+layout (location = 3) in vec2 in_uv0;
+layout (location = 4) in vec2 in_uv1;
+layout (location = 5) in vec2 in_uv2;
+layout (location = 6) in vec2 in_uv3;
+layout (location = 7) in vec4 in_color0;
+layout (location = 8) in vec4 in_color1;
+layout (location = 9) in vec4 in_color2;
+layout (location = 10) in vec4 in_color3;
 
 out vec3 POSITION;
 out vec3 NORMAL;
-out vec3 TANGENT[4];
-out vec3 BITANGENT[4];
+out vec3 TANGENT;
+out vec3 BITANGENT;
 out vec2 UV[4];
 out vec4 COLOR[4];
 
@@ -38,8 +35,8 @@ flat out uint ID;
 
 in vec3 POSITION;
 in vec3 NORMAL;
-in vec3 TANGENT[4];
-in vec3 BITANGENT[4];
+in vec3 TANGENT;
+in vec3 BITANGENT;
 in vec2 UV[4];
 in vec4 COLOR[4];
 
@@ -100,17 +97,9 @@ void DEFAULT_VERTEX_SHADER()
 
     if(PRECOMPUTED_TANGENTS)
     {
-        TANGENT[0] = transform_normal(MODEL, in_tangent0.xyz);
-        TANGENT[1] = transform_normal(MODEL, in_tangent1.xyz);
-        TANGENT[2] = transform_normal(MODEL, in_tangent2.xyz);
-        TANGENT[3] = transform_normal(MODEL, in_tangent3.xyz);
-
+        TANGENT = transform_normal(MODEL, in_tangent.xyz);
         float mirror_scale = MIRROR_SCALE ? -1 : 1;
-
-        BITANGENT[0] = normalize(cross(NORMAL, TANGENT[0]) * in_tangent0.w) * mirror_scale;
-        BITANGENT[1] = normalize(cross(NORMAL, TANGENT[1]) * in_tangent1.w) * mirror_scale;
-        BITANGENT[2] = normalize(cross(NORMAL, TANGENT[2]) * in_tangent2.w) * mirror_scale;
-        BITANGENT[3] = normalize(cross(NORMAL, TANGENT[3]) * in_tangent3.w) * mirror_scale;
+        BITANGENT = normalize(cross(NORMAL, TANGENT) * in_tangent.w) * mirror_scale;
     }
 
     UV[0]=in_uv0;
