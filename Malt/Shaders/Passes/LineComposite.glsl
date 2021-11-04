@@ -18,7 +18,7 @@ void main()
 
 uniform sampler2D color_texture;
 uniform sampler2D depth_texture;
-uniform sampler2D id_texture;
+uniform usampler2D id_texture;
 uniform sampler2D line_color_texture;
 uniform sampler2D line_data_texture;
 uniform float aa_offset = 0.0;
