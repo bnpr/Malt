@@ -160,7 +160,12 @@ def shader_preprocessor(shader_source, include_directories=[], definitions=[]):
         args.append('-D'+definition)
     args.append(tmp.name)
 
-    result = subprocess.check_output(args).decode('utf-8')
+    try:
+        result = subprocess.check_output(args).decode('utf-8')
+    except PermissionError:
+        import stat
+        os.chmod(mcpp, os.stat(mcpp).st_mode | stat.S_IEXEC)
+        result = subprocess.check_output(args).decode('utf-8')
     
     os.remove(tmp.name)
 
@@ -414,7 +419,12 @@ def glsl_reflection(code, root_path = None):
     tmp.write(code.encode('utf-8'))
     tmp.close()
     
-    json_string = subprocess.check_output([GLSLParser, tmp.name])
+    try:
+        json_string = subprocess.check_output([GLSLParser, tmp.name])
+    except PermissionError:
+        import stat
+        os.chmod(GLSLParser, os.stat(GLSLParser).st_mode | stat.S_IEXEC)
+        json_string = subprocess.check_output([GLSLParser, tmp.name])
     
     os.remove(tmp.name)
     
