@@ -2,6 +2,7 @@
 
 import os, time
 from itertools import chain
+from Malt.Parameter import Parameter, Type
 import bpy
 from . MaltProperties import MaltPropertyGroup
 from . import MaltPipeline
@@ -861,7 +862,7 @@ class MaltInlineNode(bpy.types.Node, MaltNode):
         
         inputs = {}
         for var in variables:
-            inputs[var] = '', 0
+            inputs[var] = {'type': ''}
             if var in self.inputs:
                 input = self.inputs[var]
                 linked = self.inputs[var].get_linked()
@@ -870,11 +871,11 @@ class MaltInlineNode(bpy.types.Node, MaltNode):
                 else:
                     inputs[var] = {'type': input.data_type, 'size': input.array_size}
         
-        outputs = { 'result' : ('', 0) }
+        outputs = { 'result' : {'type': ''} }
         if 'result' in self.outputs:
             out = self.outputs['result'].get_linked()
             if out:
-                outputs['result'] = out.data_type, out.array_size
+                outputs['result'] = {'type': out.data_type, 'size': out.array_size}
         
         self.setup_sockets(inputs, outputs)
 
@@ -924,20 +925,20 @@ class MaltArrayIndexNode(bpy.types.Node, MaltNode):
     def malt_setup(self):
         if self.first_setup:
             self.name = 'Array Index'
-        self.setup_sockets( { 'array' : ('', 1), 'index' : ('int', 0) },
-            { 'element' : ('', 0) } )
+        self.setup_sockets({ 'array' : {'type': '', 'size': 1}, 'index' : {'type': Parameter(0, Type.INT) }},
+            {'element' : {'type': ''} })
         
     def malt_update(self):
         inputs = { 
             'array' : {'type': '', 'size': 1},
-            'index' : {'type': 'int'}
+            'index' : {'type': Parameter(0, Type.INT) }
         }
         outputs = { 'element' : {'type': ''} }
         
         linked = self.inputs['array'].get_linked()
         if linked and linked.array_size > 0:
             inputs['array']['type'] = linked.data_type
-            inputs['array']['type'] = linked.array_size
+            inputs['array']['size'] = linked.array_size
             outputs['element']['type'] = linked.data_type
 
         self.setup_sockets(inputs, outputs)
