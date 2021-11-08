@@ -231,7 +231,7 @@ void main()
     {
         OUT_NORMAL_DEPTH.xyz = PO.normal;
         OUT_NORMAL_DEPTH.w = gl_FragCoord.z;
-        OUT_ID.x = PO.id.r;
+        OUT_ID = PO.id;
     }
     #endif
 
