@@ -8,6 +8,8 @@ vec3 surface_bitangent(int index) { return get_bitangent(index); }
 vec2 surface_uv(int index) { return UV[index]; }
 vec4 surface_vertex_color(int index) { return COLOR[index]; }
 
+uint object_id() {return ID;}
+
 mat4 model_matrix() { return MODEL; }
 mat4 camera_matrix() { return CAMERA; }
 mat4 projection_matrix() { return PROJECTION; }
