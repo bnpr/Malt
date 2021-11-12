@@ -2,11 +2,13 @@
 
 import os, time
 from itertools import chain
-from Malt.Parameter import Parameter, Type
 from Malt.SourceTranspiler import GLSLTranspiler, PythonTranspiler
 import bpy
 from BlenderMalt.MaltProperties import MaltPropertyGroup
 from BlenderMalt import MaltPipeline
+
+from BlenderMalt.MaltNodes.MaltNode import MaltNode
+from BlenderMalt.MaltNodes.Nodes import MaltIONode
 
 
 def get_pipeline_graph(context):
@@ -113,6 +115,7 @@ class MaltTree(bpy.types.NodeTree):
         pipeline_graph = self.get_pipeline_graph()
         if pipeline_graph:
             for node in self.nodes:
+                #TODO: MaltNode.is_result()
                 if isinstance(node, MaltIONode) and node.is_output:
                     output_nodes.append(node)
                     linked_nodes.append(node)
@@ -478,8 +481,33 @@ classes = (
     MALT_MT_NodeOther,
 )
 
+def foreach_node_module(callback):
+    import importlib
+    nodes_dir = os.path.join(os.path.dirname(__file__), 'Nodes')
+    for name in os.listdir(nodes_dir):
+        try:
+            if name == '__pycache__':
+                continue
+            if name.endswith('.py'):
+                name = name[:-3]
+            module = importlib.import_module(f'BlenderMalt.MaltNodes.Nodes.{name}')
+            #importlib.reload(module)
+            callback(module)
+        except ModuleNotFoundError:
+            # Ignore it. The file or dir is not a python module
+            pass
+        except Exception:
+            import traceback
+            traceback.print_exc()
+
 def register():
     for _class in classes: bpy.utils.register_class(_class)
+
+    from BlenderMalt.MaltNodes import MaltSocket, MaltNode
+    MaltSocket.register()
+    MaltNode.register()
+
+    foreach_node_module(lambda module : module.register())
 
     bpy.types.NODE_MT_add.append(add_node_ui)
     bpy.types.NODE_HT_header.append(node_header_ui)
@@ -488,10 +516,17 @@ def register():
     
 
 def unregister():
+    bpy.app.timers.unregister(track_library_changes)
+    
     bpy.types.NODE_MT_add.remove(add_node_ui)
     bpy.types.NODE_HT_header.remove(node_header_ui)
 
+    foreach_node_module(lambda module : module.unregister())
+    
+    from BlenderMalt.MaltNodes import MaltSocket, MaltNode
+    MaltSocket.unregister()
+    MaltNode.unregister()
+
     for _class in reversed(classes): bpy.utils.unregister_class(_class)
 
-    bpy.app.timers.unregister(track_library_changes)
 

@@ -99,7 +99,7 @@ class MaltSocket(bpy.types.NodeSocket):
                 layout.prop(self, 'show_in_material_panel', text='', icon=icon)
     
     def setup_shape(self):
-        from Malt.Parameter import Parameter
+        from Malt.PipelineParameters import Parameter
         base_type = True
         try:
             Parameter.from_glsl_type(self.data_type)
