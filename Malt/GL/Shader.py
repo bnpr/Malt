@@ -161,15 +161,17 @@ def shader_preprocessor(shader_source, include_directories=[], definitions=[]):
     args.append(tmp.name)
 
     try:
-        result = subprocess.check_output(args).decode('utf-8')
+        result = subprocess.run(args, stdout = subprocess.PIPE, stderr=subprocess.PIPE)
     except PermissionError:
         import stat
         os.chmod(mcpp, os.stat(mcpp).st_mode | stat.S_IEXEC)
-        result = subprocess.check_output(args).decode('utf-8')
-    
-    os.remove(tmp.name)
-
-    return result
+        result = subprocess.run(args, stdout = subprocess.PIPE, stderr=subprocess.PIPE)
+    finally:
+        os.remove(tmp.name)
+        if result.returncode != 0:
+            raise Exception(result.stderr.decode('utf-8'))
+        else:
+            return result.stdout.decode('utf-8')
 
 
 __LINE_DIRECTIVE_SUPPORT = None

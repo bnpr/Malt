@@ -147,9 +147,8 @@ class Pipeline(object):
             material_type = shader_path.split('.')[-2]
             source = '#include "{}"'.format(path.basename(shader_path))
             return self.compile_material_from_source(material_type, source, [file_dir] + search_paths)
-        except:
-            import traceback
-            return traceback.format_exc()
+        except Exception as e:
+            return str(e)
     
     def draw_screen_pass(self, shader, target, blend = False):
         #Allow screen passes draw to gl_FragDepth
