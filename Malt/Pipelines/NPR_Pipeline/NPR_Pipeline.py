@@ -197,7 +197,7 @@ class NPR_Pipeline(Pipeline):
         }
 
         #RENDER SHADOWMAPS
-        def render_shadow_passes(lights, fbos_opaque, fbos_transparent):
+        def render_shadow_passes(lights, fbos_opaque, fbos_transparent, sample_offset = sample_offset):
             for light_index, light_matrices_pair in enumerate(lights.items()):
                 light, matrices = light_matrices_pair
                 for matrix_index, camera_projection_pair in enumerate(matrices): 
@@ -224,7 +224,7 @@ class NPR_Pipeline(Pipeline):
         glDisable(GL_DEPTH_CLAMP)
 
         render_shadow_passes(self.lights_buffer.points,
-            self.shadowmaps_opaque.point_fbos, self.shadowmaps_transparent.point_fbos)
+            self.shadowmaps_opaque.point_fbos, self.shadowmaps_transparent.point_fbos, (0,0))
 
         #SCENE RENDER
         #Load scene camera settings
