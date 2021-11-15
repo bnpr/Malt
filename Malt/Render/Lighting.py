@@ -228,14 +228,14 @@ class LightsBuffer(object):
                     (( 0, 0,-1),( 0,-1, 0))
                 ]
                 matrices = []
+                position = pyrr.Vector3(light.position)
+                offset_matrix = pyrr.Matrix44.from_translation(position)
+                rotation_matrix = pyrr.Matrix44.from_eulers((sample_offset[0], sample_offset[1], 0.0))
                 for axes in cube_map_axes:
-                    position = pyrr.Vector3(light.position)
-                    offset_matrix = pyrr.Matrix44.from_translation(position)
-                    rotation_matrix = pyrr.Matrix44.from_eulers((sample_offset[0], sample_offset[1], 0.0))
                     front = pyrr.Matrix33.from_matrix44(rotation_matrix) * pyrr.Vector3(axes[0])
                     up = pyrr.Matrix33.from_matrix44(rotation_matrix) * pyrr.Vector3(axes[1])
                     matrices.append(pyrr.Matrix44.look_at(position, position + front, up))
-                    self.data.point_matrices[point_count] = flatten_matrix((offset_matrix * rotation_matrix).inverse)
+                self.data.point_matrices[point_count] = flatten_matrix((offset_matrix * rotation_matrix).inverse)
 
                 projection_matrix = make_projection_matrix(math.pi / 2.0, 1.0, 0.01, light.radius)
 
