@@ -172,19 +172,29 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                     setup_parameter(key, parameter)
         
         for key, value in rna.items():
-            if rna[key]['active'] == False:
+            rna_prop = rna[key]
+            if rna_prop['active'] == False:
                 continue
             #TODO: for now we assume we want floats as colors
             # ideally it should be opt-in in the UI,
             # so we can give them propper min/max values
-            if rna[key]['type'] == Type.FLOAT and rna[key]['size'] >= 3:
-                rna[key]['subtype'] = 'COLOR'
-                rna[key]['use_soft_limits'] = True
-                rna[key]['soft_min'] = 0.0
-                rna[key]['soft_max'] = 1.0
+            if rna_prop['type'] == Type.FLOAT and rna_prop['size'] >= 3:
+                rna_prop['subtype'] = 'COLOR'
+                rna_prop['use_soft_limits'] = True
+                rna_prop['soft_min'] = 0.0
+                rna_prop['soft_max'] = 1.0
             else:
-                rna[key]['subtype'] = 'BLEND'
-                rna[key]['use_soft_limits'] = False
+                rna_prop['subtype'] = 'BLEND'
+                rna_prop['use_soft_limits'] = False
+            
+            if bpy.app.version[0] >= 3:
+                if rna_prop['type'] in (Type.FLOAT, Type.INT):
+                    ui = self.id_properties_ui(key)
+                    if rna_prop['type'] == Type.FLOAT and rna_prop['size'] >= 3:
+                        ui.update(default=rna_prop['default'], subtype='COLOR', soft_min = 0.0, soft_max = 1.0)
+                    else:
+                        dic = ui.as_dict()
+                        ui.update(default=rna_prop['default'], subtype='NONE', soft_min = dic['min'], soft_max = dic['max'])
 
         # Force a depsgraph update. 
         # Otherwise these won't be available inside scene_eval
