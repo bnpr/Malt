@@ -201,7 +201,6 @@ ShadowData point_shadow(vec3 position, Light light, samplerCubeArray shadowmap, 
     
     ShadowData S;
     S.light_space = position - light.position;
-    S.light_space.xy += (SAMPLE_OFFSET / shadowmap_size);    
     
     S.light_uv = normalize(position - light.position);
     
