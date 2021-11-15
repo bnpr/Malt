@@ -35,6 +35,7 @@ def log_system_info():
     log.info(glGetString(GL_RENDERER).decode())
     log.info(glGetString(GL_VERSION).decode())
     log.info(glGetString(GL_SHADING_LANGUAGE_VERSION).decode())
+    log.info(f"GL_ARB_bindless_texture support : {hasGLExtension('GL_ARB_bindless_texture')}")
     for key, value in GL_NAMES.items():
         if key.startswith('GL_MAX'):
             try:

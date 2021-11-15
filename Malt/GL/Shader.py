@@ -244,10 +244,17 @@ def compile_gl_program(vertex, fragment):
     error = ""
 
     def compile_shader (source, shader_type):
+        bindless_setup = ''
+        if hasGLExtension('GL_ARB_bindless_texture'):
+            bindless_setup = '''
+            #extension GL_ARB_bindless_texture : enable
+            layout(bindless_sampler) uniform;
+            '''
         import textwrap
-        source = textwrap.dedent('''
+        source = textwrap.dedent(f'''
         #version 410 core
         #extension GL_ARB_shading_language_include : enable
+        {bindless_setup}
         #line 1 "src"
         ''') + source
         source = fix_line_directive_paths(source)
