@@ -27,6 +27,7 @@ struct Light
 
 #define MAX_SPOTS 64
 #define MAX_SUNS 64
+#define MAX_POINTS 64
 
 struct SceneLights
 {
@@ -35,6 +36,7 @@ struct SceneLights
     int cascades_count;
     mat4 spot_matrices[MAX_SPOTS];
     mat4 sun_matrices[MAX_SUNS];
+    mat4 point_matrices[MAX_POINTS];
 };
 
 layout(std140) uniform SCENE_LIGHTS
@@ -200,9 +202,8 @@ ShadowData point_shadow(vec3 position, Light light, samplerCubeArray shadowmap, 
     vec2 shadowmap_size = vec2(textureSize(shadowmap, 0));
     
     ShadowData S;
-    S.light_space = position - light.position;
-    
-    S.light_uv = normalize(position - light.position);
+    S.light_space = transform_point(LIGHTS.point_matrices[light.type_index], position);
+    S.light_uv = normalize(S.light_space);
     
     float cubemap_side_depth = max(abs(S.light_space.x), max(abs(S.light_space.y), abs(S.light_space.z)));
     float n = 0.01; //Near is hard-coded for point lights

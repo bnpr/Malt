@@ -170,7 +170,7 @@ class NPR_Pipeline(Pipeline):
         self.lights_buffer.load(scene, 
             scene.world_parameters['ShadowMaps.Sun.Cascades.Count'], 
             scene.world_parameters['ShadowMaps.Sun.Cascades.Distribution Scalar'],
-            scene.world_parameters['ShadowMaps.Sun.Cascades.Max Distance'])
+            scene.world_parameters['ShadowMaps.Sun.Cascades.Max Distance'], sample_offset)
         self.light_groups_buffer.load(scene)
         self.shadowmaps_opaque.load(scene,
             scene.world_parameters['ShadowMaps.Spot.Resolution'],

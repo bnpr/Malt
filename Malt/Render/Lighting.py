@@ -51,6 +51,7 @@ class C_Light(ctypes.Structure):
 
 MAX_SPOTS = 64
 MAX_SUNS = 64
+MAX_POINTS = 64
 
 MAX_LIGHTS = 128
 
@@ -63,6 +64,7 @@ class C_LightsBuffer(ctypes.Structure):
         ('__padding', ctypes.c_int32*2),
         ('spot_matrices', ctypes.c_float*16*MAX_SPOTS),
         ('sun_matrices', ctypes.c_float*16*MAX_SUNS),
+        ('point_matrices', ctypes.c_float*16*MAX_POINTS),
     ]
 
 class ShadowMaps(object):
@@ -162,7 +164,7 @@ class LightsBuffer(object):
         self.suns = None
         self.points = None
     
-    def load(self, scene, cascades_count, cascades_distribution_scalar, cascades_max_distance=1.0):
+    def load(self, scene, cascades_count, cascades_distribution_scalar, cascades_max_distance=1.0, sample_offset=(0,0)):
         #TODO: Automatic distribution exponent basedd on FOV
 
         spot_count=0
@@ -228,9 +230,12 @@ class LightsBuffer(object):
                 matrices = []
                 for axes in cube_map_axes:
                     position = pyrr.Vector3(light.position)
-                    front = pyrr.Vector3(axes[0])
-                    up = pyrr.Vector3(axes[1])
+                    offset_matrix = pyrr.Matrix44.from_translation(position)
+                    rotation_matrix = pyrr.Matrix44.from_eulers((sample_offset[0], sample_offset[1], 0.0))
+                    front = pyrr.Matrix33.from_matrix44(rotation_matrix) * pyrr.Vector3(axes[0])
+                    up = pyrr.Matrix33.from_matrix44(rotation_matrix) * pyrr.Vector3(axes[1])
                     matrices.append(pyrr.Matrix44.look_at(position, position + front, up))
+                    self.data.point_matrices[point_count] = flatten_matrix((offset_matrix * rotation_matrix).inverse)
 
                 projection_matrix = make_projection_matrix(math.pi / 2.0, 1.0, 0.01, light.radius)
 
