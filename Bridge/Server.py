@@ -161,7 +161,11 @@ class Viewport(object):
                 optimal_format = GL_UNSIGNED_BYTE
                 if glGetInternalformativ(GL_TEXTURE_2D, GL_RGBA8, GL_READ_PIXELS, 1) != GL_ZERO:
                     optimal_format = glGetInternalformativ(GL_TEXTURE_2D, GL_RGBA8, GL_TEXTURE_IMAGE_TYPE, 1)
-                self.final_texture = Texture(resolution, GL_RGBA8, optimal_format, pixel_format=GL_RGBA)
+                try:
+                    self.final_texture = Texture(resolution, GL_RGBA8, optimal_format, pixel_format=GL_RGBA)
+                except:
+                    # Fallback to unsigned byte, just in case
+                    self.final_texture = Texture(resolution, GL_RGBA8, GL_UNSIGNED_BYTE, pixel_format=GL_RGBA)
                 self.final_texture.channel_size = 1
                 self.final_target = RenderTarget([self.final_texture])
         
