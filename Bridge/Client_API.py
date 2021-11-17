@@ -1,6 +1,6 @@
 # Copyright (c) 2020 BlenderNPR and contributors. MIT license. 
 
-import ctypes, logging as log, io, sys
+import ctypes, logging as LOG, io, sys
 from Bridge.ipc import SharedBuffer
 
 def bridge_method(function):
@@ -11,7 +11,7 @@ def bridge_method(function):
                 return function(*args, **kwargs)
         except:
             import traceback
-            log.error(traceback.format_exc())
+            LOG.error(traceback.format_exc())
             self.lost_connection = True
         return None
     return result
@@ -25,7 +25,7 @@ class IOCapture(io.StringIO):
     
     def write(self, s):
         self.parent.write(s)
-        log.log(self.log_level, s)
+        LOG.log(self.log_level, s)
         return super().write(s)
 
 class Bridge(object):
@@ -38,10 +38,10 @@ class Bridge(object):
             import os, tempfile, time
             date = time.strftime("%Y-%m-%d(%H-%M)")
             log_path = os.path.join(tempfile.gettempdir(),'malt ' + date + '.log')
-            log.basicConfig(filename=log_path, level=log.DEBUG, format='Blender > %(message)s')
-            sys.stdout = IOCapture(sys.stdout, log_path, log.INFO)
-            sys.stderr = IOCapture(sys.stderr, log_path, log.ERROR)
-            log.info('SETUP IOCapture')
+            LOG.basicConfig(filename=log_path, level=LOG.DEBUG, format='Blender > %(message)s')
+            sys.stdout = IOCapture(sys.stdout, log_path, LOG.INFO)
+            sys.stderr = IOCapture(sys.stderr, log_path, LOG.ERROR)
+            LOG.info('SETUP IOCapture')
         
         import multiprocessing, random, string
         mp = multiprocessing.get_context('spawn')

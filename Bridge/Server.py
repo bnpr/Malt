@@ -14,38 +14,38 @@ from Malt.GL.Texture import Texture
 import Bridge.Mesh, Bridge.Material, Bridge.Texture
 from . import ipc as ipc
 
-import logging as log
+from Malt.Utils import LOG
 def setup_logging(log_path, log_level):
-    log.basicConfig(filename=log_path, level=log_level, format='Malt > %(message)s')
-    console_logger = log.StreamHandler()
-    console_logger.setLevel(log.WARNING)
-    log.getLogger().addHandler(console_logger)
+    LOG.basicConfig(filename=log_path, level=log_level, format='Malt > %(message)s')
+    console_logger = LOG.StreamHandler()
+    console_logger.setLevel(LOG.WARNING)
+    LOG.getLogger().addHandler(console_logger)
 
 
 def log_system_info():
     import sys, platform
-    log.info('SYSTEM INFO')
-    log.info('-'*80)
-    log.info('PYTHON: {}'.format(sys.version))
-    log.info('OS: {}'.format(platform.platform()))
-    log.info('CPU: {}'.format(platform.processor()))
+    LOG.info('SYSTEM INFO')
+    LOG.info('-'*80)
+    LOG.info('PYTHON: {}'.format(sys.version))
+    LOG.info('OS: {}'.format(platform.platform()))
+    LOG.info('CPU: {}'.format(platform.processor()))
 
-    log.info('OPENGL CONTEXT:')
-    log.info(glGetString(GL_VENDOR).decode())
-    log.info(glGetString(GL_RENDERER).decode())
-    log.info(glGetString(GL_VERSION).decode())
-    log.info(glGetString(GL_SHADING_LANGUAGE_VERSION).decode())
-    log.info(f"GL_ARB_bindless_texture support : {hasGLExtension('GL_ARB_bindless_texture')}")
+    LOG.info('OPENGL CONTEXT:')
+    LOG.info(glGetString(GL_VENDOR).decode())
+    LOG.info(glGetString(GL_RENDERER).decode())
+    LOG.info(glGetString(GL_VERSION).decode())
+    LOG.info(glGetString(GL_SHADING_LANGUAGE_VERSION).decode())
+    LOG.info(f"GL_ARB_bindless_texture support : {hasGLExtension('GL_ARB_bindless_texture')}")
     for key, value in GL_NAMES.items():
         if key.startswith('GL_MAX'):
             try:
-                log.info('{}: {}'.format(key, glGetInteger(value)))
+                LOG.info('{}: {}'.format(key, glGetInteger(value)))
             except:
                 pass
 
     def log_format_prop(format, prop):
         read = glGetInternalformativ(GL_TEXTURE_2D, format, prop, 1)
-        log.info('{} {}: {}'.format(GL_ENUMS[format], GL_ENUMS[prop], GL_ENUMS[read]))
+        LOG.info('{} {}: {}'.format(GL_ENUMS[format], GL_ENUMS[prop], GL_ENUMS[read]))
 
     def log_format_props(format):
         log_format_prop(format, GL_READ_PIXELS)
@@ -64,7 +64,7 @@ def log_system_info():
     log_format_props(GL_RGB32F)
     log_format_props(GL_RGBA32F)
 
-    log.info('-'*80)
+    LOG.info('-'*80)
 
 class PBO(object):
 
@@ -257,14 +257,14 @@ class Viewport(object):
 PROFILE = False
 
 def main(pipeline_path, viewport_bit_depth, connection_addresses, shared_dic, lock, log_path, debug_mode):
-    log_level = log.DEBUG if debug_mode else log.INFO
+    log_level = LOG.DEBUG if debug_mode else LOG.INFO
     setup_logging(log_path, log_level)
-    log.info('DEBUG MODE: {}'.format(debug_mode))
+    LOG.info('DEBUG MODE: {}'.format(debug_mode))
 
-    log.info('CONNECTIONS:')
+    LOG.info('CONNECTIONS:')
     connections = {}
     for name, address in connection_addresses.items():
-        log.info('Name: {} Adress: {}'.format(name, address))
+        LOG.info('Name: {} Adress: {}'.format(name, address))
         connections[name] = connection.Client(address)
     
     glfw.ERROR_REPORTING = True
@@ -285,7 +285,7 @@ def main(pipeline_path, viewport_bit_depth, connection_addresses, shared_dic, lo
 
     log_system_info()
     
-    log.info('INIT PIPELINE: ' + pipeline_path)
+    LOG.info('INIT PIPELINE: ' + pipeline_path)
 
     pipeline_dir, pipeline_name = os.path.split(pipeline_path)
     if pipeline_dir not in sys.path:
@@ -326,7 +326,7 @@ def main(pipeline_path, viewport_bit_depth, connection_addresses, shared_dic, lo
 
             while connections['SHADER REFLECTION'].poll():
                 msg = connections['SHADER REFLECTION'].recv()
-                log.debug('REFLECT SHADER : {}'.format(msg))
+                LOG.debug('REFLECT SHADER : {}'.format(msg))
                 paths = msg['paths']
                 results = {}
                 from Malt.GL.Shader import glsl_reflection, shader_preprocessor
@@ -345,7 +345,7 @@ def main(pipeline_path, viewport_bit_depth, connection_addresses, shared_dic, lo
                 msg = connections['MAIN'].recv()
                 
                 if msg['msg_type'] == 'MATERIAL':
-                    log.debug('COMPILE MATERIAL : {}'.format(msg))
+                    LOG.debug('COMPILE MATERIAL : {}'.format(msg))
                     path = msg['path']
                     search_paths = msg['search_paths']
                     material = Bridge.Material.Material(path, pipeline, search_paths)
@@ -357,24 +357,24 @@ def main(pipeline_path, viewport_bit_depth, connection_addresses, shared_dic, lo
                 if msg['msg_type'] == 'MESH':
                     msg_log = copy.copy(msg)
                     msg_log['data'] = None
-                    log.debug('LOAD MESH : {}'.format(msg_log))
+                    LOG.debug('LOAD MESH : {}'.format(msg_log))
                     Bridge.Mesh.load_mesh(msg)
                 
                 if msg['msg_type'] == 'TEXTURE':
-                    log.debug('LOAD TEXTURE : {}'.format(msg))
+                    LOG.debug('LOAD TEXTURE : {}'.format(msg))
                     Bridge.Texture.load_texture(msg)
                 
                 if msg['msg_type'] == 'GRADIENT':
                     msg_log = copy.copy(msg)
                     msg_log['pixels'] = None
-                    log.debug('LOAD GRADIENT : {}'.format(msg_log))
+                    LOG.debug('LOAD GRADIENT : {}'.format(msg_log))
                     name = msg['name']
                     pixels = msg['pixels']
                     nearest = msg['nearest']
                     Bridge.Texture.load_gradient(name, pixels, nearest)
                 
                 if msg['msg_type'] == 'RENDER':
-                    log.debug('SETUP RENDER : {}'.format(msg))
+                    LOG.debug('SETUP RENDER : {}'.format(msg))
                     viewport_id = msg['viewport_id']
                     resolution = msg['resolution']
                     scene = msg['scene']
@@ -413,7 +413,7 @@ def main(pipeline_path, viewport_bit_depth, connection_addresses, shared_dic, lo
                 for v_id, v in active_viewports.items():
                     stats += "Viewport ({}):\n{}\n\n".format(v_id, v.get_print_stats())
                 shared_dic['STATS'] = stats
-                log.debug('STATS: {} '.format(stats))
+                LOG.debug('STATS: {} '.format(stats))
             
             if PROFILE:
                 profiler.disable()
@@ -422,7 +422,7 @@ def main(pipeline_path, viewport_bit_depth, connection_addresses, shared_dic, lo
                 stats.sort_stats(pstats.SortKey.CUMULATIVE)
                 stats.print_stats()
                 if active_viewports:
-                    log.debug(profiling_data.getvalue())
+                    LOG.debug(profiling_data.getvalue())
         except (ConnectionResetError, EOFError):
             #Connection Lost
             break
@@ -430,12 +430,12 @@ def main(pipeline_path, viewport_bit_depth, connection_addresses, shared_dic, lo
             import traceback
             exception = traceback.format_exc()
             if exception != last_exception:
-                log.error(exception)
+                LOG.error(exception)
                 repeated_exception = 0
                 last_exception = exception
             else:
                 if repeated_exception in (1,10,100,1000,10000,100000):
-                    log.error('(Repeated {}+ times)'.format(repeated_exception))
+                    LOG.error('(Repeated {}+ times)'.format(repeated_exception))
                 repeated_exception += 1
 
     glfw.terminate()

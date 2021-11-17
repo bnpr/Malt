@@ -1,5 +1,5 @@
 # Copyright (c) 2020 BlenderNPR and contributors. MIT license. 
-import logging as log
+from Malt.Utils import LOG
 
 from Malt.GL import Mesh
 from Malt.GL.GL import *
@@ -65,12 +65,12 @@ def load_mesh(msg):
         color0_index = uv0_index + max_uv
         for i, uv in enumerate(result.uvs):
             if i >= max_uv:
-                log.warning('{} : UV count exceeds max supported UVs ({})'.format(name, max_uv))
+                LOG.warning('{} : UV count exceeds max supported UVs ({})'.format(name, max_uv))
                 break
             bind_VBO(uv, uv0_index + i, 2)
         for i, color in enumerate(result.colors):
             if i >= max_vertex_colors:
-                log.warning('{} : Vertex Color Layer count exceeds max supported layers ({})'.format(name, max_uv))
+                LOG.warning('{} : Vertex Color Layer count exceeds max supported layers ({})'.format(name, max_uv))
                 break
             bind_VBO(color, color0_index + i, 4, GL_UNSIGNED_BYTE, GL_TRUE)
 

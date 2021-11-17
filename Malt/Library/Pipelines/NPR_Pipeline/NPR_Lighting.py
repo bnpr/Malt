@@ -1,6 +1,6 @@
 # Copyright (c) 2020 BlenderNPR and contributors. MIT license. 
 
-import logging as log
+from Malt.Utils import LOG
 from Malt.GL.GL import *
 from Malt.GL.Shader import UBO
 from Malt.GL.Texture import TextureArray, CubeMapArray

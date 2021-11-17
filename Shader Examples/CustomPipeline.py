@@ -2,7 +2,7 @@
 
 from Malt.Library.Pipelines.NPR_Pipeline.NPR_Pipeline import *
 
-import logging as log
+from Malt.Utils import LOG
 
 class Extended_NPR_Pipeline(NPR_Pipeline):
 
@@ -30,7 +30,7 @@ class Extended_NPR_Pipeline(NPR_Pipeline):
                 return self.t_postpro
             except:
                 import traceback
-                log.error(traceback.format_exc)
+                LOG.error(traceback.format_exc)
         
         return result
 

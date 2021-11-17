@@ -20,5 +20,5 @@ def start_server(pipeline_path, viewport_bit_depth, connection_addresses, shared
     try:
         Server.main(pipeline_path, viewport_bit_depth, connection_addresses, shared_dic, lock, log_path, debug_mode)
     except:
-        import traceback, logging as log
-        log.error(traceback.format_exc())
+        import traceback, logging as LOG
+        LOG.error(traceback.format_exc())
