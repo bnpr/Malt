@@ -13,7 +13,7 @@ from Malt.PipelineParameters import *
 #Workaround for handling multiple OpenGL contexts
 MAIN_CONTEXT = True
 
-SHADER_DIR = path.join(path.dirname(__file__), 'Shaders')
+SHADER_DIR = path.join(path.dirname(__file__), 'Library', 'Shaders')
 
 class Pipeline(object):
 

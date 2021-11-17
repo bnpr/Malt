@@ -41,7 +41,7 @@ class MaltPipeline(bpy.types.PropertyGroup):
         pipeline = self.pipeline
         if pipeline == '':
             current_dir = os.path.dirname(os.path.abspath(__file__))
-            default_pipeline = os.path.join(current_dir,'.MaltPath','Malt','Pipelines','NPR_Pipeline','NPR_Pipeline_Nodes.py')
+            default_pipeline = os.path.join(current_dir,'.MaltPath','Malt','Library','Pipelines','NPR_Pipeline','NPR_Pipeline_Nodes.py')
             if platform.system() == 'Darwin':
                 # The NPR Pipeline doesn't work on OpenGL implementations limited to 16 sampler uniforms
                 default_pipeline = os.path.join(current_dir,'.MaltPath','Malt','Pipelines','MiniPipeline','MiniPipeline.py')
@@ -58,9 +58,9 @@ class MaltPipeline(bpy.types.PropertyGroup):
         params = bridge.get_parameters()
         
         #BlenderMalt parameters
-        from Malt import Parameter
-        params.world['Viewport.Resolution Scale'] = Parameter.Parameter(1.0 , Parameter.Type.FLOAT)
-        params.world['Viewport.Smooth Interpolation'] = Parameter.Parameter(True , Parameter.Type.BOOL)
+        from Malt.PipelineParameters import Parameter, Type
+        params.world['Viewport.Resolution Scale'] = Parameter(1.0 , Type.FLOAT)
+        params.world['Viewport.Smooth Interpolation'] = Parameter(True , Type.BOOL)
 
         set_bridge(bridge)
         set_pipeline_parameters(params)
@@ -126,8 +126,8 @@ def setup_all_ids():
     setup_parameters(bpy.data.curves)
     setup_parameters(bpy.data.metaballs)
     setup_parameters(bpy.data.lights)
-    from BlenderMalt import MaltNodes
-    MaltNodes.setup_node_trees()
+    from . MaltNodes.MaltNodeTree import setup_node_trees
+    setup_node_trees()
     MaltMaterial.track_shader_changes(force_update=True)
 
 def setup_parameters(ids):
@@ -187,7 +187,7 @@ def depsgraph_update(scene, depsgraph):
                     ids.append(data[update.id.name])
     setup_parameters(ids)
 
-    from . MaltNodes import MaltTree
+    from . MaltNodes.MaltNodeTree import MaltTree
 
     redraw = False
     for update in depsgraph.updates:

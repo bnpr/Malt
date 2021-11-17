@@ -1,6 +1,6 @@
 //Copyright (c) 2020 BlenderNPR and contributors. MIT license.
 
-#include "Pipelines/NPR_Pipeline.glsl"
+#include "NPR_Pipeline.glsl"
 #include "Shading/ShadingModels.glsl"
 
 uniform vec3 ao_color = vec3(0.0);

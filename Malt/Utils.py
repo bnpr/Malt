@@ -1,5 +1,7 @@
 # Copyright (c) 2020 BlenderNPR and contributors. MIT license. 
 
+import logging as LOG
+
 def dump_function(function):
     import textwrap, inspect
     name = function.__name__

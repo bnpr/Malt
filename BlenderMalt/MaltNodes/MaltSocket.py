@@ -121,9 +121,9 @@ class MaltSocket(bpy.types.NodeSocket):
         return get_type_color(self.data_type)
 
 
-classes = (
+classes = [
     MaltSocket
-)
+]
 
 def register():
     for _class in classes: bpy.utils.register_class(_class)

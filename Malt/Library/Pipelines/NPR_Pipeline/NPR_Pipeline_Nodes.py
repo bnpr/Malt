@@ -11,8 +11,10 @@ from Malt.PipelineNode import *
 
 from Malt.GL.Texture import internal_format_to_vector_type, internal_format_to_sampler_type
 
+from Malt.Library.Nodes import ScreenPass, Unpack8bitTextures
+
 _COMMON_HEADER = '''
-#include "Pipelines/NPR_Pipeline.glsl"
+#include "NPR_Pipeline.glsl"
 #include "Node Utils/node_utils.glsl"
 '''
 
@@ -186,7 +188,7 @@ class NPR_Pipeline_Nodes(NPR_Pipeline):
         for key, texture_type in self.get_render_layer_custom_outputs().items():
             outputs[key] = texture_type_to_parameter(texture_type)
         self.graphs['Render Layer'] = PythonPipelineGraph(self,
-            [RenderScreen, Unpack8bitTextures],
+            [ScreenPass.NODE, Unpack8bitTextures.NODE],
             [PipelineNode.static_reflect('Render Layer', inputs, outputs)])
 
     def get_render_outputs(self):

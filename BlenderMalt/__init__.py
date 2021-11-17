@@ -170,9 +170,9 @@ def do_windows_fixes():
                 result = ctypes.windll.shell32.ShellExecuteW(None, 'runas', 'cmd.exe', command, None, 0)
         mp.set_executable(python_executable)
 
-
 def get_modules():
-    from . import MaltTextures, MaltMeshes, MaltLights, MaltProperties, MaltPipeline, MaltNodes, MaltMaterial, MaltRenderEngine
+    from . import MaltTextures, MaltMeshes, MaltLights, MaltProperties, MaltPipeline, MaltMaterial, MaltRenderEngine
+    from . MaltNodes import _init_ as MaltNodes
     return [ MaltTextures, MaltMeshes, MaltLights, MaltProperties, MaltPipeline, MaltNodes, MaltMaterial, MaltRenderEngine ]
 
 classes=[

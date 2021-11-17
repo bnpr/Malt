@@ -1,6 +1,6 @@
 //Copyright (c) 2020 BlenderNPR and contributors. MIT license.
 
-#include "Pipelines/NPR_Pipeline.glsl"
+#include "NPR_Pipeline.glsl"
 
 uniform vec3 ambient_color = vec3(0.1,0.1,0.1);
 uniform vec4 diffuse_color = vec4(1.0,0.1,0.1,0.5);

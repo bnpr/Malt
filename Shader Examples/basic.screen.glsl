@@ -1,4 +1,4 @@
-#include "Pipelines/NPR_Pipeline.glsl"
+#include "NPR_Pipeline.glsl"
 
 uniform sampler2D IN_COLOR;
 

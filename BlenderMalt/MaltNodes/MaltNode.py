@@ -164,8 +164,7 @@ class MaltNode():
         return self.name
 
     
-classes = (
-)
+classes = []
 
 def register():
     for _class in classes: bpy.utils.register_class(_class)

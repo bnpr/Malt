@@ -1,9 +1,8 @@
 # Copyright (c) 2020 BlenderNPR and contributors. MIT license. 
 
 import ctypes, time, platform
-import cProfile, pstats, io
 import bpy
-from mathutils import Vector,Matrix,Quaternion
+from mathutils import Vector, Matrix, Quaternion
 from Malt import Scene
 from Malt.GL import GL
 from Malt.GL.Texture import Texture
@@ -43,7 +42,6 @@ class MaltRenderEngine(bpy.types.RenderEngine):
         self.view_matrix = None
         self.request_new_frame = True
         self.request_scene_update = True
-        self.profiling_data = io.StringIO()
         self.bridge = MaltPipeline.get_bridge()
         self.bridge_id = self.bridge.get_viewport_id() if self.bridge else None
         self.last_frame_time = 0

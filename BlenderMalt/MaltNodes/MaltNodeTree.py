@@ -471,7 +471,7 @@ def node_header_ui(self, context):
     #self.layout.prop(context.space_data.node_tree, 'edit_material',text='')
 
     
-classes = (
+classes = [
     MaltTree,
     NODE_PT_MaltNodeTree,
     MALT_MT_NodeFunctions,
@@ -479,35 +479,11 @@ classes = (
     MALT_MT_NodeInputs,
     MALT_MT_NodeOutputs,
     MALT_MT_NodeOther,
-)
+]
 
-def foreach_node_module(callback):
-    import importlib
-    nodes_dir = os.path.join(os.path.dirname(__file__), 'Nodes')
-    for name in os.listdir(nodes_dir):
-        try:
-            if name == '__pycache__':
-                continue
-            if name.endswith('.py'):
-                name = name[:-3]
-            module = importlib.import_module(f'BlenderMalt.MaltNodes.Nodes.{name}')
-            #importlib.reload(module)
-            callback(module)
-        except ModuleNotFoundError:
-            # Ignore it. The file or dir is not a python module
-            pass
-        except Exception:
-            import traceback
-            traceback.print_exc()
 
 def register():
     for _class in classes: bpy.utils.register_class(_class)
-
-    from BlenderMalt.MaltNodes import MaltSocket, MaltNode
-    MaltSocket.register()
-    MaltNode.register()
-
-    foreach_node_module(lambda module : module.register())
 
     bpy.types.NODE_MT_add.append(add_node_ui)
     bpy.types.NODE_HT_header.append(node_header_ui)
@@ -520,12 +496,6 @@ def unregister():
     
     bpy.types.NODE_MT_add.remove(add_node_ui)
     bpy.types.NODE_HT_header.remove(node_header_ui)
-
-    foreach_node_module(lambda module : module.unregister())
-    
-    from BlenderMalt.MaltNodes import MaltSocket, MaltNode
-    MaltSocket.unregister()
-    MaltNode.unregister()
 
     for _class in reversed(classes): bpy.utils.unregister_class(_class)
 

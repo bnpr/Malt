@@ -84,9 +84,9 @@ class MaltInlineNode(bpy.types.Node, MaltNode):
         return code + transpiler.scoped(scoped_code)
 
     
-classes = (
+classes = [
     MaltInlineNode,
-)
+]
 
 def register():
     for _class in classes: bpy.utils.register_class(_class)

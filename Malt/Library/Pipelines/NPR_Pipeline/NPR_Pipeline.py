@@ -9,7 +9,6 @@ from Malt.GL.Texture import Texture
 from Malt.Library.Render import Common
 from Malt.Library.Render import DepthToCompositeDepth
 from Malt.Library.Render import Lighting as Lighting
-#from Malt.Library.Render import Line
 from Malt.Library.Render import Sampling
 
 from Malt.Library.Pipelines.NPR_Pipeline import NPR_Lighting
@@ -20,7 +19,7 @@ from Malt.Pipeline import *
 _DEFAULT_SHADER = None
 
 _DEFAULT_SHADER_SRC='''
-#include "Pipelines/NPR_Pipeline.glsl"
+#include "NPR_Pipeline.glsl"
 
 void COMMON_PIXEL_SHADER(Surface S, inout PixelOutput PO)
 {
@@ -38,6 +37,10 @@ class NPR_Pipeline(Pipeline):
 
     def __init__(self):
         super().__init__()
+
+        shader_dir = path.join(path.dirname(__file__), 'Shaders')
+        if shader_dir not in self.SHADER_INCLUDE_PATHS:
+            self.SHADER_INCLUDE_PATHS.append(shader_dir)
 
         self.sampling_grid_size = 2
         self.samples = None
@@ -83,7 +86,7 @@ class NPR_Pipeline(Pipeline):
         self.shadowmaps_opaque, self.shadowmaps_transparent = NPR_Lighting.get_shadow_maps()
         self.custom_light_shading = NPR_Lighting.NPR_LightShaders()
 
-        self.line_rendering = Line.LineRendering()
+        #self.line_rendering = Line.LineRendering()
 
         self.composite_depth = DepthToCompositeDepth.CompositeDepth()
 
@@ -306,6 +309,7 @@ class NPR_Pipeline(Pipeline):
         self.fbo_main.clear([background_color, (0,0,0,1), (-1,-1,-1,-1)])
         self.draw_scene_pass(self.fbo_main, batches, 'MAIN_PASS', self.default_shader['MAIN_PASS'], UBOS, {}, textures, callbacks)        
         
+        return self.t_main_color
         #COMPOSITE LINE
         composited_line = self.line_rendering.composite_line(
             scene.world_parameters['Line.Max Width'], self, self.common_buffer, 

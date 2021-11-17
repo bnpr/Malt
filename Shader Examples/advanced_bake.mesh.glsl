@@ -4,7 +4,7 @@
 #define CUSTOM_MAIN
 #endif
 
-#include "Pipelines/NPR_Pipeline.glsl"
+#include "NPR_Pipeline.glsl"
 
 uniform float bake = 1.0;
 

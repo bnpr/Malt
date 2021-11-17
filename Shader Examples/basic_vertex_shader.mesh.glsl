@@ -2,7 +2,7 @@
 
 #define CUSTOM_VERTEX_SHADER
 
-#include "Pipelines/NPR_Pipeline.glsl"
+#include "NPR_Pipeline.glsl"
 
 uniform vec3 ambient_color = vec3(0.1,0.1,0.1);
 uniform vec3 diffuse_color = vec3(1.0,0.1,0.1);

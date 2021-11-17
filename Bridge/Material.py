@@ -1,6 +1,6 @@
 # Copyright (c) 2020 BlenderNPR and contributors. MIT license. 
 
-from Malt.Parameter import Parameter
+from Malt.PipelineParameters import Parameter
 from Malt.Utils import profile_function
 
 from . import Texture

@@ -1,10 +1,6 @@
 #Copyright (c) 2020 BlenderNPR and contributors. MIT license.
 
-from Malt.Pipelines.NPR_Pipeline.NPR_Pipeline import NPR_Pipeline
-from Malt.Parameter import *
-from Malt.GL.GL import *
-from Malt.GL.RenderTarget import RenderTarget
-from Malt.GL.Texture import Texture
+from Malt.Library.Pipelines.NPR_Pipeline.NPR_Pipeline import *
 
 import logging as log
 

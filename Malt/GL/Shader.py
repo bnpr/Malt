@@ -1,10 +1,9 @@
 # Copyright (c) 2020 BlenderNPR and contributors. MIT license.
 
 import ctypes, os
-import subprocess
 
 from Malt.GL.GL import *
-from Malt.Utils import log
+from Malt.Utils import LOG
 
 
 class Shader(object):
@@ -45,7 +44,7 @@ class Shader(object):
             uniform.bind()
         for name, texture in self.textures.items():
             if name not in self.uniforms:
-                log('DEBUG', "Texture Uniform {} not found".format(name))
+                LOG.debug("Texture Uniform {} not found".format(name))
                 continue
             glActiveTexture(GL_TEXTURE0 + self.uniforms[name].value[0])
             if texture:

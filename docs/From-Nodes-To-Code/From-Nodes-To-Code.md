@@ -48,7 +48,7 @@ Try to play with the examples, modify them, break them on purpose and take a loo
 <div style="width: 50%; float:left">
 
 ```glsl
-#include "Pipelines/NPR_Pipeline.glsl"
+#include "NPR_Pipeline.glsl"
 
 void COMMON_PIXEL_SHADER(Surface S, inout PixelOutput PO)
 {
@@ -74,7 +74,7 @@ void COMMON_PIXEL_SHADER(Surface S, inout PixelOutput PO)
 <div style="width: 50%; float:left">
 
 ```glsl
-#include "Pipelines/NPR_Pipeline.glsl"
+#include "NPR_Pipeline.glsl"
 
 uniform vec3 color = vec3(0,1,0);
 
@@ -105,7 +105,7 @@ void COMMON_PIXEL_SHADER(Surface S, inout PixelOutput PO)
 <div style="width: 50%; float:left">
 
 ```glsl
-#include "Pipelines/NPR_Pipeline.glsl"
+#include "NPR_Pipeline.glsl"
 
 uniform int uv_channel = 0;
 uniform sampler2D color_texture;
@@ -138,7 +138,7 @@ void COMMON_PIXEL_SHADER(Surface S, inout PixelOutput PO)
 <div style="width: 50%; float:left">
 
 ```glsl
-#include "Pipelines/NPR_Pipeline.glsl"
+#include "NPR_Pipeline.glsl"
 
 uniform vec3 color = vec3(0,1,0);
 
@@ -173,7 +173,7 @@ Let's combine the previous examples!
 <div style="width: 50%; float:left">
 
 ```glsl
-#include "Pipelines/NPR_Pipeline.glsl"
+#include "NPR_Pipeline.glsl"
 
 uniform vec3 ambient_color = vec3(0.5,0.5,0.5);
 

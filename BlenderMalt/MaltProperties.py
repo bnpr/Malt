@@ -2,7 +2,7 @@
 
 import os
 import bpy
-from Malt.Parameter import Type, Parameter, MaterialParameter
+from Malt.PipelineParameters import Type, Parameter, MaterialParameter
 from Malt import Scene
 from . import MaltTextures
 
@@ -235,7 +235,8 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
         return parameters
     
     def get_parameter(self, key, overrides, resources):
-        from BlenderMalt.MaltNodes import MaltTree, MaltNode
+        from . MaltNodes.MaltNodeTree import MaltTree
+        from . MaltNodes.MaltNode import MaltNode
         if self.parent and self.override_from_parents[key].boolean == False:
             try:
                 return self.parent.malt_parameters.get_parameter(key, overrides, resources)

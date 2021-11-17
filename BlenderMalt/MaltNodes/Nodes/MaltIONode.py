@@ -60,9 +60,9 @@ class MaltIONode(bpy.types.Node, MaltNode):
         return code
 
     
-classes = (
+classes = [
     MaltIONode,
-)
+]
 
 def register():
     for _class in classes: bpy.utils.register_class(_class)

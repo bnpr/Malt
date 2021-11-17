@@ -65,9 +65,9 @@ class MaltFunctionNode(bpy.types.Node, MaltNode):
         return transpiler.call(function, source_name, parameters, post_parameter_initialization)
 
     
-classes = (
+classes = [
     MaltFunctionNode,
-)
+]
 
 def register():
     for _class in classes: bpy.utils.register_class(_class)

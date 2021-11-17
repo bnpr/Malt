@@ -1,6 +1,6 @@
 //Copyright (c) 2020 BlenderNPR and contributors. MIT license.
 
-#include "Pipelines/NPR_Pipeline.glsl"
+#include "NPR_Pipeline.glsl"
 
 uniform int ao_samples = 16;
 uniform float ao_radius = 0.75;

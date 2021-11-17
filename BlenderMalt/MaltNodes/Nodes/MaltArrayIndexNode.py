@@ -47,9 +47,9 @@ class MaltArrayIndexNode(bpy.types.Node, MaltNode):
         return transpiler.declaration(element.data_type, element.array_size, element.get_source_reference(), initialization)
 
     
-classes = (
+classes = [
     MaltArrayIndexNode,
-)
+]
 
 def register():
     for _class in classes: bpy.utils.register_class(_class)

@@ -1,6 +1,6 @@
 //Copyright (c) 2020 BlenderNPR and contributors. MIT license.
 
-#include "Pipelines/NPR_Pipeline.glsl"
+#include "NPR_Pipeline.glsl"
 
 uniform sampler1D diffuse_gradient;
 uniform sampler1D specular_gradient;
