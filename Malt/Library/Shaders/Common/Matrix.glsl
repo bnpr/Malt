@@ -1,4 +1,4 @@
-//Copyright (c) 2020 BlenderNPR and contributors. MIT license.
+//Copyright (c) 2020-2021 BNPR, Miguel Pozo and contributors. MIT license.
 
 #ifndef COMMON_MATRIX_GLSL
 #define COMMON_MATRIX_GLSL
