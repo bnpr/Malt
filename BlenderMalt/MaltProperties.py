@@ -372,7 +372,8 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
 
 
     def draw_parameter(self, layout, key, label, draw_callback=None, is_node_socket=False):
-        from BlenderMalt.MaltNodes import MaltTree, MaltNode
+        from . MaltNodes.MaltNodeTree import MaltTree
+        from . MaltNodes.MaltNode import MaltNode
         if self.parent and self.override_from_parents[key].boolean == False:
             if self.parent.malt_parameters.draw_parameter(layout, key, label, draw_callback, is_node_socket):
                 return True
