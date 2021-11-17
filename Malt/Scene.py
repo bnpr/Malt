@@ -1,25 +1,25 @@
 # Copyright (c) 2020-2021 BNPR, Miguel Pozo and contributors. MIT license. 
 
-class Camera(object):
+class Camera():
 
     def __init__(self, camera_matrix, projection_matrix, parameters={}):
         self.camera_matrix = camera_matrix
         self.projection_matrix = projection_matrix
         self.parameters = parameters
 
-class Material(object):
+class Material():
 
     def __init__(self, shader, parameters={}):
         self.shader = shader
         self.parameters = parameters
 
-class Mesh(object):
+class Mesh():
 
     def __init__(self, mesh, parameters={}):
         self.mesh = mesh
         self.parameters = parameters
 
-class Object(object):
+class Object():
 
     def __init__(self, matrix, mesh, material, parameters={}, mirror_scale=False):
         self.matrix = matrix
@@ -28,7 +28,7 @@ class Object(object):
         self.parameters = parameters
         self.mirror_scale = mirror_scale
 
-class Light(object):
+class Light():
 
     def __init__(self):
         self.type = 0
@@ -41,7 +41,7 @@ class Light(object):
         self.radius = 0
         self.matrix = None
 
-class Scene(object):
+class Scene():
 
     def __init__(self):
         self.camera = None

@@ -6,7 +6,7 @@ from Malt.GL.GL import *
 from Malt.Utils import LOG
 
 
-class Shader(object):
+class Shader():
 
     def __init__(self, vertex_source, pixel_source):
         if vertex_source and pixel_source:
@@ -75,7 +75,7 @@ class Shader(object):
         pass
 
 
-class GLUniform(object):
+class GLUniform():
     def __init__(self, index, type, value, array_length=1):
         self.index = index
         self.type = type
@@ -110,7 +110,7 @@ class GLUniform(object):
             self.array_length)
 
 
-class UBO(object):
+class UBO():
 
     def __init__(self):
         self.size = 0

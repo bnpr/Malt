@@ -10,7 +10,7 @@ _shader_src='''
 
 _SHADER = None
 
-class CompositeDepth(object):
+class CompositeDepth():
     
     def __init__(self):
         self.t = None

@@ -28,7 +28,7 @@ class C_NPR_LightGroupsBuffer(ctypes.Structure):
         ('light_group_index', ctypes.c_int*Lighting.MAX_LIGHTS),
     ]
 
-class NPR_LightsGroupsBuffer(object):
+class NPR_LightsGroupsBuffer():
 
     def __init__(self):
         self.data = C_NPR_LightGroupsBuffer()
@@ -54,7 +54,7 @@ class C_NPR_LightShadersBuffer(ctypes.Structure):
         ('custom_shading_index', ctypes.c_int*Lighting.MAX_LIGHTS),
     ]
 
-class NPR_LightShaders(object):
+class NPR_LightShaders():
 
     def __init__(self):
         self.data = C_NPR_LightShadersBuffer()

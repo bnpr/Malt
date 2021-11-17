@@ -1,5 +1,5 @@
 
-class PipelinePlugin(object):
+class PipelinePlugin():
     
     def __init__(self):
         pass

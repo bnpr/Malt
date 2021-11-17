@@ -352,7 +352,7 @@ class MaltRenderEngine(bpy.types.RenderEngine):
 
 
 #Boilerplate code to draw an OpenGL texture to the viewport using Blender color management
-class DisplayDraw(object):
+class DisplayDraw():
     def __init__(self, resolution):
         self.resolution = resolution
         width, height = resolution

@@ -1,4 +1,4 @@
-class PipelineGraph(object):
+class PipelineGraph():
     
     def __init__(self, language, file_extension, functions, structs, graph_IO):
         self.language = language
@@ -13,6 +13,7 @@ class PipelineGraph(object):
     def get_serializable_copy(self):
         from copy import copy
         return copy(self)
+
 
 class GLSLPipelineGraph(PipelineGraph):
 

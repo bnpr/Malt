@@ -66,7 +66,7 @@ def log_system_info():
 
     LOG.info('-'*80)
 
-class PBO(object):
+class PBO():
 
     def __init__(self):
         self.handle = gl_buffer(GL_INT, 1)
@@ -119,7 +119,7 @@ class PBO(object):
         return False
 
 
-class Viewport(object):
+class Viewport():
 
     def __init__(self, pipeline, is_final_render, bit_depth):
         self.pipeline = pipeline

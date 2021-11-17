@@ -4,7 +4,7 @@ import ctypes
 
 from Malt.GL.GL import *
 
-class Mesh(object):
+class Mesh():
 
     def __init__(self, position, index, normal=None, tangent=None, uvs=[], colors=[]):
         self.position = None

@@ -67,7 +67,7 @@ class C_LightsBuffer(ctypes.Structure):
         ('point_matrices', ctypes.c_float*16*MAX_POINTS),
     ]
 
-class ShadowMaps(object):
+class ShadowMaps():
 
     def __init__(self):
         self.max_spots = 1
@@ -155,7 +155,7 @@ class ShadowMaps(object):
         shader.textures['SHADOWMAPS_DEPTH_POINT'] = self.point_depth_t
 
 
-class LightsBuffer(object):
+class LightsBuffer():
     
     def __init__(self):
         self.data = C_LightsBuffer()

@@ -1,6 +1,6 @@
 # Copyright (c) 2020-2021 BNPR, Miguel Pozo and contributors. MIT license. 
 
-class PipelineParameters(object):
+class PipelineParameters():
 
     def __init__(self, scene={}, world={}, camera={}, object={}, material={}, mesh={}, light={}):
         self.scene = scene
@@ -11,7 +11,7 @@ class PipelineParameters(object):
         self.mesh = mesh
         self.light = light
 
-class Type(object):
+class Type():
     BOOL=0
     INT=1
     FLOAT=2
@@ -35,7 +35,7 @@ class Type(object):
     def from_string(cls, type):
         return cls.string_list().index(type)
 
-class Parameter(object):
+class Parameter():
     def __init__(self, default_value, type, size=1, filter=None):
         self.default_value = default_value
         self.type = type

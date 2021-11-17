@@ -5,7 +5,7 @@ import ctypes
 from Malt.GL.GL import *
 
 
-class RenderTarget(object):
+class RenderTarget():
 
     def __init__(self, targets=[], depth_stencil=None):
         self.FBO = gl_buffer(GL_INT, 1)
@@ -88,7 +88,7 @@ class RenderTarget(object):
             pass
 
 
-class TargetBase(object):
+class TargetBase():
     def attach(self, attachment):
         pass
 

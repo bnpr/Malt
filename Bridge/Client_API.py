@@ -28,7 +28,7 @@ class IOCapture(io.StringIO):
         LOG.log(self.log_level, s)
         return super().write(s)
 
-class Bridge(object):
+class Bridge():
 
     def __init__(self, pipeline_path, viewport_bit_depth=8, debug_mode=False, renderdoc_path=None):
         super().__init__()

@@ -16,7 +16,7 @@ class C_CommonBuffer(ctypes.Structure):
         ('__padding', ctypes.c_int),
     ]
 
-class CommonBuffer(object):
+class CommonBuffer():
     
     def __init__(self):
         self.data = C_CommonBuffer()

@@ -15,7 +15,7 @@ MAIN_CONTEXT = True
 
 SHADER_DIR = path.join(path.dirname(__file__), 'Library', 'Shaders')
 
-class Pipeline(object):
+class Pipeline():
 
     GLSL_HEADER = ""
     SHADER_INCLUDE_PATHS = []

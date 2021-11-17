@@ -6,7 +6,7 @@ from . import Texture
 
 MATERIAL_SHADERS = {}
 
-class Material(object):
+class Material():
 
     def __init__(self, path, pipeline, search_paths=[]):
         self.path = path

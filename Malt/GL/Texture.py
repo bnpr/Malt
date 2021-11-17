@@ -4,7 +4,7 @@ from Malt.GL.GL import *
 from Malt.GL import Mesh
 
 
-class Texture(object):
+class Texture():
 
     def __init__(self, resolution, internal_format=GL_RGB32F, data_format = None, data = NULL, 
         wrap=GL_CLAMP_TO_EDGE, min_filter=GL_LINEAR, mag_filter=GL_LINEAR, pixel_format=None, 
@@ -48,7 +48,7 @@ class Texture(object):
             pass
 
 
-class TextureArray(object):
+class TextureArray():
 
     def __init__(self, resolution, length, internal_format=GL_RGB32F, data_format = GL_FLOAT, data = NULL, wrap=GL_CLAMP_TO_EDGE, min_filter=GL_LINEAR, mag_filter=GL_LINEAR):
         self.resolution = resolution
@@ -84,7 +84,7 @@ class TextureArray(object):
             pass
 
 
-class CubeMap(object):
+class CubeMap():
 
     def __init__(self, resolution, internal_format=GL_RGB32F, data_format = GL_FLOAT, data = [NULL]*6, min_filter=GL_LINEAR, mag_filter=GL_LINEAR):
         self.resolution = resolution
@@ -121,7 +121,7 @@ class CubeMap(object):
             pass
 
 
-class CubeMapArray(object):
+class CubeMapArray():
 
     def __init__(self, resolution, length, internal_format=GL_RGB32F, data_format = GL_FLOAT, data = NULL, min_filter=GL_LINEAR, mag_filter=GL_LINEAR):
         self.resolution = resolution
@@ -158,7 +158,7 @@ class CubeMapArray(object):
             pass
 
 
-class Gradient(object):
+class Gradient():
 
     def __init__(self, data, resolution, internal_format=GL_RGBA32F, data_format = GL_FLOAT, nearest_interpolation = False):
         self.resolution = resolution
