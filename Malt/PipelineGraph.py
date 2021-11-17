@@ -15,16 +15,35 @@ class PipelineGraph():
         return copy(self)
 
 
+class GLSLGraphIO():
+
+    COMMON_INPUT_TYPES = ['sampler2D', 'usampler2D', 'isampler2D']
+    COMMON_OUTPUT_TYPES = [
+        'float','vec2','vec3','vec4',
+        'uint','uvec2','uvec3','uvec4',
+        'int','ivec2','ivec3','ivec4',
+    ]
+    
+    def __init__(self, name, define = None, dynamic_input_types = [], dynamic_output_types = []):
+        self.name = name
+        self.define = define
+        self.dynamic_input_types = dynamic_input_types
+        self.dynamic_output_types = dynamic_output_types
+        self.signature = None
+        self.function = None
+
 class GLSLPipelineGraph(PipelineGraph):
 
-    def __init__(self, file_extension, source, root_path, graph_io_map, default_global_scope):
+    INTERNAL_PASS = 0
+    GLOBAL_PASS = 1
+    SCENE_PASS = 2
+
+    def __init__(self, pass_type, file_extension, root_path, source, default_global_scope, graph_io):
         from . GL.Shader import glsl_reflection
+        self.pass_type = pass_type
         reflection = glsl_reflection(source, root_path)
         functions = reflection["functions"]
         structs = reflection["structs"]
-        graph_io = {}
-        for name in graph_io_map.keys():
-            graph_io[name] = functions[name]        
         for key in [*functions.keys()]:
             name = functions[key]['name']
             if name.startswith('_') or name.isupper() or name == 'main':
@@ -32,9 +51,13 @@ class GLSLPipelineGraph(PipelineGraph):
         for name in [*structs.keys()]:
             if name.startswith('_'):
                 structs.pop(name)
-        super().__init__('GLSL', file_extension, functions, structs, graph_io)
-        self.graph_io_map = graph_io_map
+        graph_io_map = {}
+        for io in graph_io:
+            io.function = functions[io.name]
+            io.signature = io.function['signature']
+            graph_io_map[io.name] = io
         self.default_global_scope = default_global_scope
+        super().__init__('GLSL', file_extension, functions, structs, graph_io_map)
     
     def generate_source(self, parameters):
         import textwrap
