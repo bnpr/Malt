@@ -7,9 +7,7 @@ import bpy
 from BlenderMalt.MaltProperties import MaltPropertyGroup
 from BlenderMalt import MaltPipeline
 
-from BlenderMalt.MaltNodes.MaltNode import MaltNode
-from BlenderMalt.MaltNodes.Nodes import MaltIONode
-
+from . MaltNode import MaltNode
 
 def get_pipeline_graph(context):
     if context is None or context.space_data is None or context.space_data.edit_tree is None:
@@ -116,7 +114,7 @@ class MaltTree(bpy.types.NodeTree):
         if pipeline_graph:
             for node in self.nodes:
                 #TODO: MaltNode.is_result()
-                if isinstance(node, MaltIONode) and node.is_output:
+                if node.bl_idname == 'MaltIONode' and node.is_output:
                     output_nodes.append(node)
                     linked_nodes.append(node)
         
