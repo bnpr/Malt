@@ -22,20 +22,14 @@ def high_res_sleep(seconds):
     else:
         time.sleep(seconds)
 
-from Malt.Utils import profile_function
 
 class MaltRenderEngine(bpy.types.RenderEngine):
-    # These three members are used by blender to set up the
-    # RenderEngine; define its internal name, visible name and capabilities.
     bl_idname = "MALT"
     bl_label = "Malt"
     bl_use_preview = False
     bl_use_postprocess = True
     bl_use_shading_nodes_custom = False
 
-    # Init is called whenever a new render engine instance is created. Multiple
-    # instances may exist at the same time, for example for a viewport and final
-    # render.
     def __init__(self):
         self.display_draw = None
         self.scene = Scene.Scene()
@@ -268,30 +262,16 @@ class MaltRenderEngine(bpy.types.RenderEngine):
         # Blender never deletes RenderEngine instances ???
         del self.scene
 
-    # For viewport renders, this method gets called once at the start and
-    # whenever the scene or 3D viewport changes. This method is where data
-    # should be read from Blender in the same thread. Typically a render
-    # thread will be started to do the work while keeping Blender responsive.
     def view_update(self, context, depsgraph):
         self.request_new_frame = True
         self.request_scene_update = True
 
-        # Test which datablocks changed
         for update in depsgraph.updates:
             if update.is_updated_geometry:
                 if isinstance(update.id, bpy.types.Object):
                     MaltMeshes.unload_mesh(update.id)
 
-    # For viewport renders, this method is called whenever Blender redraws
-    # the 3D viewport. The renderer is expected to quickly draw the render
-    # with OpenGL, and not perform other expensive work.
-    # Blender will draw overlays for selection and editing on top of the
-    # rendered image automatically.
     def view_draw(self, context, depsgraph):
-        self.view_draw_wrap(context, depsgraph)
-    
-    #@profile_function
-    def view_draw_wrap(self, context, depsgraph):
         if self.bridge is not MaltPipeline.get_bridge():
             #The Bridge has been reset
             self.bridge = MaltPipeline.get_bridge()
@@ -459,10 +439,6 @@ classes = [
     OT_MaltProfileFrameReport,
 ]
 
-# RenderEngines also need to tell UI Panels that they are compatible with.
-# We recommend to enable all panels marked as BLENDER_RENDER, and then
-# exclude any panels that are replaced by Malt panels registered by the
-# render engine, or that are not supported.
 def get_panels():
     exclude_panels = {
         'VIEWLAYER_PT_filter',

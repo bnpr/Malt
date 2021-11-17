@@ -1,7 +1,6 @@
 # Copyright (c) 2020 BlenderNPR and contributors. MIT license. 
 
 from Malt.PipelineParameters import Parameter
-from Malt.Utils import profile_function
 
 from . import Texture
 
@@ -9,7 +8,6 @@ MATERIAL_SHADERS = {}
 
 class Material(object):
 
-    #@profile_function
     def __init__(self, path, pipeline, search_paths=[]):
         self.path = path
         self.parameters = {}

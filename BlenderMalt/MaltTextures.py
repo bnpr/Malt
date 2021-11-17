@@ -11,9 +11,7 @@ def get_texture(texture):
         __TEXTURES[name] = __load_texture(texture)
     return name
 
-from Malt.Utils import profile_function
 
-#@profile_function
 def __load_texture(texture):
     w,h = texture.size
     channels = int(texture.channels)
