@@ -6,15 +6,14 @@ from Malt.GL.GL import *
 from Malt.GL.RenderTarget import RenderTarget
 from Malt.GL.Texture import Texture
 
-from Malt.Render import Common
-from Malt.Render import DepthToCompositeDepth
-from Malt.Render import Lighting as Lighting
-from Malt.Render import Line
-from Malt.Render import Sampling
+from Malt.Library.Render import Common
+from Malt.Library.Render import DepthToCompositeDepth
+from Malt.Library.Render import Lighting as Lighting
+#from Malt.Library.Render import Line
+from Malt.Library.Render import Sampling
 
-from Malt.Pipelines.NPR_Pipeline import NPR_Lighting
+from Malt.Library.Pipelines.NPR_Pipeline import NPR_Lighting
 
-from Malt.Parameter import Parameter
 from Malt.Pipeline import *
 
 

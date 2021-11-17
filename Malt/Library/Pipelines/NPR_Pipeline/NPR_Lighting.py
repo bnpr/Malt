@@ -6,9 +6,9 @@ from Malt.GL.Shader import UBO
 from Malt.GL.Texture import TextureArray, CubeMapArray
 from Malt.GL.RenderTarget import ArrayLayerTarget, RenderTarget
 
-from Malt.Render import Common
-from Malt.Render import Lighting
-from Malt.Render.Lighting import LightsBuffer, ShadowMaps
+from Malt.Library.Render import Common
+from Malt.Library.Render import Lighting
+from Malt.Library.Render.Lighting import LightsBuffer, ShadowMaps
 
 from Malt import Pipeline
 

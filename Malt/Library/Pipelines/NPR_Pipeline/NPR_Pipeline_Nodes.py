@@ -1,9 +1,9 @@
 # Copyright (c) 2020 BlenderNPR and contributors. MIT license.
 
 from Malt.GL.Texture import internal_format_to_data_format
-from Malt.Pipelines.NPR_Pipeline.NPR_Pipeline import *
+from Malt.Library.Pipelines.NPR_Pipeline.NPR_Pipeline import *
 
-from Malt.Parameter import GLSLPipelineGraph, PythonPipelineGraph
+from Malt.PipelineGraph import GLSLPipelineGraph, PythonPipelineGraph
 
 from Malt import PipelineNode
 

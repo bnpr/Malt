@@ -8,7 +8,7 @@ from Malt.GL.GL import *
 from Malt.GL.Mesh import Mesh
 from Malt.GL.Shader import Shader, UBO, shader_preprocessor
 
-from Malt.Parameter import *
+from Malt.PipelineParameters import *
 
 #Workaround for handling multiple OpenGL contexts
 MAIN_CONTEXT = True
