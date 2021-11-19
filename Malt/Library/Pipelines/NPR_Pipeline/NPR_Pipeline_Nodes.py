@@ -8,7 +8,8 @@ from Malt import PipelineNode
 
 from Malt.PipelineNode import *
 
-from Malt.Library.Nodes import ScreenPass, Unpack8bitTextures
+from Malt.Library.Nodes import Unpack8bitTextures
+from Malt.Library.Pipelines.NPR_Pipeline.Nodes import ScreenPass
 
 _COMMON_HEADER = '''
 #include "NPR_Pipeline.glsl"
@@ -17,7 +18,7 @@ _COMMON_HEADER = '''
 
 _MESH_SHADER_HEADER = _COMMON_HEADER
 _MESH_SHADER_REFLECTION_SRC = _MESH_SHADER_HEADER + '''
-void void COMMON_PIXEL_SHADER(Surface S, inout PixelOutput PO) { }
+void COMMON_PIXEL_SHADER(Surface S, inout PixelOutput PO) { }
 '''
 
 _LIGHT_SHADER_HEADER = _COMMON_HEADER
@@ -89,7 +90,13 @@ class NPR_Pipeline_Nodes(NPR_Pipeline):
             root_path=SHADER_DIR,
             source=source,
             default_global_scope=_SCREEN_SHADER_HEADER,
-            graph_io=[ GLSLGraphIO(name='SCREEN_SHADER') ]
+            graph_io=[ 
+                GLSLGraphIO(
+                    name='SCREEN_SHADER',
+                    dynamic_input_types= GLSLGraphIO.COMMON_INPUT_TYPES,
+                    dynamic_output_types= GLSLGraphIO.COMMON_OUTPUT_TYPES
+                )
+            ]
         )
 
         inputs = {'Scene' : Parameter('Scene', Type.OTHER)}

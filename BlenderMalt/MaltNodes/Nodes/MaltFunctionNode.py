@@ -24,6 +24,18 @@ class MaltFunctionNode(bpy.types.Node, MaltNode):
             if parameter['io'] in ['','in','inout']:
                 inputs[parameter['name']] = parameter
         
+        try:
+            if 'pass_type' in function.keys() and function['pass_type']:
+                assert(self.id_data.get_pipeline_graph().language == 'Python')
+                pass_type = function['pass_type']
+                pass_graph = self.id_data.get_pipeline_graph(pass_type)
+                if pass_graph:
+                    assert(pass_graph.language == 'GLSL' and pass_graph.pass_type != pass_graph.INTERNAL_PASS)
+                    
+        except:
+            import traceback
+            traceback.print_exc()
+        
         self.setup_sockets(inputs, outputs)
 
     function_type : bpy.props.StringProperty(update=MaltNode.setup)

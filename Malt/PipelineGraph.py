@@ -6,6 +6,13 @@ class PipelineGraph():
         self.functions = functions
         self.structs = structs
         self.graph_IO = graph_IO
+        for key in [*functions.keys()]:
+            name = functions[key]['name']
+            if name.startswith('_') or name.isupper() or name == 'main':
+                functions.pop(key)
+        for name in [*structs.keys()]:
+            if name.startswith('_'):
+                structs.pop(name)
     
     def generate_source(self, parameters):
         return ''
@@ -44,13 +51,6 @@ class GLSLPipelineGraph(PipelineGraph):
         reflection = glsl_reflection(source, root_path)
         functions = reflection["functions"]
         structs = reflection["structs"]
-        for key in [*functions.keys()]:
-            name = functions[key]['name']
-            if name.startswith('_') or name.isupper() or name == 'main':
-                functions.pop(key)
-        for name in [*structs.keys()]:
-            if name.startswith('_'):
-                structs.pop(name)
         graph_io_map = {}
         for io in graph_io:
             io.function = functions[io.name]

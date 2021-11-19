@@ -15,22 +15,16 @@ from Malt import Pipeline
 _LIGHTS_BUFFER = None
 
 def get_lights_buffer():
-    if Pipeline.MAIN_CONTEXT:
-        global _LIGHTS_BUFFER
-        if _LIGHTS_BUFFER is None: _LIGHTS_BUFFER = LightsBuffer()
-        return _LIGHTS_BUFFER
-    else:
-        return LightsBuffer()
+    global _LIGHTS_BUFFER
+    if _LIGHTS_BUFFER is None: _LIGHTS_BUFFER = LightsBuffer()
+    return _LIGHTS_BUFFER
 
 _SHADOWMAPS = None
 
 def get_shadow_maps():
-    if Pipeline.MAIN_CONTEXT:
-        global _SHADOWMAPS
-        if _SHADOWMAPS is None: _SHADOWMAPS = ShadowMaps()
-        return _SHADOWMAPS
-    else:
-        return ShadowMaps()
+    global _SHADOWMAPS
+    if _SHADOWMAPS is None: _SHADOWMAPS = ShadowMaps()
+    return _SHADOWMAPS
 
 LIGHT_SUN = 1
 LIGHT_POINT = 2

@@ -15,12 +15,9 @@ from Malt import Pipeline
 _SHADOWMAPS = None
 
 def get_shadow_maps():
-    if Pipeline.MAIN_CONTEXT:
-        global _SHADOWMAPS
-        if _SHADOWMAPS is None: _SHADOWMAPS = (NPR_ShadowMaps(), NPR_TransparentShadowMaps())
-        return _SHADOWMAPS
-    else:
-        return (NPR_ShadowMaps(), NPR_TransparentShadowMaps())
+    global _SHADOWMAPS
+    if _SHADOWMAPS is None: _SHADOWMAPS = (NPR_ShadowMaps(), NPR_TransparentShadowMaps())
+    return _SHADOWMAPS
 
 
 class C_NPR_LightGroupsBuffer(ctypes.Structure):

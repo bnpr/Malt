@@ -66,10 +66,12 @@ class MaltTree(bpy.types.NodeTree):
         result['structs'].update(self.get_library()['structs'])
         return result
     
-    def get_pipeline_graph(self):
+    def get_pipeline_graph(self, graph_type=None):
+        if graph_type is None: 
+            graph_type = self.graph_type
         bridge = MaltPipeline.get_bridge()
-        if bridge and self.graph_type in bridge.graphs:
-            return bridge.graphs[self.graph_type]
+        if bridge and graph_type in bridge.graphs:
+            return bridge.graphs[graph_type]
         return None
     
     def cast(self, from_type, to_type):

@@ -6,30 +6,18 @@ from Malt.PipelineParameters import Parameter, Type, MaterialParameter
 
 class ScreenPass(PipelineNode):
 
-    IO_COUNT = 4
-
     def __init__(self, pipeline):
-        self.pipeline = pipeline
+        super.__init__(pipeline)
         self.resolution = None
-        self.texture_targets = [None]*self.IO_COUNT
+        self.texture_targets = []
         self.render_target = None
-
-    @classmethod
-    def reflect_inputs(cls):
-        inputs = {}
-        inputs['Material'] = MaterialParameter('', 'screen')
-        for i in range(0, cls.IO_COUNT):
-            inputs[f'Input{i}'] = Parameter('', Type.TEXTURE)
-        return inputs
     
-    @classmethod
-    def reflect_outputs(cls):
-        outputs = {}
-        for i in range(0, cls.IO_COUNT):
-            outputs[f'Output{i}'] = Parameter('', Type.TEXTURE)
-        return outputs
+    @staticmethod
+    def get_pass_type():
+        return 'Screen Shader'
     
     def execute(self, parameters):
+        return
         if self.pipeline.resolution != self.resolution:
             for i in range(self.IO_COUNT):
                 self.texture_targets[i] = Texture(self.pipeline.resolution, GL.GL_RGBA16F)

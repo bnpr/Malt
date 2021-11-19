@@ -5,12 +5,17 @@ class PipelineNode():
         self.pipeline = pipeline
     
     @staticmethod
-    def static_reflect(name, inputs, outputs):
+    def get_pass_type():
+        return None
+    
+    @classmethod
+    def static_reflect(cls, name, inputs, outputs):
         dictionary = {
             'name' : name,
             'type' : 'void',
             'file' : 'Render',
-            'parameters' : []
+            'parameters' : [],
+            'pass_type' : cls.get_pass_type()
         }
         for name, input in inputs.items():
             dictionary['parameters'].append({

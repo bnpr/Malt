@@ -5,13 +5,13 @@ import bpy
 
 MESHES = {}
 
-def get_mesh_name():
+def get_mesh_name(object):
     name = object.name_full
     if len(object.modifiers) == 0 and object.data:
         name = object.type + '_' + object.data.name_full
     return name
 
-def get_mesh():
+def get_mesh(object):
     key = get_mesh_name(object)
     if key not in MESHES.keys() or MESHES[key] is None:
         MESHES[key] = load_mesh(object, key)
@@ -110,7 +110,7 @@ def get_load_buffer(name, ctype, size):
     from . import MaltPipeline
     return MaltPipeline.get_bridge().get_shared_buffer(ctype, size)
 
-def unload_mesh():
+def unload_mesh(object):
     MESHES[get_mesh_name(object)] = None
 
 def reset_meshes():
