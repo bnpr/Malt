@@ -12,10 +12,19 @@ class MaltIONode(bpy.types.Node, MaltNode):
     properties: bpy.props.PointerProperty(type=MaltPropertyGroup)
     is_output: bpy.props.BoolProperty()
 
+    custom_pass: bpy.props.StringProperty()
+    allow_custom_pass : bpy.props.BoolProperty(default=False)
+
     def malt_setup(self):
         function = self.get_function()
         if self.first_setup:
             self.name = self.io_type + (' Output' if self.is_output else ' Input')
+        
+        if len(self.get_dynamic_parameter_types()) > 0:
+            self.allow_custom_pass = True
+        else:
+            self.allow_custom_pass = False
+            self.custom_pass = ''
 
         inputs = {}
         outputs = {}
@@ -37,7 +46,22 @@ class MaltIONode(bpy.types.Node, MaltNode):
 
     def get_function(self):
         graph = self.id_data.get_pipeline_graph()
-        return graph.graph_IO[self.io_type]
+        try:
+            return graph.graph_IO[self.io_type].function
+        except:
+            return graph.graph_IO[self.io_type]
+    
+    def get_dynamic_parameter_types(self):
+        try:
+            graph = self.id_data.get_pipeline_graph()
+            if self.is_output:
+                return graph.graph_IO[self.io_type].dynamic_output_types
+            else: 
+                return graph.graph_IO[self.io_type].dynamic_input_types
+        except:
+            import traceback
+            #traceback.print_exc()
+            return []
 
     def get_source_socket_reference(self, socket):
         io = 'out' if self.is_output else 'in'
@@ -58,6 +82,14 @@ class MaltIONode(bpy.types.Node, MaltNode):
                 code += transpiler.result(self.inputs['result'].get_source_reference())
 
         return code
+    
+    def draw_buttons(self, context, layout):
+        graph = self.id_data.get_pipeline_graph()
+        if graph.pass_type != graph.GLOBAL_PASS:
+            layout.prop(self, 'custom_pass', text='Custom Pass')
+    
+    def draw_label(self):
+        return self.name if self.custom_pass == '' else f'{self.name} : {self.custom_pass}'
 
     
 classes = [

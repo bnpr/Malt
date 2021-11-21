@@ -1,8 +1,13 @@
 class PipelineGraph():
+
+    INTERNAL_PASS = 0
+    GLOBAL_PASS = 1
+    SCENE_PASS = 2
     
-    def __init__(self, language, file_extension, functions, structs, graph_IO):
+    def __init__(self, language, file_extension, pass_type, functions, structs, graph_IO):
         self.language = language
         self.file_extension = file_extension
+        self.pass_type = pass_type
         self.functions = functions
         self.structs = structs
         self.graph_IO = graph_IO
@@ -41,13 +46,8 @@ class GLSLGraphIO():
 
 class GLSLPipelineGraph(PipelineGraph):
 
-    INTERNAL_PASS = 0
-    GLOBAL_PASS = 1
-    SCENE_PASS = 2
-
     def __init__(self, pass_type, file_extension, root_path, source, default_global_scope, graph_io):
         from . GL.Shader import glsl_reflection
-        self.pass_type = pass_type
         reflection = glsl_reflection(source, root_path)
         functions = reflection["functions"]
         structs = reflection["structs"]
@@ -57,18 +57,18 @@ class GLSLPipelineGraph(PipelineGraph):
             io.signature = io.function['signature']
             graph_io_map[io.name] = io
         self.default_global_scope = default_global_scope
-        super().__init__('GLSL', file_extension, functions, structs, graph_io_map)
+        super().__init__('GLSL', file_extension, pass_type, functions, structs, graph_io_map)
     
     def generate_source(self, parameters):
         import textwrap
         code = ''
-        for graph_function, (define, declaration) in self.graph_io_map.items():
-            if graph_function in parameters.keys() and define:
-                code += '#define {}\n'.format(define)
+        for graph_IO in self.graph_IO.values():
+            if graph_IO.name in parameters.keys() and graph_IO.define:
+                code += '#define {}\n'.format(graph_IO.define)
         code += '\n\n' + self.default_global_scope + '\n\n' + parameters['GLOBAL'] + '\n\n'
-        for graph_function, (define, declaration) in self.graph_io_map.items():
-            if graph_function in parameters.keys():
-                code += '{}\n{{\n{}\n}}'.format(declaration, textwrap.indent(parameters[graph_function],'\t'))
+        for graph_IO in self.graph_IO.values():
+            if graph_IO.name in parameters.keys():
+                code += '{}\n{{\n{}\n}}'.format(graph_IO.signature, textwrap.indent(parameters[graph_IO.name],'\t'))
         code += '\n\n'
         return code
 
@@ -86,7 +86,7 @@ class PythonPipelineGraph(PipelineGraph):
         graph_io = {}
         for node in graph_io_reflection:
             graph_io[node['name']] = node
-        super().__init__('Python', '-render_layer.py', functions, {}, graph_io)
+        super().__init__('Python', '-render_layer.py', self.GLOBAL_PASS, functions, {}, graph_io)
     
     def generate_source(self, parameters):
         src = ''
