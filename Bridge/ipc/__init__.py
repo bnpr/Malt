@@ -17,13 +17,21 @@ class C_SharedMemory(ctypes.Structure):
         ('int', ctypes.c_int),
     ]
 
+def errcheck(ret, func, args):
+    if ret != 0:
+        import os
+        raise OSError(ret, os.strerror(ret))
+    return ret
+
 create_shared_memory = Ipc['create_shared_memory']
-create_shared_memory.argtypes = [ctypes.c_char_p, ctypes.c_size_t]
-create_shared_memory.restype = C_SharedMemory
+create_shared_memory.argtypes = [ctypes.c_char_p, ctypes.c_size_t, ctypes.POINTER(C_SharedMemory)]
+create_shared_memory.restype = ctypes.c_int
+create_shared_memory.errcheck = errcheck
 
 open_shared_memory = Ipc['open_shared_memory']
-open_shared_memory.argtypes = [ctypes.c_char_p, ctypes.c_size_t]
-open_shared_memory.restype = C_SharedMemory
+open_shared_memory.argtypes = [ctypes.c_char_p, ctypes.c_size_t, ctypes.POINTER(C_SharedMemory)]
+open_shared_memory.restype = ctypes.c_int
+open_shared_memory.errcheck = errcheck
 
 close_shared_memory = Ipc['close_shared_memory']
 close_shared_memory.argtypes = [C_SharedMemory, ctypes.c_bool]
@@ -56,8 +64,10 @@ class SharedBuffer():
         self._ctype = ctype
         self._size = size
         self.id = ''.join(random.choices(string.ascii_letters + string.digits, k=16))
-        self._buffer = create_shared_memory(('MALT_SHARED_'+self.id).encode('ascii'), self.size_in_bytes())
-        self._release_flag = create_shared_memory(('MALT_FLAG_'+self.id).encode('ascii'), ctypes.sizeof(ctypes.c_bool))
+        self._buffer = C_SharedMemory()
+        create_shared_memory(('MALT_SHARED_'+self.id).encode('ascii'), self.size_in_bytes(), ctypes.byref(self._buffer))
+        self._release_flag = C_SharedMemory()
+        create_shared_memory(('MALT_FLAG_'+self.id).encode('ascii'), ctypes.sizeof(ctypes.c_bool), ctypes.byref(self._release_flag))
         ctypes.c_bool.from_address(self._release_flag.data).value = True
         self._is_owner = True
     
@@ -72,8 +82,10 @@ class SharedBuffer():
     def __setstate__(self, state):
         self.__dict__.update(state)
         self._is_owner = False
-        self._buffer = open_shared_memory(('MALT_SHARED_'+self.id).encode('ascii'), self.size_in_bytes())
-        self._release_flag = open_shared_memory(('MALT_FLAG_'+self.id).encode('ascii'), ctypes.sizeof(ctypes.c_bool))
+        self._buffer = C_SharedMemory()
+        open_shared_memory(('MALT_SHARED_'+self.id).encode('ascii'), self.size_in_bytes(), ctypes.byref(self._buffer))
+        self._release_flag = C_SharedMemory()
+        open_shared_memory(('MALT_FLAG_'+self.id).encode('ascii'), ctypes.sizeof(ctypes.c_bool), ctypes.byref(self._release_flag))
     
     def size_in_bytes(self):
         return ctypes.sizeof(self._ctype) * self._size
