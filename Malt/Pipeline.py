@@ -101,6 +101,7 @@ class Pipeline(object):
         else:
             for shader_path in self.SHADER_INCLUDE_PATHS + search_paths:
                 full_path = os.path.join(shader_path, path)
+                full_path = full_path.replace('\\', '/')
                 if os.path.exists(full_path):
                     return full_path
         return None

@@ -38,6 +38,7 @@ class MaltPipeline(bpy.types.PropertyGroup):
         
         #TODO: Sync all scenes. Only one active pipeline per Blender instance is supported atm.
         pipeline = self.pipeline
+        pipeline = pipeline.replace('\\', '/')
         if pipeline == '':
             current_dir = os.path.dirname(os.path.abspath(__file__))
             default_pipeline = os.path.join(current_dir,'.MaltPath','Malt','Pipelines','NPR_Pipeline','NPR_Pipeline_Nodes.py')
