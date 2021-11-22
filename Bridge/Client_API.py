@@ -161,7 +161,10 @@ class Bridge(object):
         if reuse_buffer is None:
             min_size = 1024*1024
             new_size = max(requested_size * 2, min_size)
-            reuse_buffer = ipc.SharedBuffer(ctypes.c_byte, new_size)
+            try:
+                reuse_buffer = ipc.SharedBuffer(ctypes.c_byte, new_size)
+            except OSError as e:
+                log.error(e)
             self.shared_buffers.append(reuse_buffer)
         
         if reuse_buffer:
