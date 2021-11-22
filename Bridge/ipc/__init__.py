@@ -46,7 +46,12 @@ class Array_Interface():
             'shape': shape
         }
 
+
 class SharedBuffer():
+    """
+    A buffer shared between main process and server side process.
+    A SharedBuffer instance can be send to server side process via Bridge.
+    """
 
     _GARBAGE = []
     
@@ -69,8 +74,9 @@ class SharedBuffer():
         self._release_flag = C_SharedMemory()
         create_shared_memory(('MALT_FLAG_'+self.id).encode('ascii'), ctypes.sizeof(ctypes.c_bool), ctypes.byref(self._release_flag))
         ctypes.c_bool.from_address(self._release_flag.data).value = False
-        self._is_owner = True
+        self._is_owner = True  # main process side SharedBuffer has ownership
     
+    # Called when a SharedBuffer is sent to a new Process via Bridge
     def __getstate__(self):
         assert(self._is_owner)
         assert(ctypes.c_bool.from_address(self._release_flag.data).value == False)
@@ -79,9 +85,10 @@ class SharedBuffer():
         state['_release_flag'] = None
         return state
 
+    # Called when a SharedBuffer is sent to a new Process via Bridge
     def __setstate__(self, state):
         self.__dict__.update(state)
-        self._is_owner = False
+        self._is_owner = False  # server side process SharedBuffer has no ownership
         self._buffer = C_SharedMemory()
         open_shared_memory(('MALT_SHARED_'+self.id).encode('ascii'), self.size_in_bytes(), ctypes.byref(self._buffer))
         self._release_flag = C_SharedMemory()
@@ -108,10 +115,13 @@ class SharedBuffer():
 
     def __del__(self):
         if self._is_owner == False or ctypes.c_bool.from_address(self._release_flag.data).value == True:
+            # When server side SharedBuffer is deleted,
+            # OR main process side SharedBuffer deleted with release flag
             ctypes.c_bool.from_address(self._release_flag.data).value = True
             close_shared_memory(self._buffer, self._is_owner)
             close_shared_memory(self._release_flag, self._is_owner)
         else:
+            # main process side SharedBuffer deleted without release flag
             buffer_copy = C_SharedMemory()
             ctypes.memmove(ctypes.addressof(buffer_copy), ctypes.addressof(self._buffer), ctypes.sizeof(C_SharedMemory))
             flag_copy = C_SharedMemory()
