@@ -57,7 +57,10 @@ void COMMON_PIXEL_SHADER(Surface S, inout PixelOutput PO)
     }
     #endif
     
-    PO.color.rgb = scene_diffuse_half(r.position, r.normal);
+    for(int i = 0; i < 4; i++)
+    {
+        PO.color.rgb += scene_diffuse_half(r.position, r.normal, MATERIAL_LIGHT_GROUPS[i], Settings.Receive_Shadow, Settings.Self_Shadow);
+    }
     PO.color.a = r.hit ? 1.0 : 0.0;
     PO.normal = r.normal;
 

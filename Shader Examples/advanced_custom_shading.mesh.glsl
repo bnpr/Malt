@@ -74,7 +74,7 @@ void COMMON_PIXEL_SHADER(Surface S, inout PixelOutput PO)
     for (int i = 0; i < LIGHTS.lights_count; i++)
     {
         Light L = LIGHTS.lights[i];
-        LitSurface LS = NPR_lit_surface(S.position, S.normal, S.id, L, i);
+        LitSurface LS = NPR_lit_surface(S.position, S.normal, S.id, L, i, Settings.Receive_Shadow, Settings.Self_Shadow);
 
         result += BRDF(LS, ao);
     }
