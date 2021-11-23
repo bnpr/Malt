@@ -323,6 +323,9 @@ int ipc_mem_open_existing(ipc_sharedmemory *mem)
     if (!mem->data)
         return -1;
 
+    // file descriptor can close after mmap
+    close(mem->fd);
+
     return 0;
 }
 
@@ -343,6 +346,9 @@ int ipc_mem_create(ipc_sharedmemory *mem)
     if (!mem->data)
         return -1;
 
+    // file descriptor can close after mmap
+    close(mem->fd);
+
     return 0;
 }
 
@@ -351,7 +357,7 @@ void ipc_mem_close(ipc_sharedmemory *mem, bool unlink)
     if (mem->data != NULL)
     {
         munmap(mem->data, mem->size);
-        close(mem->fd);
+        // close(mem->fd);
         if (unlink) shm_unlink(mem->name);
     }
     IPC_FREE(mem->name);
