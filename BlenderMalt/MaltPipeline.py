@@ -2,6 +2,7 @@
 
 import os, platform, time
 import bpy
+from BlenderMalt import malt_path_getter, malt_path_setter
 from . import MaltMaterial, MaltMeshes, MaltTextures
 
 __BRIDGE = None
@@ -75,7 +76,14 @@ class MaltPipeline(bpy.types.PropertyGroup):
 
         setup_all_ids()
     
-    pipeline : bpy.props.StringProperty(name="Malt Pipeline", subtype='FILE_PATH', update=update_pipeline)
+    def _set_pipeline(self, value):
+        self['pipeline'] = value.replace('\\','/')
+    def _get_pipeline(self):
+        return self.get('pipeline','').replace('\\','/')
+
+    pipeline : bpy.props.StringProperty(name="Malt Pipeline", subtype='FILE_PATH', update=update_pipeline,
+        set=malt_path_setter('pipeline'), get=malt_path_getter('pipeline'))
+
     viewport_bit_depth : bpy.props.EnumProperty(items=[('8', '8', ''),('32', '32', '')], 
         name="Bit Depth (Viewport)", update=update_pipeline)
     graph_types : bpy.props.CollectionProperty(type=bpy.types.PropertyGroup)

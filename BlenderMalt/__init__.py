@@ -44,14 +44,25 @@ class OT_MaltPrintError(bpy.types.Operator):
         context.window_manager.modal_handler_add(self)
         return {'RUNNING_MODAL'}
 
+# Always store paths in UNIX format so saved files work across OSs
+def malt_path_setter(property_name):
+    def setter(self, value):
+        self[property_name] = value.replace('\\','/')
+    return setter
+
+def malt_path_getter(property_name):
+    def getter(self):
+        return self.get(property_name,'').replace('\\','/')
+    return getter
 
 class Preferences(bpy.types.AddonPreferences):
     # this must match the addon name
     bl_idname = __package__
 
     setup_vs_code : bpy.props.BoolProperty(name="Auto setup VSCode", default=True, description="Setups a VSCode project on your .blend file folder")
-    
-    renderdoc_path : bpy.props.StringProperty(name="RenderDoc Path", subtype='FILE_PATH')
+
+    renderdoc_path : bpy.props.StringProperty(name="RenderDoc Path", subtype='FILE_PATH',
+        set=malt_path_setter('renderdoc_path'), get=malt_path_getter('renderdoc_path'))
     
     malt_library_path : bpy.props.StringProperty(name="Malt Library Path", subtype='DIR_PATH')
     
