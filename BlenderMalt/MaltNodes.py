@@ -4,6 +4,7 @@ import os, time
 from itertools import chain
 from Malt.Parameter import Parameter, Type
 import bpy
+from BlenderMalt import malt_path_getter, malt_path_setter
 from . MaltProperties import MaltPropertyGroup
 from . import MaltPipeline
 
@@ -27,7 +28,8 @@ class MaltTree(bpy.types.NodeTree):
     
     graph_type: bpy.props.StringProperty(name='Type')
 
-    library_source : bpy.props.StringProperty(name="Shader Library", subtype='FILE_PATH')
+    library_source : bpy.props.StringProperty(name="Shader Library", subtype='FILE_PATH',
+        set=malt_path_setter('library_source'), get=malt_path_getter('library_source'))
 
     disable_updates : bpy.props.BoolProperty(name="Disable Updates", default=False)
 

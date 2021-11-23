@@ -2,6 +2,7 @@
 
 import os
 import bpy
+from BlenderMalt import malt_path_getter, malt_path_setter
 from . MaltProperties import MaltPropertyGroup
 
 _MATERIALS = {}
@@ -24,8 +25,10 @@ class MaltMaterial(bpy.types.PropertyGroup):
     
     def poll_tree(self, object):
         return object.bl_idname == 'MaltTree'
+
+    shader_source : bpy.props.StringProperty(name="Shader Source", subtype='FILE_PATH', update=update_source,
+        set=malt_path_setter('shader_source'), get=malt_path_getter('shader_source'))
         
-    shader_source : bpy.props.StringProperty(name="Shader Source", subtype='FILE_PATH', update=update_source)
     shader_nodes : bpy.props.PointerProperty(name="Node Tree", type=bpy.types.NodeTree, update=update_nodes, poll=poll_tree)
     compiler_error : bpy.props.StringProperty(name="Compiler Error")
 
