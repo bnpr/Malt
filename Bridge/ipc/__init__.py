@@ -68,12 +68,12 @@ class SharedBuffer():
         create_shared_memory(('MALT_SHARED_'+self.id).encode('ascii'), self.size_in_bytes(), ctypes.byref(self._buffer))
         self._release_flag = C_SharedMemory()
         create_shared_memory(('MALT_FLAG_'+self.id).encode('ascii'), ctypes.sizeof(ctypes.c_bool), ctypes.byref(self._release_flag))
-        ctypes.c_bool.from_address(self._release_flag.data).value = False
+        ctypes.c_bool.from_address(self._release_flag.data).value = True
         self._is_owner = True
     
     def __getstate__(self):
         assert(self._is_owner)
-        assert(ctypes.c_bool.from_address(self._release_flag.data).value == False)
+        ctypes.c_bool.from_address(self._release_flag.data).value = False
         state = self.__dict__.copy()
         state['_buffer'] = None
         state['_release_flag'] = None
