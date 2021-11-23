@@ -9,27 +9,25 @@
 #define IPC_IMPLEMENTATION
 #include "ipc.h"
 
-EXPORT ipc_sharedmemory create_shared_memory(char* name, size_t size)
+EXPORT int create_shared_memory(char* name, size_t size, ipc_sharedmemory* mem)
 {
-    ipc_sharedmemory mem = {0};
-    ipc_mem_init(&mem, name, size);
-    ipc_mem_create(&mem);
-
-    return mem;
+    ipc_mem_init(mem, name, size);
+    if (ipc_mem_create(mem) != 0) {
+        return errno;
+    }
+    return 0;
 }
 
-EXPORT ipc_sharedmemory open_shared_memory(char* name, size_t size)
+EXPORT int open_shared_memory(char* name, size_t size, ipc_sharedmemory* mem)
 {
-    ipc_sharedmemory mem = {0};
-    ipc_mem_init(&mem, name, size);
-    ipc_mem_open_existing(&mem);
-    
-    return mem;
+    ipc_mem_init(mem, name, size);
+    if (ipc_mem_open_existing(mem) != 0) {
+        return errno;
+    }
+    return 0;
 }
 
 EXPORT void close_shared_memory(ipc_sharedmemory  mem, bool release)
 {
     ipc_mem_close(&mem, release);
 }
-
-
