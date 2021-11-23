@@ -119,6 +119,9 @@ class PBO(object):
         return False
 
 
+class MeshNotRecvYetException(Exception):
+    pass
+
 class Viewport(object):
 
     def __init__(self, pipeline, is_final_render, bit_depth):
@@ -186,7 +189,11 @@ class Viewport(object):
                 if mesh is None:
                     continue
                 for i, submesh in enumerate(mesh):
-                    submesh.mesh = Bridge.Mesh.MESHES[submesh.mesh][i]
+                    try:
+                        if isinstance(submesh.mesh, str):
+                            submesh.mesh = Bridge.Mesh.MESHES[submesh.mesh][i]
+                    except KeyError:
+                        raise MeshNotRecvYetException()
             
             for material in scene.materials:
                 material.shader = Bridge.Material.get_shader(material.shader['path'], material.shader['parameters'])
@@ -306,6 +313,8 @@ def main(pipeline_path, viewport_bit_depth, connection_addresses, shared_dic, lo
     last_exception = ''
     repeated_exception = 0
 
+    received_render_msg = None
+
     while glfw.window_should_close(window) == False:
         
         try:
@@ -368,7 +377,7 @@ def main(pipeline_path, viewport_bit_depth, connection_addresses, shared_dic, lo
             
             needs_loading = False
 
-            while connections['RENDER'].poll():
+            while connections['RENDER'].poll() or received_render_msg is not None:
                 needs_loading = False
                 for key in ['MATERIAL','MESH','TEXTURE','GRADIENT']:
                     if connections[key].poll():
@@ -376,7 +385,10 @@ def main(pipeline_path, viewport_bit_depth, connection_addresses, shared_dic, lo
                 if needs_loading:
                     break
 
-                msg = connections['RENDER'].recv()
+                if received_render_msg is not None:
+                    msg = received_render_msg
+                else:
+                    msg = connections['RENDER'].recv()
                 log.debug('SETUP RENDER : {}'.format(msg))
                 viewport_id = msg['viewport_id']
                 resolution = msg['resolution']
@@ -389,9 +401,15 @@ def main(pipeline_path, viewport_bit_depth, connection_addresses, shared_dic, lo
                     bit_depth = viewport_bit_depth if viewport_id != 0 else 32
                     viewports[viewport_id] = Viewport(pipeline_class(), viewport_id == 0, bit_depth)
 
-                viewports[viewport_id].setup(new_buffers, resolution, scene, scene_update, renderdoc_capture)
+                try:
+                    viewports[viewport_id].setup(new_buffers, resolution, scene, scene_update, renderdoc_capture)
+                except MeshNotRecvYetException:
+                    received_render_msg = msg
+                    needs_loading = True
+                    break
                 shared_dic[(viewport_id, 'FINISHED')] = False
                 shared_dic[(viewport_id, 'SETUP')] = True
+                received_render_msg = None
             
             if needs_loading:
                 continue
