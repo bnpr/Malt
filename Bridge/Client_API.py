@@ -1,6 +1,6 @@
 # Copyright (c) 2020 BlenderNPR and contributors. MIT license. 
 
-import ctypes, logging as log, io
+import ctypes, logging as log, io, sys
 from Bridge.ipc import SharedBuffer
 
 def bridge_method(function):
@@ -153,7 +153,8 @@ class Bridge(object):
         reuse_buffer = None
         for buffer in self.shared_buffers:
             release_flag = ctypes.c_bool.from_address(buffer._release_flag.data)
-            if release_flag.value == True:
+            min_ref_count = 3 # shared_buffers + local buffer var + getrefcount ref
+            if release_flag.value == True and sys.getrefcount(buffer) == min_ref_count:
                 if buffer._buffer.size >= requested_size:
                     if reuse_buffer is None or buffer._buffer.size < reuse_buffer._buffer.size:
                         reuse_buffer = buffer
@@ -165,7 +166,7 @@ class Bridge(object):
             self.shared_buffers.append(reuse_buffer)
         
         if reuse_buffer:
-            ctypes.c_bool.from_address(reuse_buffer._release_flag.data).value = False
+            ctypes.c_bool.from_address(reuse_buffer._release_flag.data).value = True
             reuse_buffer._ctype = ctype
             reuse_buffer._size = size
             return reuse_buffer
