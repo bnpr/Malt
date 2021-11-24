@@ -29,9 +29,6 @@ class MaltSocket(bpy.types.NodeSocket):
 
     def is_instantiable_type(self):
         return self.data_type.startswith('sampler') == False
-    
-    def get_source_name(self):
-        return self.id_data.get_transpiler().get_source_name(self.name)
 
     def get_source_reference(self, target_type=None):
         if not self.is_instantiable_type() and not self.is_output and self.get_linked() is not None:
@@ -44,7 +41,8 @@ class MaltSocket(bpy.types.NodeSocket):
             return reference
     
     def get_source_global_reference(self):
-        return self.id_data.get_transpiler().global_reference(self.node.get_source_name(), self.name)
+        transpiler = self.id_data.get_transpiler()
+        return transpiler.global_reference(self.node.get_source_name(), transpiler.get_source_name(self.name)).replace('__','_')
     
     def is_struct_member(self):
         return '.' in self.name

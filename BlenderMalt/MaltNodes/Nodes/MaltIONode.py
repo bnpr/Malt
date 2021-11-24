@@ -88,7 +88,7 @@ class MaltIONode(bpy.types.Node, MaltNode):
         io = 'out' if self.is_output else 'in'
         transpiler = self.id_data.get_transpiler()
         if self.is_custom_socket(socket):
-            return transpiler.global_reference(self.get_source_name(), socket.get_source_name())
+            return socket.get_source_global_reference()
         else:
             return transpiler.io_parameter_reference(socket.name, io)
     
