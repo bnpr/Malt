@@ -5,7 +5,7 @@ It's aimed at advanced users and technical artists who want more control over th
 
 [Docs](https://malt3d.com) | [Forums & Support](https://github.com/bnpr/Malt/discussions) | [Bug Reports](#bug-reports) | [Twitter](https://twitter.com/pragma37) | [Patreon](https://patreon.com/pragma37)
 
-### Features
+## Features
 
 - **Free and Open Source**. MIT License.
 - **Real Time Rendering**.
@@ -34,9 +34,6 @@ Malt is software agnostic, but Blender is the only integration planned right now
 
 > While Malt itself works on Mac, the default render pipeline does not due to limits in the Mac OpenGL drivers.
 
-> On Linux distributions not based on Ubuntu, you may have to compile and package BlenderMalt yourself.     
-> See [How to setup BlenderMalt for Development](docs/Setup-BlenderMalt-for-Development.md) for instructions.
-
 ## Install
  
 - Go to [the latest Release page](https://github.com/bnpr/Malt/releases/tag/Release-latest).
@@ -47,7 +44,7 @@ Malt is software agnostic, but Blender is the only integration planned right now
 > Altenatively, you can download the [Development version](https://github.com/bnpr/Malt/releases/tag/Development-latest) to test the latest features.       
 > Keep in mind this version is only intended for testing and your scenes may break often.
 
-#### Uninstall
+## Uninstall
 
 - Untick the box in *Preferences > Addons > BlenderMalt* to disable the addon.
 - Restart *Blender*.
