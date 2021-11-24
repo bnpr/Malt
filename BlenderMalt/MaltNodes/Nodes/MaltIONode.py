@@ -115,8 +115,12 @@ class MaltIONode(bpy.types.Node, MaltNode):
         src = MaltNode.get_source_global_parameters(self, transpiler)
         if self.is_output:
             graph_io = self.id_data.get_pipeline_graph().graph_IO[self.io_type]
-            shader_type = graph_io.shader_type
-            index = graph_io.custom_output_start_index
+            try:
+                shader_type = graph_io.shader_type
+                index = graph_io.custom_output_start_index
+            except:
+                shader_type = None
+                index = None
             for socket in self.inputs:
                 if self.is_custom_socket(socket):
                     src += transpiler.global_output_declaration(socket.data_type, socket.name, index, shader_type)
