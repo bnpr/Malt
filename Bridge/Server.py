@@ -300,7 +300,12 @@ def main(pipeline_path, viewport_bit_depth, connection_addresses, shared_dic, lo
     params = pipeline.get_parameters()
     graphs = pipeline.get_graphs()
     outputs = pipeline.get_render_outputs()
-    connections['PARAMS'].send((params, graphs, outputs))
+    connections['MAIN'].send({
+        'msg_type': 'PARAMS',
+        'params': params,
+        'graphs': graphs,
+        'outputs': outputs
+    })
 
     viewports = {}
     last_exception = ''
@@ -319,14 +324,6 @@ def main(pipeline_path, viewport_bit_depth, connection_addresses, shared_dic, lo
 
             glfw.poll_events()
 
-            while connections['MATERIAL'].poll():
-                msg = connections['MATERIAL'].recv()
-                log.debug('COMPILE MATERIAL : {}'.format(msg))
-                path = msg['path']
-                search_paths = msg['search_paths']
-                material = Bridge.Material.Material(path, pipeline, search_paths)
-                connections['MATERIAL'].send(material)
-            
             while connections['SHADER REFLECTION'].poll():
                 msg = connections['SHADER REFLECTION'].recv()
                 log.debug('REFLECT SHADER : {}'.format(msg))
@@ -343,58 +340,55 @@ def main(pipeline_path, viewport_bit_depth, connection_addresses, shared_dic, lo
                     for function in reflection['functions'].values(): reflection['paths'].add(function['file'])
                     results[path] = reflection
                 connections['SHADER REFLECTION'].send(results)
-            
-            while connections['MESH'].poll():
-                msg = connections['MESH'].recv()
-                msg_log = copy.copy(msg)
-                msg_log['data'] = None
-                log.debug('LOAD MESH : {}'.format(msg_log))
-                Bridge.Mesh.load_mesh(msg)
-            
-            while connections['TEXTURE'].poll():
-                msg = connections['TEXTURE'].recv()
-                log.debug('LOAD TEXTURE : {}'.format(msg))
-                Bridge.Texture.load_texture(msg)
-            
-            while connections['GRADIENT'].poll():
-                msg = connections['GRADIENT'].recv()
-                msg_log = copy.copy(msg)
-                msg_log['pixels'] = None
-                log.debug('LOAD GRADIENT : {}'.format(msg_log))
-                name = msg['name']
-                pixels = msg['pixels']
-                nearest = msg['nearest']
-                Bridge.Texture.load_gradient(name, pixels, nearest)
-            
-            needs_loading = False
 
-            while connections['RENDER'].poll():
-                needs_loading = False
-                for key in ['MATERIAL','MESH','TEXTURE','GRADIENT']:
-                    if connections[key].poll():
-                        needs_loading = True
-                if needs_loading:
-                    break
+            while connections['MAIN'].poll():
+                msg = connections['MAIN'].recv()
+                
+                if msg['msg_type'] == 'MATERIAL':
+                    log.debug('COMPILE MATERIAL : {}'.format(msg))
+                    path = msg['path']
+                    search_paths = msg['search_paths']
+                    material = Bridge.Material.Material(path, pipeline, search_paths)
+                    connections['MAIN'].send({
+                        'msg_type': 'MATERIAL',
+                        'material' : material
+                    })
+                
+                if msg['msg_type'] == 'MESH':
+                    msg_log = copy.copy(msg)
+                    msg_log['data'] = None
+                    log.debug('LOAD MESH : {}'.format(msg_log))
+                    Bridge.Mesh.load_mesh(msg)
+                
+                if msg['msg_type'] == 'TEXTURE':
+                    log.debug('LOAD TEXTURE : {}'.format(msg))
+                    Bridge.Texture.load_texture(msg)
+                
+                if msg['msg_type'] == 'GRADIENT':
+                    msg_log = copy.copy(msg)
+                    msg_log['pixels'] = None
+                    log.debug('LOAD GRADIENT : {}'.format(msg_log))
+                    name = msg['name']
+                    pixels = msg['pixels']
+                    nearest = msg['nearest']
+                    Bridge.Texture.load_gradient(name, pixels, nearest)
+                
+                if msg['msg_type'] == 'RENDER':
+                    log.debug('SETUP RENDER : {}'.format(msg))
+                    viewport_id = msg['viewport_id']
+                    resolution = msg['resolution']
+                    scene = msg['scene']
+                    scene_update = msg['scene_update']
+                    new_buffers = msg['new_buffers']
+                    renderdoc_capture = msg['renderdoc_capture']
 
-                msg = connections['RENDER'].recv()
-                log.debug('SETUP RENDER : {}'.format(msg))
-                viewport_id = msg['viewport_id']
-                resolution = msg['resolution']
-                scene = msg['scene']
-                scene_update = msg['scene_update']
-                new_buffers = msg['new_buffers']
-                renderdoc_capture = msg['renderdoc_capture']
+                    if viewport_id not in viewports:
+                        bit_depth = viewport_bit_depth if viewport_id != 0 else 32
+                        viewports[viewport_id] = Viewport(pipeline_class(), viewport_id == 0, bit_depth)
 
-                if viewport_id not in viewports:
-                    bit_depth = viewport_bit_depth if viewport_id != 0 else 32
-                    viewports[viewport_id] = Viewport(pipeline_class(), viewport_id == 0, bit_depth)
-
-                viewports[viewport_id].setup(new_buffers, resolution, scene, scene_update, renderdoc_capture)
-                shared_dic[(viewport_id, 'FINISHED')] = False
-                shared_dic[(viewport_id, 'SETUP')] = True
-            
-            if needs_loading:
-                continue
+                    viewports[viewport_id].setup(new_buffers, resolution, scene, scene_update, renderdoc_capture)
+                    shared_dic[(viewport_id, 'FINISHED')] = False
+                    shared_dic[(viewport_id, 'SETUP')] = True
             
             active_viewports = {}
             render_finished = True
