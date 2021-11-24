@@ -76,7 +76,7 @@ class Bridge(object):
             listeners[name] = listener
             malt_to_bridge[name] = address
 
-        for name in ['PARAMS','MESH','MATERIAL','SHADER REFLECTION','TEXTURE','GRADIENT','RENDER']: add_connection(name)
+        for name in ['MAIN','SHADER REFLECTION']: add_connection(name)
 
         from . import start_server
         self.process = mp.Process(target=start_server, args=[pipeline_path, viewport_bit_depth, malt_to_bridge, self.shared_dict, self.lock, sys.stdout.log_path, debug_mode, renderdoc_path])
@@ -88,7 +88,11 @@ class Bridge(object):
         
         self.connections = bridge_to_malt
 
-        self.parameters, self.graphs, self.render_outputs = self.connections['PARAMS'].recv()
+        params = self.connections['MAIN'].recv()
+        assert(params['msg_type'] == 'PARAMS')
+        self.parameters = params['params']
+        self.graphs = params['graphs']
+        self.render_outputs = params['outputs']
         self.lost_connection = False
 
     
@@ -109,13 +113,21 @@ class Bridge(object):
 
     @bridge_method
     def compile_material(self, path, search_paths=[]):
-        self.connections['MATERIAL'].send({'path': path, 'search_paths': search_paths})
-        return self.connections['MATERIAL'].recv()
+        self.connections['MAIN'].send({
+            'msg_type': 'MATERIAL',
+            'path': path,
+            'search_paths': search_paths
+        })
+        return self.connections['MAIN'].recv()
 
     @bridge_method
     def compile_materials(self, paths, search_paths=[], async_compilation=False):
         for path in paths:
-            self.connections['MATERIAL'].send({'path': path, 'search_paths': search_paths})
+            self.connections['MAIN'].send({
+                'msg_type': 'MATERIAL',
+                'path': path,
+                'search_paths': search_paths
+            })
         results = {}
         received = []
         if async_compilation == False:
@@ -127,7 +139,9 @@ class Bridge(object):
                         break
                 if completed:
                     break
-                material = self.connections['MATERIAL'].recv()
+                msg = self.connections['MAIN'].recv()
+                assert(msg['msg_type'] == 'MATERIAL')
+                material = msg['material']
                 results[material.path] = material
                 received.append(material.path)
         return results
@@ -135,8 +149,10 @@ class Bridge(object):
     @bridge_method
     def receive_async_compilation_materials(self):
         results = {}
-        while self.connections['MATERIAL'].poll():
-            material = self.connections['MATERIAL'].recv()
+        while self.connections['MAIN'].poll():
+            msg = self.connections['MAIN'].recv()
+            assert(msg['msg_type'] == 'MATERIAL')
+            material = msg['material']
             results[material.path] = material
         return results
     
@@ -173,14 +189,16 @@ class Bridge(object):
 
     @bridge_method
     def load_mesh(self, name, mesh_data):
-        self.connections['MESH'].send({
+        self.connections['MAIN'].send({
+            'msg_type': 'MESH',
             'name': name,
             'data': mesh_data
         })
     
     @bridge_method
     def load_texture(self, name, buffer, resolution, channels, sRGB):
-        self.connections['TEXTURE'].send({
+        self.connections['MAIN'].send({
+            'msg_type': 'TEXTURE',
             'buffer': buffer,
             'name': name,
             'resolution': resolution,
@@ -190,7 +208,8 @@ class Bridge(object):
 
     @bridge_method
     def load_gradient(self, name, pixels, nearest):
-        self.connections['GRADIENT'].send({
+        self.connections['MAIN'].send({
+            'msg_type': 'GRADIENT',
             'name': name,
             'pixels': pixels,
             'nearest' : nearest,
@@ -237,7 +256,8 @@ class Bridge(object):
                     return
                 
         self.shared_dict[(viewport_id, 'FINISHED')] = None
-        self.connections['RENDER'].send({
+        self.connections['MAIN'].send({
+            'msg_type': 'RENDER',
             'viewport_id': viewport_id,
             'resolution': resolution,
             'scene': scene,
