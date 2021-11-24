@@ -4,23 +4,21 @@ from BlenderMalt import MaltPipeline
 
 class MaltIOParameter(bpy.types.PropertyGroup):
 
-    def get_owner(self):
-        path = self.path_from_id()
-        owner_path = path.rsplit('.',1)[0]
-        return self.id_data.path_resolve(owner_path)
-    
     def get_parameter_enums(self, context):
         types = ['None']
-        owner = self.get_owner()
-        graph_type = owner.graph_type
-        pass_type = owner.pass_type
         bridge = MaltPipeline.get_bridge()
-        if bridge and graph_type in bridge.graphs:
-            graph = bridge.graphs[graph_type]
-            if pass_type in graph.graph_IO:
-                types = graph.graph_IO[pass_type].dynamic_output_types
+        if bridge and self.graph_type in bridge.graphs:
+            graph = bridge.graphs[self.graph_type]
+            if self.pass_type in graph.graph_IO:
+                if self.is_output:
+                    types = graph.graph_IO[self.pass_type].dynamic_output_types
+                else:
+                    types = graph.graph_IO[self.pass_type].dynamic_input_types
         return [(type, type, type) for type in types]
 
+    graph_type : bpy.props.StringProperty()
+    pass_type : bpy.props.StringProperty()
+    is_output : bpy.props.BoolProperty()
     parameter : bpy.props.EnumProperty(items=get_parameter_enums)
 
     def draw(self, context, layout, owner):
@@ -63,12 +61,15 @@ class COMMON_UL_UI_List(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
         item.draw(context, layout, data)
 
-def malt_template_list(layout, owner, list_property, index_property):
+def malt_template_list(layout, owner, list_property, index_property, add_callback=None):
     row = layout.row()
     row.template_list('COMMON_UL_UI_List', '', owner, list_property, owner, index_property)
     col = row.column()
     op = col.operator('wm.malt_list_add', text='', icon='ADD')
     op.list_path = to_json_rna_path(getattr(owner, list_property))
+    if add_callback:
+        import pickle
+        op.callback = pickle.dumps(add_callback, 0).decode()
     op = col.operator('wm.malt_list_remove', text='', icon='REMOVE')
     op.list_path = to_json_rna_path(getattr(owner, list_property))
     op.index = getattr(owner, index_property)
@@ -99,9 +100,13 @@ class OT_MaltListAdd(bpy.types.Operator):
     bl_idname = "wm.malt_list_add"
     
     list_path : bpy.props.StringProperty()
+    callback : bpy.props.StringProperty()
     
     def execute(self, context):
-        from_json_rna_path(self.list_path).add()
+        new = from_json_rna_path(self.list_path).add()
+        if self.callback != '':
+            import pickle
+            pickle.loads(self.callback.encode())(new)
         return {'FINISHED'}
 
 class OT_MaltListRemove(bpy.types.Operator):

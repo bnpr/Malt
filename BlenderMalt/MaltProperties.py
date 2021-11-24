@@ -491,6 +491,8 @@ def to_json_rna_path_node_workaround(malt_property_group, path_from_group):
 def to_json_rna_path(prop):
     blend_id = prop.id_data
     id_type = str(blend_id.__class__).split('.')[-1]
+    if isinstance(prop.id_data, bpy.types.NodeTree):
+        id_type = 'NodeTree'
     id_name = blend_id.name_full
     path = prop.path_from_id()
     return json.dumps((id_type, id_name, path))

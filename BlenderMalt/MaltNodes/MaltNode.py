@@ -118,9 +118,7 @@ class MaltNode():
         self.width = max(self.width, max_len * 10)
 
     def get_source_name(self):
-        name = self.name.replace('.','_')
-        name = '_' + ''.join(char for char in name if char.isalnum() or char == '_')
-        return name.replace('__','_')
+        return self.id_data.get_transpiler().get_source_name(self.name)
 
     def get_source_code(self, transpiler):
         if self.id_data.get_source_language() == 'GLSL':

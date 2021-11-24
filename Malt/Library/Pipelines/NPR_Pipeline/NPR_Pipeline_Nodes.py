@@ -61,14 +61,18 @@ class NPR_Pipeline_Nodes(NPR_Pipeline):
                     name='COMMON_PIXEL_SHADER',
                     dynamic_input_types= GLSLGraphIO.COMMON_INPUT_TYPES,
                     dynamic_output_types= GLSLGraphIO.COMMON_OUTPUT_TYPES,
+                    shader_type='PIXEL_SHADER',
+                    custom_output_start_index=1,
                 ),
                 GLSLGraphIO(
                     name='VERTEX_DISPLACEMENT_SHADER',
                     define='CUSTOM_VERTEX_DISPLACEMENT',
+                    shader_type='VERTEX_SHADER'
                 ),
                 GLSLGraphIO(
                     name='COMMON_VERTEX_SHADER',
                     define='CUSTOM_VERTEX_SHADER',
+                    shader_type='VERTEX_SHADER',
                 ),
             ]
         )
@@ -94,7 +98,8 @@ class NPR_Pipeline_Nodes(NPR_Pipeline):
                 GLSLGraphIO(
                     name='SCREEN_SHADER',
                     dynamic_input_types= GLSLGraphIO.COMMON_INPUT_TYPES,
-                    dynamic_output_types= GLSLGraphIO.COMMON_OUTPUT_TYPES
+                    dynamic_output_types= GLSLGraphIO.COMMON_OUTPUT_TYPES,
+                    shader_type='PIXEL_SHADER',
                 )
             ]
         )

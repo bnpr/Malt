@@ -1,6 +1,16 @@
+import textwrap
+
 #TODO: Send transpiler along graph types
 class SourceTranspiler():
     
+    @classmethod
+    def get_source_name(self, name):
+        name = name.replace('.','_').replace(' ', '_')
+        name = '_' + ''.join(char for char in name if char.isalnum() or char == '_')
+        while '__' in name:
+            name = name.replace('__','_')
+        return name
+
     @classmethod
     def asignment(self, name, asignment):
         pass
@@ -15,6 +25,14 @@ class SourceTranspiler():
     
     @classmethod
     def global_declaration(self, type, size, name, initialization=None):
+        pass
+
+    @classmethod
+    def global_output_reference(self, name):
+        pass
+
+    @classmethod
+    def global_output_declaration(self, type, name, index):
         pass
 
     @classmethod
@@ -60,6 +78,18 @@ class GLSLTranspiler(SourceTranspiler):
     @classmethod
     def global_declaration(self, type, size, name, initialization=None):
         return 'uniform ' + self.declaration(type, size, name, initialization)
+    
+    @classmethod
+    def global_output_reference(self, name):
+        return 'OUT_' + name
+
+    @classmethod
+    def global_output_declaration(self, type, name, index, shader_type):
+        return textwrap.dedent(f'''\
+        #ifdef {shader_type}
+            layout (location = {index}) out {type} {self.global_output_reference(name)};
+        #endif
+        ''')
 
     @classmethod
     def parameter_reference(self, node_name, parameter_name):
@@ -118,6 +148,14 @@ class PythonTranspiler(SourceTranspiler):
     def global_declaration(self, type, size, name, initialization=None):
         return ''
         return self.declaration(type, size, name, initialization)
+    
+    @classmethod
+    def global_output_reference(self, name):
+        return self.io_parameter_reference(name, 'out')
+
+    @classmethod
+    def global_output_declaration(self, type, name, index):
+        return self.declaration(type, 0, self.io_parameter_reference(name, 'out'))
 
     @classmethod    
     def parameter_reference(self, node_name, parameter_name):

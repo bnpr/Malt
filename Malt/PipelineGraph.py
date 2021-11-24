@@ -36,9 +36,11 @@ class GLSLGraphIO():
         'int','ivec2','ivec3','ivec4',
     ]
     
-    def __init__(self, name, define = None, dynamic_input_types = [], dynamic_output_types = []):
+    def __init__(self, name, define = None, dynamic_input_types = [], dynamic_output_types = [], shader_type=None, custom_output_start_index=0):
         self.name = name
         self.define = define
+        self.shader_type = shader_type
+        self.custom_output_start_index = custom_output_start_index
         self.dynamic_input_types = dynamic_input_types
         self.dynamic_output_types = dynamic_output_types
         self.signature = None
@@ -68,7 +70,11 @@ class GLSLPipelineGraph(PipelineGraph):
         code += '\n\n' + self.default_global_scope + '\n\n' + parameters['GLOBAL'] + '\n\n'
         for graph_IO in self.graph_IO.values():
             if graph_IO.name in parameters.keys():
+                if graph_IO.shader_type:
+                    code += f'#ifdef {graph_IO.shader_type}\n'
                 code += '{}\n{{\n{}\n}}'.format(graph_IO.signature, textwrap.indent(parameters[graph_IO.name],'\t'))
+                if graph_IO.shader_type:
+                    code += f'\n#endif //{graph_IO.shader_type}\n'
         code += '\n\n'
         return code
 
