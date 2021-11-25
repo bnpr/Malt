@@ -98,9 +98,12 @@ class MaltNode():
             elif input.array_size == 0:
                 try:
                     parameter = Parameter.from_glsl_type(input.data_type)
-                    parameter.default_value = eval(inputs[name]['meta']['value'])
                 except:
                     parameter = Parameter(inputs[name]['type'], Type.OTHER)
+                try:
+                    parameter.default_value = eval(inputs[name]['meta']['value'])
+                except:
+                    pass
             if parameter:
                 parameters[input.name] = parameter
         self.malt_parameters.setup(parameters, skip_private=False)
