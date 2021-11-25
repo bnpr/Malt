@@ -4,6 +4,7 @@ from Malt.PipelineParameters import Parameter, Type
 import bpy    
 from BlenderMalt.MaltProperties import MaltPropertyGroup
 
+COLUMN_TYPES = ['Texture','sampler','Material']
 
 class MaltNode():
 
@@ -150,12 +151,23 @@ class MaltNode():
         for socket in chain(self.inputs.values(), self.outputs.values()):
             socket.setup_shape()
     
+    def is_column_type(self, data_type):
+        global COLUMN_TYPES
+        for type in COLUMN_TYPES:
+            if type in data_type:
+                return True
+        return False
+    
     def draw_socket(self, context, layout, socket, text):
-        layout.label(text=text)
         if socket.is_output == False and socket.is_linked == False and socket.default_initialization == '':
             if socket.is_struct_member() and (socket.get_struct_socket().is_linked or socket.get_struct_socket().default_initialization != ''):
                 return
+            if self.is_column_type(socket.data_type):
+                layout = layout.column()
+            layout.label(text=text)
             self.malt_parameters.draw_parameter(layout, socket.name, None, is_node_socket=True)
+        else:
+            layout.label(text=text)
 
     @classmethod
     def poll(cls, ntree):

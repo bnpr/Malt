@@ -1,5 +1,6 @@
 # Copyright (c) 2020-2021 BNPR, Miguel Pozo and contributors. MIT license. 
 
+import json
 import bpy    
 from BlenderMalt.MaltNodes.MaltNode import MaltNode
 
@@ -29,6 +30,7 @@ class MaltFunctionNode(bpy.types.Node, MaltNode):
 
     function_type : bpy.props.StringProperty(update=MaltNode.setup)
     pass_material: bpy.props.PointerProperty(type=bpy.types.Material, update=MaltNode.setup)
+    show_material_parameters: bpy.props.BoolProperty(default=True)
     pass_type: bpy.props.StringProperty()
 
     def get_function(self):
@@ -89,8 +91,21 @@ class MaltFunctionNode(bpy.types.Node, MaltNode):
     
     def draw_buttons(self, context, layout):
         if self.pass_type != '':
-            layout.prop(self, 'pass_material')
+            layout = layout.column()
+            row = layout.row(align=True)
             if self.pass_material:
+                row.prop(self, 'show_material_parameters',
+                    icon = 'DISCLOSURE_TRI_DOWN' if self.show_material_parameters else 'DISCLOSURE_TRI_RIGHT',
+                    icon_only=True, emboss=False
+                )
+            row.template_ID(self, "pass_material")
+            material_path = json.dumps(('NodeTree', self.id_data.name_full, f'nodes["{self.name}"]'))
+            text = '' if self.pass_material else 'New'
+            icon = 'DUPLICATE' if self.pass_material else 'ADD'
+            op = row.operator('material.malt_add_material', text=text, icon=icon)
+            op.material_owner_path = material_path
+            op.material_property = 'pass_material'
+            if self.pass_material and self.show_material_parameters:
                 self.pass_material.malt.draw_ui(layout.box(),
                     self.id_data.get_pipeline_graph(self.pass_type).file_extension, self.pass_material.malt_parameters)
 

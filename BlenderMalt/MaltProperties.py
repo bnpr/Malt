@@ -465,11 +465,11 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                 material_path = to_json_rna_path_node_workaround(self, 'malt_parameters.materials["{}"]'.format(key))
             if self.materials[key].material:
                 extension = self.materials[key].extension
-                row.operator('material.malt_add_material', text='', icon='DUPLICATE').material_path = material_path
+                row.operator('material.malt_add_material', text='', icon='DUPLICATE').material_owner_path = material_path
                 material = self.materials[key].material
                 material.malt.draw_ui(layout.box(), extension, material.malt_parameters)
             else:
-                row.operator('material.malt_add_material', text='New', icon='ADD').material_path = material_path
+                row.operator('material.malt_add_material', text='New', icon='ADD').material_owner_path = material_path
         elif rna[key]['type'] == Type.GRAPH:
             make_row(True)
             row = layout.row(align=True)
@@ -541,16 +541,17 @@ class OT_MaltNewMaterial(bpy.types.Operator):
     bl_label = "Malt Add Material"
     bl_options = {'INTERNAL'}
 
-    material_path : bpy.props.StringProperty()
+    material_owner_path : bpy.props.StringProperty()
+    material_property : bpy.props.StringProperty(default='material')
 
     def execute(self, context):
-        material_wrapper = from_json_rna_path(self.material_path)
-        if material_wrapper.material:
-            material_wrapper.material = material_wrapper.material.copy()
+        material_wrapper = from_json_rna_path(self.material_owner_path)
+        if getattr(material_wrapper, self.material_property):
+            setattr(material_wrapper, self.material_property, material_wrapper.material.copy())
         else:
-            material_wrapper.material = bpy.data.materials.new('Material')
+            setattr(material_wrapper, self.material_property, bpy.data.materials.new('Material'))
         material_wrapper.id_data.update_tag()
-        material_wrapper.material.update_tag()
+        getattr(material_wrapper, self.material_property).update_tag()
         return {'FINISHED'}
 
 class OT_MaltNewOverride(bpy.types.Operator):
