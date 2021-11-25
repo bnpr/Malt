@@ -119,7 +119,7 @@ class PythonPipelineGraph(PipelineGraph):
         except:
             import traceback
             traceback.print_exc()
-        print('SOURCE:\n', source)
-        print('PARAMETERS: ', PARAMETERS)
-        print('IN: ', IN)
-        print('OUT: ', OUT)
+            print('SOURCE:\n', source)
+            print('PARAMETERS: ', PARAMETERS)
+            print('IN: ', IN)
+            print('OUT: ', OUT)

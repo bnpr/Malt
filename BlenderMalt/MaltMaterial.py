@@ -49,7 +49,8 @@ class MaltMaterial(bpy.types.PropertyGroup):
 
         source_path = self.get_source_path()
 
-        if source_path != '' and source_path.endswith('.'+extension+'.glsl') == False:
+        if source_path != '' and source_path.endswith(extension) == False:
+            print('Wrong extension:', source_path)
             box = layout.box()
             box.label(text='Wrong shader extension, should be '+extension+'.', icon='ERROR')
             return
@@ -122,7 +123,7 @@ class MALT_PT_MaterialSettings(bpy.types.Panel):
                 row.operator("object.material_slot_deselect", text="Deselect")
         
         if context.material:
-            context.material.malt.draw_ui(layout, 'mesh', context.material.malt_parameters)
+            context.material.malt.draw_ui(layout, '.mesh.glsl', context.material.malt_parameters)
 
 
 classes = (

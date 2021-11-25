@@ -29,8 +29,8 @@ class Pipeline():
         self.parameters.mesh['double_sided'] = Parameter(False, Type.BOOL)
         self.parameters.mesh['precomputed_tangents'] = Parameter(False, Type.BOOL)
 
-        self.parameters.world['Material.Default'] = MaterialParameter('', 'mesh')
-        self.parameters.world['Material.Override'] = MaterialParameter('', 'mesh')
+        self.parameters.world['Material.Default'] = MaterialParameter('', '.mesh.glsl')
+        self.parameters.world['Material.Override'] = MaterialParameter('', '.mesh.glsl')
 
         self.graphs = {}
 

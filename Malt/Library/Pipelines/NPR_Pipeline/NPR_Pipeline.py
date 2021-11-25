@@ -64,9 +64,9 @@ class NPR_Pipeline(Pipeline):
         self.parameters.world['Transparency.Layers @ Preview'] = Parameter(1, Type.INT)
         
         default_material_path = os.path.join(os.path.dirname(__file__), 'default.mesh.glsl')
-        self.parameters.world['Material.Default'] = MaterialParameter(default_material_path, 'mesh')
+        self.parameters.world['Material.Default'] = MaterialParameter(default_material_path, '.mesh.glsl')
         
-        self.parameters.light['Shader'] = MaterialParameter('', 'light')
+        self.parameters.light['Shader'] = MaterialParameter('', '.light.glsl')
         self.parameters.light['Light Group'] = Parameter(1, Type.INT)
         
         self.parameters.material['Light Groups.Light'] = Parameter([1,0,0,0], Type.INT, 4, 'mesh')

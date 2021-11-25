@@ -98,7 +98,9 @@ class MaltIONode(bpy.types.Node, MaltNode):
             function = self.get_function()
             for socket in self.inputs:
                 if self.is_custom_socket(socket):
-                    code += transpiler.asignment(transpiler.global_output_reference(socket.name), socket.get_source_reference())
+                    code += transpiler.asignment(
+                        transpiler.global_output_reference(socket.get_source_global_reference()),
+                        socket.get_source_initialization())
                 else:
                     if socket.name == 'result':
                         code += transpiler.declaration(socket.data_type, socket.array_size, None)
@@ -123,7 +125,7 @@ class MaltIONode(bpy.types.Node, MaltNode):
                 index = None
             for socket in self.inputs:
                 if self.is_custom_socket(socket):
-                    src += transpiler.global_output_declaration(socket.data_type, socket.name, index, shader_type)
+                    src += transpiler.global_output_declaration(socket.data_type, socket.get_source_global_reference(), index, shader_type)
                     index += 1
         else:
             for socket in self.outputs:

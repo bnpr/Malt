@@ -89,7 +89,10 @@ class MaltFunctionNode(bpy.types.Node, MaltNode):
     
     def draw_buttons(self, context, layout):
         if self.pass_type != '':
-            layout.prop(self, 'pass_material', text='Material')
+            layout.prop(self, 'pass_material')
+            if self.pass_material:
+                self.pass_material.malt.draw_ui(layout.box(),
+                    self.id_data.get_pipeline_graph(self.pass_type).file_extension, self.pass_material.malt_parameters)
 
     
 classes = [

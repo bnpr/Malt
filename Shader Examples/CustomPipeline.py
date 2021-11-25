@@ -8,7 +8,7 @@ class Extended_NPR_Pipeline(NPR_Pipeline):
 
     def __init__(self):
         super().__init__()
-        self.parameters.world['Custom Post Process'] = MaterialParameter('', 'screen')
+        self.parameters.world['Custom Post Process'] = MaterialParameter('', '.screen.glsl')
     
     def setup_render_targets(self, resolution):
         super().setup_render_targets(resolution)
