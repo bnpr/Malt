@@ -76,6 +76,20 @@ class MaltTree(bpy.types.NodeTree):
             return bridge.graphs[graph_type]
         return None
     
+    def get_custom_io(self, io_archetype=None):
+        params = []
+        for node in self.nodes:
+            if node.bl_idname == 'MaltIONode':
+                io = 'out' if node.is_output else 'in'
+                for parameter in node.custom_parameters:
+                    params.append({
+                        'name': parameter.name,
+                        'type': 'Texture', #TODO
+                        'size': 0,
+                        'io': io,
+                    })
+        return params
+    
     def cast(self, from_type, to_type):
         cast_function = f'{to_type}_from_{from_type}'
         lib = self.get_full_library()

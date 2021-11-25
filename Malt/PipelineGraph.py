@@ -105,7 +105,7 @@ class PythonPipelineGraph(PipelineGraph):
         from copy import copy
         result = copy(self)
         result.pipeline = None
-        result.nodes = None
+        #result.nodes = None
         return result
     
     def run_source(self, source, PARAMETERS, IN, OUT):
@@ -119,4 +119,7 @@ class PythonPipelineGraph(PipelineGraph):
         except:
             import traceback
             traceback.print_exc()
-            print(source)
+        print('SOURCE:\n', source)
+        print('PARAMETERS: ', PARAMETERS)
+        print('IN: ', IN)
+        print('OUT: ', OUT)

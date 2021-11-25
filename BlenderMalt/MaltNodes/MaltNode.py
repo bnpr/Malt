@@ -100,7 +100,7 @@ class MaltNode():
                     parameter = Parameter.from_glsl_type(input.data_type)
                     parameter.default_value = eval(inputs[name]['meta']['value'])
                 except:
-                    pass
+                    parameter = Parameter(inputs[name]['type'], Type.OTHER)
             if parameter:
                 parameters[input.name] = parameter
         self.malt_parameters.setup(parameters, skip_private=False)

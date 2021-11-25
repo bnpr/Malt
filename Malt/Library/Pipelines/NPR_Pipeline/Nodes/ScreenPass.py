@@ -7,7 +7,7 @@ from Malt.PipelineParameters import Parameter, Type, MaterialParameter
 class ScreenPass(PipelineNode):
 
     def __init__(self, pipeline):
-        super.__init__(pipeline)
+        PipelineNode.__init__(self, pipeline)
         self.resolution = None
         self.texture_targets = []
         self.render_target = None
@@ -17,6 +17,8 @@ class ScreenPass(PipelineNode):
         return 'Screen Shader'
     
     def execute(self, parameters):
+        print('-'*50)
+        print(parameters)
         return
         if self.pipeline.resolution != self.resolution:
             for i in range(self.IO_COUNT):

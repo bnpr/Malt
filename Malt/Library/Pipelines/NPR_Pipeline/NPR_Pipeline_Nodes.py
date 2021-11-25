@@ -105,7 +105,7 @@ class NPR_Pipeline_Nodes(NPR_Pipeline):
         )
 
         inputs = {'Scene' : Parameter('Scene', Type.OTHER)}
-        outputs = {'Color' : Parameter('', Type.TEXTURE)}
+        outputs = {'Color' : Parameter('Texture', Type.OTHER)}
         self.graphs['Render Layer'] = PythonPipelineGraph(self,
             [ScreenPass.NODE, Unpack8bitTextures.NODE],
             [PipelineNode.static_reflect('Render Layer', inputs, outputs)])

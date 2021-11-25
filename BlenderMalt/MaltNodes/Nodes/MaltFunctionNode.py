@@ -3,7 +3,6 @@
 import bpy    
 from BlenderMalt.MaltNodes.MaltNode import MaltNode
 
-
 class MaltFunctionNode(bpy.types.Node, MaltNode):
     
     bl_label = "Function Node"
@@ -24,28 +23,40 @@ class MaltFunctionNode(bpy.types.Node, MaltNode):
             if parameter['io'] in ['','in','inout']:
                 inputs[parameter['name']] = parameter
         
-        try:
-            if 'pass_type' in function.keys() and function['pass_type']:
-                assert(self.id_data.get_pipeline_graph().language == 'Python')
-                pass_type = function['pass_type']
-                pass_graph = self.id_data.get_pipeline_graph(pass_type)
-                if pass_graph:
-                    assert(pass_graph.language == 'GLSL' and pass_graph.pass_type != pass_graph.INTERNAL_PASS)
-                    
-        except:
-            import traceback
-            traceback.print_exc()
+        self.pass_type = self.get_pass_type()
         
         self.setup_sockets(inputs, outputs)
 
     function_type : bpy.props.StringProperty(update=MaltNode.setup)
+    pass_material: bpy.props.PointerProperty(type=bpy.types.Material, update=MaltNode.setup)
+    pass_type: bpy.props.StringProperty()
 
     def get_function(self):
         graph = self.id_data.get_pipeline_graph()
+        function = None
         if self.function_type in graph.functions:
-            return graph.functions[self.function_type]
+            function = graph.functions[self.function_type]
         else:
-            return self.id_data.get_library()['functions'][self.function_type]
+            function = self.id_data.get_library()['functions'][self.function_type]
+        from copy import deepcopy
+        function = deepcopy(function)
+        function['parameters'] += self.get_custom_io()
+        return function
+    
+    def get_pass_type(self):
+        graph = self.id_data.get_pipeline_graph()
+        if graph.language == 'Python':
+            pass_type = graph.nodes[self.function_type].get_pass_type()
+            if pass_type:
+                return pass_type
+        return ''
+    
+    def get_custom_io(self):
+        if self.get_pass_type() != '' and self.pass_material:
+            tree = self.pass_material.malt.shader_nodes
+            if tree:
+                return tree.get_custom_io()
+        return []
 
     def get_source_socket_reference(self, socket):
         transpiler = self.id_data.get_transpiler()
@@ -59,6 +70,7 @@ class MaltFunctionNode(bpy.types.Node, MaltNode):
         function = self.get_function()
         source_name = self.get_source_name()
 
+        parameters = []
         post_parameter_initialization = ''
         for input in self.inputs:
             if input.is_struct_member():
@@ -66,7 +78,6 @@ class MaltFunctionNode(bpy.types.Node, MaltNode):
                 if initialization:
                     post_parameter_initialization += transpiler.asignment(input.get_source_reference(), initialization)
 
-        parameters = []
         for parameter in function['parameters']:
             initialization = None
             if parameter['io'] in ['','in','inout']:
@@ -75,6 +86,10 @@ class MaltFunctionNode(bpy.types.Node, MaltNode):
             parameters.append(initialization)
 
         return transpiler.call(function, source_name, parameters, post_parameter_initialization)
+    
+    def draw_buttons(self, context, layout):
+        if self.pass_type != '':
+            layout.prop(self, 'pass_material', text='Material')
 
     
 classes = [

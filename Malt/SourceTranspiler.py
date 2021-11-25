@@ -5,10 +5,6 @@ class SourceTranspiler():
     
     @classmethod
     def get_source_name(self, name):
-        name = name.replace('.','_').replace(' ', '_')
-        name = '_' + ''.join(char for char in name if char.isalnum() or char == '_')
-        while '__' in name:
-            name = name.replace('__','_')
         return name
 
     @classmethod
@@ -60,6 +56,14 @@ class SourceTranspiler():
         pass
 
 class GLSLTranspiler(SourceTranspiler):
+
+    @classmethod
+    def get_source_name(self, name):
+        name = name.replace('.','_').replace(' ', '_')
+        name = '_' + ''.join(char for char in name if char.isalnum() or char == '_')
+        while '__' in name:
+            name = name.replace('__','_')
+        return name
 
     @classmethod
     def asignment(self, name, asignment):
