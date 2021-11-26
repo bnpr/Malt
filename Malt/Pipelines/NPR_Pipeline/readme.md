@@ -15,9 +15,9 @@ The *NPR Pipeline* supports 3 types of shaders:
 
 | Type | Source | Extension | Description |
 |------|-------------|-----------|-------------|
-| **Mesh** | [NPR_MeshShader.glsl](../../Shaders/Pipelines/NPR_Pipeline/NPR_MeshShader.glsl) | *.mesh.gsl* | Material shaders for rendering objects.
-| **Light** | [NPR_LightShader.glsl](../../Shaders/Pipelines/NPR_Pipeline/NPR_LightShader.glsl) | *.light.gsl* | Custom light shader that outputs the light color and intensity at a certain point.
-| **Screen** | [NPR_ScreenShader.glsl](../../Shaders/Pipelines/NPR_Pipeline/NPR_ScreenShader.glsl) | *.screen.gsl* | Shaders for screen-space effects, like post-processing.
+| **Mesh** | [NPR_MeshShader.glsl](../../Shaders/Pipelines/NPR_Pipeline/NPR_MeshShader.glsl) | *.mesh.glsl* | Material shaders for rendering objects.
+| **Light** | [NPR_LightShader.glsl](../../Shaders/Pipelines/NPR_Pipeline/NPR_LightShader.glsl) | *.light.glsl* | Custom light shader that outputs the light color and intensity at a certain point.
+| **Screen** | [NPR_ScreenShader.glsl](../../Shaders/Pipelines/NPR_Pipeline/NPR_ScreenShader.glsl) | *.screen.glsl* | Shaders for screen-space effects, like post-processing.
 
 There are examples for each shader type in the [Shader Examples](../../../Shader%20Examples) folder.
 
