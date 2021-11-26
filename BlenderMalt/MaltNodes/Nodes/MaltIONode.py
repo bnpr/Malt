@@ -4,7 +4,7 @@ import bpy
 from BlenderMalt.MaltNodes.MaltNode import MaltNode
 from BlenderMalt.MaltProperties import MaltPropertyGroup
 
-from BlenderMalt.MaltNodes.MaltIOArchetype import *
+from BlenderMalt.MaltNodes.MaltCustomPasses import *
 
 class MaltIONode(bpy.types.Node, MaltNode):
     
@@ -13,8 +13,15 @@ class MaltIONode(bpy.types.Node, MaltNode):
     properties: bpy.props.PointerProperty(type=MaltPropertyGroup)
     is_output: bpy.props.BoolProperty()
 
-    custom_pass: bpy.props.StringProperty()
+    def get_custom_pass_enums(self, context):
+        custom_passes = ['Default']
+        if self.allow_custom_pass:
+            custom_passes = context.scene.world.malt_graph_types[self.id_data.graph_type].custom_passes.keys()
+        return [(p,p,p) for p in custom_passes]
+        
+    custom_pass: bpy.props.EnumProperty(items=get_custom_pass_enums)
     allow_custom_pass : bpy.props.BoolProperty(default=False)
+    allow_custom_parameters : bpy.props.BoolProperty(default=False)
 
     def malt_setup(self):
         function = self.get_function()
@@ -24,11 +31,9 @@ class MaltIONode(bpy.types.Node, MaltNode):
         self.graph_type = self.id_data.graph_type
         self.pass_type = self.io_type
         
-        if len(self.get_dynamic_parameter_types()) > 0:
-            self.allow_custom_pass = True
-        else:
-            self.allow_custom_pass = False
-            self.custom_pass = ''
+        graph = self.id_data.get_pipeline_graph()
+        self.allow_custom_pass = graph.pass_type == graph.SCENE_PASS
+        self.allow_custom_parameters = len(self.get_dynamic_parameter_types()) > 0
 
         inputs = {}
         outputs = {}
@@ -134,12 +139,11 @@ class MaltIONode(bpy.types.Node, MaltNode):
         return src
     
     def draw_buttons(self, context, layout):
-        graph = self.id_data.get_pipeline_graph()
-        if graph.pass_type == graph.SCENE_PASS:
+        if self.allow_custom_pass and (self.is_output or self.allow_custom_parameters):
             layout.prop(self, 'custom_pass', text='Custom Pass')
     
     def draw_buttons_ext(self, context, layout):
-        if self.allow_custom_pass:
+        if self.allow_custom_parameters:
             layout.operator("wm.malt_callback", text='Reload', icon='FILE_REFRESH').callback.set(self.setup)
             row = layout.row()
             row.template_list('COMMON_UL_UI_List', '', self, 'custom_parameters', self, 'custom_parameters_index')
@@ -160,8 +164,6 @@ class MaltIONode(bpy.types.Node, MaltNode):
                 self.custom_parameters.remove(self.custom_parameters_index)
             col.operator("wm.malt_callback", text='', icon='REMOVE').callback.set(remove_custom_socket)
     
-    def draw_label(self):
-        return self.name if self.custom_pass == '' else f'{self.name} : {self.custom_pass}'
     
 classes = [
     MaltIONode,

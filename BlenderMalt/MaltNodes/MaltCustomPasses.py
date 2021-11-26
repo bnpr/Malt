@@ -9,15 +9,15 @@ class MaltIOParameter(bpy.types.PropertyGroup):
         bridge = MaltPipeline.get_bridge()
         if bridge and self.graph_type in bridge.graphs:
             graph = bridge.graphs[self.graph_type]
-            if self.pass_type in graph.graph_IO:
+            if self.io_type in graph.graph_IO:
                 if self.is_output:
-                    types = graph.graph_IO[self.pass_type].dynamic_output_types
+                    types = graph.graph_IO[self.io_type].dynamic_output_types
                 else:
-                    types = graph.graph_IO[self.pass_type].dynamic_input_types
+                    types = graph.graph_IO[self.io_type].dynamic_input_types
         return [(type, type, type) for type in types]
 
     graph_type : bpy.props.StringProperty()
-    pass_type : bpy.props.StringProperty()
+    io_type : bpy.props.StringProperty()
     is_output : bpy.props.BoolProperty()
     parameter : bpy.props.EnumProperty(items=get_parameter_enums)
 
@@ -26,35 +26,39 @@ class MaltIOParameter(bpy.types.PropertyGroup):
         layout.prop(self, 'name', text='')
         layout.prop(self, 'parameter', text='')
 
-class MaltIOArchetype(bpy.types.PropertyGroup):
+class MaltCustomIO(bpy.types.PropertyGroup):
+
+    inputs : bpy.props.CollectionProperty(type=MaltIOParameter)
+    inputs_index : bpy.props.IntProperty()
+    outputs : bpy.props.CollectionProperty(type=MaltIOParameter)
+    outputs_index : bpy.props.IntProperty()
+
+class MaltCustomPasses(bpy.types.PropertyGroup):
 
     def get_graph_enums(self, context):
         types = context.world.malt.graph_types.keys()
         return [(type, type, type) for type in types]
     
-    def get_pass_enums(self, context):
-        types = ['NONE']
-        bridge = MaltPipeline.get_bridge()
-        if bridge and self.graph_type in bridge.graphs:
-            types = bridge.graphs[self.graph_type].graph_IO.keys()
-        return [(type, type, type) for type in types]
-
     graph_type : bpy.props.EnumProperty(items=get_graph_enums)
-    pass_type : bpy.props.EnumProperty(items=get_pass_enums)
-    parameters : bpy.props.CollectionProperty(type=MaltIOParameter)
-    parameters_index : bpy.props.IntProperty()
+    io : bpy.props.CollectionProperty(type=MaltCustomIO)
 
-    def draw(self, context, layout, owner):
-        layout = layout.column()
-        row = layout.row()
-        row.label(text='', icon='DOT')
-        row.prop(self, 'name', text='')
-        row = layout.row()
-        row.label(text='', icon='BLANK1')
-        row.prop(self, 'graph_type', text='')
-        row = layout.row()
-        row.label(text='', icon='BLANK1')
-        row.prop(self, 'pass_type', text='')
+class MaltGraphType(bpy.types.PropertyGroup):
+
+    custom_passes : bpy.props.CollectionProperty(type=MaltCustomPasses)
+
+def setup_default_passes(graphs):
+    world = bpy.context.scene.world
+    for name, graph in graphs.items():
+        if graph.pass_type == graph.SCENE_PASS:
+            if name not in world.malt_graph_types:
+                world.malt_graph_types.add().name = name
+            graph_type = world.malt_graph_types[name]
+            if 'Default' not in graph_type.custom_passes:
+                graph_type.custom_passes.add().name = 'Default'
+            for custom_pass in graph_type.custom_passes:
+                for name, io in graph.graph_IO.items():
+                    if name not in custom_pass.io:
+                        custom_pass.io.add().name = name
 
 class Malt_PipelineIOArchetypesPanel(bpy.types.Panel):
     bl_label = 'Malt IO Archetypes'
@@ -78,17 +82,19 @@ class Malt_PipelineIOArchetypesPanel(bpy.types.Panel):
 
 classes = [
     MaltIOParameter,
-    MaltIOArchetype,
-    Malt_PipelineIOArchetypesPanel,
+    MaltCustomIO,
+    MaltCustomPasses,
+    MaltGraphType,
+    #Malt_PipelineIOArchetypesPanel,
 ]
 
 def register():
     for _class in classes: bpy.utils.register_class(_class)
-    bpy.types.World.io_archetypes = bpy.props.CollectionProperty(type=MaltIOArchetype)
-    bpy.types.World.io_archetypes_index = bpy.props.IntProperty()
+    bpy.types.World.malt_graph_types = bpy.props.CollectionProperty(type=MaltGraphType)
+    #bpy.types.World.malt_custom_passes_index = bpy.props.IntProperty()
     
 def unregister():
-    del bpy.types.World.io_archetypes
-    del bpy.types.World.io_archetypes_index
+    del bpy.types.World.malt_custom_passes
+    #del bpy.types.World.malt_custom_passes_index
     for _class in reversed(classes): bpy.utils.unregister_class(_class)
 

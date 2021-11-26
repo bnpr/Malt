@@ -221,6 +221,10 @@ class MaltTree(bpy.types.NodeTree):
 
 def setup_node_trees():
     graphs = MaltPipeline.get_bridge().graphs
+    
+    from . import MaltCustomPasses
+    MaltCustomPasses.setup_default_passes(graphs)
+
     for name, graph in graphs.items():
         preload_menus(graph.structs, graph.functions)
     
