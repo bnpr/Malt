@@ -411,15 +411,13 @@ class DisplayDraw():
         GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
 
 
-import bpy_extras
-
 class OT_MaltRenderDocCapture(bpy.types.Operator):
     bl_idname = "wm.malt_renderdoc_capture"
     bl_label = "RenderDoc Capture"
 
     def execute(self, context):
-        from . import MaltRenderEngine
-        MaltRenderEngine.CAPTURE = True
+        global CAPTURE
+        CAPTURE = True
         context.area.tag_redraw()
         return {'FINISHED'}
     
