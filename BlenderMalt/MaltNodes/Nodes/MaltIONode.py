@@ -132,11 +132,10 @@ class MaltIONode(bpy.types.Node, MaltNode):
                 if self.is_custom_socket(socket):
                     src += transpiler.global_declaration(socket.data_type, socket.array_size, socket.get_source_global_reference())
         return src
-
     
     def draw_buttons(self, context, layout):
         graph = self.id_data.get_pipeline_graph()
-        if graph.pass_type != graph.GLOBAL_PASS:
+        if graph.pass_type == graph.SCENE_PASS:
             layout.prop(self, 'custom_pass', text='Custom Pass')
     
     def draw_buttons_ext(self, context, layout):

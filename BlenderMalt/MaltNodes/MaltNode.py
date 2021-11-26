@@ -159,15 +159,14 @@ class MaltNode():
         return False
     
     def draw_socket(self, context, layout, socket, text):
-        if socket.is_output == False and socket.is_linked == False and socket.default_initialization == '':
-            if socket.is_struct_member() and (socket.get_struct_socket().is_linked or socket.get_struct_socket().default_initialization != ''):
-                return
-            if self.is_column_type(socket.data_type):
-                layout = layout.column()
-            layout.label(text=text)
+        draw_parameter = socket.is_output == False and socket.is_linked == False and socket.default_initialization == ''
+        if socket.is_struct_member() and (socket.get_struct_socket().is_linked or socket.get_struct_socket().default_initialization != ''):
+            draw_parameter = False
+        if draw_parameter and self.is_column_type(socket.data_type):
+            layout = layout.column()
+        layout.label(text=text)
+        if draw_parameter:
             self.malt_parameters.draw_parameter(layout, socket.name, None, is_node_socket=True)
-        else:
-            layout.label(text=text)
 
     @classmethod
     def poll(cls, ntree):
