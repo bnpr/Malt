@@ -20,40 +20,7 @@ _PY_VERSION = str(sys.version_info[0])+str(sys.version_info[1])
 __MALT_DEPENDENCIES_PATH = path.join(__MALT_PATH,'Malt','.Dependencies-{}'.format(_PY_VERSION))
 if __MALT_DEPENDENCIES_PATH not in sys.path: sys.path.append(__MALT_DEPENDENCIES_PATH)
 
-
-class OT_MaltPrintError(bpy.types.Operator):
-    bl_idname = "wm.malt_print_error"
-    bl_label = "Print Malt Error"
-    bl_description = "MALT ERROR"
-
-    message : bpy.props.StringProperty(default="Malt Error", description='Error Message')
-
-    @classmethod
-    def description(cls, context, properties):
-        return properties.message
-
-    def execute(self, context):
-        self.report({'ERROR'}, self.message)
-        return {'FINISHED'}
-    
-    def modal(self, context, event):
-        self.report({'ERROR'}, self.message)
-        return {'FINISHED'}
-
-    def invoke(self, context, event):
-        context.window_manager.modal_handler_add(self)
-        return {'RUNNING_MODAL'}
-
-# Always store paths in UNIX format so saved files work across OSs
-def malt_path_setter(property_name):
-    def setter(self, value):
-        self[property_name] = value.replace('\\','/')
-    return setter
-
-def malt_path_getter(property_name):
-    def getter(self):
-        return self.get(property_name,'').replace('\\','/')
-    return getter
+from BlenderMalt.MaltUtils import malt_path_getter, malt_path_setter
 
 class Preferences(bpy.types.AddonPreferences):
     # this must match the addon name
@@ -90,32 +57,6 @@ class Preferences(bpy.types.AddonPreferences):
         layout.prop(self, "render_fps_cap")
         layout.prop(self, "debug_mode")
 
-class OT_MaltRenderDocCapture(bpy.types.Operator):
-    bl_idname = "wm.malt_renderdoc_capture"
-    bl_label = "RenderDoc Capture"
-
-    def execute(self, context):
-        from . import MaltRenderEngine
-        MaltRenderEngine.CAPTURE = True
-        context.area.tag_redraw()
-        return {'FINISHED'}
-    
-class VIEW3D_PT_Malt_Stats(bpy.types.Panel):
-    bl_space_type = 'VIEW_3D'
-    bl_region_type = 'UI'
-    bl_category = "View"
-    bl_label = "Malt Stats"
-
-    @classmethod
-    def poll(cls, context):
-        return context.scene.render.engine == 'MALT'
-
-    def draw(self, context):
-        from . import MaltPipeline
-        self.layout.operator("wm.malt_renderdoc_capture")
-        stats = MaltPipeline.get_bridge().get_stats()
-        for line in stats.splitlines():
-            self.layout.label(text=line)
 
 _VS_CODE_SETTINGS = '''
 {{
@@ -132,7 +73,6 @@ _VS_CODE_SETTINGS = '''
     "python.analysis.extraPaths": ["{}","{}"],
 }}
 '''
-
 
 @bpy.app.handlers.persistent
 def setup_vs_code(dummy):
@@ -171,15 +111,12 @@ def do_windows_fixes():
         mp.set_executable(python_executable)
 
 def get_modules():
-    from . import MaltTextures, MaltMeshes, MaltLights, MaltProperties, MaltPipeline, MaltMaterial, MaltRenderEngine
+    from . import MaltTextures, MaltMeshes, MaltLights, MaltProperties, MaltPipeline, MaltMaterial, MaltRenderEngine, MaltUtils
     from . MaltNodes import _init_ as MaltNodes
-    return [ MaltTextures, MaltMeshes, MaltLights, MaltProperties, MaltPipeline, MaltNodes, MaltMaterial, MaltRenderEngine ]
+    return [ MaltTextures, MaltMeshes, MaltLights, MaltProperties, MaltPipeline, MaltNodes, MaltMaterial, MaltRenderEngine, MaltUtils ]
 
 classes=[
     Preferences,
-    OT_MaltPrintError,
-    OT_MaltRenderDocCapture,
-    VIEW3D_PT_Malt_Stats,
 ]
 
 def register():

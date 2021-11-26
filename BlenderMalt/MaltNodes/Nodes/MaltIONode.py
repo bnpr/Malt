@@ -140,6 +140,7 @@ class MaltIONode(bpy.types.Node, MaltNode):
     
     def draw_buttons_ext(self, context, layout):
         if self.allow_custom_pass:
+            layout.operator("wm.malt_callback", text='Reload').callback.set(lambda : self.setup())
             row = layout.row()
             row.template_list('COMMON_UL_UI_List', '', self, 'custom_parameters', self, 'custom_parameters_index')
             col = row.column()
@@ -151,6 +152,18 @@ class MaltIONode(bpy.types.Node, MaltNode):
     
     def draw_label(self):
         return self.name if self.custom_pass == '' else f'{self.name} : {self.custom_pass}'
+
+
+class OT_MaltNodeRunSetup(bpy.types.Operator):
+    bl_label = 'Malt Node Run Setup'
+    bl_idname = "wm.malt_node_run_setup"
+    
+    node : bpy.props.PointerProperty(type=bpy.types.Node)
+    
+    def execute(self, context):
+        if self.node:
+            self.node.setup()
+        return {'FINISHED'}
 
 class OT_MaltAddCustomSocket(bpy.types.Operator):
     bl_label = 'Malt Add Custom Socket'
@@ -170,7 +183,7 @@ class OT_MaltAddCustomSocket(bpy.types.Operator):
         while f'{name} {index}' in node.custom_parameters.keys():
             index += 1
         new_param.name = f'{name} {index}'
-        node.malt_setup()
+        #node.malt_setup()
         return {'FINISHED'}
 
 class OT_MaltRemoveCustomSocket(bpy.types.Operator):
@@ -183,11 +196,12 @@ class OT_MaltRemoveCustomSocket(bpy.types.Operator):
     def execute(self, context):
         node = from_json_rna_path(self.node_path)
         node.custom_parameters.remove(self.index)
-        node.malt_setup()
+        #node.malt_setup()
         return {'FINISHED'}
     
 classes = [
     MaltIONode,
+    OT_MaltNodeRunSetup,
     OT_MaltAddCustomSocket,
     OT_MaltRemoveCustomSocket
 ]

@@ -2,7 +2,7 @@
 
 import os, platform, time
 import bpy
-from BlenderMalt import malt_path_getter, malt_path_setter
+from BlenderMalt.MaltUtils import malt_path_getter, malt_path_setter
 from . import MaltMaterial, MaltMeshes, MaltTextures
 
 __BRIDGE = None

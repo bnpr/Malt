@@ -413,30 +413,37 @@ class DisplayDraw():
 
 import bpy_extras
 
-class OT_MaltProfileFrameReport(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
-    bl_idname = "wm.malt_profile_frame_report"
-    bl_label = "Malt Profile Frame Report"
-
-    filename_ext = ".txt"  # ExportHelper mixin class uses this
-
-    filter_glob : bpy.props.StringProperty(
-        default="*.txt",
-        options={'HIDDEN'},
-        maxlen=255,  # Max internal buffer length, longer would be clamped.
-    )
+class OT_MaltRenderDocCapture(bpy.types.Operator):
+    bl_idname = "wm.malt_renderdoc_capture"
+    bl_label = "RenderDoc Capture"
 
     def execute(self, context):
-        global REPORT_PATH
-        REPORT_PATH = self.filepath
-        global PROFILE
-        PROFILE = True
-        context.space_data.shading.type = 'SOLID'
-        context.space_data.shading.type = 'RENDERED'
-        return{'FINISHED'}
+        from . import MaltRenderEngine
+        MaltRenderEngine.CAPTURE = True
+        context.area.tag_redraw()
+        return {'FINISHED'}
+    
+class VIEW3D_PT_Malt_Stats(bpy.types.Panel):
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'UI'
+    bl_category = "View"
+    bl_label = "Malt Stats"
+
+    @classmethod
+    def poll(cls, context):
+        return context.scene.render.engine == 'MALT'
+
+    def draw(self, context):
+        from . import MaltPipeline
+        self.layout.operator("wm.malt_renderdoc_capture")
+        stats = MaltPipeline.get_bridge().get_stats()
+        for line in stats.splitlines():
+            self.layout.label(text=line)
 
 classes = [
     MaltRenderEngine,
-    OT_MaltProfileFrameReport,
+    OT_MaltRenderDocCapture,
+    VIEW3D_PT_Malt_Stats,
 ]
 
 def get_panels():

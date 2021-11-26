@@ -6,7 +6,7 @@ from Malt.SourceTranspiler import GLSLTranspiler, PythonTranspiler
 import bpy
 from BlenderMalt.MaltProperties import MaltPropertyGroup
 from BlenderMalt import MaltPipeline
-from BlenderMalt import malt_path_setter, malt_path_getter
+from BlenderMalt.MaltUtils import malt_path_setter, malt_path_getter
 
 from . MaltNode import MaltNode
 
