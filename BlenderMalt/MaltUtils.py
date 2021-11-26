@@ -34,7 +34,6 @@ def malt_path_getter(property_name):
         return self.get(property_name,'').replace('\\','/')
     return getter
 
-
 # Operator buttons are generated every time the UI is redrawn.
 # The UI is redrawn for every frame the cursor hovers over it
 # The operator button called is not the last one created (???)
@@ -70,7 +69,7 @@ class OT_MaltCallback(bpy.types.Operator):
         global _CALLBACKS, _MAX_CALLBACKS
         _CALLBACKS = [None] * _MAX_CALLBACKS
     '''
-    
+
 classes=[
     OT_MaltPrintError,
     MaltCallback,

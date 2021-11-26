@@ -140,70 +140,31 @@ class MaltIONode(bpy.types.Node, MaltNode):
     
     def draw_buttons_ext(self, context, layout):
         if self.allow_custom_pass:
-            layout.operator("wm.malt_callback", text='Reload').callback.set(lambda : self.setup())
+            layout.operator("wm.malt_callback", text='Reload', icon='FILE_REFRESH').callback.set(lambda : self.setup())
             row = layout.row()
             row.template_list('COMMON_UL_UI_List', '', self, 'custom_parameters', self, 'custom_parameters_index')
             col = row.column()
-            op = col.operator('wm.malt_add_custom_socket', text='', icon='ADD')
-            op.node_path = to_json_rna_path(self)
-            op = col.operator('wm.malt_remove_custom_socket', text='', icon='REMOVE')
-            op.node_path = to_json_rna_path(self)
-            op.index = self.custom_parameters_index
+            def add_custom_socket():
+                new_param = self.custom_parameters.add()
+                new_param.graph_type = self.id_data.graph_type
+                new_param.pass_type = self.io_type
+                new_param.is_output = self.is_output
+                name = f"Custom {'Output' if new_param.is_output else 'Input'}"
+                index = 1
+                #TODO: Check against default parameters
+                while f'{name} {index}' in self.custom_parameters.keys():
+                    index += 1
+                new_param.name = f'{name} {index}'
+            col.operator("wm.malt_callback", text='', icon='ADD').callback.set(add_custom_socket)
+            def remove_custom_socket():
+                self.custom_parameters.remove(self.custom_parameters_index)
+            col.operator("wm.malt_callback", text='', icon='REMOVE').callback.set(remove_custom_socket)
     
     def draw_label(self):
         return self.name if self.custom_pass == '' else f'{self.name} : {self.custom_pass}'
-
-
-class OT_MaltNodeRunSetup(bpy.types.Operator):
-    bl_label = 'Malt Node Run Setup'
-    bl_idname = "wm.malt_node_run_setup"
-    
-    node : bpy.props.PointerProperty(type=bpy.types.Node)
-    
-    def execute(self, context):
-        if self.node:
-            self.node.setup()
-        return {'FINISHED'}
-
-class OT_MaltAddCustomSocket(bpy.types.Operator):
-    bl_label = 'Malt Add Custom Socket'
-    bl_idname = "wm.malt_add_custom_socket"
-    
-    node_path : bpy.props.StringProperty()
-    
-    def execute(self, context):
-        node = from_json_rna_path(self.node_path)
-        new_param = node.custom_parameters.add()
-        new_param.graph_type = node.id_data.graph_type
-        new_param.pass_type = node.io_type
-        new_param.is_output = node.is_output
-        name = f"Custom {'Output' if new_param.is_output else 'Input'}"
-        index = 1
-        #TODO: Check against default parameters
-        while f'{name} {index}' in node.custom_parameters.keys():
-            index += 1
-        new_param.name = f'{name} {index}'
-        #node.malt_setup()
-        return {'FINISHED'}
-
-class OT_MaltRemoveCustomSocket(bpy.types.Operator):
-    bl_label = 'Malt Remove Custom Socket'
-    bl_idname = "wm.malt_remove_custom_socket"
-    
-    node_path : bpy.props.StringProperty()
-    index : bpy.props.IntProperty()
-    
-    def execute(self, context):
-        node = from_json_rna_path(self.node_path)
-        node.custom_parameters.remove(self.index)
-        #node.malt_setup()
-        return {'FINISHED'}
     
 classes = [
     MaltIONode,
-    OT_MaltNodeRunSetup,
-    OT_MaltAddCustomSocket,
-    OT_MaltRemoveCustomSocket
 ]
 
 def register():
