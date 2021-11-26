@@ -16,6 +16,19 @@ class MaltGradientPropertyWrapper(bpy.types.PropertyGroup):
         return texture.type == 'BLEND' and texture.use_color_ramp
     texture : bpy.props.PointerProperty(type=bpy.types.Texture, poll=poll)
 
+    def add_or_duplicate(self):
+        if self.texture:
+            self.texture = self.texture.copy()
+        else:
+            texture = bpy.data.textures.new('malt_color_ramp', 'BLEND')
+            texture.use_color_ramp = True
+            texture.color_ramp.elements[0].alpha = 1.0
+            self.texture = texture
+        self.id_data.update_tag()
+        self.texture.update_tag()
+        from . MaltTextures import add_gradient_workaround
+        add_gradient_workaround(self.texture)
+
 class MaltTexturePropertyWrapper(bpy.types.PropertyGroup):
     texture : bpy.props.PointerProperty(type=bpy.types.Image)
 
@@ -23,6 +36,14 @@ class MaltMaterialPropertyWrapper(bpy.types.PropertyGroup):
     #TODO:poll
     material : bpy.props.PointerProperty(type=bpy.types.Material)
     extension : bpy.props.StringProperty()
+
+    def add_or_duplicate(self):
+        if self.material:
+            self.material = self.material.copy()
+        else:
+            self.material = bpy.data.materials.new('Material')
+        self.id_data.update_tag()
+        self.material.update_tag()
 
 class MaltGraphPropertyWrapper(bpy.types.PropertyGroup):
     def poll(self, tree):
@@ -414,13 +435,11 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
             
             if is_node_socket == False:            
                 if is_override:
-                    delete_op = row.operator('wm.malt_delete_override', text='', icon='X')
-                    delete_op.properties_path = to_json_rna_path(self)
-                    delete_op.property = key
+                    row.operator('wm.malt_callback', text='', icon='X').callback.set(
+                        lambda : self.remove_override(key))
                 else:
-                    override_op = row.operator('wm.malt_new_override', text='', icon='DECORATE_OVERRIDE')
-                    override_op.properties_path = to_json_rna_path(self)
-                    override_op.property = key
+                    row.operator('wm.malt_new_override', text='', icon='DECORATE_OVERRIDE').callback.set(
+                        lambda override_name: self.add_override(key, override_name))
             
             if draw_callback:
                 draw_callback(row, self)
@@ -446,30 +465,26 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
             column = layout.column()
             row = column.row(align=True)
             row.template_ID(self.gradients[key], "texture")
-            try:
-                texture_path = to_json_rna_path(self.gradients[key])
-            except:
-                texture_path = to_json_rna_path_node_workaround(self, 'malt_parameters.gradients["{}"]'.format(key))
             if self.gradients[key].texture:
-                row.operator('texture.malt_add_gradient', text='', icon='DUPLICATE').texture_path = texture_path
+                row.operator('wm.malt_callback', text='', icon='DUPLICATE').callback.set(
+                    self.gradients[key].add_or_duplicate)
                 column.template_color_ramp(self.gradients[key].texture, 'color_ramp')
             else:
-                row.operator('texture.malt_add_gradient', text='New', icon='ADD').texture_path = texture_path
+                row.operator('wm.malt_callback', text='New', icon='ADD').callback.set(
+                    self.gradients[key].add_or_duplicate)
         elif rna[key]['type'] == Type.MATERIAL:
             make_row(True)
             row = layout.row(align=True)
             row.template_ID(self.materials[key], "material")
-            try:
-                material_path = to_json_rna_path(self.materials[key])
-            except:
-                material_path = to_json_rna_path_node_workaround(self, 'malt_parameters.materials["{}"]'.format(key))
             if self.materials[key].material:
                 extension = self.materials[key].extension
-                row.operator('material.malt_add_material', text='', icon='DUPLICATE').material_owner_path = material_path
+                row.operator('wm.malt_callback', text='', icon='DUPLICATE').callback.set(
+                    self.materials[key].add_or_duplicate)
                 material = self.materials[key].material
                 material.malt.draw_ui(layout.box(), extension, material.malt_parameters)
             else:
-                row.operator('material.malt_add_material', text='New', icon='ADD').material_owner_path = material_path
+                row.operator('wm.malt_callback', text='New', icon='ADD').callback.set(
+                    self.materials[key].add_or_duplicate)
         elif rna[key]['type'] == Type.GRAPH:
             make_row(True)
             row = layout.row(align=True)
@@ -477,91 +492,14 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
             
         return True
 
-import json
 
-# https://developer.blender.org/T51096
-def to_json_rna_path_node_workaround(malt_property_group, path_from_group):
-    tree = malt_property_group.id_data
-    assert(isinstance(tree, bpy.types.NodeTree))
-    for node in tree.nodes:
-        if node.malt_parameters.as_pointer() == malt_property_group.as_pointer():
-            path = 'nodes["{}"].{}'.format(node.name, path_from_group)
-            return json.dumps(('NodeTree', tree.name_full, path))
-
-def to_json_rna_path(prop):
-    blend_id = prop.id_data
-    id_type = str(blend_id.__class__).split('.')[-1]
-    if isinstance(prop.id_data, bpy.types.NodeTree):
-        id_type = 'NodeTree'
-    id_name = blend_id.name_full
-    path = prop.path_from_id()
-    return json.dumps((id_type, id_name, path))
-
-def from_json_rna_path(prop):
-    id_type, id_name, path = json.loads(prop)
-    data_map = {
-        'Object' : bpy.data.objects,
-        'Mesh' : bpy.data.meshes,
-        'Light' : bpy.data.lights,
-        'Camera' : bpy.data.cameras,
-        'Material' : bpy.data.materials,
-        'World': bpy.data.worlds,
-        'Scene': bpy.data.scenes,
-        'NodeTree' : bpy.data.node_groups
-    }
-    for class_name, data in data_map.items():
-        if class_name in id_type:
-            return data[id_name].path_resolve(path)
-    return None
-
-class OT_MaltNewGradient(bpy.types.Operator):
-    bl_idname = "texture.malt_add_gradient"
-    bl_label = "Malt Add Gradient"
-    bl_options = {'INTERNAL'}
-
-    texture_path : bpy.props.StringProperty()
-
-    def execute(self, context):
-        gradient_wrapper = from_json_rna_path(self.texture_path)
-        if gradient_wrapper.texture:
-            gradient_wrapper.texture = gradient_wrapper.texture.copy()
-        else:
-            texture = bpy.data.textures.new('malt_color_ramp', 'BLEND')
-            texture.use_color_ramp = True
-            texture.color_ramp.elements[0].alpha = 1.0
-            gradient_wrapper.texture = texture
-        gradient_wrapper.id_data.update_tag()
-        gradient_wrapper.texture.update_tag()
-        from . MaltTextures import add_gradient_workaround
-        add_gradient_workaround(gradient_wrapper.texture)
-        return {'FINISHED'}
-
-class OT_MaltNewMaterial(bpy.types.Operator):
-    bl_idname = "material.malt_add_material"
-    bl_label = "Malt Add Material"
-    bl_options = {'INTERNAL'}
-
-    material_owner_path : bpy.props.StringProperty()
-    material_property : bpy.props.StringProperty(default='material')
-
-    def execute(self, context):
-        material_wrapper = from_json_rna_path(self.material_owner_path)
-        if getattr(material_wrapper, self.material_property):
-            setattr(material_wrapper, self.material_property, material_wrapper.material.copy())
-        else:
-            setattr(material_wrapper, self.material_property, bpy.data.materials.new('Material'))
-        material_wrapper.id_data.update_tag()
-        getattr(material_wrapper, self.material_property).update_tag()
-        return {'FINISHED'}
+from . import MaltUtils
 
 class OT_MaltNewOverride(bpy.types.Operator):
     bl_idname = "wm.malt_new_override"
     bl_label = "Malt Add A Property Override"
     bl_options = {'INTERNAL'}
 
-    properties_path : bpy.props.StringProperty()
-    property : bpy.props.StringProperty()
-    
     def get_override_enums(self, context):
         overrides = context.scene.world.malt.overrides.split(',')
         result = []
@@ -569,6 +507,8 @@ class OT_MaltNewOverride(bpy.types.Operator):
             result.append((override, override, '', i))
         return result
     override : bpy.props.EnumProperty(items=get_override_enums)
+    
+    callback : bpy.props.PointerProperty(type=MaltUtils.MaltCallback)
     
     def invoke(self, context, event):
         return context.window_manager.invoke_props_dialog(self)
@@ -578,24 +518,9 @@ class OT_MaltNewOverride(bpy.types.Operator):
         layout.prop(self, "override")
     
     def execute(self, context):
-        properties = from_json_rna_path(self.properties_path)
-        properties.add_override(self.property, self.override)
-        properties.id_data.update_tag()
+        self.callback.call(self.override)
         return {'FINISHED'}
 
-class OT_MaltDeleteOverride(bpy.types.Operator):
-    bl_idname = "wm.malt_delete_override"
-    bl_label = "Malt Delete A Property Override"
-    bl_options = {'INTERNAL'}
-
-    properties_path : bpy.props.StringProperty()
-    property : bpy.props.StringProperty()
-
-    def execute(self, context):
-        properties = from_json_rna_path(self.properties_path)
-        properties.remove_override(self.property)
-        properties.id_data.update_tag()
-        return {'FINISHED'}
 
 class MALT_PT_Base(bpy.types.Panel):
     bl_space_type = 'PROPERTIES'
@@ -695,10 +620,7 @@ classes = (
     MaltMaterialPropertyWrapper,
     MaltGraphPropertyWrapper,
     MaltPropertyGroup,
-    OT_MaltNewGradient,
-    OT_MaltNewMaterial,
     OT_MaltNewOverride,
-    OT_MaltDeleteOverride,
     MALT_PT_Base,
     MALT_PT_Scene,
     MALT_PT_World,

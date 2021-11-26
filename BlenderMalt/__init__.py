@@ -111,9 +111,9 @@ def do_windows_fixes():
         mp.set_executable(python_executable)
 
 def get_modules():
-    from . import MaltTextures, MaltMeshes, MaltLights, MaltProperties, MaltPipeline, MaltMaterial, MaltRenderEngine, MaltUtils
+    from . import MaltUtils, MaltTextures, MaltMeshes, MaltLights, MaltProperties, MaltPipeline, MaltMaterial, MaltRenderEngine
     from . MaltNodes import _init_ as MaltNodes
-    return [ MaltTextures, MaltMeshes, MaltLights, MaltProperties, MaltPipeline, MaltNodes, MaltMaterial, MaltRenderEngine, MaltUtils ]
+    return [ MaltUtils, MaltTextures, MaltMeshes, MaltLights, MaltProperties, MaltPipeline, MaltNodes, MaltMaterial, MaltRenderEngine ]
 
 classes=[
     Preferences,

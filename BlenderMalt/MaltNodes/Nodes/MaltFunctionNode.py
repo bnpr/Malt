@@ -99,12 +99,17 @@ class MaltFunctionNode(bpy.types.Node, MaltNode):
                     icon_only=True, emboss=False
                 )
             row.template_ID(self, "pass_material")
-            material_path = json.dumps(('NodeTree', self.id_data.name_full, f'nodes["{self.name}"]'))
+            def add_or_duplicate():
+                if self.pass_material:
+                    self.pass_material = self.pass_material.copy()
+                else:
+                    self.pass_material = bpy.data.materials.new('Material')
+                self.setup()
+                #self.id_data.update_tag()
+                #self.pass_material.update_tag()
             text = '' if self.pass_material else 'New'
             icon = 'DUPLICATE' if self.pass_material else 'ADD'
-            op = row.operator('material.malt_add_material', text=text, icon=icon)
-            op.material_owner_path = material_path
-            op.material_property = 'pass_material'
+            row.operator('wm.malt_callback', text=text, icon=icon).callback.set(add_or_duplicate)
             if self.pass_material and self.show_material_parameters:
                 self.pass_material.malt.draw_ui(layout.box(),
                     self.id_data.get_pipeline_graph(self.pass_type).file_extension, self.pass_material.malt_parameters)

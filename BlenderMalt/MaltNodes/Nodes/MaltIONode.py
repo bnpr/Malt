@@ -140,7 +140,7 @@ class MaltIONode(bpy.types.Node, MaltNode):
     
     def draw_buttons_ext(self, context, layout):
         if self.allow_custom_pass:
-            layout.operator("wm.malt_callback", text='Reload', icon='FILE_REFRESH').callback.set(lambda : self.setup())
+            layout.operator("wm.malt_callback", text='Reload', icon='FILE_REFRESH').callback.set(self.setup)
             row = layout.row()
             row.template_list('COMMON_UL_UI_List', '', self, 'custom_parameters', self, 'custom_parameters_index')
             col = row.column()

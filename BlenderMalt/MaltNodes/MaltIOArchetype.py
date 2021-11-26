@@ -56,24 +56,6 @@ class MaltIOArchetype(bpy.types.PropertyGroup):
         row.label(text='', icon='BLANK1')
         row.prop(self, 'pass_type', text='')
 
-class COMMON_UL_UI_List(bpy.types.UIList):
-    
-    def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
-        item.draw(context, layout, data)
-
-def malt_template_list(layout, owner, list_property, index_property, add_callback=None):
-    row = layout.row()
-    row.template_list('COMMON_UL_UI_List', '', owner, list_property, owner, index_property)
-    col = row.column()
-    op = col.operator('wm.malt_list_add', text='', icon='ADD')
-    op.list_path = to_json_rna_path(getattr(owner, list_property))
-    if add_callback:
-        import pickle
-        op.callback = pickle.dumps(add_callback, 0).decode()
-    op = col.operator('wm.malt_list_remove', text='', icon='REMOVE')
-    op.list_path = to_json_rna_path(getattr(owner, list_property))
-    op.index = getattr(owner, index_property)
-
 class Malt_PipelineIOArchetypesPanel(bpy.types.Panel):
     bl_label = 'Malt IO Archetypes'
     bl_idname = 'WORLD_PT_MALT_Pipeline_IO_Archetypes'
@@ -82,6 +64,7 @@ class Malt_PipelineIOArchetypesPanel(bpy.types.Panel):
     bl_context = 'world'
 
     def draw(self, context):
+        from BlenderMalt.MaltUtils import malt_template_list
         layout = self.layout
         world = context.world
         layout.label(text='Custom Passes:')
@@ -93,40 +76,10 @@ class Malt_PipelineIOArchetypesPanel(bpy.types.Panel):
         except:
             pass
 
-from BlenderMalt.MaltProperties import to_json_rna_path, from_json_rna_path
-
-class OT_MaltListAdd(bpy.types.Operator):
-    bl_label = 'Malt List Add'
-    bl_idname = "wm.malt_list_add"
-    
-    list_path : bpy.props.StringProperty()
-    callback : bpy.props.StringProperty()
-    
-    def execute(self, context):
-        new = from_json_rna_path(self.list_path).add()
-        if self.callback != '':
-            import pickle
-            pickle.loads(self.callback.encode())(new)
-        return {'FINISHED'}
-
-class OT_MaltListRemove(bpy.types.Operator):
-    bl_label = 'Malt List Remove'
-    bl_idname = "wm.malt_list_remove"
-    
-    list_path : bpy.props.StringProperty()
-    index : bpy.props.IntProperty()
-    
-    def execute(self, context):
-        from_json_rna_path(self.list_path).remove(self.index)
-        return {'FINISHED'}
-
 classes = [
     MaltIOParameter,
     MaltIOArchetype,
-    COMMON_UL_UI_List,
     Malt_PipelineIOArchetypesPanel,
-    OT_MaltListAdd,
-    OT_MaltListRemove,
 ]
 
 def register():
