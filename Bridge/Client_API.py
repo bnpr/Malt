@@ -253,7 +253,11 @@ class Bridge(object):
                 # Don't stack multiple render workloads for the same viewport
                 if time.perf_counter() - start > 1:
                     #But don't stall Blender forever
-                    return
+                    if new_buffers is None and scene_update == False:
+                        #Never skip new_buffers setup or scene update
+                        return
+                    else:
+                        break
                 
         self.shared_dict[(viewport_id, 'FINISHED')] = None
         self.connections['MAIN'].send({
