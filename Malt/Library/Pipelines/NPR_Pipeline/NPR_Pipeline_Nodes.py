@@ -62,7 +62,7 @@ class NPR_Pipeline_Nodes(NPR_Pipeline):
                     dynamic_input_types= GLSLGraphIO.COMMON_INPUT_TYPES,
                     dynamic_output_types= GLSLGraphIO.COMMON_OUTPUT_TYPES,
                     shader_type='PIXEL_SHADER',
-                    custom_output_start_index=1,
+                    custom_output_start_index=2,
                 ),
                 GLSLGraphIO(
                     name='VERTEX_DISPLACEMENT_SHADER',

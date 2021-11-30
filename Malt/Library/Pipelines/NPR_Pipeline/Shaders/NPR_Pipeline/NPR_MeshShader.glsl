@@ -146,8 +146,8 @@ uniform sampler2D IN_NORMAL_DEPTH;
 uniform usampler2D IN_ID;
 
 layout (location = 0) out vec4 OUT_COLOR;
-layout (location = 1) out vec4 OUT_LINE_COLOR;
-layout (location = 2) out vec4 OUT_LINE_DATA;
+//layout (location = 1) out vec4 OUT_LINE_COLOR;
+//layout (location = 2) out vec4 OUT_LINE_DATA;
 #endif //MAIN_PASS
 
 #ifndef CUSTOM_MAIN
@@ -241,9 +241,9 @@ void main()
         OUT_COLOR = PO.color;
         if(PO.line_width > 0 && PO.line_color.a > 0)
         {
-            OUT_LINE_COLOR = PO.line_color;
-            OUT_LINE_DATA.xy = screen_uv();
-            OUT_LINE_DATA.z = PO.line_width;
+            //OUT_LINE_COLOR = PO.line_color;
+            //OUT_LINE_DATA.xy = screen_uv();
+            //OUT_LINE_DATA.z = PO.line_width;
         }
     }
     #endif
