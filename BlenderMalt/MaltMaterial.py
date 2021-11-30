@@ -50,7 +50,6 @@ class MaltMaterial(bpy.types.PropertyGroup):
         source_path = self.get_source_path()
 
         if source_path != '' and source_path.endswith(extension) == False:
-            print('Wrong extension:', source_path)
             box = layout.box()
             box.label(text='Wrong shader extension, should be '+extension+'.', icon='ERROR')
             return
