@@ -100,11 +100,12 @@ class MaltIONode(bpy.types.Node, MaltNode):
             return False
 
     def get_source_socket_reference(self, socket):
-        io = 'out' if self.is_output else 'in'
         transpiler = self.id_data.get_transpiler()
         if self.is_custom_socket(socket):
-            return socket.get_source_global_reference()
+            graph_io = 'OUT' if self.is_output else 'IN'
+            return transpiler.custom_io_reference(graph_io, self.io_type, socket.name)
         else:
+            io = 'out' if self.is_output else 'in'
             return transpiler.io_parameter_reference(socket.name, io)
     
     def get_source_code(self, transpiler):
@@ -113,8 +114,7 @@ class MaltIONode(bpy.types.Node, MaltNode):
             function = self.get_function()
             for socket in self.inputs:
                 if self.is_custom_socket(socket):
-                    code += transpiler.asignment(
-                        transpiler.global_output_reference(socket.get_source_global_reference()),
+                    code += transpiler.asignment(self.get_source_socket_reference(socket),
                         socket.get_source_initialization())
                 else:
                     if socket.name == 'result':
@@ -140,12 +140,12 @@ class MaltIONode(bpy.types.Node, MaltNode):
                 index = None
             for socket in self.inputs:
                 if self.is_custom_socket(socket):
-                    src += transpiler.global_output_declaration(socket.data_type, socket.get_source_global_reference(), index, shader_type)
+                    src += transpiler.custom_output_declaration(socket.data_type, socket.name, index, shader_type, self.io_type)
                     index += 1
         else:
             for socket in self.outputs:
                 if self.is_custom_socket(socket):
-                    src += transpiler.global_declaration(socket.data_type, socket.array_size, socket.get_source_global_reference())
+                    src += transpiler.global_declaration(socket.data_type, socket.array_size, self.get_source_socket_reference(socket))
         return src
     
     def draw_buttons(self, context, layout):

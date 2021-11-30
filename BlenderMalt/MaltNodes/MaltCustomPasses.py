@@ -17,7 +17,10 @@ class MaltIOParameter(bpy.types.PropertyGroup):
         return [(type, type, type) for type in types]
     
     def get_parameter(self):
-        return self.get_parameter_enums().index(tuple(self['PARAMETER']))
+        try:
+            return self.get_parameter_enums().index(tuple(self['PARAMETER']))
+        except:
+            return 0
 
     def set_parameter(self, value):
         self['PARAMETER'] = self.get_parameter_enums()[value]

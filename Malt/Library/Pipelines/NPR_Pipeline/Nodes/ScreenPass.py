@@ -9,7 +9,7 @@ class ScreenPass(PipelineNode):
     def __init__(self, pipeline):
         PipelineNode.__init__(self, pipeline)
         self.resolution = None
-        self.texture_targets = []
+        self.texture_targets = {}
         self.render_target = None
     
     @staticmethod

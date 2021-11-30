@@ -24,11 +24,11 @@ class SourceTranspiler():
         pass
 
     @classmethod
-    def global_output_reference(self, name):
+    def custom_io_reference(self, io, graph_io_type, name):
         pass
 
     @classmethod
-    def global_output_declaration(self, type, name, index):
+    def custom_output_declaration(self, type, name, index, shader_type, graph_io_type):
         pass
 
     @classmethod
@@ -84,14 +84,14 @@ class GLSLTranspiler(SourceTranspiler):
         return 'uniform ' + self.declaration(type, size, name, initialization)
     
     @classmethod
-    def global_output_reference(self, name):
-        return 'OUT_' + name
+    def custom_io_reference(self, io, graph_io_type, name):
+        return f"{io}_{graph_io_type}_{''.join(char.upper() for char in name if char.isalnum())}"
 
     @classmethod
-    def global_output_declaration(self, type, name, index, shader_type):
+    def custom_output_declaration(self, type, name, index, shader_type, graph_io_type):
         return textwrap.dedent(f'''\
         #ifdef {shader_type}
-            layout (location = {index}) out {type} {self.global_output_reference(name)};
+            layout (location = {index}) out {type} {self.custom_io_reference('OUT', graph_io_type, name)};
         #endif
         ''')
 
@@ -154,11 +154,11 @@ class PythonTranspiler(SourceTranspiler):
         return self.declaration(type, size, name, initialization)
     
     @classmethod
-    def global_output_reference(self, name):
-        return self.io_parameter_reference(name, 'out')
+    def custom_io_reference(self, io, graph_io_type, name):
+        return self.io_parameter_reference(name, io.lower())
 
     @classmethod
-    def global_output_declaration(self, type, name, index):
+    def custom_output_declaration(self, type, name, index, shader_type, graph_io_type):
         return self.declaration(type, 0, self.io_parameter_reference(name, 'out'))
 
     @classmethod    
