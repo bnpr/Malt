@@ -9,11 +9,15 @@ class MaltIOParameter(bpy.types.PropertyGroup):
         bridge = MaltPipeline.get_bridge()
         if bridge and self.graph_type in bridge.graphs:
             graph = bridge.graphs[self.graph_type]
-            if self.io_type in graph.graph_IO:
+            if self.io_type in graph.graph_IO.keys():
                 if self.is_output:
                     types = graph.graph_IO[self.io_type].dynamic_output_types
                 else:
                     types = graph.graph_IO[self.io_type].dynamic_input_types
+            else:
+                print('NO IO:', self.io_type, graph.graph_IO.keys())
+        else:
+            print('ENUM ERROR:', self.graph_type, self.io_type)
         return [(type, type, type) for type in types]
 
     graph_type : bpy.props.StringProperty()
@@ -35,11 +39,6 @@ class MaltCustomIO(bpy.types.PropertyGroup):
 
 class MaltCustomPasses(bpy.types.PropertyGroup):
 
-    def get_graph_enums(self, context):
-        types = context.world.malt.graph_types.keys()
-        return [(type, type, type) for type in types]
-    
-    graph_type : bpy.props.EnumProperty(items=get_graph_enums)
     io : bpy.props.CollectionProperty(type=MaltCustomIO)
 
 class MaltGraphType(bpy.types.PropertyGroup):
@@ -60,32 +59,34 @@ def setup_default_passes(graphs):
                     if name not in custom_pass.io:
                         custom_pass.io.add().name = name
 
-class Malt_PipelineIOArchetypesPanel(bpy.types.Panel):
-    bl_label = 'Malt IO Archetypes'
-    bl_idname = 'WORLD_PT_MALT_Pipeline_IO_Archetypes'
-    bl_space_type = 'PROPERTIES'
-    bl_region_type = 'WINDOW'
-    bl_context = 'world'
+class OT_MaltAddCustomPass(bpy.types.Operator):
+    bl_idname = "wm.malt_add_custom_pass"
+    bl_label = "Malt Add Cusstom Pass"
+    bl_options = {'INTERNAL'}
+
+    graph_type : bpy.props.StringProperty()
+    name : bpy.props.StringProperty(default='Custom Pass')
 
     def draw(self, context):
-        from BlenderMalt.MaltUtils import malt_template_list
-        layout = self.layout
-        world = context.world
-        layout.label(text='Custom Passes:')
-        malt_template_list(layout, world, 'io_archetypes', 'io_archetypes_index')
-        try:
-            layout.label(text='Outputs:')
-            active_archetype = world.io_archetypes[world.io_archetypes_index]
-            malt_template_list(layout, active_archetype, 'parameters', 'parameters_index')
-        except:
-            pass
+        self.layout.prop(self,'name')
+
+    def execute(self, context):
+        new_pass = context.scene.world.malt_graph_types[self.graph_type].custom_passes.add()
+        new_pass.name = self.name
+        for name in MaltPipeline.get_bridge().graphs[self.graph_type].graph_IO.keys():
+            new_pass.io.add().name = name
+        return {'FINISHED'}
+    
+    def invoke(self, context, event):
+        return context.window_manager.invoke_props_dialog(self)
+
 
 classes = [
     MaltIOParameter,
     MaltCustomIO,
     MaltCustomPasses,
     MaltGraphType,
-    #Malt_PipelineIOArchetypesPanel,
+    OT_MaltAddCustomPass,
 ]
 
 def register():

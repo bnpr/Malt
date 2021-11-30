@@ -17,8 +17,6 @@ class ScreenPass(PipelineNode):
         return 'Screen Shader'
     
     def execute(self, parameters):
-        print('-'*50)
-        print(parameters)
         return
         if self.pipeline.resolution != self.resolution:
             for i in range(self.IO_COUNT):
