@@ -101,11 +101,10 @@ class MaltIONode(bpy.types.Node, MaltNode):
 
     def get_source_socket_reference(self, socket):
         transpiler = self.id_data.get_transpiler()
+        io = 'out' if self.is_output else 'in'
         if self.is_custom_socket(socket):
-            graph_io = 'OUT' if self.is_output else 'IN'
-            return transpiler.custom_io_reference(graph_io, self.io_type, socket.name)
+            return transpiler.custom_io_reference(io, self.io_type, socket.name)
         else:
-            io = 'out' if self.is_output else 'in'
             return transpiler.io_parameter_reference(socket.name, io)
     
     def get_source_code(self, transpiler):

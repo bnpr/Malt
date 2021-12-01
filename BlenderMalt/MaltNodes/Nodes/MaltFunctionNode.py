@@ -1,6 +1,5 @@
 # Copyright (c) 2020-2021 BNPR, Miguel Pozo and contributors. MIT license. 
 
-import json
 import bpy    
 from BlenderMalt.MaltNodes.MaltNode import MaltNode
 
@@ -63,7 +62,7 @@ class MaltFunctionNode(bpy.types.Node, MaltNode):
     def get_source_socket_reference(self, socket):
         transpiler = self.id_data.get_transpiler()
         if transpiler.is_instantiable_type(socket.data_type):
-            return transpiler.parameter_reference(self.get_source_name(), socket.name)
+            return transpiler.parameter_reference(self.get_source_name(), socket.name, 'out' if socket.is_output else 'in')
         else:
             source = self.get_source_code(transpiler)
             return source.splitlines()[-1].split('=')[-1].split(';')[0]

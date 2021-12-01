@@ -81,7 +81,7 @@ class MaltTree(bpy.types.NodeTree):
         for node in self.nodes:
             if node.bl_idname == 'MaltIONode':
                 io = 'out' if node.is_output else 'in'
-                for parameter in node.custom_parameters:
+                for parameter in node.get_custom_parameters():
                     params.append({
                         'name': parameter.name,
                         'type': 'Texture', #TODO

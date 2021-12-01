@@ -32,7 +32,7 @@ class SourceTranspiler():
         pass
 
     @classmethod
-    def parameter_reference(self, node_name, parameter_name):
+    def parameter_reference(self, node_name, parameter_name, io_type):
         pass
 
     @classmethod
@@ -85,7 +85,7 @@ class GLSLTranspiler(SourceTranspiler):
     
     @classmethod
     def custom_io_reference(self, io, graph_io_type, name):
-        return f"{io}_{graph_io_type}_{''.join(char.upper() for char in name if char.isalnum())}"
+        return f"{io.upper()}_{graph_io_type.upper()}_{''.join(char.upper() for char in name if char.isalnum())}"
 
     @classmethod
     def custom_output_declaration(self, type, name, index, shader_type, graph_io_type):
@@ -96,7 +96,7 @@ class GLSLTranspiler(SourceTranspiler):
         ''')
 
     @classmethod
-    def parameter_reference(self, node_name, parameter_name):
+    def parameter_reference(self, node_name, parameter_name, io_type):
         return f'{node_name}_0_{parameter_name}'
 
     @classmethod    
@@ -109,7 +109,7 @@ class GLSLTranspiler(SourceTranspiler):
         for i, parameter in enumerate(function['parameters']):
             if parameter['io'] in ['out','inout']:
                 initialization = parameters[i]
-                src_reference = self.parameter_reference(name, parameter['name'])
+                src_reference = self.parameter_reference(name, parameter['name'], parameter['io'])
                 src += self.declaration(parameter['type'], parameter['size'], src_reference, initialization)
                 parameters[i] = src_reference
         src += post_parameter_initialization
@@ -117,7 +117,7 @@ class GLSLTranspiler(SourceTranspiler):
         initialization = f'{function["name"]}({",".join(parameters)})'
         
         if function['type'] != 'void' and self.is_instantiable_type(function['type']):
-            src += self.declaration(function['type'], 0, self.parameter_reference(name, 'result'), initialization)
+            src += self.declaration(function['type'], 0, self.parameter_reference(name, 'result', 'out'), initialization)
         else:
             src += initialization + ';\n'
         
@@ -155,32 +155,35 @@ class PythonTranspiler(SourceTranspiler):
     
     @classmethod
     def custom_io_reference(self, io, graph_io_type, name):
-        return self.io_parameter_reference(name, io.lower())
+        return self.io_parameter_reference(name, io)
 
     @classmethod
     def custom_output_declaration(self, type, name, index, shader_type, graph_io_type):
         return self.declaration(type, 0, self.io_parameter_reference(name, 'out'))
 
     @classmethod    
-    def parameter_reference(self, node_name, parameter_name):
-        return f'{node_name}_parameters["{parameter_name}"]'
+    def parameter_reference(self, node_name, parameter_name, io_type):
+        return f'{node_name}_parameters["{io_type.upper()}"]["{parameter_name}"]'
 
     @classmethod    
     def io_parameter_reference(self, parameter_name, io_type):
-        if io_type == 'out':
-            return f'OUT["{parameter_name}"]'
-        else:
-            return f'IN["{parameter_name}"]'
+        return f'{io_type.upper()}["{parameter_name}"]'
 
     @classmethod
     def call(self, function, name, parameters=[], post_parameter_initialization = ''):
+        import textwrap
         src = ''
-        src += f'{name}_parameters = {{}}\n'
+        src += textwrap.dedent(
+        f'''{name}_parameters = {{
+            'IN' : {{}},
+            'OUT' : {{}},
+        }}
+        ''')
         for i, parameter in enumerate(function['parameters']):
             initialization = parameters[i]
             if initialization is None:
                 initialization = 'None'
-            parameter_reference = self.parameter_reference(name, parameter['name'])
+            parameter_reference = self.parameter_reference(name, parameter['name'], parameter['io'])
             src += f'{parameter_reference} = {initialization}\n'
         src += post_parameter_initialization
         src += f'run_node("{name}", "{function["name"]}", {name}_parameters)\n'
