@@ -23,13 +23,19 @@ class MaltFunctionNode(bpy.types.Node, MaltNode):
             if parameter['io'] in ['','in','inout']:
                 inputs[parameter['name']] = parameter
         
-        self.pass_type = self.get_pass_type()
-        
         self.setup_sockets(inputs, outputs)
+        
+        self.pass_type = self.get_pass_type()
+        if self.pass_type != '':
+            from Malt.PipelineParameters import MaterialParameter
+            extension = self.id_data.get_pipeline_graph(self.pass_type).file_extension
+            self.malt_parameters.setup(
+                {'PASS_MATERIAL': MaterialParameter('', extension)},
+                replace_parameters=False,
+                skip_private=False
+            )
 
     function_type : bpy.props.StringProperty(update=MaltNode.setup)
-    pass_material: bpy.props.PointerProperty(type=bpy.types.Material, update=MaltNode.setup)
-    show_material_parameters: bpy.props.BoolProperty(default=True)
     pass_type: bpy.props.StringProperty()
 
     def get_function(self):
@@ -52,9 +58,14 @@ class MaltFunctionNode(bpy.types.Node, MaltNode):
                 return pass_type
         return ''
     
+    def get_pass_material(self):
+        if self.get_pass_type() != '' and 'PASS_MATERIAL' in self.malt_parameters.materials.keys():
+            return self.malt_parameters.materials['PASS_MATERIAL'].material
+    
     def get_custom_io(self):
-        if self.get_pass_type() != '' and self.pass_material:
-            tree = self.pass_material.malt.shader_nodes
+        material = self.get_pass_material()
+        if material:
+            tree = material.malt.shader_nodes
             if tree:
                 return tree.get_custom_io()
         return []
@@ -90,29 +101,11 @@ class MaltFunctionNode(bpy.types.Node, MaltNode):
     
     def draw_buttons(self, context, layout):
         if self.pass_type != '':
-            layout = layout.column()
-            row = layout.row(align=True)
-            if self.pass_material:
-                row.prop(self, 'show_material_parameters',
-                    icon = 'DISCLOSURE_TRI_DOWN' if self.show_material_parameters else 'DISCLOSURE_TRI_RIGHT',
-                    icon_only=True, emboss=False
-                )
-            row.template_ID(self, "pass_material")
-            def add_or_duplicate():
-                if self.pass_material:
-                    self.pass_material = self.pass_material.copy()
-                else:
-                    self.pass_material = bpy.data.materials.new('Material')
-                self.setup()
-                #self.id_data.update_tag()
-                #self.pass_material.update_tag()
-            text = '' if self.pass_material else 'New'
-            icon = 'DUPLICATE' if self.pass_material else 'ADD'
-            row.operator('wm.malt_callback', text=text, icon=icon).callback.set(add_or_duplicate)
-            if self.pass_material and self.show_material_parameters:
-                self.pass_material.malt.draw_ui(layout.box(),
-                    self.id_data.get_pipeline_graph(self.pass_type).file_extension, self.pass_material.malt_parameters)
-
+            #layout = layout.column()
+            layout.operator('wm.malt_callback', text='', icon='FILE_REFRESH').callback.set(self.setup)
+            def _draw_callback(row, properties):
+                print('DRAW CALLBACK!!!')
+            self.malt_parameters.draw_parameter(layout, 'PASS_MATERIAL', None, is_node_socket=True, draw_callback=_draw_callback)
     
 classes = [
     MaltFunctionNode,

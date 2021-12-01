@@ -173,8 +173,8 @@ class PythonTranspiler(SourceTranspiler):
     def call(self, function, name, parameters=[], post_parameter_initialization = ''):
         import textwrap
         src = ''
-        src += textwrap.dedent(
-        f'''{name}_parameters = {{
+        src += textwrap.dedent(f'''
+        {name}_parameters = {{
             'IN' : {{}},
             'OUT' : {{}},
         }}
