@@ -101,11 +101,8 @@ class MaltFunctionNode(bpy.types.Node, MaltNode):
     
     def draw_buttons(self, context, layout):
         if self.pass_type != '':
-            #layout = layout.column()
-            layout.operator('wm.malt_callback', text='', icon='FILE_REFRESH').callback.set(self.setup)
-            def _draw_callback(row, properties):
-                print('DRAW CALLBACK!!!')
-            self.malt_parameters.draw_parameter(layout, 'PASS_MATERIAL', None, is_node_socket=True, draw_callback=_draw_callback)
+            layout.operator('wm.malt_callback', text='Reload Sockets', icon='FILE_REFRESH').callback.set(self.setup)
+            self.malt_parameters.draw_parameter(layout, 'PASS_MATERIAL', None, is_node_socket=True)
     
 classes = [
     MaltFunctionNode,
