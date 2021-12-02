@@ -163,7 +163,10 @@ class PythonTranspiler(SourceTranspiler):
 
     @classmethod    
     def parameter_reference(self, node_name, parameter_name, io_type):
-        return f'{node_name}_parameters["{io_type.upper()}"]["{parameter_name}"]'
+        if io_type:
+            return f'{node_name}_parameters["{io_type.upper()}"]["{parameter_name}"]'
+        else:
+            return f'{node_name}_parameters["{parameter_name}"]'
 
     @classmethod    
     def io_parameter_reference(self, parameter_name, io_type):

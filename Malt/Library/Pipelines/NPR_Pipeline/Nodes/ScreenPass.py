@@ -11,32 +11,44 @@ class ScreenPass(PipelineNode):
         self.resolution = None
         self.texture_targets = {}
         self.render_target = None
+        self.custom_io = []
     
     @staticmethod
     def get_pass_type():
         return 'Screen Shader'
     
     def execute(self, parameters):
-        return
-        if self.pipeline.resolution != self.resolution:
-            for i in range(self.IO_COUNT):
-                self.texture_targets[i] = Texture(self.pipeline.resolution, GL.GL_RGBA16F)
-            self.render_target = RenderTarget(self.texture_targets)
-            self.resolution = self.pipeline.resolution
-        
-        self.render_target.clear([(0,0,0,0)]*self.IO_COUNT)
+        inputs = parameters['IN']
+        outputs = parameters['OUT']
+        material = parameters['PASS_MATERIAL']
+        custom_io = parameters['CUSTOM_IO']
 
-        material = parameters['Material']
+        print(custom_io)
+
+        if self.pipeline.resolution != self.resolution or self.custom_io != custom_io:
+            self.texture_targets = {}
+            for io in custom_io:
+                if io['io'] == 'out':
+                    if io['type'] == 'Texture':#TODO
+                        self.texture_targets[io['name']] = Texture(self.pipeline.resolution, GL.GL_RGBA16F)
+            self.render_target = RenderTarget([*self.texture_targets.values()])
+            self.resolution = self.pipeline.resolution
+            self.custom_io = custom_io
+        
+        self.render_target.clear([(0,0,0,0)]*len(self.texture_targets))
+
         if material and material.shader and 'SHADER' in material.shader:
             shader = material.shader['SHADER']
-            for i in range(0, self.IO_COUNT):
-                input_name = f'Input{i}'
-                texture_name = f'INPUT_{i}'
-                shader.textures[texture_name] = parameters[input_name]
-            self.pipeline.draw_screen_pass(shader, self.render_target, blend = False)
-
-        for i in range(0, self.IO_COUNT):
-            parameters[f'Output{i}'] = self.texture_targets[i]
+            for io in custom_io:
+                if io['io'] == 'in':
+                    if io['type'] == 'Texture':#TODO
+                        shader.textures[io['name']] = inputs[io['name']]
+            self.pipeline.draw_screen_pass(shader, self.render_target)
+        
+        for io in custom_io:
+            if io['io'] == 'out':
+                if io['type'] == 'Texture':#TODO
+                    outputs[io['name']] = self.texture_targets[io['name']]
 
 
 NODE = ScreenPass    

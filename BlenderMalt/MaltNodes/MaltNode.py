@@ -17,6 +17,9 @@ class MaltNode():
     # Blender will trigger update callbacks even before init and update has finished
     # So we use some wrappers to get a more sane behaviour
 
+    def get_parameters(self, overrides, resources):
+        return self.malt_parameters.get_parameters(overrides, resources)
+
     def _disable_updates_wrapper(self, function):
         tree = self.id_data
         tree.disable_updates = True
@@ -74,7 +77,7 @@ class MaltNode():
                     remove.append(current[e])
             for e in remove:
                 current.remove(e)
-            for name, dic in new.items():
+            for i, (name, dic) in enumerate(new.items()):
                 type = dic['type']
                 size = dic['size'] if 'size' in dic else 0
                 if name not in current:
@@ -89,6 +92,9 @@ class MaltNode():
                     current[name].default_initialization = dic['meta']['init']
                 except:
                     current[name].default_initialization = ''
+                
+                current.move(current.keys().index(name), i)
+
         setup(self.inputs, inputs)
         setup(self.outputs, outputs)
         parameters = {}

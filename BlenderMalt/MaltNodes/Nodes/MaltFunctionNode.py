@@ -38,6 +38,12 @@ class MaltFunctionNode(bpy.types.Node, MaltNode):
     function_type : bpy.props.StringProperty(update=MaltNode.setup)
     pass_type: bpy.props.StringProperty()
 
+    def get_parameters(self, overrides, resources):
+        parameters = MaltNode.get_parameters(self, overrides, resources)
+        if self.get_pass_material():
+            parameters['CUSTOM_IO'] = self.get_custom_io()
+        return parameters
+
     def get_function(self):
         graph = self.id_data.get_pipeline_graph()
         function = None
@@ -96,6 +102,15 @@ class MaltFunctionNode(bpy.types.Node, MaltNode):
                 socket = self.inputs[parameter['name']]
                 initialization = socket.get_source_initialization()
             parameters.append(initialization)
+        
+        if self.pass_type != '':
+            def add_implicit_parameter(name):
+                parameter = transpiler.parameter_reference(self.get_source_name(), name, None)
+                initialization = transpiler.global_reference(self.get_source_name(), name)
+                nonlocal post_parameter_initialization
+                post_parameter_initialization += transpiler.asignment(parameter, initialization)
+            add_implicit_parameter('PASS_MATERIAL')
+            add_implicit_parameter('CUSTOM_IO')
 
         return transpiler.call(function, source_name, parameters, post_parameter_initialization)
     

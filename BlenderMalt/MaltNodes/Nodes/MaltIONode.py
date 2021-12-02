@@ -129,22 +129,21 @@ class MaltIONode(bpy.types.Node, MaltNode):
     
     def get_source_global_parameters(self, transpiler):
         src = MaltNode.get_source_global_parameters(self, transpiler)
-        if self.is_output:
-            graph_io = self.id_data.get_pipeline_graph().graph_IO[self.io_type]
-            try:
-                shader_type = graph_io.shader_type
-                index = graph_io.custom_output_start_index
-            except:
-                shader_type = None
-                index = None
-            for socket in self.inputs:
-                if self.is_custom_socket(socket):
-                    src += transpiler.custom_output_declaration(socket.data_type, socket.name, index, shader_type, self.io_type)
-                    index += 1
-        else:
-            for socket in self.outputs:
-                if self.is_custom_socket(socket):
-                    src += transpiler.global_declaration(socket.data_type, socket.array_size, self.get_source_socket_reference(socket))
+        graph_io = self.id_data.get_pipeline_graph().graph_IO[self.io_type]
+        try:
+            index = graph_io.custom_output_start_index
+            shader_type = graph_io.shader_type
+        except:
+            index = None
+            shader_type = None
+        for key, parameter in self.get_custom_parameters().items():
+            if parameter.is_output:
+                socket = self.inputs[key]
+                src += transpiler.custom_output_declaration(socket.data_type, key, index, shader_type, self.io_type)
+                index += 1
+            else:
+                socket = self.outputs[key]
+                src += transpiler.global_declaration(parameter.parameter, 0, self.get_source_socket_reference(socket))
         return src
     
     def draw_buttons(self, context, layout):
