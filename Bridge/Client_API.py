@@ -112,11 +112,12 @@ class Bridge():
             return ''
 
     @bridge_method
-    def compile_material(self, path, search_paths=[]):
+    def compile_material(self, path, search_paths=[], custom_passes=[]):
         self.connections['MAIN'].send({
             'msg_type': 'MATERIAL',
             'path': path,
-            'search_paths': search_paths
+            'search_paths': search_paths,
+            'custom_passes': custom_passes,
         })
         return self.connections['MAIN'].recv()
 

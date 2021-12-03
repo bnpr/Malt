@@ -1,22 +1,39 @@
+class PipelineGraphIO():
+
+    def __init__(self, name, dynamic_input_types = [], dynamic_output_types = []):
+        self.name = name
+        self.signature = None
+        self.function = None
+        self.dynamic_input_types = dynamic_input_types
+        self.dynamic_output_types = dynamic_output_types
+
 class PipelineGraph():
 
-    INTERNAL_PASS = 0
-    GLOBAL_PASS = 1
-    SCENE_PASS = 2
+    INTERNAL_GRAPH = 0
+    GLOBAL_GRAPH = 1
+    SCENE_GRAPH = 2
     
-    def __init__(self, language, file_extension, pass_type, functions, structs, graph_IO):
+    def __init__(self, name, language, file_extension, graph_type, graph_io):
+        self.name = name
         self.language = language
         self.file_extension = file_extension
-        self.pass_type = pass_type
+        self.graph_type = graph_type
+        self.functions = None
+        self.structs = None
+        self.graph_io = { io.name : io for io in graph_io } 
+    
+    def setup_reflection(self, functions, structs):
         self.functions = functions
         self.structs = structs
-        self.graph_IO = graph_IO
+        for io in self.graph_io.values():
+            io.function = functions[io.name]
+            io.signature = io.function['signature']
         for key in [*functions.keys()]:
             name = functions[key]['name']
             if name.startswith('_') or name.isupper() or name == 'main':
                 functions.pop(key)
         for name in [*structs.keys()]:
-            if name.startswith('_'):
+            if name.startswith('_'): #TODO: Upper???
                 structs.pop(name)
     
     def generate_source(self, parameters):
@@ -27,7 +44,7 @@ class PipelineGraph():
         return copy(self)
 
 
-class GLSLGraphIO():
+class GLSLGraphIO(PipelineGraphIO): 
 
     COMMON_INPUT_TYPES = ['sampler2D', 'usampler2D', 'isampler2D']
     COMMON_OUTPUT_TYPES = [
@@ -37,29 +54,34 @@ class GLSLGraphIO():
     ]
     
     def __init__(self, name, define = None, dynamic_input_types = [], dynamic_output_types = [], shader_type=None, custom_output_start_index=0):
-        self.name = name
+        super().__init__(name, dynamic_input_types, dynamic_output_types)
         self.define = define
         self.shader_type = shader_type
         self.custom_output_start_index = custom_output_start_index
-        self.dynamic_input_types = dynamic_input_types
-        self.dynamic_output_types = dynamic_output_types
-        self.signature = None
-        self.function = None
+
 
 class GLSLPipelineGraph(PipelineGraph):
 
-    def __init__(self, pass_type, file_extension, root_path, source, default_global_scope, graph_io):
+    def __init__(self, name, graph_type, default_global_scope, shaders=['SHADER'], graph_io=[]):
+        file_extension = f'.{name.lower()}.glsl'
+        super().__init__(name, 'GLSL', file_extension, graph_type)
+        self.default_global_scope = default_global_scope
+        self.shaders = shaders
+        self.graph_io = graph_io
+    
+    def name_as_macro(self, name):
+        return ''.join(c for c in name.replace('','_').upper() if c.is_alnum() or c == '_')
+    
+    def get_material_define(self):
+        return f'IS_{self.name_as_macro(self.name)}_SHADER'
+
+    def setup_reflection(self, pipeline, source):
+        source = self.default_global_scope + source
+        source = pipeline.preprocess_shader_from_source(source, [], [self.get_material_define(), 'VERTEX_SHADER','PIXEL_SHADER','REFLECTION'])
+        root_path = pipeline.SHADER_INCLUDE_PATHS #TODO: pass a list
         from . GL.Shader import glsl_reflection
         reflection = glsl_reflection(source, root_path)
-        functions = reflection["functions"]
-        structs = reflection["structs"]
-        graph_io_map = {}
-        for io in graph_io:
-            io.function = functions[io.name]
-            io.signature = io.function['signature']
-            graph_io_map[io.name] = io
-        self.default_global_scope = default_global_scope
-        super().__init__('GLSL', file_extension, pass_type, functions, structs, graph_io_map)
+        super().setup_reflection(reflection["functions"], reflection["structs"])
     
     def generate_source(self, parameters):
         import textwrap
@@ -77,11 +99,18 @@ class GLSLPipelineGraph(PipelineGraph):
                     code += f'\n#endif //{graph_IO.shader_type}\n'
         code += '\n\n'
         return code
+    
+    def compile_material(self, pipeline, source, include_paths=[], custom_passes=[]):
+        shaders = {}
+        for shader in self.shaders:
+            shaders[shader] = [self.get_material_define(), shader]
+            for custom_pass in custom_passes:
+                shaders[f'{custom_pass}'] = [self.get_material_define(), shader, self.name_as_macro(custom_pass)]
+        return pipeline.compile_shaders_from_source(source, include_paths, shaders)
 
 class PythonPipelineGraph(PipelineGraph):
     
-    def __init__(self, pipeline, function_nodes, graph_io_reflection):
-        self.pipeline = pipeline
+    def __init__(self, name, function_nodes, graph_io_reflection):
         self.node_instances = {}
         self.nodes = {}
         functions = {}
@@ -92,7 +121,9 @@ class PythonPipelineGraph(PipelineGraph):
         graph_io = {}
         for node in graph_io_reflection:
             graph_io[node['name']] = node
-        super().__init__('Python', '-render_layer.py', self.GLOBAL_PASS, functions, {}, graph_io)
+        extension = f'-{name}.py'
+        super().__init__(name, 'Python', extension, self.GLOBAL_GRAPH, functions, {}, graph_io)
+        self.setup_reflection(functions, None)
     
     def generate_source(self, parameters):
         src = ''
@@ -101,19 +132,12 @@ class PythonPipelineGraph(PipelineGraph):
                 src += parameters[io]
         return src
     
-    def get_serializable_copy(self):
-        from copy import copy
-        result = copy(self)
-        result.pipeline = None
-        #result.nodes = None
-        return result
-    
-    def run_source(self, source, PARAMETERS, IN, OUT):
+    def run_source(self, pipeline, source, PARAMETERS, IN, OUT):
         try:
             def run_node(node_name, node_type, parameters):
                 if node_name not in self.node_instances.keys():
                     node_class = self.nodes[node_type]
-                    self.node_instances[node_name] = node_class(self.pipeline)
+                    self.node_instances[node_name] = node_class(pipeline)
                 self.node_instances[node_name].execute(parameters)
             exec(source)
         except:

@@ -32,7 +32,7 @@ class MaltIONode(bpy.types.Node, MaltNode):
         self.pass_type = self.io_type
         
         graph = self.id_data.get_pipeline_graph()
-        self.allow_custom_pass = graph.pass_type == graph.SCENE_PASS
+        self.allow_custom_pass = graph.pass_type == graph.SCENE_GRAPH
         self.allow_custom_parameters = len(self.get_dynamic_parameter_types()) > 0
 
         inputs = {}

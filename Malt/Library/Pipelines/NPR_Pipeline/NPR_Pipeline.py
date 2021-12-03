@@ -92,21 +92,21 @@ class NPR_Pipeline(Pipeline):
 
         self.layer_query = None
 
-    def compile_material_from_source(self, material_type, source, include_paths=[]):
+    def compile_material_from_source(self, material_type, source, include_paths=[], custom_passes={}):
         if material_type == 'mesh':
             return self.compile_shaders_from_source(source, include_paths, {
                 'PRE_PASS': ['IS_MESH_SHADER','PRE_PASS'],
                 'MAIN_PASS': ['IS_MESH_SHADER','MAIN_PASS'],
                 'SHADOW_PASS': ['IS_MESH_SHADER','SHADOW_PASS'],
-            })
+            } + custom_passes)
         elif material_type == 'screen':
             return self.compile_shaders_from_source(source, include_paths, {
                 'SHADER': ['IS_SCREEN_SHADER'],
-            })
+            } + custom_passes)
         elif material_type == 'light':
             return self.compile_shaders_from_source(source, include_paths, {
                 'SHADER': ['IS_LIGHT_SHADER'],
-            })
+            } + custom_passes)
         else:
             return 'Invalid material type. Valid extensions are .mesh.glsl, .light.glsl and .screen.glsl'
     

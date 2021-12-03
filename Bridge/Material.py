@@ -8,12 +8,12 @@ MATERIAL_SHADERS = {}
 
 class Material():
 
-    def __init__(self, path, pipeline, search_paths=[]):
+    def __init__(self, path, pipeline, search_paths=[], custom_passes={}):
         self.path = path
         self.parameters = {}
         self.compiler_error = ''
         
-        compiled_material = pipeline.compile_material(path, search_paths)
+        compiled_material = pipeline.compile_material(path, search_paths, custom_passes)
         
         if isinstance(compiled_material, str):
             self.compiler_error = compiled_material

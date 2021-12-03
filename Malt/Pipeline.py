@@ -136,15 +136,18 @@ class Pipeline():
             results[shader] = Shader(vertex, pixel)
         return results
     
-    def compile_material_from_source(self, material_type, source, include_paths=[]):
+    def compile_material_from_source(self, material_type, source, include_paths=[], custom_passes={}):
         return {}
     
-    def compile_material(self, shader_path, search_paths=[]):
+    def compile_material(self, shader_path, search_paths=[], custom_passes={}):
         try:
             file_dir = path.dirname(shader_path)
-            material_type = shader_path.split('.')[-2]
             source = '#include "{}"'.format(path.basename(shader_path))
-            return self.compile_material_from_source(material_type, source, [file_dir] + search_paths)
+            for graph in self.graphs.values():
+                if shader_path.endswith(graph.extension):
+                    return graph.compile_material(self, source, [file_dir] + search_paths, custom_passes)
+            material_type = shader_path.split('.')[-2]
+            return self.compile_material_from_source(material_type, source, [file_dir] + search_paths, custom_passes)
         except Exception as e:
             return str(e)
     

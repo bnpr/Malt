@@ -53,7 +53,7 @@ class MaltGraphType(bpy.types.PropertyGroup):
 def setup_default_passes(graphs):
     world = bpy.context.scene.world
     for name, graph in graphs.items():
-        if graph.pass_type == graph.SCENE_PASS:
+        if graph.pass_type == graph.SCENE_GRAPH:
             if name not in world.malt_graph_types:
                 world.malt_graph_types.add().name = name
             graph_type = world.malt_graph_types[name]

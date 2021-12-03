@@ -16,24 +16,11 @@ _COMMON_HEADER = '''
 #include "Node Utils/node_utils.glsl"
 '''
 
-_MESH_SHADER_HEADER = _COMMON_HEADER
-_MESH_SHADER_REFLECTION_SRC = _MESH_SHADER_HEADER + '''
-void COMMON_PIXEL_SHADER(Surface S, inout PixelOutput PO) { }
-'''
-
-_LIGHT_SHADER_HEADER = _COMMON_HEADER
-_LIGHT_SHADER_REFLECTION_SRC=_LIGHT_SHADER_HEADER + '''
-void LIGHT_SHADER(LightShaderInput I, inout LightShaderOutput O) { }
-'''
-
 _SCREEN_SHADER_HEADER= _COMMON_HEADER + '''
 #ifdef PIXEL_SHADER
 void SCREEN_SHADER(vec2 uv);
 void main(){ SCREEN_SHADER(UV[0]); }
 #endif //PIXEL_SHADER
-'''
-_SCREEN_SHADER_REFLECTION_SRC= _SCREEN_SHADER_HEADER + '''
-void SCREEN_SHADER(vec2 uv){ }
 '''
 
 class NPR_Pipeline_Nodes(NPR_Pipeline):
@@ -49,13 +36,11 @@ class NPR_Pipeline_Nodes(NPR_Pipeline):
         self.setup_graphs()
 
     def setup_graphs(self):
-        source = self.preprocess_shader_from_source(_MESH_SHADER_REFLECTION_SRC, [], ['IS_MESH_SHADER','VERTEX_SHADER','PIXEL_SHADER','REFLECTION'])
-        self.graphs['Mesh Shader'] = GLSLPipelineGraph(
-            pass_type=GLSLPipelineGraph.SCENE_PASS,
-            file_extension='.mesh.glsl',
-            root_path=SHADER_DIR,
-            source=source,
-            default_global_scope=_MESH_SHADER_HEADER,
+        mesh = GLSLPipelineGraph(
+            name='Mesh',
+            graph_type=GLSLPipelineGraph.SCENE_GRAPH,
+            default_global_scope=_COMMON_HEADER,
+            shaders=['PRE_PASS', 'MAIN_PASS', 'SHADOW_PASS'],
             graph_io=[
                 GLSLGraphIO(
                     name='COMMON_PIXEL_SHADER',
@@ -76,23 +61,24 @@ class NPR_Pipeline_Nodes(NPR_Pipeline):
                 ),
             ]
         )
+        mesh.setup_reflection(self, "void COMMON_PIXEL_SHADER(Surface S, inout PixelOutput PO) { }")
 
-        source = self.preprocess_shader_from_source(_LIGHT_SHADER_REFLECTION_SRC, [], ['IS_LIGHT_SHADER','PIXEL_SHADER','REFLECTION'])
-        self.graphs['Light Shader'] = GLSLPipelineGraph(
-            pass_type=GLSLPipelineGraph.INTERNAL_PASS,
-            file_extension='.light.glsl',
-            root_path=SHADER_DIR,
-            source=source,
-            default_global_scope=_LIGHT_SHADER_HEADER,
-            graph_io=[ GLSLGraphIO(name='LIGHT_SHADER') ]
+        light = GLSLPipelineGraph(
+            name='Light',
+            graph_type=GLSLPipelineGraph.INTERNAL_GRAPH,
+            default_global_scope=_COMMON_HEADER,
+            graph_io=[ 
+                GLSLGraphIO(
+                    name='LIGHT_SHADER',
+                    shader_type='PIXEL_SHADER',
+                )
+            ]
         )
+        light.setup_reflection(self, "void LIGHT_SHADER(LightShaderInput I, inout LightShaderOutput O) { }")
 
-        source = self.preprocess_shader_from_source(_SCREEN_SHADER_REFLECTION_SRC, [], ['IS_SCREEN_SHADER','PIXEL_SHADER','REFLECTION'])
-        self.graphs['Screen Shader'] = GLSLPipelineGraph(
-            pass_type=GLSLPipelineGraph.GLOBAL_PASS,
-            file_extension='.screen.glsl',
-            root_path=SHADER_DIR,
-            source=source,
+        screen = GLSLPipelineGraph(
+            name='Screen',
+            graph_type=GLSLPipelineGraph.GLOBAL_GRAPH,
             default_global_scope=_SCREEN_SHADER_HEADER,
             graph_io=[ 
                 GLSLGraphIO(
@@ -103,12 +89,14 @@ class NPR_Pipeline_Nodes(NPR_Pipeline):
                 )
             ]
         )
+        screen.setup_reflection(self, "void SCREEN_SHADER(vec2 uv){ }")
 
         inputs = {'Scene' : Parameter('Scene', Type.OTHER)}
         outputs = {'Color' : Parameter('Texture', Type.OTHER)}
-        self.graphs['Render Layer'] = PythonPipelineGraph(self,
-            [ScreenPass.NODE, Unpack8bitTextures.NODE],
-            [PipelineNode.static_reflect('Render Layer', inputs, outputs)])
+        render_layer = PythonPipelineGraph(
+            name='Render Layer',
+            function_nodes=[ScreenPass.NODE, Unpack8bitTextures.NODE],
+            graph_io_reflection=[PipelineNode.static_reflect('Render Layer', inputs, outputs)])
 
     def get_render_outputs(self):
         return super().get_render_outputs()
@@ -150,7 +138,7 @@ class NPR_Pipeline_Nodes(NPR_Pipeline):
         OUT = {'Color' : None}
         graph = scene.world_parameters['Render Layer']
         if graph:
-            self.graphs['Render Layer'].run_source(graph['source'], graph['parameters'], IN, OUT)
+            self.graphs['Render Layer'].run_source(self, graph['source'], graph['parameters'], IN, OUT)
         else:
             OUT['Color'] = super().draw_layer(batches, scene, background_color)
 
