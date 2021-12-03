@@ -42,7 +42,9 @@ class ScreenPass(PipelineNode):
             for io in custom_io:
                 if io['io'] == 'in':
                     if io['type'] == 'Texture':#TODO
-                        shader.textures[io['name']] = inputs[io['name']]
+                        from Malt.SourceTranspiler import GLSLTranspiler
+                        glsl_name = GLSLTranspiler.custom_io_reference('IN', 'SCREEN_SHADER', io['name'])
+                        shader.textures[glsl_name] = inputs[io['name']]
             self.pipeline.draw_screen_pass(shader, self.render_target)
         
         for io in custom_io:
