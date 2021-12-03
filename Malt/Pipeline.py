@@ -137,18 +137,20 @@ class Pipeline():
         return results
     
     def compile_material_from_source(self, material_type, source, include_paths=[], custom_passes={}):
-        return {}
+        return self.graphs[material_type].compile_material(self, source, include_paths, custom_passes)
     
     def compile_material(self, shader_path, search_paths=[], custom_passes={}):
         try:
             file_dir = path.dirname(shader_path)
             source = '#include "{}"'.format(path.basename(shader_path))
-            for graph in self.graphs.values():
-                if shader_path.endswith(graph.extension):
-                    return graph.compile_material(self, source, [file_dir] + search_paths, custom_passes)
             material_type = shader_path.split('.')[-2]
+            for graph in self.graphs.values():
+                if shader_path.endswith(graph.file_extension):
+                    material_type = graph.name
             return self.compile_material_from_source(material_type, source, [file_dir] + search_paths, custom_passes)
         except Exception as e:
+            import traceback
+            traceback.print_exc()
             return str(e)
     
     def draw_screen_pass(self, shader, target, blend = False):

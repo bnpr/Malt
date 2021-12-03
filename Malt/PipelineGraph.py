@@ -1,11 +1,10 @@
 class PipelineGraphIO():
 
-    def __init__(self, name, dynamic_input_types = [], dynamic_output_types = []):
+    def __init__(self, name, dynamic_input_types = [], dynamic_output_types = [], function=None):
         self.name = name
-        self.signature = None
-        self.function = None
         self.dynamic_input_types = dynamic_input_types
         self.dynamic_output_types = dynamic_output_types
+        self.function = function
 
 class PipelineGraph():
 
@@ -18,23 +17,13 @@ class PipelineGraph():
         self.language = language
         self.file_extension = file_extension
         self.graph_type = graph_type
-        self.functions = None
-        self.structs = None
+        self.functions = {}
+        self.structs = {}
         self.graph_io = { io.name : io for io in graph_io } 
     
     def setup_reflection(self, functions, structs):
         self.functions = functions
         self.structs = structs
-        for io in self.graph_io.values():
-            io.function = functions[io.name]
-            io.signature = io.function['signature']
-        for key in [*functions.keys()]:
-            name = functions[key]['name']
-            if name.startswith('_') or name.isupper() or name == 'main':
-                functions.pop(key)
-        for name in [*structs.keys()]:
-            if name.startswith('_'): #TODO: Upper???
-                structs.pop(name)
     
     def generate_source(self, parameters):
         return ''
@@ -57,6 +46,7 @@ class GLSLGraphIO(PipelineGraphIO):
         super().__init__(name, dynamic_input_types, dynamic_output_types)
         self.define = define
         self.shader_type = shader_type
+        self.signature = None
         self.custom_output_start_index = custom_output_start_index
 
 
@@ -64,13 +54,12 @@ class GLSLPipelineGraph(PipelineGraph):
 
     def __init__(self, name, graph_type, default_global_scope, shaders=['SHADER'], graph_io=[]):
         file_extension = f'.{name.lower()}.glsl'
-        super().__init__(name, 'GLSL', file_extension, graph_type)
+        super().__init__(name, 'GLSL', file_extension, graph_type, graph_io)
         self.default_global_scope = default_global_scope
         self.shaders = shaders
-        self.graph_io = graph_io
     
     def name_as_macro(self, name):
-        return ''.join(c for c in name.replace('','_').upper() if c.is_alnum() or c == '_')
+        return ''.join(c for c in name.replace(' ','_').upper() if c.isalnum() or c == '_')
     
     def get_material_define(self):
         return f'IS_{self.name_as_macro(self.name)}_SHADER'
@@ -79,24 +68,38 @@ class GLSLPipelineGraph(PipelineGraph):
         source = self.default_global_scope + source
         source = pipeline.preprocess_shader_from_source(source, [], [self.get_material_define(), 'VERTEX_SHADER','PIXEL_SHADER','REFLECTION'])
         root_path = pipeline.SHADER_INCLUDE_PATHS #TODO: pass a list
+        from Malt.Pipeline import SHADER_DIR
+        root_path = SHADER_DIR
         from . GL.Shader import glsl_reflection
         reflection = glsl_reflection(source, root_path)
-        super().setup_reflection(reflection["functions"], reflection["structs"])
+        functions = reflection["functions"]
+        structs = reflection["structs"]
+        for io in self.graph_io.values():
+            io.function = functions[io.name]
+            io.signature = io.function['signature']
+        for key in [*functions.keys()]:
+            name = functions[key]['name']
+            if name.startswith('_') or name.isupper() or name == 'main':
+                functions.pop(key)
+        for name in [*structs.keys()]:
+            if name.startswith('_'): #TODO: Upper???
+                structs.pop(name)
+        super().setup_reflection(functions, structs)
     
     def generate_source(self, parameters):
         import textwrap
         code = ''
-        for graph_IO in self.graph_IO.values():
-            if graph_IO.name in parameters.keys() and graph_IO.define:
-                code += '#define {}\n'.format(graph_IO.define)
+        for graph_io in self.graph_io.values():
+            if graph_io.name in parameters.keys() and graph_io.define:
+                code += '#define {}\n'.format(graph_io.define)
         code += '\n\n' + self.default_global_scope + '\n\n' + parameters['GLOBAL'] + '\n\n'
-        for graph_IO in self.graph_IO.values():
-            if graph_IO.name in parameters.keys():
-                if graph_IO.shader_type:
-                    code += f'#ifdef {graph_IO.shader_type}\n'
-                code += '{}\n{{\n{}\n}}'.format(graph_IO.signature, textwrap.indent(parameters[graph_IO.name],'\t'))
-                if graph_IO.shader_type:
-                    code += f'\n#endif //{graph_IO.shader_type}\n'
+        for graph_io in self.graph_io.values():
+            if graph_io.name in parameters.keys():
+                if graph_io.shader_type:
+                    code += f'#ifdef {graph_io.shader_type}\n'
+                code += '{}\n{{\n{}\n}}'.format(graph_io.signature, textwrap.indent(parameters[graph_io.name],'\t'))
+                if graph_io.shader_type:
+                    code += f'\n#endif //{graph_io.shader_type}\n'
         code += '\n\n'
         return code
     
@@ -108,26 +111,22 @@ class GLSLPipelineGraph(PipelineGraph):
                 shaders[f'{custom_pass}'] = [self.get_material_define(), shader, self.name_as_macro(custom_pass)]
         return pipeline.compile_shaders_from_source(source, include_paths, shaders)
 
+
 class PythonPipelineGraph(PipelineGraph):
     
-    def __init__(self, name, function_nodes, graph_io_reflection):
+    def __init__(self, name, nodes, graph_io):
+        extension = f'-{name}.py'
+        super().__init__(name, 'Python', extension, self.GLOBAL_GRAPH, graph_io)
         self.node_instances = {}
         self.nodes = {}
-        functions = {}
-        for node_class in function_nodes:
+        for node_class in nodes:
             reflection = node_class.reflect()
-            functions[reflection['name']] = reflection
+            self.functions[reflection['name']] = reflection
             self.nodes[reflection['name']] = node_class
-        graph_io = {}
-        for node in graph_io_reflection:
-            graph_io[node['name']] = node
-        extension = f'-{name}.py'
-        super().__init__(name, 'Python', extension, self.GLOBAL_GRAPH, functions, {}, graph_io)
-        self.setup_reflection(functions, None)
     
     def generate_source(self, parameters):
         src = ''
-        for io in self.graph_IO.keys():
+        for io in self.graph_io.keys():
             if io in parameters.keys():
                 src += parameters[io]
         return src

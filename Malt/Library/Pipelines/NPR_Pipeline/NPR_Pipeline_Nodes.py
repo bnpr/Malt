@@ -33,7 +33,7 @@ class NPR_Pipeline_Nodes(NPR_Pipeline):
         self.render_layer_custom_output_accumulate_textures = {}
         self.render_layer_custom_output_accumulate_fbos = {}
         self.draw_layer_counter = 0
-        self.setup_graphs()
+        #self.setup_graphs()
 
     def setup_graphs(self):
         mesh = GLSLPipelineGraph(
@@ -91,12 +91,23 @@ class NPR_Pipeline_Nodes(NPR_Pipeline):
         )
         screen.setup_reflection(self, "void SCREEN_SHADER(vec2 uv){ }")
 
-        inputs = {'Scene' : Parameter('Scene', Type.OTHER)}
-        outputs = {'Color' : Parameter('Texture', Type.OTHER)}
         render_layer = PythonPipelineGraph(
             name='Render Layer',
-            function_nodes=[ScreenPass.NODE, Unpack8bitTextures.NODE],
-            graph_io_reflection=[PipelineNode.static_reflect('Render Layer', inputs, outputs)])
+            nodes = [ScreenPass.NODE, Unpack8bitTextures.NODE],
+            graph_io = [
+                PipelineGraphIO(
+                    name = 'Render Layer',
+                    dynamic_output_types= ['Texture'],
+                    function = PipelineNode.static_reflect(
+                        name = 'Render Layer',
+                        inputs = {'Scene' : Parameter('Scene', Type.OTHER)},
+                        outputs = {'Color' : Parameter('Texture', Type.OTHER)},
+                    )
+                )
+            ]
+        )
+        
+        self.graphs = {e.name : e for e in [mesh, light, screen, render_layer]}
 
     def get_render_outputs(self):
         return super().get_render_outputs()

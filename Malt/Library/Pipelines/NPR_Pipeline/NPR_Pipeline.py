@@ -72,8 +72,10 @@ class NPR_Pipeline(Pipeline):
         self.parameters.material['Light Groups.Light'] = Parameter([1,0,0,0], Type.INT, 4, 'mesh')
         self.parameters.material['Light Groups.Shadow'] = Parameter([1,0,0,0], Type.INT, 4, 'mesh')
 
+        self.setup_graphs()
+
         global _DEFAULT_SHADER
-        if _DEFAULT_SHADER is None: _DEFAULT_SHADER = self.compile_material_from_source('mesh', _DEFAULT_SHADER_SRC)
+        if _DEFAULT_SHADER is None: _DEFAULT_SHADER = self.compile_material_from_source('Mesh', _DEFAULT_SHADER_SRC)
         self.default_shader = _DEFAULT_SHADER
 
         global _BLEND_TRANSPARENCY_SHADER
@@ -92,6 +94,9 @@ class NPR_Pipeline(Pipeline):
 
         self.layer_query = None
 
+    def setup_graphs(self):
+        pass
+    '''
     def compile_material_from_source(self, material_type, source, include_paths=[], custom_passes={}):
         if material_type == 'mesh':
             return self.compile_shaders_from_source(source, include_paths, {
@@ -109,7 +114,8 @@ class NPR_Pipeline(Pipeline):
             } + custom_passes)
         else:
             return 'Invalid material type. Valid extensions are .mesh.glsl, .light.glsl and .screen.glsl'
-    
+    '''
+
     def setup_render_targets(self, resolution):
         self.t_depth = Texture(resolution, GL_DEPTH_COMPONENT32F)
         

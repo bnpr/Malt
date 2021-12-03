@@ -127,7 +127,8 @@ class Bridge():
             self.connections['MAIN'].send({
                 'msg_type': 'MATERIAL',
                 'path': path,
-                'search_paths': search_paths
+                'search_paths': search_paths,
+                'custom_passes': [],
             })
         results = {}
         received = []

@@ -32,7 +32,7 @@ class MaltIONode(bpy.types.Node, MaltNode):
         self.pass_type = self.io_type
         
         graph = self.id_data.get_pipeline_graph()
-        self.allow_custom_pass = graph.pass_type == graph.SCENE_GRAPH
+        self.allow_custom_pass = graph.graph_type == graph.SCENE_GRAPH
         self.allow_custom_parameters = len(self.get_dynamic_parameter_types()) > 0
 
         inputs = {}
@@ -65,10 +65,7 @@ class MaltIONode(bpy.types.Node, MaltNode):
 
     def get_function(self):
         graph = self.id_data.get_pipeline_graph()
-        try:
-            return graph.graph_IO[self.io_type].function
-        except:
-            return graph.graph_IO[self.io_type]
+        return graph.graph_io[self.io_type].function
     
     def get_custom_parameters(self):
         if self.allow_custom_parameters:
@@ -81,14 +78,11 @@ class MaltIONode(bpy.types.Node, MaltNode):
             return {}
     
     def get_dynamic_parameter_types(self):
-        try:
-            graph = self.id_data.get_pipeline_graph()
-            if self.is_output:
-                return graph.graph_IO[self.io_type].dynamic_output_types
-            else: 
-                return graph.graph_IO[self.io_type].dynamic_input_types
-        except:
-            return []
+        graph = self.id_data.get_pipeline_graph()
+        if self.is_output:
+            return graph.graph_io[self.io_type].dynamic_output_types
+        else: 
+            return graph.graph_io[self.io_type].dynamic_input_types
     
     def is_custom_socket(self, socket):
         parameters = [parameter['name'] for parameter in self.get_function()['parameters']]
@@ -129,10 +123,10 @@ class MaltIONode(bpy.types.Node, MaltNode):
     
     def get_source_global_parameters(self, transpiler):
         src = MaltNode.get_source_global_parameters(self, transpiler)
-        graph_io = self.id_data.get_pipeline_graph().graph_IO[self.io_type]
+        graph_io = self.id_data.get_pipeline_graph().graph_io[self.io_type]
         try:
             index = graph_io.custom_output_start_index
-            shader_type = graph_io.shader_type
+            shader_type = graph_io.shader_type #TODO: Move to graph.generate_source()
         except:
             index = None
             shader_type = None

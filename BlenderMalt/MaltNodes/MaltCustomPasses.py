@@ -9,11 +9,11 @@ class MaltIOParameter(bpy.types.PropertyGroup):
         bridge = MaltPipeline.get_bridge()
         if bridge and self.graph_type in bridge.graphs:
             graph = bridge.graphs[self.graph_type]
-            if self.io_type in graph.graph_IO.keys():
+            if self.io_type in graph.graph_io.keys():
                 if self.is_output:
-                    types = graph.graph_IO[self.io_type].dynamic_output_types
+                    types = graph.graph_io[self.io_type].dynamic_output_types
                 else:
-                    types = graph.graph_IO[self.io_type].dynamic_input_types
+                    types = graph.graph_io[self.io_type].dynamic_input_types
         return [(type, type, type) for type in types]
     
     def get_parameter(self):
@@ -53,14 +53,14 @@ class MaltGraphType(bpy.types.PropertyGroup):
 def setup_default_passes(graphs):
     world = bpy.context.scene.world
     for name, graph in graphs.items():
-        if graph.pass_type == graph.SCENE_GRAPH:
+        if graph.graph_type == graph.SCENE_GRAPH:
             if name not in world.malt_graph_types:
                 world.malt_graph_types.add().name = name
             graph_type = world.malt_graph_types[name]
             if 'Default' not in graph_type.custom_passes:
                 graph_type.custom_passes.add().name = 'Default'
             for custom_pass in graph_type.custom_passes:
-                for name, io in graph.graph_IO.items():
+                for name, io in graph.graph_io.items():
                     if name not in custom_pass.io:
                         custom_pass.io.add().name = name
 
@@ -78,7 +78,7 @@ class OT_MaltAddCustomPass(bpy.types.Operator):
     def execute(self, context):
         new_pass = context.scene.world.malt_graph_types[self.graph_type].custom_passes.add()
         new_pass.name = self.name
-        for name in MaltPipeline.get_bridge().graphs[self.graph_type].graph_IO.keys():
+        for name in MaltPipeline.get_bridge().graphs[self.graph_type].graph_io.keys():
             new_pass.io.add().name = name
         return {'FINISHED'}
     

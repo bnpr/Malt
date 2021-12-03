@@ -349,7 +349,7 @@ def main(pipeline_path, viewport_bit_depth, connection_addresses, shared_dic, lo
                     path = msg['path']
                     search_paths = msg['search_paths']
                     custom_passes = msg['custom_passes']
-                    material = Bridge.Material.Material(path, pipeline, custom_passes)
+                    material = Bridge.Material.Material(path, pipeline, search_paths, custom_passes)
                     connections['MAIN'].send({
                         'msg_type': 'MATERIAL',
                         'material' : material
