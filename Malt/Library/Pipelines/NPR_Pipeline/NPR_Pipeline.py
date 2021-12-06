@@ -13,10 +13,10 @@ from Malt.GL.Texture import internal_format_to_vector_type, internal_format_to_s
 
 from Malt.Library.Render import Common
 from Malt.Library.Render import DepthToCompositeDepth
-from Malt.Library.Render import Lighting as Lighting
 from Malt.Library.Render import Sampling
 
-from Malt.Library.Pipelines.NPR_Pipeline import NPR_Lighting
+from Malt.Library.Pipelines.NPR_Pipeline.NPR_Lighting import NPR_Lighting
+from Malt.Library.Pipelines.NPR_Pipeline.NPR_LightShaders import NPR_LightShaders
 
 from Malt.Library.Nodes import Unpack8bitTextures
 
@@ -60,8 +60,6 @@ class NPR_Pipeline(Pipeline):
         if shader_dir not in self.SHADER_INCLUDE_PATHS:
             self.SHADER_INCLUDE_PATHS.append(shader_dir)
 
-        self.setup_graphs()
-        
         self.sampling_grid_size = 2
         self.samples = None
 
@@ -71,32 +69,25 @@ class NPR_Pipeline(Pipeline):
         self.parameters.world['Samples.Grid Size @ Preview'] = Parameter(4, Type.INT)
         self.parameters.world['Samples.Width'] = Parameter(1.5, Type.FLOAT)
         
-        self.parameters.world['ShadowMaps.Sun.Cascades.Distribution Scalar'] = Parameter(0.9, Type.FLOAT)
-        self.parameters.world['ShadowMaps.Sun.Cascades.Count'] = Parameter(4, Type.INT)
-        self.parameters.world['ShadowMaps.Sun.Cascades.Count @ Preview'] = Parameter(2, Type.INT)
-        self.parameters.world['ShadowMaps.Sun.Cascades.Max Distance'] = Parameter(100, Type.FLOAT)
-        self.parameters.world['ShadowMaps.Sun.Cascades.Max Distance @ Preview'] = Parameter(25, Type.FLOAT)
-        self.parameters.world['ShadowMaps.Sun.Resolution'] = Parameter(2048, Type.INT)
-        self.parameters.world['ShadowMaps.Spot.Resolution'] = Parameter(2048, Type.INT)
-        self.parameters.world['ShadowMaps.Spot.Resolution @ Preview'] = Parameter(512, Type.INT)
-        self.parameters.world['ShadowMaps.Point.Resolution'] = Parameter(2048, Type.INT)
-        self.parameters.world['ShadowMaps.Point.Resolution @ Preview'] = Parameter(512, Type.INT)
-        
         self.parameters.world['Transparency.Layers'] = Parameter(4, Type.INT)
         self.parameters.world['Transparency.Layers @ Preview'] = Parameter(1, Type.INT)
         
         default_material_path = os.path.join(os.path.dirname(__file__), 'default.mesh.glsl')
         self.parameters.world['Material.Default'] = MaterialParameter(default_material_path, '.mesh.glsl')
         
-        self.parameters.light['Shader'] = MaterialParameter('', '.light.glsl')
-        self.parameters.light['Light Group'] = Parameter(1, Type.INT)
-        
-        self.parameters.material['Light Groups.Light'] = Parameter([1,0,0,0], Type.INT, 4, 'mesh')
-        self.parameters.material['Light Groups.Shadow'] = Parameter([1,0,0,0], Type.INT, 4, 'mesh')
-
         self.parameters.world['Render Layer'] = Parameter('Render Layer', Type.GRAPH)
         self.render_layer_nodes = {}
 
+        self.common_buffer = Common.CommonBuffer()
+        self.npr_lighting = NPR_Lighting(self.parameters)
+        self.npr_light_shaders = NPR_LightShaders(self.parameters)
+        
+        self.composite_depth = DepthToCompositeDepth.CompositeDepth()
+
+        self.layer_query = DrawQuery()
+        
+        self.setup_graphs()
+        
         global _DEFAULT_SHADER
         if _DEFAULT_SHADER is None: _DEFAULT_SHADER = self.compile_material_from_source('Mesh', _DEFAULT_SHADER_SRC)
         self.default_shader = _DEFAULT_SHADER
@@ -104,16 +95,6 @@ class NPR_Pipeline(Pipeline):
         global _BLEND_TRANSPARENCY_SHADER
         if _BLEND_TRANSPARENCY_SHADER is None: _BLEND_TRANSPARENCY_SHADER = self.compile_shader_from_source(_BLEND_TRANSPARENCY_SHADER_SRC)
         self.blend_transparency_shader = _BLEND_TRANSPARENCY_SHADER
-
-        self.common_buffer = Common.CommonBuffer()
-        self.lights_buffer = Lighting.get_lights_buffer()
-        self.light_groups_buffer = NPR_Lighting.NPR_LightsGroupsBuffer()
-        self.shadowmaps_opaque, self.shadowmaps_transparent = NPR_Lighting.get_shadow_maps()
-        self.custom_light_shading = NPR_Lighting.NPR_LightShaders()
-
-        self.composite_depth = DepthToCompositeDepth.CompositeDepth()
-
-        self.layer_query = DrawQuery()
 
     def get_mesh_shader_custom_outputs(self):
         return {
@@ -209,18 +190,6 @@ class NPR_Pipeline(Pipeline):
         )
         mesh.setup_reflection(self, mesh_src)
 
-        light = GLSLPipelineGraph(
-            name='Light',
-            default_global_scope=_COMMON_HEADER,
-            graph_io=[ 
-                GLSLGraphIO(
-                    name='LIGHT_SHADER',
-                    shader_type='PIXEL_SHADER',
-                )
-            ]
-        )
-        light.setup_reflection(self, "void LIGHT_SHADER(LightShaderInput I, inout LightShaderOutput O) { }")
-
         screen = GLSLPipelineGraph(
             name='Screen',
             default_global_scope=_SCREEN_SHADER_HEADER,
@@ -263,7 +232,9 @@ class NPR_Pipeline(Pipeline):
             ]
         )
         
-        self.graphs = {e.name : e for e in [mesh, light, screen, render_layer]}
+        self.graphs |= {e.name : e for e in [mesh, screen, render_layer]}
+
+        self.npr_light_shaders.setup_graphs(self.graphs)
 
     def setup_render_targets(self, resolution):
         self.t_depth = Texture(resolution, GL_DEPTH_COMPONENT32F)
@@ -335,65 +306,17 @@ class NPR_Pipeline(Pipeline):
                     transparent_batches[material] = meshes
                     continue
             opaque_batches[material] = meshes
-
-        #SETUP UNIFORM BLOCKS
-        self.common_buffer.load(scene, resolution, sample_offset, self.sample_count)
-        self.lights_buffer.load(scene, 
-            scene.world_parameters['ShadowMaps.Sun.Cascades.Count'], 
-            scene.world_parameters['ShadowMaps.Sun.Cascades.Distribution Scalar'],
-            scene.world_parameters['ShadowMaps.Sun.Cascades.Max Distance'], sample_offset)
-        self.light_groups_buffer.load(scene)
-        self.shadowmaps_opaque.load(scene,
-            scene.world_parameters['ShadowMaps.Spot.Resolution'],
-            scene.world_parameters['ShadowMaps.Sun.Resolution'],
-            scene.world_parameters['ShadowMaps.Point.Resolution'],
-            scene.world_parameters['ShadowMaps.Sun.Cascades.Count'])
-        self.shadowmaps_transparent.load(scene,
-            scene.world_parameters['ShadowMaps.Spot.Resolution'],
-            scene.world_parameters['ShadowMaps.Sun.Resolution'],
-            scene.world_parameters['ShadowMaps.Point.Resolution'],
-            scene.world_parameters['ShadowMaps.Sun.Cascades.Count'])
         
-        UBOS = {
-            'COMMON_UNIFORMS' : self.common_buffer,
-            'SCENE_LIGHTS' : self.lights_buffer
-        }
-
-        #RENDER SHADOWMAPS
-        def render_shadow_passes(lights, fbos_opaque, fbos_transparent, sample_offset = sample_offset):
-            for light_index, light_matrices_pair in enumerate(lights.items()):
-                light, matrices = light_matrices_pair
-                for matrix_index, camera_projection_pair in enumerate(matrices): 
-                    camera, projection = camera_projection_pair
-                    i = light_index * len(matrices) + matrix_index
-                    self.common_buffer.load(scene, fbos_opaque[i].resolution, sample_offset, self.sample_count, camera, projection)
-                    def get_light_group_batches(batches):
-                        result = {}
-                        for material, meshes in batches.items():
-                            if material and light.parameters['Light Group'] in material.parameters['Light Groups.Shadow']:
-                                result[material] = meshes
-                        return result
-                    self.draw_scene_pass(fbos_opaque[i], get_light_group_batches(opaque_batches), 
-                        'SHADOW_PASS', self.default_shader['SHADOW_PASS'], UBOS)
-                    self.draw_scene_pass(fbos_transparent[i], get_light_group_batches(transparent_batches), 
-                        'SHADOW_PASS', self.default_shader['SHADOW_PASS'], UBOS)
-        
-        render_shadow_passes(self.lights_buffer.spots,
-            self.shadowmaps_opaque.spot_fbos, self.shadowmaps_transparent.spot_fbos)
-        
-        glEnable(GL_DEPTH_CLAMP)
-        render_shadow_passes(self.lights_buffer.suns,
-            self.shadowmaps_opaque.sun_fbos, self.shadowmaps_transparent.sun_fbos)
-        glDisable(GL_DEPTH_CLAMP)
-
-        render_shadow_passes(self.lights_buffer.points,
-            self.shadowmaps_opaque.point_fbos, self.shadowmaps_transparent.point_fbos, (0,0))
+        self.npr_lighting.load(self, scene, opaque_batches, transparent_batches, sample_offset, self.sample_count)
 
         #SCENE RENDER
         #Load scene camera settings
         self.common_buffer.load(scene, resolution, sample_offset, self.sample_count)
 
+        self.draw_layer_count = 0
+        
         result = self.draw_layer(opaque_batches, scene, scene.world_parameters['Background.Color'])
+        self.draw_layer_count += 1
 
         self.copy_textures(self.fbo_opaque, [result], self.t_depth)
         
@@ -404,27 +327,8 @@ class NPR_Pipeline(Pipeline):
             if i > 0:
                 self.layer_query.begin_conditional_draw()
             result = self.draw_layer(transparent_batches, scene)
+            self.draw_layer_count += 1
             
-            graph = scene.world_parameters['Render Layer']
-            if graph:
-                IN = {
-                    'Color' : result,
-                    'Normal_Depth' : self.t_prepass_normal_depth,
-                    'ID' : self.t_prepass_id,
-                } | self.mesh_shader_custom_output_textures
-                OUT = { 'Color' : result }
-                
-                self.graphs['Render Layer'].run_source(self, graph['source'], graph['parameters'], IN, OUT)
-                
-                #TODO: AOV transparency ???
-                if i == 0:
-                    for key, fbo in self.render_layer_custom_output_accumulate_fbos.items():
-                        if key in OUT and OUT[key]:
-                            if internal_format_to_data_format(OUT[key].internal_format) == GL_FLOAT:
-                                # TEMPORAL SUPER-SAMPLING ACCUMULATION
-                                self.blend_texture(OUT[key], fbo, 1.0 / (self.sample_count + 1))
-                result = OUT['Color']
-
             self.copy_textures(self.fbo_last_layer_id, [self.t_prepass_id])
 
             self.blend_transparency_shader.textures['IN_BACK'] = result
@@ -453,16 +357,9 @@ class NPR_Pipeline(Pipeline):
         } | self.render_layer_custom_output_accumulate_textures
     
     def draw_layer(self, batches, scene, background_color=(0,0,0,0)):
-        UBOS = {
-            'COMMON_UNIFORMS' : self.common_buffer,
-            'SCENE_LIGHTS' : self.lights_buffer
-        }
-        
-        callbacks = [
-            self.light_groups_buffer.shader_callback,
-            self.shadowmaps_opaque.shader_callback,
-            self.shadowmaps_transparent.shader_callback,
-        ]
+        UBOS = {'COMMON_UNIFORMS' : self.common_buffer}
+
+        callbacks = [self.npr_lighting.shader_callback]
 
         #PRE-PASS
         textures = {
@@ -477,11 +374,9 @@ class NPR_Pipeline(Pipeline):
         self.draw_scene_pass(self.fbo_prepass, batches, 'PRE_PASS', self.default_shader['PRE_PASS'], UBOS, {}, textures, callbacks)
         self.layer_query.end_query()
 
-        #CUSTOM LIGHT SHADING
-        self.custom_light_shading.load(self, self.t_depth, scene)
-        callbacks.append(
-            lambda shader : self.custom_light_shading.shader_callback(shader)
-        )
+        #CUSTOM LIGHT SHADERS
+        self.npr_light_shaders.load(self, self.t_depth, scene)
+        callbacks.append(self.custom_light_shading.shader_callback)
 
         #MAIN-PASS
         textures = {
@@ -497,7 +392,33 @@ class NPR_Pipeline(Pipeline):
         self.fbo_main.clear(clear_colors)
         self.draw_scene_pass(self.fbo_main, batches, 'MAIN_PASS', self.default_shader['MAIN_PASS'], UBOS, {}, textures, callbacks)
 
-        return self.t_main_color
+        result = self.apply_render_layer_graph(scene, self.t_main_color, self.t_prepass_normal_depth, self.t_prepass_id)
+        
+        return result
+
+    def apply_render_layer_graph(self, scene, color, normal_depth, ID):
+        result = color
+        graph = scene.world_parameters['Render Layer']
+        if graph:
+            IN = {
+                'Color' : result,
+                'Normal_Depth' : normal_depth,
+                'ID' : ID,
+            } | self.mesh_shader_custom_output_textures
+            OUT = { 'Color' : result }
+            
+            self.graphs['Render Layer'].run_source(self, graph['source'], graph['parameters'], IN, OUT)
+            
+            #TODO: AOV transparency ???
+            if self.draw_layer_count == 0:
+                for key, fbo in self.render_layer_custom_output_accumulate_fbos.items():
+                    if key in OUT and OUT[key]:
+                        if internal_format_to_data_format(OUT[key].internal_format) == GL_FLOAT:
+                            # TEMPORAL SUPER-SAMPLING ACCUMULATION
+                            self.blend_texture(OUT[key], fbo, 1.0 / (self.sample_count + 1))
+            result = OUT['Color']
+        return result
+
 
 
 PIPELINE = NPR_Pipeline
