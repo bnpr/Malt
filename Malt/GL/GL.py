@@ -27,6 +27,27 @@ if True: #create new scope to import OpenGL
             GL_ENUMS[getattr(GL, e)] = e
             GL_NAMES[e] = getattr(GL, e)
 
+class DrawQuery():
+
+    def __init__(self):
+        self.query = None
+    
+    def begin_query(self, query_type=GL_ANY_SAMPLES_PASSED):
+        if self.query:
+            glDeleteQueries(1, self.query)
+        self.query = gl_buffer(GL_UNSIGNED_INT, 1)
+        glGenQueries(1, self.query)
+        glBeginQuery(query_type, self.query[0])
+
+    def end_query(self):        
+        glEndQuery(self.query_type)
+
+    def begin_conditional_draw(self, wait_mode=GL_QUERY_WAIT):
+        glBeginConditionalRender(self.query[0], wait_mode)
+    
+    def end_conditional_draw(self, wait_mode=GL_QUERY_WAIT):
+        glEndConditionalRender()
+    
 
 def gl_buffer(type, size, data=None):
     types = {

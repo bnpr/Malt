@@ -113,12 +113,12 @@ class NPR_Pipeline(Pipeline):
 
         self.composite_depth = DepthToCompositeDepth.CompositeDepth()
 
-        self.layer_query = None
+        self.layer_query = DrawQuery()
 
     def get_mesh_shader_custom_outputs(self):
         return {
             'Line Color' : GL_RGBA16F,
-            'Line Width' : GL_RGBA16F,
+            'Line Width' : GL_R16F,
         }
     
     def get_render_layer_custom_outputs(self):
@@ -326,8 +326,6 @@ class NPR_Pipeline(Pipeline):
         
         sample_offset = self.get_samples(scene.world_parameters['Samples.Width'])[self.sample_count]
 
-        self.draw_layer_counter = 0
-
         #SETUP SCENE BATCHES
         opaque_batches = {}
         transparent_batches = {}
@@ -404,9 +402,29 @@ class NPR_Pipeline(Pipeline):
 
         for i in range(scene.world_parameters['Transparency.Layers']):
             if i > 0:
-                glBeginConditionalRender(self.layer_query[0], GL_QUERY_WAIT)
+                self.layer_query.begin_conditional_draw()
             result = self.draw_layer(transparent_batches, scene)
-            self.draw_layer_counter += 1
+            
+            graph = scene.world_parameters['Render Layer']
+            if graph:
+                IN = {
+                    'Color' : result,
+                    'Normal_Depth' : self.t_prepass_normal_depth,
+                    'ID' : self.t_prepass_id,
+                } | self.mesh_shader_custom_output_textures
+                OUT = { 'Color' : result }
+                
+                self.graphs['Render Layer'].run_source(self, graph['source'], graph['parameters'], IN, OUT)
+                
+                #TODO: AOV transparency ???
+                if i == 0:
+                    for key, fbo in self.render_layer_custom_output_accumulate_fbos.items():
+                        if key in OUT and OUT[key]:
+                            if internal_format_to_data_format(OUT[key].internal_format) == GL_FLOAT:
+                                # TEMPORAL SUPER-SAMPLING ACCUMULATION
+                                self.blend_texture(OUT[key], fbo, 1.0 / (self.sample_count + 1))
+                result = OUT['Color']
+
             self.copy_textures(self.fbo_last_layer_id, [self.t_prepass_id])
 
             self.blend_transparency_shader.textures['IN_BACK'] = result
@@ -415,7 +433,7 @@ class NPR_Pipeline(Pipeline):
             
             self.copy_textures(self.fbo_transparent, [self.t_color], self.t_depth)
             if i > 0:
-                glEndConditionalRender()
+                self.layer_query.end_conditional_draw()
 
         self.blend_transparency_shader.textures['IN_BACK'] = self.t_opaque_color
         self.blend_transparency_shader.textures['IN_FRONT'] = self.t_transparent_color
@@ -441,9 +459,9 @@ class NPR_Pipeline(Pipeline):
         }
         
         callbacks = [
-            lambda shader : self.light_groups_buffer.shader_callback(shader),
-            lambda shader : self.shadowmaps_opaque.shader_callback(shader),
-            lambda shader : self.shadowmaps_transparent.shader_callback(shader),
+            self.light_groups_buffer.shader_callback,
+            self.shadowmaps_opaque.shader_callback,
+            self.shadowmaps_transparent.shader_callback,
         ]
 
         #PRE-PASS
@@ -455,13 +473,9 @@ class NPR_Pipeline(Pipeline):
         }
         self.fbo_prepass.clear([(0,0,1,1), (0,0,0,0)], 1, 0)
 
-        if self.layer_query:
-            glDeleteQueries(1, self.layer_query)
-        self.layer_query = gl_buffer(GL_UNSIGNED_INT, 1)
-        glGenQueries(1, self.layer_query)
-        glBeginQuery(GL_ANY_SAMPLES_PASSED, self.layer_query[0])
+        self.layer_query.begin_query()
         self.draw_scene_pass(self.fbo_prepass, batches, 'PRE_PASS', self.default_shader['PRE_PASS'], UBOS, {}, textures, callbacks)
-        glEndQuery(GL_ANY_SAMPLES_PASSED)
+        self.layer_query.end_query()
 
         #CUSTOM LIGHT SHADING
         self.custom_light_shading.load(self, self.t_depth, scene)
@@ -483,28 +497,7 @@ class NPR_Pipeline(Pipeline):
         self.fbo_main.clear(clear_colors)
         self.draw_scene_pass(self.fbo_main, batches, 'MAIN_PASS', self.default_shader['MAIN_PASS'], UBOS, {}, textures, callbacks)
 
-        result = self.t_main_color
+        return self.t_main_color
 
-        graph = scene.world_parameters['Render Layer']
-        if graph:
-            IN = {
-                'Color' : result,
-                'Normal_Depth' : self.t_prepass_normal_depth,
-                'ID' : self.t_prepass_id,
-            } | self.mesh_shader_custom_output_textures
-            OUT = { 'Color' : result }
-            
-            self.graphs['Render Layer'].run_source(self, graph['source'], graph['parameters'], IN, OUT)
-            
-            #TODO: AOV transparency ???
-            if self.draw_layer_counter == 0:
-                for key, fbo in self.render_layer_custom_output_accumulate_fbos.items():
-                    if key in OUT and OUT[key]:
-                        if internal_format_to_data_format(OUT[key].internal_format) == GL_FLOAT:
-                            # TEMPORAL SUPER-SAMPLING ACCUMULATION
-                            self.blend_texture(OUT[key], fbo, 1.0 / (self.sample_count + 1))
-            result = OUT['Color']
-        
-        return result
 
 PIPELINE = NPR_Pipeline
