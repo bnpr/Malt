@@ -23,8 +23,6 @@ struct PixelOutput
     vec4 color;
     vec3 normal;
     uvec4 id;
-    vec4 line_color;
-    float line_width;
     vec4 transparency_shadow_color;
 };
 
@@ -146,8 +144,6 @@ uniform sampler2D IN_NORMAL_DEPTH;
 uniform usampler2D IN_ID;
 
 layout (location = 0) out vec4 OUT_COLOR;
-//layout (location = 1) out vec4 OUT_LINE_COLOR;
-//layout (location = 2) out vec4 OUT_LINE_DATA;
 #endif //MAIN_PASS
 
 #ifndef CUSTOM_MAIN
@@ -169,8 +165,6 @@ void main()
     PO.color = vec4(0,0,0,1);
     PO.normal = S.normal;
     PO.id.r = ID;
-    PO.line_color = vec4(0,0,0,1);
-    PO.line_width = 0;
 
     if(Settings.Transparency)
     {
@@ -239,12 +233,6 @@ void main()
     #ifdef MAIN_PASS
     {
         OUT_COLOR = PO.color;
-        if(PO.line_width > 0 && PO.line_color.a > 0)
-        {
-            //OUT_LINE_COLOR = PO.line_color;
-            //OUT_LINE_DATA.xy = screen_uv();
-            //OUT_LINE_DATA.z = PO.line_width;
-        }
     }
     #endif
 }

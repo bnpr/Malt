@@ -42,11 +42,12 @@ class NPR_Pipeline(Pipeline):
         if shader_dir not in self.SHADER_INCLUDE_PATHS:
             self.SHADER_INCLUDE_PATHS.append(shader_dir)
 
+        self.setup_graphs()
+        
         self.sampling_grid_size = 2
         self.samples = None
 
         self.parameters.world['Background.Color'] = Parameter((0.5,0.5,0.5,1), Type.FLOAT, 4)
-        self.parameters.world['Line.Max Width'] = Parameter(10, Type.INT)
         self.parameters.world['Samples.Grid Size'] = Parameter(8, Type.INT)
         self.parameters.world['Samples.Grid Size @ Preview'] = Parameter(4, Type.INT)
         self.parameters.world['Samples.Width'] = Parameter(1.5, Type.FLOAT)
@@ -72,8 +73,6 @@ class NPR_Pipeline(Pipeline):
         self.parameters.material['Light Groups.Light'] = Parameter([1,0,0,0], Type.INT, 4, 'mesh')
         self.parameters.material['Light Groups.Shadow'] = Parameter([1,0,0,0], Type.INT, 4, 'mesh')
 
-        self.setup_graphs()
-
         global _DEFAULT_SHADER
         if _DEFAULT_SHADER is None: _DEFAULT_SHADER = self.compile_material_from_source('Mesh', _DEFAULT_SHADER_SRC)
         self.default_shader = _DEFAULT_SHADER
@@ -88,33 +87,12 @@ class NPR_Pipeline(Pipeline):
         self.shadowmaps_opaque, self.shadowmaps_transparent = NPR_Lighting.get_shadow_maps()
         self.custom_light_shading = NPR_Lighting.NPR_LightShaders()
 
-        #self.line_rendering = Line.LineRendering()
-
         self.composite_depth = DepthToCompositeDepth.CompositeDepth()
 
         self.layer_query = None
 
     def setup_graphs(self):
         pass
-    '''
-    def compile_material_from_source(self, material_type, source, include_paths=[], custom_passes={}):
-        if material_type == 'mesh':
-            return self.compile_shaders_from_source(source, include_paths, {
-                'PRE_PASS': ['IS_MESH_SHADER','PRE_PASS'],
-                'MAIN_PASS': ['IS_MESH_SHADER','MAIN_PASS'],
-                'SHADOW_PASS': ['IS_MESH_SHADER','SHADOW_PASS'],
-            } + custom_passes)
-        elif material_type == 'screen':
-            return self.compile_shaders_from_source(source, include_paths, {
-                'SHADER': ['IS_SCREEN_SHADER'],
-            } + custom_passes)
-        elif material_type == 'light':
-            return self.compile_shaders_from_source(source, include_paths, {
-                'SHADER': ['IS_LIGHT_SHADER'],
-            } + custom_passes)
-        else:
-            return 'Invalid material type. Valid extensions are .mesh.glsl, .light.glsl and .screen.glsl'
-    '''
 
     def setup_render_targets(self, resolution):
         self.t_depth = Texture(resolution, GL_DEPTH_COMPONENT32F)
@@ -316,12 +294,5 @@ class NPR_Pipeline(Pipeline):
         self.draw_scene_pass(self.fbo_main, batches, 'MAIN_PASS', self.default_shader['MAIN_PASS'], UBOS, {}, textures, callbacks)        
         
         return self.t_main_color
-        #COMPOSITE LINE
-        composited_line = self.line_rendering.composite_line(
-            scene.world_parameters['Line.Max Width'], self, self.common_buffer, 
-            self.t_main_color, self.t_depth, self.t_prepass_id, self.t_line_color, self.t_line_data)
-        
-        return composited_line
-
 
 PIPELINE = NPR_Pipeline
