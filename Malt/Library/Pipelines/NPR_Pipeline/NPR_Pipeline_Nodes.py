@@ -38,14 +38,11 @@ class NPR_Pipeline_Nodes(NPR_Pipeline):
     def setup_graphs(self):
         mesh = GLSLPipelineGraph(
             name='Mesh',
-            graph_type=GLSLPipelineGraph.SCENE_GRAPH,
             default_global_scope=_COMMON_HEADER,
             shaders=['PRE_PASS', 'MAIN_PASS', 'SHADOW_PASS'],
             graph_io=[
                 GLSLGraphIO(
                     name='COMMON_PIXEL_SHADER',
-                    dynamic_input_types= GLSLGraphIO.COMMON_INPUT_TYPES,
-                    dynamic_output_types= GLSLGraphIO.COMMON_OUTPUT_TYPES,
                     shader_type='PIXEL_SHADER',
                     custom_output_start_index=2,
                 ),
@@ -65,7 +62,6 @@ class NPR_Pipeline_Nodes(NPR_Pipeline):
 
         light = GLSLPipelineGraph(
             name='Light',
-            graph_type=GLSLPipelineGraph.INTERNAL_GRAPH,
             default_global_scope=_COMMON_HEADER,
             graph_io=[ 
                 GLSLGraphIO(
@@ -78,7 +74,6 @@ class NPR_Pipeline_Nodes(NPR_Pipeline):
 
         screen = GLSLPipelineGraph(
             name='Screen',
-            graph_type=GLSLPipelineGraph.GLOBAL_GRAPH,
             default_global_scope=_SCREEN_SHADER_HEADER,
             graph_io=[ 
                 GLSLGraphIO(
@@ -97,7 +92,6 @@ class NPR_Pipeline_Nodes(NPR_Pipeline):
             graph_io = [
                 PipelineGraphIO(
                     name = 'Render Layer',
-                    dynamic_output_types= ['Texture'],
                     function = PipelineNode.static_reflect(
                         name = 'Render Layer',
                         inputs = {'Scene' : Parameter('Scene', Type.OTHER)},

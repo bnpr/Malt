@@ -1,6 +1,6 @@
 def get_modules():
-    from . import MaltNode, MaltNodeTree, MaltSocket, MaltCustomPasses
-    modules = [MaltNode, MaltNodeTree, MaltSocket, MaltCustomPasses]
+    from . import MaltNode, MaltNodeTree, MaltSocket
+    modules = [MaltNode, MaltNodeTree, MaltSocket]
     
     import importlib, os
     nodes_dir = os.path.join(os.path.dirname(__file__), 'Nodes')
