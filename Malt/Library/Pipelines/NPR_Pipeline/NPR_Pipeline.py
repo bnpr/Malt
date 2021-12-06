@@ -168,7 +168,7 @@ class NPR_Pipeline(Pipeline):
             key = ''.join(c for c in key if c.isalnum())
             type = internal_format_to_vector_type(texture_format)
             layout += f"layout (location = {i+1}) out {type} OUT_{key};\n"
-            signature += f", out {type} {key}"
+            signature += f", inout {type} {key}"
             declaration += f"{type} {key} = {type}(0);\n"
             call += f", {key}"
             asignment += f"OUT_{key} = {key};\n"
