@@ -91,21 +91,13 @@ class NPR_Lighting():
         self.shadowmaps_transparent.shader_callback(shader)
 
 
-_SHADOWMAPS = None
-
-def get_shadow_maps():
-    global _SHADOWMAPS
-    if _SHADOWMAPS is None: _SHADOWMAPS = (NPR_ShadowMaps(), NPR_TransparentShadowMaps())
-    return _SHADOWMAPS
-
-class C_NPR_LightGroupsBuffer(ctypes.Structure):
-    _fields_ = [
-        ('light_group_index', ctypes.c_int*Lighting.MAX_LIGHTS),
-    ]
-
 class NPR_LightsGroupsBuffer():
 
     def __init__(self):
+        class C_NPR_LightGroupsBuffer(ctypes.Structure):
+            _fields_ = [
+                ('light_group_index', ctypes.c_int*Lighting.MAX_LIGHTS),
+            ]
         self.data = C_NPR_LightGroupsBuffer()
         self.UBO = UBO()
     
@@ -123,7 +115,15 @@ class NPR_LightsGroupsBuffer():
     def shader_callback(self, shader):
         if 'LIGHT_GROUPS' in shader.uniform_blocks:
             self.UBO.bind(shader.uniform_blocks['LIGHT_GROUPS'])
-        
+
+
+_SHADOWMAPS = None
+
+def get_shadow_maps():
+    global _SHADOWMAPS
+    if _SHADOWMAPS is None: _SHADOWMAPS = (NPR_ShadowMaps(), NPR_TransparentShadowMaps())
+    return _SHADOWMAPS        
+
 
 class NPR_ShadowMaps(Lighting.ShadowMaps):
 
