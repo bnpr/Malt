@@ -234,7 +234,7 @@ class NPR_Pipeline(Pipeline):
         
         self.graphs |= {e.name : e for e in [mesh, screen, render_layer]}
 
-        self.npr_light_shaders.setup_graphs(self.graphs)
+        self.npr_light_shaders.setup_graphs(self, self.graphs)
 
     def setup_render_targets(self, resolution):
         self.t_depth = Texture(resolution, GL_DEPTH_COMPONENT32F)
@@ -375,8 +375,8 @@ class NPR_Pipeline(Pipeline):
         self.layer_query.end_query()
 
         #CUSTOM LIGHT SHADERS
-        self.npr_light_shaders.load(self, self.t_depth, scene)
-        callbacks.append(self.custom_light_shading.shader_callback)
+        self.npr_light_shaders.load(self, self.t_depth, scene, self.npr_lighting.lights_buffer)
+        callbacks.append(self.npr_light_shaders.shader_callback)
 
         #MAIN-PASS
         textures = {
@@ -392,9 +392,7 @@ class NPR_Pipeline(Pipeline):
         self.fbo_main.clear(clear_colors)
         self.draw_scene_pass(self.fbo_main, batches, 'MAIN_PASS', self.default_shader['MAIN_PASS'], UBOS, {}, textures, callbacks)
 
-        result = self.apply_render_layer_graph(scene, self.t_main_color, self.t_prepass_normal_depth, self.t_prepass_id)
-        
-        return result
+        return self.apply_render_layer_graph(scene, self.t_main_color, self.t_prepass_normal_depth, self.t_prepass_id)
 
     def apply_render_layer_graph(self, scene, color, normal_depth, ID):
         result = color

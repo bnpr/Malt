@@ -28,10 +28,9 @@ class NPR_LightShaders():
         self.texture = None
         self.fbos = None
     
-    def setup_graphs(self, graphs):
-        super().setup_graphs(graphs)
+    def setup_graphs(self, pipeline, graphs):
         from Malt.Library.Pipelines.NPR_Pipeline.NPR_Pipeline import _COMMON_HEADER
-        graphs['light'] = GLSLPipelineGraph(
+        graphs['Light'] = GLSLPipelineGraph(
             name='Light',
             default_global_scope=_COMMON_HEADER,
             graph_io=[ 
@@ -41,9 +40,9 @@ class NPR_LightShaders():
                 )
             ]
         )
-        graphs['light'].setup_reflection(self, "void LIGHT_SHADER(LightShaderInput I, inout LightShaderOutput O) { }")
+        graphs['Light'].setup_reflection(pipeline, "void LIGHT_SHADER(LightShaderInput I, inout LightShaderOutput O) { }")
     
-    def load(self, pipeline, depth_texture, scene):
+    def load(self, pipeline, depth_texture, scene, lights_buffer):
         self.custom_shading_count = 0
         for i, light in enumerate(scene.lights):
             custom_shading_index = -1
@@ -70,7 +69,7 @@ class NPR_LightShaders():
             if material.shader and 'SHADER' in material.shader.keys():
                 shader = material.shader['SHADER']
                 pipeline.common_buffer.bind(shader.uniform_blocks['COMMON_UNIFORMS'])
-                pipeline.lights_buffer.bind(shader.uniform_blocks['SCENE_LIGHTS'])
+                lights_buffer.bind(shader.uniform_blocks['SCENE_LIGHTS'])
                 shader.textures['IN_DEPTH'] = depth_texture
                 if 'LIGHT_INDEX' in shader.uniforms:
                     light_index = scene.lights.index(light)

@@ -1,24 +1,18 @@
 # Copyright (c) 2020-2021 BNPR, Miguel Pozo and contributors. MIT license. 
 
-from Malt.Utils import LOG
 from Malt.GL.GL import *
 from Malt.GL.Shader import UBO
 from Malt.GL.Texture import TextureArray, CubeMapArray
 from Malt.GL.RenderTarget import ArrayLayerTarget, RenderTarget
 
+from Malt.PipelineParameters import Parameter, Type
+
 from Malt.Library.Render import Common
 from Malt.Library.Render import Lighting
-from Malt.Library.Render.Lighting import LightsBuffer, ShadowMaps
-
-from Malt import Pipeline
-
-from Malt.PipelinePlugin import *
-
 
 class NPR_Lighting():
 
     def __init__(self, parameters):
-        super().__init__(parameters)
         parameters.world['ShadowMaps.Sun.Cascades.Distribution Scalar'] = Parameter(0.9, Type.FLOAT)
         parameters.world['ShadowMaps.Sun.Cascades.Count'] = Parameter(4, Type.INT)
         parameters.world['ShadowMaps.Sun.Cascades.Count @ Preview'] = Parameter(2, Type.INT)
@@ -59,8 +53,7 @@ class NPR_Lighting():
             'SCENE_LIGHTS' : self.lights_buffer
         }
 
-        #RENDER SHADOWMAPS
-        def render_shadow_passes(lights, fbos_opaque, fbos_transparent, sample_offset = sample_offset):
+        def render_shadowmaps(lights, fbos_opaque, fbos_transparent, sample_offset = sample_offset):
             for light_index, light_matrices_pair in enumerate(lights.items()):
                 light, matrices = light_matrices_pair
                 for matrix_index, camera_projection_pair in enumerate(matrices): 
@@ -79,15 +72,15 @@ class NPR_Lighting():
                     pipeline.draw_scene_pass(fbos_transparent[i], get_light_group_batches(transparent_batches), 
                         'SHADOW_PASS', pipeline.default_shader['SHADOW_PASS'], UBOS)
         
-        render_shadow_passes(self.lights_buffer.spots,
+        render_shadowmaps(self.lights_buffer.spots,
             self.shadowmaps_opaque.spot_fbos, self.shadowmaps_transparent.spot_fbos)
         
         glEnable(GL_DEPTH_CLAMP)
-        render_shadow_passes(self.lights_buffer.suns,
+        render_shadowmaps(self.lights_buffer.suns,
             self.shadowmaps_opaque.sun_fbos, self.shadowmaps_transparent.sun_fbos)
         glDisable(GL_DEPTH_CLAMP)
 
-        render_shadow_passes(self.lights_buffer.points,
+        render_shadowmaps(self.lights_buffer.points,
             self.shadowmaps_opaque.point_fbos, self.shadowmaps_transparent.point_fbos, (0,0))
     
     def shader_callback(self, shader):
@@ -132,7 +125,7 @@ class NPR_LightsGroupsBuffer():
             self.UBO.bind(shader.uniform_blocks['LIGHT_GROUPS'])
         
 
-class NPR_ShadowMaps(ShadowMaps):
+class NPR_ShadowMaps(Lighting.ShadowMaps):
 
     def __init__(self):
         super().__init__()
