@@ -23,8 +23,6 @@ class ScreenPass(PipelineNode):
         material = parameters['PASS_MATERIAL']
         custom_io = parameters['CUSTOM_IO']
 
-        print(custom_io)
-
         if self.pipeline.resolution != self.resolution or self.custom_io != custom_io:
             self.texture_targets = {}
             for io in custom_io:

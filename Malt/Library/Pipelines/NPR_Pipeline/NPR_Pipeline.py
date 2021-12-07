@@ -20,7 +20,7 @@ from Malt.Library.Pipelines.NPR_Pipeline.NPR_LightShaders import NPR_LightShader
 
 from Malt.Library.Nodes import Unpack8bitTextures
 
-from Malt.Library.Pipelines.NPR_Pipeline.Nodes import ScreenPass
+from Malt.Library.Pipelines.NPR_Pipeline.Nodes import ScreenPass, PrePass, MainPass
 
 _COMMON_HEADER = '''
 #include "NPR_Pipeline.glsl"
@@ -210,20 +210,20 @@ class NPR_Pipeline(Pipeline):
                 return Parameter('', Type.TEXTURE)
             else:
                 return Parameter(sampler_type, Type.OTHER)
+        
+        MainPass.NODE.get_custom_outputs = self.get_mesh_shader_custom_outputs
 
         render_layer = PythonPipelineGraph(
             name='Render Layer',
-            nodes = [ScreenPass.NODE, Unpack8bitTextures.NODE],
+            nodes = [ScreenPass.NODE, PrePass.NODE, MainPass.NODE, Unpack8bitTextures.NODE],
             graph_io = [
                 PipelineGraphIO(
                     name = 'Render Layer',
                     function = PipelineNode.static_reflect(
                         name = 'Render Layer',
                         inputs = {
-                            'Color' : Parameter('', Type.TEXTURE),
-                            'Normal_Depth' : Parameter('', Type.TEXTURE),
-                            'ID' : Parameter('', Type.TEXTURE),
-                        } | {k : texture_type_to_parameter(t) for k,t in self.get_mesh_shader_custom_outputs().items()},
+                            'Scene' : Parameter('Scene', Type.OTHER),
+                        },
                         outputs = {
                             'Color' : Parameter('', Type.TEXTURE),
                         } | {k : texture_type_to_parameter(t) for k,t in self.get_render_layer_custom_outputs().items()},
@@ -237,34 +237,11 @@ class NPR_Pipeline(Pipeline):
         self.npr_light_shaders.setup_graphs(self, self.graphs)
 
     def setup_render_targets(self, resolution):
-        self.t_depth = Texture(resolution, GL_DEPTH_COMPONENT32F)
-        
-        self.t_prepass_normal_depth = Texture(resolution, GL_RGBA32F)
-        self.t_prepass_id = Texture(resolution, GL_RGBA16UI, min_filter=GL_NEAREST, mag_filter=GL_NEAREST)
-        self.fbo_prepass = RenderTarget([self.t_prepass_normal_depth, self.t_prepass_id], self.t_depth)
-        
-        self.t_last_layer_id = Texture(resolution, GL_R16UI, min_filter=GL_NEAREST, mag_filter=GL_NEAREST)
-        self.fbo_last_layer_id = RenderTarget([self.t_last_layer_id])
-
-        self.mesh_shader_custom_output_textures = {}
-        self.render_layer_custom_output_accumulate_textures = {}
-        self.render_layer_custom_output_accumulate_fbos = {}
-        
-        self.t_main_color = Texture(resolution, GL_RGBA16F)
-        fbo_main_targets = [self.t_main_color]
-        for key, texture_format in self.get_mesh_shader_custom_outputs().items():
-            texture = Texture(resolution, texture_format)
-            self.mesh_shader_custom_output_textures[key] = texture
-            fbo_main_targets.append(texture)
-        self.fbo_main = RenderTarget(fbo_main_targets, self.t_depth)
-
         self.t_opaque_color = Texture(resolution, GL_RGBA16F)
-        self.t_opaque_depth = Texture(resolution, GL_DEPTH_COMPONENT32F)
-        self.fbo_opaque = RenderTarget([self.t_opaque_color], self.t_opaque_depth)
+        self.fbo_opaque = RenderTarget([self.t_opaque_color])
 
         self.t_transparent_color = Texture(resolution, GL_RGBA16F)
-        self.t_transparent_depth = Texture(resolution, GL_DEPTH_COMPONENT32F)
-        self.fbo_transparent = RenderTarget([self.t_transparent_color], self.t_transparent_depth)
+        self.fbo_transparent = RenderTarget([self.t_transparent_color])
 
         self.t_color = Texture(resolution, GL_RGBA16F)
         self.fbo_color = RenderTarget([self.t_color])
@@ -280,6 +257,17 @@ class NPR_Pipeline(Pipeline):
                 texture = Texture(resolution, texture_format)
                 self.render_layer_custom_output_accumulate_textures[key] = texture
                 self.render_layer_custom_output_accumulate_fbos[key] = RenderTarget([texture])
+    
+    def get_scene_batches(self, scene):
+        opaque_batches = {}
+        transparent_batches = {}
+        for material, meshes in scene.batches.items():
+            if material and material.shader:
+                if material.shader['MAIN_PASS'].uniforms['Settings.Transparency'].value[0] == True:
+                    transparent_batches[material] = meshes
+                    continue
+            opaque_batches[material] = meshes
+        return opaque_batches, transparent_batches
 
     def do_render(self, resolution, scene, is_final_render, is_new_frame):
         #SETUP SAMPLING
@@ -291,26 +279,13 @@ class NPR_Pipeline(Pipeline):
             self.fbo_accumulate.clear([(0,0,0,0)])
             for fbo in self.render_layer_custom_output_accumulate_fbos.values():
                 fbo.clear([(0,0,0,0)])
-
-        self.fbo_opaque.clear([(0,0,0,0)])
-        self.fbo_color.clear([(0,0,0,0)])
         
         sample_offset = self.get_samples(scene.world_parameters['Samples.Width'])[self.sample_count]
 
-        #SETUP SCENE BATCHES
-        opaque_batches = {}
-        transparent_batches = {}
-        for material, meshes in scene.batches.items():
-            if material and material.shader:
-                if material.shader['MAIN_PASS'].uniforms['Settings.Transparency'].value[0] == True:
-                    transparent_batches[material] = meshes
-                    continue
-            opaque_batches[material] = meshes
+        opaque_batches, transparent_batches = self.get_scene_batches(scene)
         
         self.npr_lighting.load(self, scene, opaque_batches, transparent_batches, sample_offset, self.sample_count)
 
-        #SCENE RENDER
-        #Load scene camera settings
         self.common_buffer.load(scene, resolution, sample_offset, self.sample_count)
 
         self.draw_layer_count = 0
@@ -318,24 +293,26 @@ class NPR_Pipeline(Pipeline):
         result = self.draw_layer(opaque_batches, scene, scene.world_parameters['Background.Color'])
         self.draw_layer_count += 1
 
-        self.copy_textures(self.fbo_opaque, [result], self.t_depth)
+        self.copy_textures(self.fbo_opaque, [result])
         
+        self.fbo_color.clear([(0,0,0,0)])
         self.fbo_transparent.clear([(0,0,0,0)], -1)
-        self.fbo_last_layer_id.clear([(0,0,0,0)])
 
         for i in range(scene.world_parameters['Transparency.Layers']):
             if i > 0:
                 self.layer_query.begin_conditional_draw()
+
+            self.layer_query.begin_query()
             result = self.draw_layer(transparent_batches, scene)
+            self.layer_query.end_query()
             self.draw_layer_count += 1
             
-            self.copy_textures(self.fbo_last_layer_id, [self.t_prepass_id])
-
             self.blend_transparency_shader.textures['IN_BACK'] = result
             self.blend_transparency_shader.textures['IN_FRONT'] = self.t_transparent_color
             self.draw_screen_pass(self.blend_transparency_shader, self.fbo_color)
             
-            self.copy_textures(self.fbo_transparent, [self.t_color], self.t_depth)
+            self.copy_textures(self.fbo_transparent, [self.t_color])
+            
             if i > 0:
                 self.layer_query.end_conditional_draw()
 
@@ -357,53 +334,10 @@ class NPR_Pipeline(Pipeline):
         } | self.render_layer_custom_output_accumulate_textures
     
     def draw_layer(self, batches, scene, background_color=(0,0,0,0)):
-        UBOS = {'COMMON_UNIFORMS' : self.common_buffer}
-
-        callbacks = [self.npr_lighting.shader_callback]
-
-        #PRE-PASS
-        textures = {
-            'IN_OPAQUE_COLOR': self.t_opaque_color,
-            'IN_OPAQUE_DEPTH': self.t_opaque_depth,
-            'IN_TRANSPARENT_DEPTH': self.t_transparent_depth,
-            'IN_LAST_ID': self.t_last_layer_id,
-        }
-        self.fbo_prepass.clear([(0,0,1,1), (0,0,0,0)], 1, 0)
-
-        self.layer_query.begin_query()
-        self.draw_scene_pass(self.fbo_prepass, batches, 'PRE_PASS', self.default_shader['PRE_PASS'], UBOS, {}, textures, callbacks)
-        self.layer_query.end_query()
-
-        #CUSTOM LIGHT SHADERS
-        self.npr_light_shaders.load(self, self.t_depth, scene, self.npr_lighting.lights_buffer)
-        callbacks.append(self.npr_light_shaders.shader_callback)
-
-        #MAIN-PASS
-        textures = {
-            'IN_NORMAL_DEPTH': self.t_prepass_normal_depth,
-            'IN_ID': self.t_prepass_id,
-            'IN_OPAQUE_COLOR': self.t_opaque_color,
-            'IN_OPAQUE_DEPTH': self.t_opaque_depth,
-            'IN_TRANSPARENT_DEPTH': self.t_transparent_depth,
-            'IN_LAST_ID': self.t_last_layer_id,
-        }
-        clear_colors = [background_color]
-        clear_colors.extend([(0)*4] * len(self.mesh_shader_custom_output_textures))
-        self.fbo_main.clear(clear_colors)
-        self.draw_scene_pass(self.fbo_main, batches, 'MAIN_PASS', self.default_shader['MAIN_PASS'], UBOS, {}, textures, callbacks)
-
-        return self.apply_render_layer_graph(scene, self.t_main_color, self.t_prepass_normal_depth, self.t_prepass_id)
-
-    def apply_render_layer_graph(self, scene, color, normal_depth, ID):
-        result = color
         graph = scene.world_parameters['Render Layer']
         if graph:
-            IN = {
-                'Color' : result,
-                'Normal_Depth' : normal_depth,
-                'ID' : ID,
-            } | self.mesh_shader_custom_output_textures
-            OUT = { 'Color' : result }
+            IN = {'Scene' : scene}
+            OUT = {'Color' : None}
             
             self.graphs['Render Layer'].run_source(self, graph['source'], graph['parameters'], IN, OUT)
             
@@ -414,9 +348,7 @@ class NPR_Pipeline(Pipeline):
                         if internal_format_to_data_format(OUT[key].internal_format) == GL_FLOAT:
                             # TEMPORAL SUPER-SAMPLING ACCUMULATION
                             self.blend_texture(OUT[key], fbo, 1.0 / (self.sample_count + 1))
-            result = OUT['Color']
-        return result
-
+            return OUT['Color']
 
 
 PIPELINE = NPR_Pipeline

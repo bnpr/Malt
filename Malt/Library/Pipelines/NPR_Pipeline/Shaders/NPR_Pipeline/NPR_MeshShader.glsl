@@ -166,9 +166,9 @@ void main()
     PO.normal = S.normal;
     PO.id.r = ID;
 
-    if(Settings.Transparency)
+    #ifdef PRE_PASS
     {
-        #ifndef SHADOW_PASS
+        if(Settings.Transparency)
         {
             float opaque_depth = texelFetch(IN_OPAQUE_DEPTH, ivec2(gl_FragCoord.xy), 0).x;
             float transparent_depth = texelFetch(IN_TRANSPARENT_DEPTH, ivec2(gl_FragCoord.xy), 0).x;
@@ -180,8 +180,8 @@ void main()
                 discard;
             }
         }
-        #endif
     }
+    #endif
 
     COMMON_PIXEL_SHADER(S, PO);
 
@@ -192,14 +192,6 @@ void main()
     else if(!Settings.Transparency)
     {
         PO.color.a = 1.0;
-    }
-
-    {
-    if(Settings.Transparency && Settings.Transparency_Single_Layer)
-        if(PO.id.r == texelFetch(IN_LAST_ID, ivec2(gl_FragCoord.xy), 0).x)
-        {
-            discard;
-        }
     }
 
     #ifdef SHADOW_PASS
@@ -224,6 +216,13 @@ void main()
 
     #ifdef PRE_PASS
     {
+        if(Settings.Transparency && Settings.Transparency_Single_Layer)
+        {
+            if(PO.id.r == texelFetch(IN_LAST_ID, ivec2(gl_FragCoord.xy), 0).x)
+            {
+                discard;
+            }
+        }
         OUT_NORMAL_DEPTH.xyz = PO.normal;
         OUT_NORMAL_DEPTH.w = gl_FragCoord.z;
         OUT_ID = PO.id;

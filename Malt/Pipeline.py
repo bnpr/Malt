@@ -236,10 +236,12 @@ class Pipeline():
             
         return result
     
-    def draw_scene_pass(self, render_target, scene_batches, pass_name=None, default_shader=None, uniform_blocks={}, uniforms={}, textures={}, shader_callbacks=[]):
+    def draw_scene_pass(self, render_target, scene_batches, pass_name=None, default_shader=None, 
+        uniform_blocks={}, uniforms={}, textures={}, shader_callbacks=[], 
+        depth_test_function=GL_LEQUAL):
         glDisable(GL_BLEND)
         glEnable(GL_DEPTH_TEST)
-        glDepthFunc(GL_LEQUAL)
+        glDepthFunc(depth_test_function)
         glDepthMask(GL_TRUE)
         glDepthRange(0,1)
 
