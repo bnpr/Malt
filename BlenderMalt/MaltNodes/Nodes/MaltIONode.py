@@ -4,39 +4,7 @@ import bpy
 from BlenderMalt.MaltNodes.MaltNode import MaltNode
 from BlenderMalt.MaltProperties import MaltPropertyGroup
 
-class MaltIOParameter(bpy.types.PropertyGroup):
-
-    def get_parameter_enums(self, context=None):
-        types = ['None']
-        from BlenderMalt import MaltPipeline
-        bridge = MaltPipeline.get_bridge()
-        if bridge and self.graph_type in bridge.graphs:
-            graph = bridge.graphs[self.graph_type]
-            if self.io_type in graph.graph_io.keys():
-                if self.is_output:
-                    types = graph.graph_io[self.io_type].dynamic_output_types
-                else:
-                    types = graph.graph_io[self.io_type].dynamic_input_types
-        return [(type, type, type) for type in types]
-    
-    def get_parameter(self):
-        try:
-            return self.get_parameter_enums().index(tuple(self['PARAMETER']))
-        except:
-            return 0
-
-    def set_parameter(self, value):
-        self['PARAMETER'] = self.get_parameter_enums()[value]
-
-    graph_type : bpy.props.StringProperty()
-    io_type : bpy.props.StringProperty()
-    is_output : bpy.props.BoolProperty()
-    parameter : bpy.props.EnumProperty(items=get_parameter_enums, get=get_parameter, set=set_parameter)
-
-    def draw(self, context, layout, owner):
-        layout.label(text='', icon='DOT')
-        layout.prop(self, 'name', text='')
-        layout.prop(self, 'parameter', text='')
+from BlenderMalt.MaltNodes.MaltCustomPasses import *
 
 class MaltIONode(bpy.types.Node, MaltNode):
     
@@ -45,6 +13,14 @@ class MaltIONode(bpy.types.Node, MaltNode):
     properties: bpy.props.PointerProperty(type=MaltPropertyGroup)
     is_output: bpy.props.BoolProperty()
 
+    def get_custom_pass_enums(self, context):
+        custom_passes = ['Default']
+        if self.allow_custom_pass:
+            custom_passes = context.scene.world.malt_graph_types[self.id_data.graph_type].custom_passes.keys()
+        return [(p,p,p) for p in custom_passes]
+        
+    custom_pass: bpy.props.EnumProperty(items=get_custom_pass_enums)
+    allow_custom_pass : bpy.props.BoolProperty(default=False)
     allow_custom_parameters : bpy.props.BoolProperty(default=False)
 
     def malt_setup(self):
@@ -55,6 +31,8 @@ class MaltIONode(bpy.types.Node, MaltNode):
         self.graph_type = self.id_data.graph_type
         self.pass_type = self.io_type
         
+        graph = self.id_data.get_pipeline_graph()
+        self.allow_custom_pass = graph.graph_type == graph.SCENE_GRAPH
         self.allow_custom_parameters = len(self.get_dynamic_parameter_types()) > 0
 
         inputs = {}
@@ -91,7 +69,11 @@ class MaltIONode(bpy.types.Node, MaltNode):
     
     def get_custom_parameters(self):
         if self.allow_custom_parameters:
-            return self.custom_parameters
+            if self.allow_custom_pass:
+                io = bpy.context.scene.world.malt_graph_types[self.id_data.graph_type].custom_passes[self.custom_pass].io[self.io_type]
+                return io.outputs if self.is_output else io.inputs
+            else:
+                return self.custom_parameters
         else:
             return {}
     
@@ -158,6 +140,19 @@ class MaltIONode(bpy.types.Node, MaltNode):
                 src += transpiler.global_declaration(parameter.parameter, 0, self.get_source_socket_reference(socket))
         return src
     
+    def draw_buttons(self, context, layout):
+        if self.allow_custom_pass and (self.is_output or self.allow_custom_parameters):
+            row = layout.row(align=True)
+            row.prop(self, 'custom_pass', text='Custom Pass')
+            row.operator('wm.malt_add_custom_pass', text='', icon='ADD').graph_type = self.id_data.graph_type
+            if self.custom_pass != 'Default':
+                def remove():
+                    custom_passes = context.scene.world.malt_graph_types[self.id_data.graph_type].custom_passes
+                    custom_passes.remove(custom_passes.find(self.custom_pass))
+                    #self.custom_pass = 'Default'
+                row.operator('wm.malt_callback', text='', icon='REMOVE').callback.set(remove)
+
+    
     def draw_buttons_ext(self, context, layout):
         if self.allow_custom_parameters:
             def refresh():
@@ -168,27 +163,34 @@ class MaltIONode(bpy.types.Node, MaltNode):
                         tree.update()
             layout.operator("wm.malt_callback", text='Reload', icon='FILE_REFRESH').callback.set(refresh)
             row = layout.row()
-            row.template_list('COMMON_UL_UI_List', '', self, 'custom_parameters', self, 'custom_parameters_index')
+            owner = self
+            parameters_key = 'custom_parameters'
+            if self.allow_custom_pass:
+                owner = context.scene.world.malt_graph_types[self.id_data.graph_type].custom_passes[self.custom_pass].io[self.io_type]
+                parameters_key = 'outputs' if self.is_output else 'inputs'
+            index_key = f'{parameters_key}_index'
+            row.template_list('COMMON_UL_UI_List', '', owner, parameters_key, owner, index_key)
+            parameters = getattr(owner, parameters_key)
+            index = getattr(owner, index_key)
             col = row.column()
             def add_custom_socket():
-                new_param = self.custom_parameters.add()
+                new_param = parameters.add()
                 new_param.graph_type = self.id_data.graph_type
                 new_param.io_type = self.io_type
                 new_param.is_output = self.is_output
                 name = f"Custom {'Output' if new_param.is_output else 'Input'}"
                 i = 1
                 #TODO: Check against default parameters
-                while f'{name} {i}' in self.custom_parameters.keys():
+                while f'{name} {i}' in parameters.keys():
                     i += 1
                 new_param.name = f'{name} {i}'
             col.operator("wm.malt_callback", text='', icon='ADD').callback.set(add_custom_socket)
             def remove_custom_socket():
-                self.custom_parameters.remove(self.custom_parameters_index)
+                parameters.remove(index)
             col.operator("wm.malt_callback", text='', icon='REMOVE').callback.set(remove_custom_socket)
-
+    
     
 classes = [
-    MaltIOParameter,
     MaltIONode,
 ]
 
