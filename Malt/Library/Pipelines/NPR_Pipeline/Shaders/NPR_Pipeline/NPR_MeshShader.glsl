@@ -36,6 +36,7 @@ struct PrePassOutput
 {
     vec3 normal;
     float depth_offset;
+    bool offset_position;
     uvec4 id;
     vec4 surface_color;
 };
@@ -152,13 +153,14 @@ void PRE_PASS_PIXEL_SHADER(inout PrePassOutput PO);
 
 void MAIN_PASS_PIXEL_SHADER();
 
-vec3 get_normal();
-
 void main()
 {
+    PIXEL_SETUP_INPUT();
+
     PrePassOutput PPO;
-    PPO.normal = get_normal();
+    PPO.normal = NORMAL;
     PPO.depth_offset = 0;
+    PPO.offset_position = true;
     PPO.id = uvec4(ID,0,0,0);
     PPO.surface_color = vec4(0,0,0,1);
 
@@ -174,10 +176,19 @@ void main()
     }
 
     float depth = gl_FragCoord.z;
+    vec3 offset_position = POSITION - view_direction() * PPO.depth_offset;
+
+    #ifdef SHADOW_PASS
+    {
+        if(!PPO.offset_position)
+        {
+            PPO.depth_offset = 0;
+        }
+    }
+    #endif
 
     if(PPO.depth_offset != 0)
     {
-        vec3 offset_position = POSITION - view_direction() * PPO.depth_offset;
         depth = project_point(PROJECTION * CAMERA, offset_position).z;
         float far = gl_DepthRange.far;
         float near = gl_DepthRange.near;
@@ -230,6 +241,13 @@ void main()
 
     #ifdef MAIN_PASS
     {
+        if(PPO.offset_position)
+        {
+            POSITION = offset_position;
+        }
+        NORMAL = texelFetch(IN_NORMAL_DEPTH, ivec2(gl_FragCoord.xy), 0).xyz;
+        ID = texelFetch(IN_ID, ivec2(gl_FragCoord.xy), 0).xyz;
+
         MAIN_PASS_PIXEL_SHADER();
     }
     #endif
@@ -247,22 +265,6 @@ void main()
 #include "Filters/Bevel.glsl"
 #include "Filters/Curvature.glsl"
 #include "Filters/Line.glsl"
-
-
-// Normal of the currently shaded pixel surface.
-// Returns the PixelOutput normal in the Main Pass and the smooth mesh normal in other passes
-vec3 get_normal()
-{
-    #ifdef PIXEL_SHADER
-    {
-        #ifdef MAIN_PASS
-            return texelFetch(IN_NORMAL_DEPTH, ivec2(gl_FragCoord.xy), 0).xyz;
-        #endif
-        return normalize(NORMAL) * (gl_FrontFacing ? 1.0 : -1.0);
-    }
-    #endif
-    return NORMAL;
-}
 
 vec3 get_diffuse()
 {

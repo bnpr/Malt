@@ -86,13 +86,16 @@ void VERTEX_SETUP_OUTPUT()
 
 void PIXEL_SETUP_INPUT()
 {
-    POSITION = IO_POSITION;
-    NORMAL = IO_NORMAL;
-    TANGENT = IO_TANGENT;
-    BITANGENT = IO_BITANGENT;
-    UV = IO_UV;
-    COLOR = IO_COLOR;
-    ID = IO_ID;
+    #ifdef PIXEL_SHADER
+    {
+        POSITION = IO_POSITION;
+        NORMAL = normalize(IO_NORMAL) * (gl_FrontFacing ? 1.0 : -1.0);
+        TANGENT = IO_TANGENT;
+        BITANGENT = IO_BITANGENT;
+        UV = IO_UV;
+        COLOR = IO_COLOR;
+        ID = IO_ID;
+    }
 }
 
 void DEFAULT_VERTEX_SHADER()
