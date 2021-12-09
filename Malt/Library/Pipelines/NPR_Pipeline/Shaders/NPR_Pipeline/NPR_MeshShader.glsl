@@ -3,28 +3,9 @@
 /// NPR Pipeline for mesh materials.
 /// Includes a simplified API for writing shaders.
 
+#include "NPR_Intellisense.glsl"
+#include "Common/Hash.glsl"
 #include "Common.glsl"
-
-// All the mesh surface data of the currently shaded pixel.
-struct Surface
-{
-    vec3 position;// Surface position
-    vec3 normal;// Surface normal
-    vec3 tangent;// Surface tangent, one for each UV. Only available if use_precomputed normals is enabled in the mesh settings panel.
-    vec3 bitangent;
-    vec2 uv[4];
-    vec4 color[4]; // Vertex colors. Black if unused.
-    uvec4 id;
-};
-
-// The result of the pixel shader.
-struct PixelOutput
-{
-    vec4 color;
-    vec3 normal;
-    uvec4 id;
-    vec4 transparency_shadow_color;
-};
 
 // Global material settings. Can be modified in the material panel UI
 struct NPR_Settings
@@ -40,18 +21,37 @@ uniform NPR_Settings Settings = NPR_Settings(true, true, false, false, 0.001);
 
 uniform ivec4 MATERIAL_LIGHT_GROUPS;
 
+struct Vertex
+{
+    vec3 position;
+    vec3 normal;
+    uvec4 id;
+    vec3 tangent;
+    vec3 bitangent;
+    vec2 uv[4];
+    vec4 vertex_color[4];
+};
+
+struct PrePassOutput
+{
+    vec3 normal;
+    float depth_offset;
+    uvec4 id;
+    vec4 surface_color;
+};
+
 #ifdef VERTEX_SHADER
 
-void COMMON_VERTEX_SHADER(inout Surface S);
+void COMMON_VERTEX_SHADER(inout Vertex V);
 
 #ifndef CUSTOM_VERTEX_SHADER
-void COMMON_VERTEX_SHADER(inout Surface S){}
+void COMMON_VERTEX_SHADER(inout Vertex V){}
 #endif
 
-vec3 VERTEX_DISPLACEMENT_SHADER(Surface S);
+vec3 VERTEX_DISPLACEMENT_SHADER(Vertex V);
 
 #ifndef CUSTOM_VERTEX_DISPLACEMENT
-vec3 VERTEX_DISPLACEMENT_SHADER(Surface S){ return vec3(0); }
+vec3 VERTEX_DISPLACEMENT_SHADER(Vertex V){ return vec3(0); }
 #endif
 
 #ifndef VERTEX_DISPLACEMENT_OFFSET
@@ -63,28 +63,28 @@ void main()
 {
     DEFAULT_VERTEX_SHADER();
 
-    Surface S;
-    S.position = POSITION;
-    S.normal = NORMAL;
-    S.tangent = TANGENT;
-    S.bitangent = BITANGENT;
-    S.uv = UV;
-    S.color = COLOR;
-    S.id.r = ID;
+    Vertex V;
+    V.position = POSITION;
+    V.normal = NORMAL;
+    V.tangent = TANGENT;
+    V.bitangent = BITANGENT;
+    V.uv = UV;
+    V.color = COLOR;
+    V.id.r = ID;
     
-    COMMON_VERTEX_SHADER(S);
+    COMMON_VERTEX_SHADER(V);
 
-    POSITION = S.position;
-    NORMAL = S.normal;
-    TANGENT = S.tangent;
-    BITANGENT = S.bitangent;
-    UV = S.uv;
-    COLOR = S.color;
-    //ID = S.ID TODO???
+    POSITION = V.position;
+    NORMAL = V.normal;
+    TANGENT = V.tangent;
+    BITANGENT = V.bitangent;
+    UV = V.uv;
+    COLOR = V.color;
+    ID = V.ID TODO
 
     #ifdef CUSTOM_VERTEX_DISPLACEMENT
     {
-        vec3 displaced_position = POSITION + VERTEX_DISPLACEMENT_SHADER(S);
+        vec3 displaced_position = POSITION + VERTEX_DISPLACEMENT_SHADER(V);
         
         if(!PRECOMPUTED_TANGENTS)
         {
@@ -95,14 +95,14 @@ void main()
             BITANGENT = normalize(cross(NORMAL, tangent));
         }
         
-        Surface s = S;
+        Vertex v = V;
 
-        s.position = POSITION + TANGENT * Settings.Vertex_Displacement_Offset;
-        vec3 displaced_tangent = s.position + VERTEX_DISPLACEMENT_SHADER(s);
+        v.position = POSITION + TANGENT * Settingv.Vertex_Displacement_Offset;
+        vec3 displaced_tangent = v.position + VERTEX_DISPLACEMENT_SHADER(s);
         TANGENT = normalize(displaced_tangent - displaced_position);
 
-        s.position = POSITION + BITANGENT * Settings.Vertex_Displacement_Offset;
-        vec3 displaced_bitangent = s.position + VERTEX_DISPLACEMENT_SHADER(s);
+        v.position = POSITION + BITANGENT * Settingv.Vertex_Displacement_Offset;
+        vec3 displaced_bitangent = v.position + VERTEX_DISPLACEMENT_SHADER(s);
         BITANGENT = normalize(displaced_bitangent - displaced_position);
         
         POSITION = displaced_position;
@@ -131,7 +131,7 @@ uniform usampler2D IN_LAST_ID;
 
 #ifdef SHADOW_PASS
 layout (location = 0) out uint OUT_ID;
-layout (location = 1) out vec3 OUT_SHADOW_COLOR;
+layout (location = 1) out vec3 OUT_SHADOW_MULTIPLY_COLOR;
 #endif //PRE_PASS
 
 #ifdef PRE_PASS
@@ -148,93 +148,93 @@ layout (location = 0) out vec4 OUT_COLOR;
 
 #ifndef CUSTOM_MAIN
 
-void COMMON_PIXEL_SHADER(Surface S, inout PixelOutput PO);
+void PRE_PASS_PIXEL_SHADER(inout PrePassOutput PO);
+
+void MAIN_PASS_PIXEL_SHADER();
+
+vec3 get_normal();
 
 void main()
 {
-    Surface S;
-    S.position = POSITION;
-    S.normal = normalize(NORMAL) * (gl_FrontFacing ? 1.0 : -1.0);
-    S.tangent = TANGENT;
-    S.bitangent = BITANGENT;
-    S.uv = UV;
-    S.color = COLOR;
-    S.id.r = ID;
+    PrePassOutput PPO;
+    PPO.normal = get_normal();
+    PPO.depth_offset = 0;
+    PPO.id = uvec4(ID,0,0,0);
+    PPO.surface_color = vec4(0,0,0,1);
 
-    PixelOutput PO;
-    PO.color = vec4(0,0,0,1);
-    PO.normal = S.normal;
-    PO.id.r = ID;
+    PRE_PASS_PIXEL_SHADER(PPO);
 
+    if(PPO.surface_color.a == 0)
+    {
+        discard;
+    }
+    else if(!Settings.Transparency)
+    {
+        PPO.surface_color.a = 1.0;
+    }
+
+    float depth = gl_FragCoord.z;
+
+    if(PPO.depth_offset != 0)
+    {
+        vec3 offset_position = POSITION - view_direction() * PPO.depth_offset;
+        depth = project_point(PROJECTION * CAMERA, offset_position).z;
+        float far = gl_DepthRange.far;
+        float near = gl_DepthRange.near;
+        gl_FragDepth = (((far-near) * depth) + near + far) / 2.0;
+    }
+
+    #ifdef SHADOW_PASS
+    {
+        OUT_ID = PPO.id.r;
+
+        if(Settings.Transparency)
+        {
+            float pass_through = hash(vec4(POSITION, SAMPLE_COUNT)).x;
+            if(pass_through > PPO.surface_color.a)
+            {
+                discard;
+            }
+            //TODO: Take alpha probability into account for multiply color
+            OUT_SHADOW_MULTIPLY_COLOR = PPO.surface_color.rgb * saturate(1.0 - PPO.surface_color.a);
+        }
+    }
+    #endif
+    
     #ifdef PRE_PASS
     {
         if(Settings.Transparency)
         {
             float opaque_depth = texelFetch(IN_OPAQUE_DEPTH, ivec2(gl_FragCoord.xy), 0).x;
             float transparent_depth = texelFetch(IN_TRANSPARENT_DEPTH, ivec2(gl_FragCoord.xy), 0).x;
-            float depth = (gl_FragCoord.z / gl_FragCoord.w) * 0.5 + 0.5;
-            depth = gl_FragCoord.z;
             
             if(depth >= opaque_depth || depth <= transparent_depth)
             {
                 discard;
             }
-        }
-    }
-    #endif
 
-    COMMON_PIXEL_SHADER(S, PO);
-
-    if(PO.color.a <= 0)
-    {
-        discard;
-    }
-    else if(!Settings.Transparency)
-    {
-        PO.color.a = 1.0;
-    }
-
-    #ifdef SHADOW_PASS
-    {
-        OUT_ID = PO.id.r;
-
-        if(Settings.Transparency)
-        {
-            OUT_SHADOW_COLOR = PO.transparency_shadow_color.rgb;
-
-            float a = random_per_pixel(transform_point(CAMERA, POSITION).z);
-            float b = random_per_sample(PO.id.r);
-            float c = random_per_sample(transform_point(CAMERA, POSITION).z);
-            float pass_through = c;
-            if(pass_through > PO.transparency_shadow_color.a)
+            if(Settings.Transparency_Single_Layer)
             {
-                discard;
+                if(PO.id.r == texelFetch(IN_LAST_ID, ivec2(gl_FragCoord.xy), 0).x)
+                {
+                    discard;
+                }
             }
         }
-    }
-    #endif
 
-    #ifdef PRE_PASS
-    {
-        if(Settings.Transparency && Settings.Transparency_Single_Layer)
-        {
-            if(PO.id.r == texelFetch(IN_LAST_ID, ivec2(gl_FragCoord.xy), 0).x)
-            {
-                discard;
-            }
-        }
-        OUT_NORMAL_DEPTH.xyz = PO.normal;
-        OUT_NORMAL_DEPTH.w = gl_FragCoord.z;
-        OUT_ID = PO.id;
+        OUT_NORMAL_DEPTH.xyz = PPO.normal;
+        OUT_NORMAL_DEPTH.w = depth;
+        OUT_ID = PPO.id;
     }
     #endif
 
     #ifdef MAIN_PASS
     {
-        OUT_COLOR = PO.color;
+        MAIN_PASS_PIXEL_SHADER();
     }
     #endif
 }
+
 #endif //NDEF CUSTOM_MAIN
 
 #endif //PIXEL_SHADER
@@ -253,12 +253,15 @@ void main()
 // Returns the PixelOutput normal in the Main Pass and the smooth mesh normal in other passes
 vec3 get_normal()
 {
-    #if defined(PIXEL_SHADER) && defined(MAIN_PASS)
+    #ifdef PIXEL_SHADER
     {
-        return texelFetch(IN_NORMAL_DEPTH, ivec2(gl_FragCoord.xy), 0).xyz;
+        #ifdef MAIN_PASS
+            return texelFetch(IN_NORMAL_DEPTH, ivec2(gl_FragCoord.xy), 0).xyz;
+        #endif
+        return normalize(NORMAL) * (gl_FrontFacing ? 1.0 : -1.0);
     }
     #endif
-    return normalize(NORMAL);
+    return NORMAL;
 }
 
 vec3 get_diffuse()
@@ -449,8 +452,6 @@ float get_rim_light(float angle, float rim_length, float thickness, float thickn
 {
     return rim_light(get_normal(), angle * DEGREES_TO_RADIANS, rim_length, rim_length, thickness, thickness_falloff);
 }
-
-//TODO: World Space width for curvature
 
 LineDetectionOutput get_line_detection()
 {
