@@ -862,7 +862,7 @@ class MaltIONode(bpy.types.Node, MaltNode):
             function = self.get_function()
             for socket in self.inputs:
                 if socket.name == 'result':
-                    code += transpiler.declaration(socket.data_type, socket.array_size, None)
+                    code += transpiler.declaration(socket.data_type, socket.array_size, socket.name)
                 initialization = socket.get_source_initialization()
                 if initialization:
                     code += transpiler.asignment(socket.get_source_reference(), initialization)
