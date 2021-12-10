@@ -111,7 +111,7 @@ class MaltIONode(bpy.types.Node, MaltNode):
                         socket.get_source_initialization())
                 else:
                     if socket.name == 'result':
-                        code += transpiler.declaration(socket.data_type, socket.array_size, None)
+                        code += transpiler.declaration(socket.data_type, socket.array_size, socket.name)
                     initialization = socket.get_source_initialization()
                     if initialization:
                         code += transpiler.asignment(socket.get_source_reference(), initialization)
