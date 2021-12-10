@@ -51,6 +51,26 @@ void COMMON_VERTEX_SHADER(inout Vertex V){}
 
 vec3 VERTEX_DISPLACEMENT_SHADER(Vertex V);
 
+vec3 VERTEX_DISPLACEMENT_WRAPPER(Vertex V)
+{
+    Vertex real;
+    real.position = POSITION;
+    real.tangent = TANGENT;
+    real.bitangent = BITANGENT;
+
+    POSITION = V.position;
+    TANGENT = V.tangent;
+    BITANGENT = V.bitangent;
+
+    vec3 result = VERTEX_DISPLACEMENT_SHADER(V);
+
+    POSITION = real.position;
+    TANGENT = real.tangent;
+    BITANGENT = real.bitangent;
+
+    return result;
+}
+
 #ifndef CUSTOM_VERTEX_DISPLACEMENT
 vec3 VERTEX_DISPLACEMENT_SHADER(Vertex V){ return vec3(0); }
 #endif
@@ -85,7 +105,7 @@ void main()
 
     #ifdef CUSTOM_VERTEX_DISPLACEMENT
     {
-        vec3 displaced_position = POSITION + VERTEX_DISPLACEMENT_SHADER(V);
+        vec3 displaced_position = POSITION + VERTEX_DISPLACEMENT_WRAPPER(V);
         
         if(!PRECOMPUTED_TANGENTS)
         {
@@ -98,12 +118,12 @@ void main()
         
         Vertex v = V;
 
-        v.position = POSITION + TANGENT * Settingv.Vertex_Displacement_Offset;
-        vec3 displaced_tangent = v.position + VERTEX_DISPLACEMENT_SHADER(s);
+        v.position = POSITION + TANGENT * Settings.Vertex_Displacement_Offset;
+        vec3 displaced_tangent = v.position + VERTEX_DISPLACEMENT_WRAPPER(s);
         TANGENT = normalize(displaced_tangent - displaced_position);
 
-        v.position = POSITION + BITANGENT * Settingv.Vertex_Displacement_Offset;
-        vec3 displaced_bitangent = v.position + VERTEX_DISPLACEMENT_SHADER(s);
+        v.position = POSITION + BITANGENT * Settings.Vertex_Displacement_Offset;
+        vec3 displaced_bitangent = v.position + VERTEX_DISPLACEMENT_WRAPPER(s);
         BITANGENT = normalize(displaced_bitangent - displaced_position);
         
         POSITION = displaced_position;
