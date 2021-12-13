@@ -208,7 +208,8 @@ class MaltRenderEngine(bpy.types.RenderEngine):
         return scene
     
     def update_render_passes(self, scene=None, renderlayer=None):
-        render_outputs = self.bridge.render_outputs
+        bridge = MaltPipeline.get_bridge(scene.world, True)
+        render_outputs = bridge.render_outputs
         if 'COLOR' in render_outputs.keys():
             self.register_pass(scene, renderlayer, "Combined", 4, "RGBA", 'COLOR')
         if 'DEPTH' in render_outputs.keys():
