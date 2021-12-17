@@ -182,14 +182,16 @@ class Pipeline(object):
             if obj.material not in result:
                 result[obj.material] = {}
             if obj.mesh not in result[obj.material]:
-                result[obj.material][obj.mesh] = {
-                    'normal_scale':[],
-                    'mirror_scale':[],
-                }
+                result[obj.material][obj.mesh] = {}
+            mesh_dict = result[obj.material][obj.mesh]
             if obj.mirror_scale:
-                result[obj.material][obj.mesh]['mirror_scale'].append(obj)
+                if 'mirror_scale' not in mesh_dict:
+                    mesh_dict['mirror_scale'] = []
+                mesh_dict['mirror_scale'].append(obj)
             else:
-                result[obj.material][obj.mesh]['normal_scale'].append(obj)
+                if 'normal_scale' not in mesh_dict:
+                    mesh_dict['normal_scale'] = []
+                mesh_dict['normal_scale'].append(obj)
         
         # Assume at least 64kb of UBO storage (d3d11 requirement) and max element size of mat4
         max_instances = 1000
@@ -231,7 +233,7 @@ class Pipeline(object):
             
         return result
     
-    def draw_scene_pass(self, render_target, batches, pass_name=None, default_shader=None, uniform_blocks={}, uniforms={}, textures={}, shader_callbacks=[]):
+    def draw_scene_pass(self, render_target, scene_batches, pass_name=None, default_shader=None, uniform_blocks={}, uniforms={}, textures={}, shader_callbacks=[]):
         glDisable(GL_BLEND)
         glEnable(GL_DEPTH_TEST)
         glDepthFunc(GL_LEQUAL)
@@ -240,7 +242,9 @@ class Pipeline(object):
 
         render_target.bind()
 
-        for material, meshes in batches.items():
+        _double_sided = None
+
+        for material in scene_batches.keys():
             shader = default_shader
             if material and pass_name in material.shader and material.shader[pass_name]:
                 shader = material.shader[pass_name]
@@ -261,27 +265,41 @@ class Pipeline(object):
             for name, block in uniform_blocks.items():
                 if name in shader.uniform_blocks:
                     block.bind(shader.uniform_blocks[name])
-
-            for mesh, scale_groups in meshes.items():
-
+            
+            precomputed_tangents_uniform = shader.uniforms.get('PRECOMPUTED_TANGENTS')
+            _precomputed_tangents = None
+            _scale_group = None
+            
+            meshes = scene_batches[material]
+            for mesh in meshes.keys():
                 mesh.mesh.bind()
                 
-                for scale_group, batches in scale_groups.items():
-                    if mesh.parameters['double_sided']:
+                double_sided = mesh.parameters['double_sided']
+                if double_sided != _double_sided:
+                    _double_sided = double_sided
+                    if _double_sided:
                         glDisable(GL_CULL_FACE)
                     else:
                         glEnable(GL_CULL_FACE)
                         glCullFace(GL_BACK)  
-                    if scale_group == 'normal_scale':
-                        glFrontFace(GL_CCW)
-                        if 'MIRROR_SCALE' in shader.uniforms:
-                            shader.uniforms['MIRROR_SCALE'].bind(False)
-                    else:
-                        glFrontFace(GL_CW)
-                        if 'MIRROR_SCALE' in shader.uniforms:
-                            shader.uniforms['MIRROR_SCALE'].bind(True)
-                    if 'PRECOMPUTED_TANGENTS' in shader.uniforms:
-                        shader.uniforms['PRECOMPUTED_TANGENTS'].bind(mesh.parameters['precomputed_tangents'])
+
+                if precomputed_tangents_uniform:
+                    precomputed_tangents = mesh.parameters['precomputed_tangents']
+                    if _precomputed_tangents != precomputed_tangents:
+                        _precomputed_tangents = precomputed_tangents
+                        precomputed_tangents_uniform.bind(precomputed_tangents)
+
+                for scale_group, batches in meshes[mesh].items():
+                    if scale_group != _scale_group:
+                        _scale_group = scale_group
+                        if scale_group == 'normal_scale':
+                            glFrontFace(GL_CCW)
+                            if 'MIRROR_SCALE' in shader.uniforms:
+                                shader.uniforms['MIRROR_SCALE'].bind(False)
+                        else:
+                            glFrontFace(GL_CW)
+                            if 'MIRROR_SCALE' in shader.uniforms:
+                                shader.uniforms['MIRROR_SCALE'].bind(True)
                 
                     for batch in batches:
                         batch['BATCH_MODELS'].bind(shader.uniform_blocks['BATCH_MODELS'])

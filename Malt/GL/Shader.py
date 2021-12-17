@@ -125,13 +125,7 @@ class UBO(object):
         glBindBuffer(GL_UNIFORM_BUFFER, 0)
 
     def bind(self, uniform_block):
-        if self.size != uniform_block['size']:
-            log('DEBUG', "non-matching size UBO bindind")
-            log('DEBUG', "name : {} | bind : {} | UBO size : {} | uniform block size : {}".format(
-                uniform_block['name'], uniform_block['bind'], self.size, uniform_block['size']
-            ))
-
-        glBindBufferRange(GL_UNIFORM_BUFFER, uniform_block['bind'], self.buffer[0], 0, self.size)
+        glBindBufferRange(GL_UNIFORM_BUFFER, uniform_block['bind'], self.buffer[0], 0, min(self.size, uniform_block['size']))
     
     def __del__(self):
         try:
