@@ -27,8 +27,7 @@ Now we can make changes in our shader file and as soon as we save it (*Ctrl+S*) 
 
 Note: When you save the blend file in step 1 and *Malt* is active it will create a `.vscode` folder in the root of your new folder which includes a `settings.json` file that will help the extensions installed in step 4 work properly.
 
-_Click image below to view a video of this installation/setup process in youtube_
-[![Malt VSCode config](https://img.youtube.com/vi/UjsW7Ce0BKo/maxresdefault.jpg)](http://www.youtube.com/watch?v=UjsW7Ce0BKo "Malt VSCode config")
+_Having problems with the setup? View a video of this installation/setup process in [YouTube](http://www.youtube.com/watch?v=UjsW7Ce0BKo "Malt VSCode config")_
 
 ## First Contact
 
