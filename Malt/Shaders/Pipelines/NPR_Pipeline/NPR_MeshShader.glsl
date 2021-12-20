@@ -126,6 +126,7 @@ void main()
 
 #ifdef PIXEL_SHADER
 
+uniform sampler2D IN_OPAQUE_COLOR;
 uniform sampler2D IN_OPAQUE_DEPTH;
 uniform sampler2D IN_TRANSPARENT_DEPTH;
 uniform usampler2D IN_LAST_ID;

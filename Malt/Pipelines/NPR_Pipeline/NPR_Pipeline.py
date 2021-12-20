@@ -274,6 +274,7 @@ class NPR_Pipeline(Pipeline):
 
         #PRE-PASS
         textures = {
+            'IN_OPAQUE_COLOR': self.t_opaque_color,
             'IN_OPAQUE_DEPTH': self.t_opaque_depth,
             'IN_TRANSPARENT_DEPTH': self.t_transparent_depth,
             'IN_LAST_ID': self.t_last_layer_id,
@@ -298,6 +299,7 @@ class NPR_Pipeline(Pipeline):
         textures = {
             'IN_NORMAL_DEPTH': self.t_prepass_normal_depth,
             'IN_ID': self.t_prepass_id,
+            'IN_OPAQUE_COLOR': self.t_opaque_color,
             'IN_OPAQUE_DEPTH': self.t_opaque_depth,
             'IN_TRANSPARENT_DEPTH': self.t_transparent_depth,
             'IN_LAST_ID': self.t_last_layer_id,
