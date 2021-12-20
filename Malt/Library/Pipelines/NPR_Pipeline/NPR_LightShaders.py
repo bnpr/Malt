@@ -32,6 +32,7 @@ class NPR_LightShaders():
         from Malt.Library.Pipelines.NPR_Pipeline.NPR_Pipeline import _COMMON_HEADER
         graphs['Light'] = GLSLPipelineGraph(
             name='Light',
+            graph_type=GLSLPipelineGraph.INTERNAL_GRAPH,
             default_global_scope=_COMMON_HEADER,
             graph_io=[ 
                 GLSLGraphIO(

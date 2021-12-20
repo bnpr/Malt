@@ -29,7 +29,7 @@ struct Vertex
     vec3 tangent;
     vec3 bitangent;
     vec2 uv[4];
-    vec4 vertex_color[4];
+    vec4 color[4];
 };
 
 struct PrePassOutput
@@ -62,7 +62,7 @@ vec3 VERTEX_DISPLACEMENT_WRAPPER(Vertex V)
     TANGENT = V.tangent;
     BITANGENT = V.bitangent;
 
-    vec3 result = VERTEX_DISPLACEMENT_SHADER(V);
+    vec3 result = VERTEX_DISPLACEMENT_SHADER();
 
     POSITION = real.position;
     TANGENT = real.tangent;
@@ -91,7 +91,7 @@ void main()
     V.bitangent = BITANGENT;
     V.uv = UV;
     V.color = COLOR;
-    V.id.r = ID;
+    V.id = ID;
     
     COMMON_VERTEX_SHADER(V);
 
@@ -101,7 +101,7 @@ void main()
     BITANGENT = V.bitangent;
     UV = V.uv;
     COLOR = V.color;
-    ID = V.ID TODO
+    ID = V.id;
 
     #ifdef CUSTOM_VERTEX_DISPLACEMENT
     {
@@ -169,7 +169,7 @@ layout (location = 0) out vec4 OUT_COLOR;
 
 #ifndef CUSTOM_MAIN
 
-void PRE_PASS_PIXEL_SHADER(inout PrePassOutput PO);
+void PRE_PASS_PIXEL_SHADER(inout PrePassOutput PPO);
 
 void MAIN_PASS_PIXEL_SHADER();
 
@@ -181,7 +181,7 @@ void main()
     PPO.normal = NORMAL;
     PPO.depth_offset = 0;
     PPO.offset_position = true;
-    PPO.id = uvec4(ID,0,0,0);
+    PPO.id = ID;
     PPO.surface_color = vec4(0,0,0,1);
 
     PRE_PASS_PIXEL_SHADER(PPO);
@@ -246,7 +246,7 @@ void main()
 
             if(Settings.Transparency_Single_Layer)
             {
-                if(PO.id.r == texelFetch(IN_LAST_ID, ivec2(gl_FragCoord.xy), 0).x)
+                if(PPO.id.r == texelFetch(IN_LAST_ID, ivec2(gl_FragCoord.xy), 0).x)
                 {
                     discard;
                 }
@@ -291,7 +291,7 @@ vec3 get_diffuse()
     vec3 result = vec3(0);
     for(int i = 0; i < 4; i++)
     {
-        result += scene_diffuse(POSITION, get_normal(), MATERIAL_LIGHT_GROUPS[i], Settings.Receive_Shadow, Settings.Self_Shadow);
+        result += scene_diffuse(POSITION, NORMAL, MATERIAL_LIGHT_GROUPS[i], Settings.Receive_Shadow, Settings.Self_Shadow);
     }
     return result;
 }
@@ -301,7 +301,7 @@ vec3 get_diffuse_half()
     vec3 result = vec3(0);
     for(int i = 0; i < 4; i++)
     {
-        result += scene_diffuse_half(POSITION, get_normal(), MATERIAL_LIGHT_GROUPS[i], Settings.Receive_Shadow, Settings.Self_Shadow);
+        result += scene_diffuse_half(POSITION, NORMAL, MATERIAL_LIGHT_GROUPS[i], Settings.Receive_Shadow, Settings.Self_Shadow);
     }
     return result;
 }
@@ -311,7 +311,7 @@ vec3 get_diffuse_gradient(sampler1D gradient_texture)
     vec3 result = vec3(0);
     for(int i = 0; i < 4; i++)
     {
-        result += scene_diffuse_gradient(POSITION, get_normal(), gradient_texture, MATERIAL_LIGHT_GROUPS[i], Settings.Receive_Shadow, Settings.Self_Shadow);
+        result += scene_diffuse_gradient(POSITION, NORMAL, gradient_texture, MATERIAL_LIGHT_GROUPS[i], Settings.Receive_Shadow, Settings.Self_Shadow);
     }
     return result;
 }
@@ -321,7 +321,7 @@ vec3 get_specular(float roughness)
     vec3 result = vec3(0);
     for(int i = 0; i < 4; i++)
     {
-        result += scene_specular(POSITION, get_normal(), roughness, MATERIAL_LIGHT_GROUPS[i], Settings.Receive_Shadow, Settings.Self_Shadow);
+        result += scene_specular(POSITION, NORMAL, roughness, MATERIAL_LIGHT_GROUPS[i], Settings.Receive_Shadow, Settings.Self_Shadow);
     }
     return result;
 }
@@ -331,7 +331,7 @@ vec3 get_specular_gradient(sampler1D gradient_texture, float roughness)
     vec3 result = vec3(0);
     for(int i = 0; i < 4; i++)
     {
-        result += scene_specular_gradient(POSITION, get_normal(), roughness, gradient_texture, MATERIAL_LIGHT_GROUPS[i], Settings.Receive_Shadow, Settings.Self_Shadow);
+        result += scene_specular_gradient(POSITION, NORMAL, roughness, gradient_texture, MATERIAL_LIGHT_GROUPS[i], Settings.Receive_Shadow, Settings.Self_Shadow);
     }
     return result;
 }
@@ -341,7 +341,7 @@ vec3 get_specular_anisotropic(float roughness, float anisotropy, vec3 tangent)
     vec3 result = vec3(0);
     for(int i = 0; i < 4; i++)
     {
-        result += scene_specular_anisotropic(POSITION, get_normal(), tangent, anisotropy, roughness, MATERIAL_LIGHT_GROUPS[i], Settings.Receive_Shadow, Settings.Self_Shadow);
+        result += scene_specular_anisotropic(POSITION, NORMAL, tangent, anisotropy, roughness, MATERIAL_LIGHT_GROUPS[i], Settings.Receive_Shadow, Settings.Self_Shadow);
     }
     return result;
 }
@@ -351,7 +351,7 @@ vec3 get_specular_anisotropic_gradient(sampler1D gradient_texture, float roughne
     vec3 result = vec3(0);
     for(int i = 0; i < 4; i++)
     {
-        result += scene_specular_anisotropic_gradient(POSITION, get_normal(), tangent, anisotropy, roughness, gradient_texture, MATERIAL_LIGHT_GROUPS[i], Settings.Receive_Shadow, Settings.Self_Shadow);
+        result += scene_specular_anisotropic_gradient(POSITION, NORMAL, tangent, anisotropy, roughness, gradient_texture, MATERIAL_LIGHT_GROUPS[i], Settings.Receive_Shadow, Settings.Self_Shadow);
     }
     return result;
 }
@@ -361,7 +361,7 @@ vec3 get_toon(float size, float gradient_size, float specularity, float offset)
     vec3 result = vec3(0);
     for(int i = 0; i < 4; i++)
     {
-        result += scene_toon(POSITION, get_normal(), size, gradient_size, specularity, offset, MATERIAL_LIGHT_GROUPS[i], Settings.Receive_Shadow, Settings.Self_Shadow);
+        result += scene_toon(POSITION, NORMAL, size, gradient_size, specularity, offset, MATERIAL_LIGHT_GROUPS[i], Settings.Receive_Shadow, Settings.Self_Shadow);
     }
     return result;
 }
@@ -455,7 +455,7 @@ bool get_is_front_facing()
 
 float get_facing()
 {
-    float d = dot(get_normal(), view_direction());
+    float d = dot(NORMAL, view_direction());
     return d;
     return clamp(d, 0.0, 1.0);
 }
@@ -467,12 +467,12 @@ float get_fresnel()
 
 vec4 get_matcap(sampler2D matcap_texture)
 {
-    return texture(matcap_texture, matcap_uv(get_normal()));
+    return texture(matcap_texture, matcap_uv(NORMAL));
 }
 
 float get_rim_light(float angle, float rim_length, float thickness, float thickness_falloff)
 {
-    return rim_light(get_normal(), angle * DEGREES_TO_RADIANS, rim_length, rim_length, thickness, thickness_falloff);
+    return rim_light(NORMAL, angle * DEGREES_TO_RADIANS, rim_length, rim_length, thickness, thickness_falloff);
 }
 
 LineDetectionOutput get_line_detection()
@@ -483,7 +483,7 @@ LineDetectionOutput get_line_detection()
     {
         result = line_detection(
             POSITION,
-            get_normal(), true_normal(),
+            NORMAL, true_normal(),
             1,
             1,
             LINE_DEPTH_MODE_NEAR,

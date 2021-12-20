@@ -39,10 +39,9 @@ _DEFAULT_SHADER = None
 _DEFAULT_SHADER_SRC='''
 #include "NPR_Pipeline.glsl"
 
-void COMMON_PIXEL_SHADER(Surface S, inout PixelOutput PO)
-{
-    PO.color.rgb = vec3(1,1,0);
-}
+void PRE_PASS_PIXEL_SHADER(inout PrePassOutput PO){ }
+
+void MAIN_PASS_PIXEL_SHADER() { }
 '''
 
 _BLEND_TRANSPARENCY_SHADER = None
@@ -113,67 +112,19 @@ class NPR_Pipeline(Pipeline):
             self.samples = Sampling.get_RGSS_samples(self.sampling_grid_size, width)
         return self.samples
     
-    def get_mesh_shader_generated_source(self):
-        from textwrap import dedent
-        header = _COMMON_HEADER + dedent('''
-        #ifdef PIXEL_SHADER
-        #ifdef MAIN_PASS
-        {CUSTOM_OUTPUT_LAYOUT}
-        #endif
-        #endif
-
-        void CUSTOM_COMMON_PIXEL_SHADER(Surface S, inout PixelOutput PO {CUSTOM_OUTPUT_SIGNATURE});
-
-        void COMMON_PIXEL_SHADER(Surface S, inout PixelOutput PO)
-        {{
-            {CUSTOM_OUTPUT_DECLARATION}
-
-            CUSTOM_COMMON_PIXEL_SHADER(S, PO {CUSTOM_OUTPUT_CALL});
-
-            #ifdef PIXEL_SHADER
-            #ifdef MAIN_PASS
-            {{
-                {CUSTOM_OUTPUT_ASIGNMENT}
-            }}
-            #endif
-            #endif
-        }}
-        ''')
-        custom_outputs = self.get_mesh_shader_custom_outputs()
-        layout = ""
-        signature = ""
-        declaration = ""
-        call = ""
-        asignment = ""
-        for i, (key, texture_format) in enumerate(custom_outputs.items()):
-            key = ''.join(c for c in key if c.isalnum())
-            type = internal_format_to_vector_type(texture_format)
-            layout += f"layout (location = {i+1}) out {type} OUT_{key};\n"
-            signature += f", inout {type} {key}"
-            declaration += f"{type} {key} = {type}(0);\n"
-            call += f", {key}"
-            asignment += f"OUT_{key} = {key};\n"
-
-        header = header.format(
-            CUSTOM_OUTPUT_LAYOUT = layout,
-            CUSTOM_OUTPUT_SIGNATURE = signature,
-            CUSTOM_OUTPUT_DECLARATION = declaration,
-            CUSTOM_OUTPUT_CALL = call,
-            CUSTOM_OUTPUT_ASIGNMENT = asignment,
-        )
-
-        reflection_src = f"void CUSTOM_COMMON_PIXEL_SHADER(Surface S, inout PixelOutput PO {signature}) {{}}\n"
-        return header, reflection_src
-    
     def setup_graphs(self):
-        mesh_header, mesh_src = self.get_mesh_shader_generated_source()
         mesh = GLSLPipelineGraph(
             name='Mesh',
-            default_global_scope=mesh_header,
+            graph_type=GLSLPipelineGraph.SCENE_GRAPH,
+            default_global_scope=_COMMON_HEADER,
             shaders=['PRE_PASS', 'MAIN_PASS', 'SHADOW_PASS'],
             graph_io=[
                 GLSLGraphIO(
-                    name='CUSTOM_COMMON_PIXEL_SHADER',
+                    name='PRE_PASS_PIXEL_SHADER',
+                    shader_type='PIXEL_SHADER',
+                ),
+                GLSLGraphIO(
+                    name='MAIN_PASS_PIXEL_SHADER',
                     shader_type='PIXEL_SHADER',
                 ),
                 GLSLGraphIO(
@@ -188,10 +139,11 @@ class NPR_Pipeline(Pipeline):
                 ),
             ]
         )
-        mesh.setup_reflection(self, mesh_src)
+        mesh.setup_reflection(self, _DEFAULT_SHADER_SRC)
 
         screen = GLSLPipelineGraph(
             name='Screen',
+            graph_type=GLSLPipelineGraph.GLOBAL_GRAPH,
             default_global_scope=_SCREEN_SHADER_HEADER,
             graph_io=[ 
                 GLSLGraphIO(

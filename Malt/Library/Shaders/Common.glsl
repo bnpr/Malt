@@ -5,6 +5,12 @@
 
 #include "Common/Meta.glsl"
 
+#ifdef VERTEX_SHADER
+#define vertex_out out
+#else
+#define vertex_out in
+#endif
+
 vec3 POSITION;
 vec3 NORMAL;
 vec3 TANGENT;
@@ -13,7 +19,7 @@ vec2 UV[4];
 vec4 COLOR[4];
 uvec4 ID;
 
-varying mat4 MODEL;
+vertex_out mat4 MODEL;
 
 layout(std140) uniform COMMON_UNIFORMS
 {
@@ -29,6 +35,11 @@ layout(std140) uniform COMMON_UNIFORMS
 uniform bool MIRROR_SCALE = false;
 uniform bool PRECOMPUTED_TANGENTS = false;
 
+#ifndef MAX_BATCH_SIZE
+    // Assume at least 64kb of UBO storage (d3d11 requirement) and max element size of mat4
+    #define MAX_BATCH_SIZE 1000
+#endif
+
 layout(std140) uniform BATCH_MODELS
 {
     uniform mat4 BATCH_MODEL[MAX_BATCH_SIZE];
@@ -38,18 +49,13 @@ uniform BATCH_IDS
     uniform uint BATCH_ID[MAX_BATCH_SIZE];
 };
 
-varying vec3 IO_POSITION;
-varying vec3 IO_NORMAL;
-varying vec3 IO_TANGENT;
-varying vec3 IO_BITANGENT;
-varying vec2 IO_UV[4];
-varying vec4 IO_COLOR[4];
-flat varying uvec4 IO_ID;
-
-#ifndef MAX_BATCH_SIZE
-    // Assume at least 64kb of UBO storage (d3d11 requirement) and max element size of mat4
-    #define MAX_BATCH_SIZE 1000
-#endif
+vertex_out vec3 IO_POSITION;
+vertex_out vec3 IO_NORMAL;
+vertex_out vec3 IO_TANGENT;
+vertex_out vec3 IO_BITANGENT;
+vertex_out vec2 IO_UV[4];
+vertex_out vec4 IO_COLOR[4];
+flat vertex_out uvec4 IO_ID;
 
 #include "Common/Color.glsl"
 #include "Common/Math.glsl"
@@ -84,20 +90,6 @@ void VERTEX_SETUP_OUTPUT()
     IO_ID = ID;
 }
 
-void PIXEL_SETUP_INPUT()
-{
-    #ifdef PIXEL_SHADER
-    {
-        POSITION = IO_POSITION;
-        NORMAL = normalize(IO_NORMAL) * (gl_FrontFacing ? 1.0 : -1.0);
-        TANGENT = IO_TANGENT;
-        BITANGENT = IO_BITANGENT;
-        UV = IO_UV;
-        COLOR = IO_COLOR;
-        ID = IO_ID;
-    }
-}
-
 void DEFAULT_VERTEX_SHADER()
 {
     MODEL = BATCH_MODEL[gl_InstanceID];
@@ -127,6 +119,21 @@ void DEFAULT_VERTEX_SHADER()
 }
 
 #endif //VERTEX_SHADER
+
+#ifdef PIXEL_SHADER
+
+void PIXEL_SETUP_INPUT()
+{
+    POSITION = IO_POSITION;
+    NORMAL = normalize(IO_NORMAL) * (gl_FrontFacing ? 1.0 : -1.0);
+    TANGENT = IO_TANGENT;
+    BITANGENT = IO_BITANGENT;
+    UV = IO_UV;
+    COLOR = IO_COLOR;
+    ID = IO_ID;
+}
+
+#endif //PIXEL_SHADER
 
 #endif //COMMON_GLSL
 

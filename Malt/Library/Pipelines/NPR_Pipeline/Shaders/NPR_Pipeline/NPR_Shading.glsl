@@ -100,7 +100,7 @@ vec3 lit_toon(LitSurface LS, float size, float gradient_size, float specularity,
     {\
         if(LIGHT_GROUP_INDEX[i] != light_group) continue;\
         Light L = LIGHTS.lights[i];\
-        LitSurface LS = NPR_lit_surface(position, normal, ID, L, i, shadows, self_shadows);\
+        LitSurface LS = NPR_lit_surface(position, normal, ID.x, L, i, shadows, self_shadows);\
         result += (callback);\
     }\
     return result;\
