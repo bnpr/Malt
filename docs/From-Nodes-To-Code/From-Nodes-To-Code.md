@@ -12,23 +12,23 @@ You may be surprised by how much of your knowledge about node based programming 
 Shader files are just plain text, so any text editor works for writing them.  
 But we can make our lifes much easier by using a code editor.
 
+### Visual Studio Code
 *Malt* has built-in integration with [VSCode](https://code.visualstudio.com/download), it's free, cross-platform and open source so go ahead, download and install it!
 
-<div style="position: relative; width: 100%; padding-top: 56.25%; /* 16:9 Aspect Ratio */">
-<iframe style="position: absolute; top: 0; left: 0; bottom: 0;right: 0; width:100%; height:100%; margin:0; border:0;" 
-src="https://www.youtube-nocookie.com/embed/UjsW7Ce0BKo" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-</div>
-
-After installation:
+### After installing Visual Studio Code:
 
 1. Open Blender, change the render engine to *Malt* and save the *.blend* file in a new folder.  
-(When *Malt* is active it will auto-setup a *VSCode* workspace on the same folder you save your *.blend* file)
-2. Open the folder in the OS file explorer and *Right Click > Open with Code*.
+2. Open this newly created folder in your OS file explorer and *Right Click > Open with Code*.
 3. Create a new file and save it as ```malt-tutorial.mesh.glsl```. (or any othe name, but make sure it ends in ```.mesh.glsl```)
 4. VSCode will tell you it has extensions for that file format and will ask you if you want to install them, say yes!
 5. Select the shader file as the *Shader Source* for a new material (*Material Properties* Panel).
 
 Now we can make changes in our shader file and as soon as we save it (*Ctrl+S*) Malt will reload it.
+
+Note: When you save the blend file in step 1 and *Malt* is active it will auto-create a `.vscode` folder in the root of your new folder which includes a `settings.json` file that will help the extensions installed in step 4 work properly.
+
+_Click image below to view a video of this installation/setup process in youtube_
+[![Malt VSCode config](https://img.youtube.com/vi/UjsW7Ce0BKo/maxresdefault.jpg)](http://www.youtube.com/watch?v=UjsW7Ce0BKo "Malt VSCode config")
 
 ## First Contact
 
