@@ -27,7 +27,7 @@ Now we can make changes in our shader file and as soon as we save it (*Ctrl+S*) 
 
 Note: When you save the blend file in step 1 and the *Malt* renderer is active, it will create a `.vscode` folder in the root of your new folder which includes a `settings.json` file that will help the extensions installed in step 4 work properly.
 
-_Having problems with the setup? View a video of this installation/setup process in [YouTube](http://www.youtube.com/watch?v=UjsW7Ce0BKo "Malt VSCode config")_
+_Having problems with the setup?_
 <div style="position: relative; width: 100%; padding-top: 56.25%; /* 16:9 Aspect Ratio */">
  <iframe style="position: absolute; top: 0; left: 0; bottom: 0;right: 0; width:100%; height:100%; margin:0; border:0;" 
  src="https://www.youtube-nocookie.com/embed/UjsW7Ce0BKo" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
