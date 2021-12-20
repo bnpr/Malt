@@ -164,14 +164,17 @@ layout (location = 1) out uvec4 OUT_ID;
 uniform sampler2D IN_NORMAL_DEPTH;
 uniform usampler2D IN_ID;
 
-layout (location = 0) out vec4 OUT_COLOR;
+//layout (location = 0) out vec4 OUT_COLOR;
 #endif //MAIN_PASS
 
 #ifndef CUSTOM_MAIN
 
+#ifdef CUSTOM_PRE_PASS
 void PRE_PASS_PIXEL_SHADER(inout PrePassOutput PPO);
-
+#endif
+#ifdef MAIN_PASS
 void MAIN_PASS_PIXEL_SHADER();
+#endif
 
 void main()
 {
@@ -184,36 +187,42 @@ void main()
     PPO.id = ID;
     PPO.surface_color = vec4(0,0,0,1);
 
-    PRE_PASS_PIXEL_SHADER(PPO);
-
-    if(PPO.surface_color.a == 0)
-    {
-        discard;
-    }
-    else if(!Settings.Transparency)
-    {
-        PPO.surface_color.a = 1.0;
-    }
-
     float depth = gl_FragCoord.z;
-    vec3 offset_position = POSITION - view_direction() * PPO.depth_offset;
-
-    #ifdef SHADOW_PASS
+    vec3 offset_position = POSITION;
+    
+    #ifdef CUSTOM_PRE_PASS
     {
-        if(!PPO.offset_position)
+        PRE_PASS_PIXEL_SHADER(PPO);
+
+        if(PPO.surface_color.a == 0)
         {
-            PPO.depth_offset = 0;
+            discard;
+        }
+        else if(!Settings.Transparency)
+        {
+            PPO.surface_color.a = 1.0;
+        }
+
+        offset_position = POSITION - view_direction() * PPO.depth_offset;
+
+        #ifdef SHADOW_PASS
+        {
+            if(!PPO.offset_position)
+            {
+                PPO.depth_offset = 0;
+            }
+        }
+        #endif
+
+        if(PPO.depth_offset != 0)
+        {
+            depth = project_point(PROJECTION * CAMERA, offset_position).z;
+            float far = gl_DepthRange.far;
+            float near = gl_DepthRange.near;
+            gl_FragDepth = (((far-near) * depth) + near + far) / 2.0;
         }
     }
     #endif
-
-    if(PPO.depth_offset != 0)
-    {
-        depth = project_point(PROJECTION * CAMERA, offset_position).z;
-        float far = gl_DepthRange.far;
-        float near = gl_DepthRange.near;
-        gl_FragDepth = (((far-near) * depth) + near + far) / 2.0;
-    }
 
     #ifdef SHADOW_PASS
     {
@@ -266,7 +275,7 @@ void main()
             POSITION = offset_position;
         }
         NORMAL = texelFetch(IN_NORMAL_DEPTH, ivec2(gl_FragCoord.xy), 0).xyz;
-        ID = texelFetch(IN_ID, ivec2(gl_FragCoord.xy), 0).xyz;
+        ID = texelFetch(IN_ID, ivec2(gl_FragCoord.xy), 0);
 
         MAIN_PASS_PIXEL_SHADER();
     }

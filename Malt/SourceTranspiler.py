@@ -86,14 +86,19 @@ class GLSLTranspiler(SourceTranspiler):
     @classmethod
     def custom_io_reference(self, io, graph_io_type, name):
         return f"{io.upper()}_{graph_io_type.upper()}_{''.join(char.upper() for char in name if char.isalnum())}"
+    
+    @classmethod
+    def preprocessor_wrap(self, define, content):
+        return textwrap.dedent(f'''\
+        #ifdef {define}
+            {content}
+        #endif
+        ''')
 
     @classmethod
     def custom_output_declaration(self, type, name, index, shader_type, graph_io_type):
-        return textwrap.dedent(f'''\
-        #ifdef {shader_type}
-            layout (location = {index}) out {type} {self.custom_io_reference('OUT', graph_io_type, name)};
-        #endif
-        ''')
+        return self.preprocessor_wrap(shader_type,
+        f"layout (location = {index}) out {type} {self.custom_io_reference('OUT', graph_io_type, name)};")
 
     @classmethod
     def parameter_reference(self, node_name, parameter_name, io_type):

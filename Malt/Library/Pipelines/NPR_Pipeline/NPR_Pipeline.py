@@ -121,11 +121,16 @@ class NPR_Pipeline(Pipeline):
             graph_io=[
                 GLSLGraphIO(
                     name='PRE_PASS_PIXEL_SHADER',
+                    define='CUSTOM_PRE_PASS',
                     shader_type='PIXEL_SHADER',
+                    dynamic_output_types=GLSLGraphIO.COMMON_OUTPUT_TYPES,
+                    custom_output_start_index=2,
                 ),
                 GLSLGraphIO(
                     name='MAIN_PASS_PIXEL_SHADER',
-                    shader_type='PIXEL_SHADER',
+                    shader_type='MAIN_PASS',
+                    dynamic_input_types=GLSLGraphIO.COMMON_INPUT_TYPES,
+                    dynamic_output_types=GLSLGraphIO.COMMON_OUTPUT_TYPES,
                 ),
                 GLSLGraphIO(
                     name='VERTEX_DISPLACEMENT_SHADER',
@@ -215,7 +220,8 @@ class NPR_Pipeline(Pipeline):
         transparent_batches = {}
         for material, meshes in scene.batches.items():
             if material and material.shader:
-                if material.shader['MAIN_PASS'].uniforms['Settings.Transparency'].value[0] == True:
+                pre_pass = material.shader['MAIN_PASS']
+                if 'Settings.Transparency' in pre_pass.uniforms and pre_pass.uniforms['Settings.Transparency'].value[0] == True:
                     transparent_batches[material] = meshes
                     continue
             opaque_batches[material] = meshes

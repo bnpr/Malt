@@ -88,6 +88,7 @@ class GLSLPipelineGraph(PipelineGraph):
     
     def generate_source(self, parameters):
         import textwrap
+        from Malt.SourceTranspiler import GLSLTranspiler
         code = ''
         for graph_io in self.graph_io.values():
             if graph_io.name in parameters.keys() and graph_io.define:
@@ -95,11 +96,8 @@ class GLSLPipelineGraph(PipelineGraph):
         code += '\n\n' + self.default_global_scope + '\n\n' + parameters['GLOBAL'] + '\n\n'
         for graph_io in self.graph_io.values():
             if graph_io.name in parameters.keys():
-                if graph_io.shader_type:
-                    code += f'#ifdef {graph_io.shader_type}\n'
-                code += '{}\n{{\n{}\n}}'.format(graph_io.signature, textwrap.indent(parameters[graph_io.name],'\t'))
-                if graph_io.shader_type:
-                    code += f'\n#endif //{graph_io.shader_type}\n'
+                code += GLSLTranspiler.preprocessor_wrap(graph_io.shader_type,
+                '{}\n{{\n{}\n}}'.format(graph_io.signature, textwrap.indent(parameters[graph_io.name],'\t')))
         code += '\n\n'
         return code
     
