@@ -89,11 +89,11 @@ class GLSLTranspiler(SourceTranspiler):
     
     @classmethod
     def preprocessor_wrap(self, define, content):
-        return textwrap.dedent(f'''\
-        #ifdef {define}
-            {content}
-        #endif
-        ''')
+        return textwrap.dedent('''
+        #ifdef {}
+        {}
+        #endif //{}
+        ''').format(define, content, define)
 
     @classmethod
     def custom_output_declaration(self, type, name, index, shader_type, graph_io_type):
