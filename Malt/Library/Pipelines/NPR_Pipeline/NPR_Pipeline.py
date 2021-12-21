@@ -220,8 +220,7 @@ class NPR_Pipeline(Pipeline):
         transparent_batches = {}
         for material, meshes in scene.batches.items():
             if material and material.shader:
-                pre_pass = material.shader['MAIN_PASS']
-                if 'Settings.Transparency' in pre_pass.uniforms and pre_pass.uniforms['Settings.Transparency'].value[0] == True:
+                if material.shader['PRE_PASS'].uniforms['Settings.Transparency'].value[0] == True:
                     transparent_batches[material] = meshes
                     continue
             opaque_batches[material] = meshes
@@ -237,7 +236,6 @@ class NPR_Pipeline(Pipeline):
             self.fbo_accumulate.clear([(0,0,0,0)])
             for fbo in self.render_layer_custom_output_accumulate_fbos.values():
                 fbo.clear([(0,0,0,0)])
-        
         
         sample_offset = self.get_samples(scene.world_parameters['Samples.Width'])[self.sample_count]
 
@@ -279,24 +277,9 @@ class NPR_Pipeline(Pipeline):
         self.blend_transparency_shader.textures['IN_FRONT'] = self.t_transparent_color
         self.draw_screen_pass(self.blend_transparency_shader, self.fbo_color)
 
-        '''
-        self.fbo_opaque.clear([(1,0,0,1)])
-        self.fbo_transparent.clear([(1,1,0,0.5)])
-        self.fbo_color.clear([(0,0,0,1)])
-        self.blend_transparency_shader.textures['IN_BACK'] = self.t_opaque_color
-        self.blend_transparency_shader.textures['IN_FRONT'] = self.t_transparent_color
-        self.draw_screen_pass(self.blend_transparency_shader, self.fbo_color)
-        #self.blend_texture(self.t_transparent_color, self.fbo_color, 1)
-        '''
-
         # TEMPORAL SUPER-SAMPLING ACCUMULATION
         self.blend_texture(self.t_color, self.fbo_accumulate, 1.0 / (self.sample_count + 1))
 
-        #return {'COLOR' : self.t_color}
-        
-        print(self.sample_count,  1.0 / (self.sample_count + 1))
-        #return {'COLOR' : self.t_color}
-        
         #COMPOSITE DEPTH
         composite_depth = None
         if is_final_render:
