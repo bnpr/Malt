@@ -45,8 +45,6 @@ class LineRender(PipelineNode):
         if _SHADER is None:
             _SHADER = self.pipeline.compile_shader_from_source('#include "Passes/LineComposite.glsl"')
         
-        print(_SHADER.error)
-        
         _SHADER.textures['color_texture'] = inputs['Color']
         _SHADER.textures['depth_texture'] = inputs['Normal Depth']
         _SHADER.uniforms['depth_channel'].set_value(3)
