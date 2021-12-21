@@ -20,7 +20,7 @@ from Malt.Library.Pipelines.NPR_Pipeline.NPR_LightShaders import NPR_LightShader
 
 from Malt.Library.Nodes import Unpack8bitTextures
 
-from Malt.Library.Pipelines.NPR_Pipeline.Nodes import ScreenPass, PrePass, MainPass, CompositeLayers, SSAA
+from Malt.Library.Pipelines.NPR_Pipeline.Nodes import ScreenPass, PrePass, MainPass, CompositeLayers, SSAA, LineRender
 
 _COMMON_HEADER = '''
 #include "NPR_Pipeline.glsl"
@@ -178,7 +178,7 @@ class NPR_Pipeline(Pipeline):
 
         render_layer = PythonPipelineGraph(
             name='Render Layer',
-            nodes = [ScreenPass.NODE, PrePass.NODE, MainPass.NODE, Unpack8bitTextures.NODE, CompositeLayers.NODE, SSAA.NODE],
+            nodes = [ScreenPass.NODE, PrePass.NODE, MainPass.NODE, Unpack8bitTextures.NODE, CompositeLayers.NODE, SSAA.NODE, LineRender.NODE],
             graph_io = [
                 PipelineGraphIO(
                     name = 'Render Layer',
