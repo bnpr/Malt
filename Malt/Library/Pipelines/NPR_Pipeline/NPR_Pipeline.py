@@ -66,7 +66,7 @@ class NPR_Pipeline(Pipeline):
         
         self.parameters.world['Samples.Grid Size'] = Parameter(8, Type.INT)
         self.parameters.world['Samples.Grid Size @ Preview'] = Parameter(4, Type.INT)
-        self.parameters.world['Samples.Width'] = Parameter(1.5, Type.FLOAT)
+        self.parameters.world['Samples.Width'] = Parameter(1.0, Type.FLOAT)
         
         self.parameters.world['Transparency.Layers'] = Parameter(4, Type.INT)
         self.parameters.world['Transparency.Layers @ Preview'] = Parameter(1, Type.INT)
@@ -107,10 +107,16 @@ class NPR_Pipeline(Pipeline):
     def get_render_outputs(self):
         return super().get_render_outputs() | self.get_render_layer_custom_outputs()
     
-    def get_samples(self, width=1.0):
+    def get_samples(self):
         if self.samples is None:
-            self.samples = Sampling.get_RGSS_samples(self.sampling_grid_size, width)
+            self.samples = Sampling.get_RGSS_samples(self.sampling_grid_size, 1.0)
         return self.samples
+    
+    def get_sample(self, width):
+        w, h = self.get_samples()[self.sample_count]
+        w*=width
+        h*=width
+        return w, h
     
     def setup_graphs(self):
         mesh = GLSLPipelineGraph(
@@ -237,7 +243,7 @@ class NPR_Pipeline(Pipeline):
             for fbo in self.render_layer_custom_output_accumulate_fbos.values():
                 fbo.clear([(0,0,0,0)])
         
-        sample_offset = self.get_samples(scene.world_parameters['Samples.Width'])[self.sample_count]
+        sample_offset = self.get_sample(scene.world_parameters['Samples.Width'])
 
         opaque_batches, transparent_batches = self.get_scene_batches(scene)
         
