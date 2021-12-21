@@ -20,7 +20,7 @@ from Malt.Library.Pipelines.NPR_Pipeline.NPR_LightShaders import NPR_LightShader
 
 from Malt.Library.Nodes import Unpack8bitTextures
 
-from Malt.Library.Pipelines.NPR_Pipeline.Nodes import ScreenPass, PrePass, MainPass
+from Malt.Library.Pipelines.NPR_Pipeline.Nodes import ScreenPass, PrePass, MainPass, CompositeLayers
 
 _COMMON_HEADER = '''
 #include "NPR_Pipeline.glsl"
@@ -178,7 +178,7 @@ class NPR_Pipeline(Pipeline):
 
         render_layer = PythonPipelineGraph(
             name='Render Layer',
-            nodes = [ScreenPass.NODE, PrePass.NODE, MainPass.NODE, Unpack8bitTextures.NODE],
+            nodes = [ScreenPass.NODE, PrePass.NODE, MainPass.NODE, Unpack8bitTextures.NODE, CompositeLayers.NODE],
             graph_io = [
                 PipelineGraphIO(
                     name = 'Render Layer',
@@ -200,15 +200,6 @@ class NPR_Pipeline(Pipeline):
         self.npr_light_shaders.setup_graphs(self, self.graphs)
 
     def setup_render_targets(self, resolution):
-        self.t_opaque_color = Texture(resolution, GL_RGBA16F)
-        self.fbo_opaque = RenderTarget([self.t_opaque_color])
-
-        self.t_transparent_color = Texture(resolution, GL_RGBA16F)
-        self.fbo_transparent = RenderTarget([self.t_transparent_color])
-
-        self.t_color = Texture(resolution, GL_RGBA16F)
-        self.fbo_color = RenderTarget([self.t_color])
-
         self.t_color_accumulate = Texture(resolution, GL_RGBA32F)
         self.fbo_accumulate = RenderTarget([self.t_color_accumulate])
 
@@ -252,39 +243,15 @@ class NPR_Pipeline(Pipeline):
         self.common_buffer.load(scene, resolution, sample_offset, self.sample_count)
 
         self.draw_layer_count = 0
-        
-        result = self.draw_layer(opaque_batches, scene, scene.world_parameters['Background.Color'])
-        self.draw_layer_count += 1
-
-        self.copy_textures(self.fbo_opaque, [result])
-        
-        self.fbo_color.clear([(0,0,0,0)])
-        self.fbo_transparent.clear([(0,0,0,0)], -1)
-
-        for i in range(scene.world_parameters['Transparency.Layers']):
-            if i > 0:
-                self.layer_query.begin_conditional_draw()
-
-            self.layer_query.begin_query()
-            result = self.draw_layer(transparent_batches, scene)
-            self.layer_query.end_query()
+        self.transparency_layers = scene.world_parameters['Transparency.Layers']
+        result = None
+        for i in range(self.transparency_layers):
+            result = self.draw_layer(scene)
             self.draw_layer_count += 1
-            
-            self.blend_transparency_shader.textures['IN_BACK'] = result
-            self.blend_transparency_shader.textures['IN_FRONT'] = self.t_transparent_color
-            self.draw_screen_pass(self.blend_transparency_shader, self.fbo_color)
-            
-            self.copy_textures(self.fbo_transparent, [self.t_color])
-            
-            if i > 0:
-                self.layer_query.end_conditional_draw()
-
-        self.blend_transparency_shader.textures['IN_BACK'] = self.t_opaque_color
-        self.blend_transparency_shader.textures['IN_FRONT'] = self.t_transparent_color
-        self.draw_screen_pass(self.blend_transparency_shader, self.fbo_color)
 
         # TEMPORAL SUPER-SAMPLING ACCUMULATION
-        self.blend_texture(self.t_color, self.fbo_accumulate, 1.0 / (self.sample_count + 1))
+        #self.blend_texture(self.t_color, self.fbo_accumulate, 1.0 / (self.sample_count + 1))
+        self.blend_texture(result, self.fbo_accumulate, 1.0 / (self.sample_count + 1))
 
         #COMPOSITE DEPTH
         composite_depth = None
@@ -296,11 +263,12 @@ class NPR_Pipeline(Pipeline):
             'DEPTH' : composite_depth,
         } | self.render_layer_custom_output_accumulate_textures
     
-    def draw_layer(self, batches, scene, background_color=(0,0,0,0)):
+    def draw_layer(self, scene):
         graph = scene.world_parameters['Render Layer']
         if graph:
             IN = {'Scene' : scene}
             OUT = {'Color' : None}
+            graph['parameters']['SCENE'] = scene
             
             self.graphs['Render Layer'].run_source(self, graph['source'], graph['parameters'], IN, OUT)
             
