@@ -30,7 +30,7 @@ _COMMON_HEADER = '''
 _SCREEN_SHADER_HEADER= _COMMON_HEADER + '''
 #ifdef PIXEL_SHADER
 void SCREEN_SHADER(vec2 uv);
-void main(){ SCREEN_SHADER(UV[0]); }
+void main(){ PIXEL_SETUP_INPUT(); SCREEN_SHADER(UV[0]); }
 #endif //PIXEL_SHADER
 '''
 
@@ -238,6 +238,7 @@ class NPR_Pipeline(Pipeline):
             for fbo in self.render_layer_custom_output_accumulate_fbos.values():
                 fbo.clear([(0,0,0,0)])
         
+        
         sample_offset = self.get_samples(scene.world_parameters['Samples.Width'])[self.sample_count]
 
         opaque_batches, transparent_batches = self.get_scene_batches(scene)
@@ -278,9 +279,24 @@ class NPR_Pipeline(Pipeline):
         self.blend_transparency_shader.textures['IN_FRONT'] = self.t_transparent_color
         self.draw_screen_pass(self.blend_transparency_shader, self.fbo_color)
 
+        '''
+        self.fbo_opaque.clear([(1,0,0,1)])
+        self.fbo_transparent.clear([(1,1,0,0.5)])
+        self.fbo_color.clear([(0,0,0,1)])
+        self.blend_transparency_shader.textures['IN_BACK'] = self.t_opaque_color
+        self.blend_transparency_shader.textures['IN_FRONT'] = self.t_transparent_color
+        self.draw_screen_pass(self.blend_transparency_shader, self.fbo_color)
+        #self.blend_texture(self.t_transparent_color, self.fbo_color, 1)
+        '''
+
         # TEMPORAL SUPER-SAMPLING ACCUMULATION
         self.blend_texture(self.t_color, self.fbo_accumulate, 1.0 / (self.sample_count + 1))
 
+        #return {'COLOR' : self.t_color}
+        
+        print(self.sample_count,  1.0 / (self.sample_count + 1))
+        #return {'COLOR' : self.t_color}
+        
         #COMPOSITE DEPTH
         composite_depth = None
         if is_final_render:

@@ -9,6 +9,8 @@ void main()
     POSITION = in_position;
     UV[0] = in_position.xy * 0.5 + 0.5;
 
+    VERTEX_SETUP_OUTPUT();
+    
     gl_Position = vec4(POSITION, 1);
 }
 #endif
@@ -22,6 +24,8 @@ layout (location = 0) out vec4 OUT_RESULT;
 
 void main()
 {
+    PIXEL_SETUP_INPUT();
+
     vec4 back = texelFetch(IN_BACK, ivec2(gl_FragCoord.xy), 0);
     vec4 front = texelFetch(IN_FRONT, ivec2(gl_FragCoord.xy), 0);
 

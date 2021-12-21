@@ -37,6 +37,7 @@ class MiniPipeline(Pipeline):
             layout (location = 0) out vec4 RESULT;
             void main()
             {
+                PIXEL_SETUP_INPUT();
                 RESULT = vec4(1);
             }
             #endif

@@ -7,6 +7,8 @@ void main()
 {
     POSITION = in_position;
     UV[0] = in_position.xy * 0.5 + 0.5;
+    
+    VERTEX_SETUP_OUTPUT();
 
     gl_Position = vec4(POSITION, 1);
 }
@@ -23,6 +25,8 @@ layout (location = 3) out vec4 OUT_D;
 
 void main()
 {
+    PIXEL_SETUP_INPUT();
+
     uvec4 packed_pixel = texture(IN_PACKED, UV[0]);    
     OUT_A = unpackUnorm4x8(packed_pixel.r);
     OUT_B = unpackUnorm4x8(packed_pixel.g);

@@ -43,6 +43,8 @@ class ScreenPass(PipelineNode):
                         from Malt.SourceTranspiler import GLSLTranspiler
                         glsl_name = GLSLTranspiler.custom_io_reference('IN', 'SCREEN_SHADER', io['name'])
                         shader.textures[glsl_name] = inputs[io['name']]
+            shader.bind()
+            self.pipeline.common_buffer.bind(shader.uniform_blocks['COMMON_UNIFORMS'])
             self.pipeline.draw_screen_pass(shader, self.render_target)
         
         for io in custom_io:

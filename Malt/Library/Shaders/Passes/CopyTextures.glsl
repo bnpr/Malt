@@ -8,6 +8,8 @@ void main()
     POSITION = in_position;
     UV[0] = in_position.xy * 0.5 + 0.5;
 
+    VERTEX_SETUP_OUTPUT();
+    
     gl_Position = vec4(POSITION, 1);
 }
 #endif
@@ -28,6 +30,8 @@ layout (location = 3) out vec4 OUT_3;
 
 void main()
 {
+    PIXEL_SETUP_INPUT();
+
     ivec2 uv = ivec2(gl_FragCoord.xy);
     
     OUT_0 = texelFetch(IN_0, uv, 0);

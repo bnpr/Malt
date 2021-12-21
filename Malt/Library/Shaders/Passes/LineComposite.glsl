@@ -7,6 +7,8 @@ void main()
 {
     POSITION = in_position;
     UV[0] = in_position.xy * 0.5 + 0.5;
+    
+    VERTEX_SETUP_OUTPUT();
 
     gl_Position = vec4(POSITION, 1);
 }
@@ -29,6 +31,8 @@ uniform int brute_force_range = 10;
 
 void main()
 {
+    PIXEL_SETUP_INPUT();
+
     vec2 uv = screen_uv();
     vec4 line_color = line_expand(
         uv, brute_force_range, aa_offset,
