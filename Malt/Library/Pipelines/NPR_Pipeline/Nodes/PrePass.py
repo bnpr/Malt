@@ -70,10 +70,11 @@ class PrePass(PipelineNode):
 
         if self.is_opaque_pass():
             self.fbo_last_layer_id.clear([(0,0,0,0)])
-            self.pipeline.copy_textures(self.fbo_opaque_depth, [self.t_depth])
+            self.fbo_transparent_depth.clear([], -1)
+            self.pipeline.copy_textures(self.fbo_opaque_depth, [], self.t_depth)
         else:
             self.pipeline.copy_textures(self.fbo_last_layer_id, [self.t_id])
-            self.pipeline.copy_textures(self.fbo_transparent_depth, [self.t_depth])
+            self.pipeline.copy_textures(self.fbo_transparent_depth, [], self.t_depth)
 
         #CUSTOM LIGHT SHADERS
         self.pipeline.npr_light_shaders.load(self.pipeline, self.t_depth, scene, self.pipeline.npr_lighting.lights_buffer)
