@@ -230,13 +230,13 @@ void main()
 
         if(Settings.Transparency)
         {
-            float pass_through = hash(vec4(POSITION, SAMPLE_COUNT)).x;
+            float pass_through = hash(vec2(ID.x, SAMPLE_COUNT)).x;
             if(pass_through > PPO.surface_color.a)
             {
                 discard;
             }
-            //TODO: Take alpha probability into account for multiply color
-            OUT_SHADOW_MULTIPLY_COLOR = PPO.surface_color.rgb * saturate(1.0 - PPO.surface_color.a);
+            //TODO: Take alpha probability into account for multiply color ?
+            OUT_SHADOW_MULTIPLY_COLOR = PPO.surface_color.rgb;// * saturate(1.0 - PPO.surface_color.a);
         }
     }
     #endif
