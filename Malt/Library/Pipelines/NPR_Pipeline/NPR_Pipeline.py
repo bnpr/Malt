@@ -20,7 +20,7 @@ from Malt.Library.Pipelines.NPR_Pipeline.NPR_LightShaders import NPR_LightShader
 
 from Malt.Library.Nodes import Unpack8bitTextures
 
-from Malt.Library.Pipelines.NPR_Pipeline.Nodes import ScreenPass, PrePass, MainPass, CompositeLayers
+from Malt.Library.Pipelines.NPR_Pipeline.Nodes import ScreenPass, PrePass, MainPass, CompositeLayers, SSAA
 
 _COMMON_HEADER = '''
 #include "NPR_Pipeline.glsl"
@@ -178,7 +178,7 @@ class NPR_Pipeline(Pipeline):
 
         render_layer = PythonPipelineGraph(
             name='Render Layer',
-            nodes = [ScreenPass.NODE, PrePass.NODE, MainPass.NODE, Unpack8bitTextures.NODE, CompositeLayers.NODE],
+            nodes = [ScreenPass.NODE, PrePass.NODE, MainPass.NODE, Unpack8bitTextures.NODE, CompositeLayers.NODE, SSAA.NODE],
             graph_io = [
                 PipelineGraphIO(
                     name = 'Render Layer',
@@ -200,9 +200,6 @@ class NPR_Pipeline(Pipeline):
         self.npr_light_shaders.setup_graphs(self, self.graphs)
 
     def setup_render_targets(self, resolution):
-        self.t_color_accumulate = Texture(resolution, GL_RGBA32F)
-        self.fbo_accumulate = RenderTarget([self.t_color_accumulate])
-
         self.render_layer_custom_output_accumulate_textures = {}
         self.render_layer_custom_output_accumulate_fbos = {}
         
@@ -228,9 +225,10 @@ class NPR_Pipeline(Pipeline):
         if self.sampling_grid_size != scene.world_parameters['Samples.Grid Size']:
             self.sampling_grid_size = scene.world_parameters['Samples.Grid Size']
             self.samples = None
+        
+        self.is_new_frame = is_new_frame
 
         if is_new_frame:
-            self.fbo_accumulate.clear([(0,0,0,0)])
             for fbo in self.render_layer_custom_output_accumulate_fbos.values():
                 fbo.clear([(0,0,0,0)])
         
@@ -249,17 +247,13 @@ class NPR_Pipeline(Pipeline):
             result = self.draw_layer(scene)
             self.draw_layer_count += 1
 
-        # TEMPORAL SUPER-SAMPLING ACCUMULATION
-        #self.blend_texture(self.t_color, self.fbo_accumulate, 1.0 / (self.sample_count + 1))
-        self.blend_texture(result, self.fbo_accumulate, 1.0 / (self.sample_count + 1))
-
         #COMPOSITE DEPTH
         composite_depth = None
         if is_final_render:
             composite_depth = self.composite_depth.render(self, self.common_buffer, self.t_opaque_depth)
         
         return {
-            'COLOR' : self.t_color_accumulate,
+            'COLOR' : result,
             'DEPTH' : composite_depth,
         } | self.render_layer_custom_output_accumulate_textures
     
