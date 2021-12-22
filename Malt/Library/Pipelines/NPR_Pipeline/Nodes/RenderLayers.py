@@ -21,6 +21,7 @@ class RenderLayers(PipelineNode):
     def reflect_inputs(cls):
         inputs = {}
         inputs['Scene'] = Parameter('Scene', Type.OTHER)
+        inputs['Transparent Layers'] = Parameter(2, Type.INT)
         return inputs
     
     @classmethod
@@ -32,17 +33,17 @@ class RenderLayers(PipelineNode):
     def execute(self, parameters):
         inputs = parameters['IN']
         outputs = parameters['OUT']
-        graph = parameters['PASS_GRAPH']
         custom_io = parameters['CUSTOM_IO']
+        graph = parameters['PASS_GRAPH']
         scene = inputs['Scene']
         if scene and graph:
-            self.draw_layer_count = 0
-            self.pipeline.transparency_layers = scene.world_parameters['Transparency.Layers']
-            self.transparency_layers = self.pipeline.transparency_layers
-            for i in range(self.transparency_layers):
-                self.pipeline.draw_layer_count = self.draw_layer_count
+            self.layer_index = 0
+            self.layer_count = inputs['Transparent Layers'] + 1
+            for i in range(self.layer_count):
+                graph['parameters']['__LAYER_INDEX__'] = self.layer_index
+                graph['parameters']['__LAYER_COUNT__'] = self.layer_count
                 self.pipeline.graphs['Render Layer'].run_source(self.pipeline, graph['source'], graph['parameters'], inputs, outputs)
-                self.draw_layer_count += 1
+                self.layer_index += 1
             
 
 

@@ -141,7 +141,7 @@ class PythonPipelineGraph(PipelineGraph):
                 if node_name not in self.node_instances.keys():
                     node_class = self.nodes[node_type]
                     self.node_instances[node_name] = node_class(pipeline)
-                parameters['GLOBAL_PARAMETERS'] = PARAMETERS
+                parameters['__GLOBALS__'] = PARAMETERS
                 self.node_instances[node_name].execute(parameters)
             exec(source)
         except:

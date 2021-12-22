@@ -31,9 +31,6 @@ class CompositeLayers(PipelineNode):
 
         self.t_color = Texture(resolution, GL_RGBA16F)
         self.fbo_color = RenderTarget([self.t_color])
-    
-    def is_opaque_pass(self):
-        return self.pipeline.draw_layer_count == 0
 
     def execute(self, parameters):
         inputs = parameters['IN']
@@ -43,8 +40,12 @@ class CompositeLayers(PipelineNode):
             self.setup_render_targets(self.pipeline.resolution)
             self.resolution = self.pipeline.resolution
         
+        G = parameters['__GLOBALS__']
+        is_opaque_pass = G['__LAYER_INDEX__'] == 0
+        is_last_layer = G['__LAYER_INDEX__'] + 1 == G['__LAYER_COUNT__']
+        
         if inputs['Color']:
-            if self.is_opaque_pass():
+            if is_opaque_pass:
                 self.pipeline.copy_textures(self.fbo_opaque, [inputs['Color']])
                 self.fbo_color.clear([(0,0,0,0)])
                 self.fbo_transparent.clear([(0,0,0,0)])
@@ -55,7 +56,7 @@ class CompositeLayers(PipelineNode):
 
                 self.pipeline.copy_textures(self.fbo_transparent, [self.t_color])
         
-        if self.pipeline.draw_layer_count == self.pipeline.transparency_layers - 1:
+        if is_last_layer:
             self.pipeline.blend_transparency_shader.textures['IN_BACK'] = self.t_opaque_color
             self.pipeline.blend_transparency_shader.textures['IN_FRONT'] = self.t_transparent_color
             self.pipeline.draw_screen_pass(self.pipeline.blend_transparency_shader, self.fbo_color)

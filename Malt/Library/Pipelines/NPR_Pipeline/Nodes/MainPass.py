@@ -43,9 +43,6 @@ class MainPass(PipelineNode):
             self.t_custom_outputs[key] = texture
             fbo_main_targets.append(texture)
         self.fbo_main = RenderTarget(fbo_main_targets, t_depth)
-    
-    def is_opaque_pass(self):
-        return self.pipeline.draw_layer_count == 0
 
     def execute(self, parameters):
         inputs = parameters['IN']
