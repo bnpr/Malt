@@ -93,6 +93,8 @@ class GLSLTranspiler(SourceTranspiler):
     
     @classmethod
     def preprocessor_wrap(self, define, content):
+        if define is None:
+            return content
         return textwrap.dedent('''\
         #ifdef {}
         {}

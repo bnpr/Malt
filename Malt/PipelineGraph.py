@@ -112,7 +112,7 @@ class GLSLPipelineGraph(PipelineGraph):
 
 class PythonGraphIO(PipelineGraphIO):
 
-    COMMON_IO_TYPES = ['Texture', 'Scene']
+    COMMON_IO_TYPES = ['Texture']
 
     def __init__(self, name, dynamic_input_types = [], dynamic_output_types = [], function=None):
         super().__init__(name, dynamic_input_types, dynamic_output_types, function)
