@@ -59,20 +59,14 @@ class NPR_Pipeline(Pipeline):
         self.sampling_grid_size = 2
         self.samples = None
 
-        self.parameters.world['Background.Color'] = Parameter((0.5,0.5,0.5,1), Type.FLOAT, 4)
-        
         self.parameters.world['Samples.Grid Size'] = Parameter(8, Type.INT)
         self.parameters.world['Samples.Grid Size @ Preview'] = Parameter(4, Type.INT)
         self.parameters.world['Samples.Width'] = Parameter(1.0, Type.FLOAT)
-        
-        self.parameters.world['Transparency.Layers'] = Parameter(4, Type.INT)
-        self.parameters.world['Transparency.Layers @ Preview'] = Parameter(1, Type.INT)
         
         default_material_path = os.path.join(os.path.dirname(__file__), 'default.mesh.glsl')
         self.parameters.world['Material.Default'] = MaterialParameter(default_material_path, '.mesh.glsl')
         
         self.parameters.world['Render'] = Parameter('Render', Type.GRAPH)
-        self.render_layer_nodes = {}
 
         self.common_buffer = Common.CommonBuffer()
         self.npr_lighting = NPR_Lighting(self.parameters)
@@ -80,8 +74,6 @@ class NPR_Pipeline(Pipeline):
         
         self.composite_depth = DepthToCompositeDepth.CompositeDepth()
 
-        self.layer_query = DrawQuery()
-        
         self.setup_graphs()
         
         global _DEFAULT_SHADER
@@ -91,12 +83,6 @@ class NPR_Pipeline(Pipeline):
         global _BLEND_TRANSPARENCY_SHADER
         if _BLEND_TRANSPARENCY_SHADER is None: _BLEND_TRANSPARENCY_SHADER = self.compile_shader_from_source(_BLEND_TRANSPARENCY_SHADER_SRC)
         self.blend_transparency_shader = _BLEND_TRANSPARENCY_SHADER
-
-    def get_mesh_shader_custom_outputs(self):
-        return {
-            'Line Color' : GL_RGBA16F,
-            'Line Width' : GL_R16F,
-        }
     
     def get_samples(self):
         if self.samples is None:
@@ -160,8 +146,6 @@ class NPR_Pipeline(Pipeline):
         )
         screen.setup_reflection(self, "void SCREEN_SHADER(vec2 uv){ }")
         
-        MainPass.NODE.get_custom_outputs = self.get_mesh_shader_custom_outputs
-
         render_layer = PythonPipelineGraph(
             name='Render Layer',
             nodes = [ScreenPass.NODE, PrePass.NODE, MainPass.NODE, Unpack8bitTextures.NODE, CompositeLayers.NODE, LineRender.NODE],
