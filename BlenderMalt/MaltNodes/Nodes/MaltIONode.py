@@ -105,17 +105,21 @@ class MaltIONode(bpy.types.Node, MaltNode):
         code = ''
         if self.is_output:
             function = self.get_function()
+            custom_outputs = ''
             for socket in self.inputs:
                 if self.is_custom_socket(socket):
-                    code += transpiler.asignment(self.get_source_socket_reference(socket),
-                        socket.get_source_initialization())
+                    custom_outputs += transpiler.asignment(self.get_source_socket_reference(socket), socket.get_source_initialization())
                 else:
                     if socket.name == 'result':
                         code += transpiler.declaration(socket.data_type, socket.array_size, socket.name)
                     initialization = socket.get_source_initialization()
                     if initialization:
                         code += transpiler.asignment(socket.get_source_reference(), initialization)
-
+            if custom_outputs != '':
+                graph_io = self.id_data.get_pipeline_graph().graph_io[self.io_type]
+                try: io_wrap = graph_io.io_wrap
+                except: io_wrap = ''
+                code += transpiler.preprocessor_wrap(io_wrap, custom_outputs)
             if function['type'] != 'void':
                 code += transpiler.result(self.inputs['result'].get_source_reference())
 
@@ -123,24 +127,26 @@ class MaltIONode(bpy.types.Node, MaltNode):
     
     def get_source_global_parameters(self, transpiler):
         src = MaltNode.get_source_global_parameters(self, transpiler)
+        custom_outputs = ''
         graph_io = self.id_data.get_pipeline_graph().graph_io[self.io_type]
-        try:
-            index = graph_io.custom_output_start_index
-            shader_type = graph_io.shader_type #TODO: Move to graph.generate_source()
-        except:
-            index = 0
-            shader_type = ''
+        try: index = graph_io.custom_output_start_index
+        except: index = 0
         for key, parameter in self.get_custom_parameters().items():
             if parameter.is_output:
                 socket = self.inputs[key]
-                src += transpiler.custom_output_declaration(socket.data_type, key, index, shader_type, self.io_type)
+                custom_outputs += transpiler.custom_output_declaration(socket.data_type, key, index, self.io_type)
                 index += 1
             else:
                 socket = self.outputs[key]
                 src += transpiler.global_declaration(parameter.parameter, 0, self.get_source_socket_reference(socket))
+        if custom_outputs != '':
+            try: io_wrap = graph_io.io_wrap
+            except: io_wrap = ''
+            src += transpiler.preprocessor_wrap(io_wrap, custom_outputs)
         return src
     
     def draw_buttons(self, context, layout):
+        return #only 1 custom pass signature for now
         if self.allow_custom_pass and (self.is_output or self.allow_custom_parameters):
             row = layout.row(align=True)
             row.prop(self, 'custom_pass', text='Custom Pass')

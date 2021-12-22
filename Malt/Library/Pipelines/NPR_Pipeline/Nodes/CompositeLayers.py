@@ -56,11 +56,11 @@ class CompositeLayers(PipelineNode):
 
                 self.pipeline.copy_textures(self.fbo_transparent, [self.t_color])
         
-        if is_last_layer:
-            self.pipeline.blend_transparency_shader.textures['IN_BACK'] = self.t_opaque_color
-            self.pipeline.blend_transparency_shader.textures['IN_FRONT'] = self.t_transparent_color
-            self.pipeline.draw_screen_pass(self.pipeline.blend_transparency_shader, self.fbo_color)
+            if is_last_layer:
+                self.pipeline.blend_transparency_shader.textures['IN_BACK'] = self.t_opaque_color
+                self.pipeline.blend_transparency_shader.textures['IN_FRONT'] = self.t_transparent_color
+                self.pipeline.draw_screen_pass(self.pipeline.blend_transparency_shader, self.fbo_color)
 
-            outputs['Color'] = self.t_color
+                outputs['Color'] = self.t_color
 
 NODE = CompositeLayers

@@ -28,7 +28,11 @@ class SourceTranspiler():
         pass
 
     @classmethod
-    def custom_output_declaration(self, type, name, index, shader_type, graph_io_type):
+    def preprocessor_wrap(self, define, content):
+        return content
+
+    @classmethod
+    def custom_output_declaration(self, type, name, index, graph_io_type):
         pass
 
     @classmethod
@@ -89,16 +93,15 @@ class GLSLTranspiler(SourceTranspiler):
     
     @classmethod
     def preprocessor_wrap(self, define, content):
-        return textwrap.dedent('''
+        return textwrap.dedent('''\
         #ifdef {}
         {}
         #endif //{}
-        ''').format(define, content, define)
+        ''').format(define, content.strip(), define)
 
     @classmethod
-    def custom_output_declaration(self, type, name, index, shader_type, graph_io_type):
-        return self.preprocessor_wrap(shader_type,
-        f"layout (location = {index}) out {type} {self.custom_io_reference('OUT', graph_io_type, name)};")
+    def custom_output_declaration(self, type, name, index, graph_io_type):
+        return f"layout (location = {index}) out {type} {self.custom_io_reference('OUT', graph_io_type, name)};\n"
 
     @classmethod
     def parameter_reference(self, node_name, parameter_name, io_type):
@@ -163,7 +166,7 @@ class PythonTranspiler(SourceTranspiler):
         return self.io_parameter_reference(name, io)
 
     @classmethod
-    def custom_output_declaration(self, type, name, index, shader_type, graph_io_type):
+    def custom_output_declaration(self, type, name, index, graph_io_type):
         return self.declaration(type, 0, self.io_parameter_reference(name, 'out'))
 
     @classmethod    

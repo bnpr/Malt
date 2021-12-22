@@ -76,10 +76,10 @@ class MaltTree(bpy.types.NodeTree):
             return bridge.graphs[graph_type]
         return None
     
-    def get_custom_io(self, io_archetype=None):
+    def get_custom_io(self, io_type):
         params = []
         for node in self.nodes:
-            if node.bl_idname == 'MaltIONode':
+            if node.bl_idname == 'MaltIONode' and node.io_type == io_type:
                 io = 'out' if node.is_output else 'in'
                 for parameter in node.get_custom_parameters():
                     params.append({

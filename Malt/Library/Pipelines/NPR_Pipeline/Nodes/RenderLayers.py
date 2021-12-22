@@ -15,7 +15,7 @@ class RenderLayers(PipelineNode):
     
     @staticmethod
     def get_pass_type():
-        return 'Render Layer'
+        return 'Render Layer.Render Layer'
     
     @classmethod
     def reflect_inputs(cls):
@@ -43,8 +43,7 @@ class RenderLayers(PipelineNode):
                 graph['parameters']['__LAYER_INDEX__'] = self.layer_index
                 graph['parameters']['__LAYER_COUNT__'] = self.layer_count
                 self.pipeline.graphs['Render Layer'].run_source(self.pipeline, graph['source'], graph['parameters'], inputs, outputs)
-                self.layer_index += 1
-            
+                self.layer_index += 1     
 
 
 NODE = RenderLayers  

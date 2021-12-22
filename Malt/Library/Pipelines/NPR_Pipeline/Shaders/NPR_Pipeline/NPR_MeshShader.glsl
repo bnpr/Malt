@@ -146,9 +146,6 @@ void main()
 #ifdef PIXEL_SHADER
 
 uniform sampler2D IN_OPAQUE_COLOR;
-uniform sampler2D IN_OPAQUE_DEPTH;
-uniform sampler2D IN_TRANSPARENT_DEPTH;
-uniform usampler2D IN_LAST_ID;
 
 #ifdef SHADOW_PASS
 layout (location = 0) out uint OUT_ID;
@@ -156,6 +153,10 @@ layout (location = 1) out vec3 OUT_SHADOW_MULTIPLY_COLOR;
 #endif //PRE_PASS
 
 #ifdef PRE_PASS
+uniform sampler2D IN_OPAQUE_DEPTH;
+uniform sampler2D IN_TRANSPARENT_DEPTH;
+uniform usampler2D IN_LAST_ID;
+
 layout (location = 0) out vec4 OUT_NORMAL_DEPTH;
 layout (location = 1) out uvec4 OUT_ID;
 #endif //PRE_PASS
@@ -163,8 +164,6 @@ layout (location = 1) out uvec4 OUT_ID;
 #ifdef MAIN_PASS
 uniform sampler2D IN_NORMAL_DEPTH;
 uniform usampler2D IN_ID;
-
-//layout (location = 0) out vec4 OUT_COLOR;
 #endif //MAIN_PASS
 
 #ifndef CUSTOM_MAIN

@@ -10,6 +10,11 @@ class PrePass(PipelineNode):
         PipelineNode.__init__(self, pipeline)
         self.resolution = None
         self.batches = None
+        self.custom_io = []
+    
+    @staticmethod
+    def get_pass_type():
+        return 'Mesh.PRE_PASS_PIXEL_SHADER'
     
     @classmethod
     def reflect_inputs(cls):
@@ -25,12 +30,16 @@ class PrePass(PipelineNode):
         outputs['ID'] = Parameter('', Type.TEXTURE)
         return outputs
     
-    def setup_render_targets(self, resolution):
+    def setup_render_targets(self, resolution, custom_io):
         self.t_depth = Texture(resolution, GL_DEPTH_COMPONENT32F)
         
         self.t_normal_depth = Texture(resolution, GL_RGBA32F)
         self.t_id = Texture(resolution, GL_RGBA16UI, min_filter=GL_NEAREST, mag_filter=GL_NEAREST)
-        self.fbo = RenderTarget([self.t_normal_depth, self.t_id], self.t_depth)
+        self.custom_targets = {}
+        for io in custom_io:
+            if io['io'] == 'out' and io['type'] == 'Texture':#TODO
+                self.custom_targets[io['name']] = Texture(resolution, GL.GL_RGBA16F)
+        self.fbo = RenderTarget([self.t_normal_depth, self.t_id, *self.custom_targets.values()], self.t_depth)
         
         self.t_last_layer_id = Texture(resolution, GL_R16UI, min_filter=GL_NEAREST, mag_filter=GL_NEAREST)
         self.fbo_last_layer_id = RenderTarget([self.t_last_layer_id])
@@ -43,13 +52,15 @@ class PrePass(PipelineNode):
     def execute(self, parameters):
         inputs = parameters['IN']
         outputs = parameters['OUT']
+        custom_io = parameters['CUSTOM_IO']
         scene = inputs['Scene']
 
         is_opaque_pass = parameters['__GLOBALS__']['__LAYER_INDEX__'] == 0
 
-        if self.pipeline.resolution != self.resolution:
-            self.setup_render_targets(self.pipeline.resolution)
+        if self.pipeline.resolution != self.resolution or self.custom_io != custom_io:
+            self.setup_render_targets(self.pipeline.resolution, custom_io)
             self.resolution = self.pipeline.resolution
+            self.custom_io = custom_io
         
         opaque_batches, transparent_batches = self.pipeline.get_scene_batches(scene)
         self.batches = opaque_batches if is_opaque_pass else transparent_batches
@@ -62,7 +73,7 @@ class PrePass(PipelineNode):
             'IN_TRANSPARENT_DEPTH': self.t_transparent_depth,
             'IN_LAST_ID': self.t_last_layer_id,
         }
-        self.fbo.clear([(0,0,1,1), (0,0,0,0)], 1)
+        self.fbo.clear([(0,0,1,1), (0,0,0,0)] + [(0,0,0,0)]*len(self.custom_targets), 1)
 
         self.pipeline.draw_scene_pass(self.fbo, self.batches, 'PRE_PASS', self.pipeline.default_shader['PRE_PASS'],
             UBOS, {}, textures, callbacks)
@@ -81,5 +92,7 @@ class PrePass(PipelineNode):
         outputs['PrePass'] = self
         outputs['Normal Depth'] = self.t_normal_depth
         outputs['ID'] = self.t_id
+        outputs |= self.custom_targets
+
 
 NODE = PrePass

@@ -42,9 +42,10 @@ class GLSLGraphIO(PipelineGraphIO):
         'int','ivec2','ivec3','ivec4',
     ]
     
-    def __init__(self, name, define = None, dynamic_input_types = [], dynamic_output_types = [], shader_type=None, custom_output_start_index=0):
+    def __init__(self, name, define = None, io_wrap=None, dynamic_input_types = [], dynamic_output_types = [], shader_type=None, custom_output_start_index=0):
         super().__init__(name, dynamic_input_types, dynamic_output_types)
         self.define = define
+        self.io_wrap = io_wrap
         self.shader_type = shader_type
         self.signature = None
         self.custom_output_start_index = custom_output_start_index

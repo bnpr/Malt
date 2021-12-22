@@ -15,7 +15,7 @@ class ScreenPass(PipelineNode):
     
     @staticmethod
     def get_pass_type():
-        return 'Screen'
+        return 'Screen.SCREEN_SHADER'
     
     def execute(self, parameters):
         inputs = parameters['IN']
