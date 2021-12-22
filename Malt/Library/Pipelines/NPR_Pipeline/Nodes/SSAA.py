@@ -34,11 +34,10 @@ class SSAA(PipelineNode):
             self.setup_render_targets(self.pipeline.resolution)
             self.resolution = self.pipeline.resolution
         
-        if self.pipeline.draw_layer_count == self.pipeline.transparency_layers - 1:
-            if self.pipeline.is_new_frame:
-                self.fbo.clear([(0,0,0,0)])
-            if inputs['Color']:
-                self.pipeline.blend_texture(inputs['Color'], self.fbo, 1.0 / (self.pipeline.sample_count + 1))
-                outputs['Color'] = self.t_color
+        if self.pipeline.is_new_frame:
+            self.fbo.clear([(0,0,0,0)])
+        if inputs['Color']:
+            self.pipeline.blend_texture(inputs['Color'], self.fbo, 1.0 / (self.pipeline.sample_count + 1))
+            outputs['Color'] = self.t_color
 
 NODE = SSAA

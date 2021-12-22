@@ -109,6 +109,12 @@ class GLSLPipelineGraph(PipelineGraph):
                 shaders[f'{custom_pass}'] = [self.get_material_define(), shader, self.name_as_macro(custom_pass)]
         return pipeline.compile_shaders_from_source(source, include_paths, shaders)
 
+class PythonGraphIO(PipelineGraphIO):
+
+    COMMON_IO_TYPES = ['Texture', 'Scene']
+
+    def __init__(self, name, dynamic_input_types = [], dynamic_output_types = [], function=None):
+        super().__init__(name, dynamic_input_types, dynamic_output_types, function)
 
 class PythonPipelineGraph(PipelineGraph):
     
@@ -135,6 +141,7 @@ class PythonPipelineGraph(PipelineGraph):
                 if node_name not in self.node_instances.keys():
                     node_class = self.nodes[node_type]
                     self.node_instances[node_name] = node_class(pipeline)
+                parameters['GLOBAL_PARAMETERS'] = PARAMETERS
                 self.node_instances[node_name].execute(parameters)
             exec(source)
         except:

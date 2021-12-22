@@ -1,5 +1,6 @@
 # Copyright (c) 2020-2021 BNPR, Miguel Pozo and contributors. MIT license. 
 
+from Malt.PipelineParameters import Type, Parameter, MaterialParameter
 import bpy    
 from BlenderMalt.MaltNodes.MaltNode import MaltNode
 
@@ -27,21 +28,26 @@ class MaltFunctionNode(bpy.types.Node, MaltNode):
         
         self.pass_type = self.get_pass_type()
         if self.pass_type != '':
-            from Malt.PipelineParameters import MaterialParameter
-            extension = self.id_data.get_pipeline_graph(self.pass_type).file_extension
-            self.malt_parameters.setup(
-                {'PASS_MATERIAL': MaterialParameter('', extension)},
-                replace_parameters=False,
-                skip_private=False
-            )
+            graph = self.id_data.get_pipeline_graph(self.pass_type)
+            if graph.language == 'Python':
+                self.malt_parameters.setup(
+                    {'PASS_GRAPH': Parameter('Render Layer', Type.GRAPH)},
+                    replace_parameters=False,
+                    skip_private=False
+                )
+            else:
+                self.malt_parameters.setup(
+                    {'PASS_MATERIAL': MaterialParameter('', graph.file_extension)},
+                    replace_parameters=False,
+                    skip_private=False
+                )
 
     function_type : bpy.props.StringProperty(update=MaltNode.setup)
     pass_type: bpy.props.StringProperty()
 
     def get_parameters(self, overrides, resources):
         parameters = MaltNode.get_parameters(self, overrides, resources)
-        if self.get_pass_material():
-            parameters['CUSTOM_IO'] = self.get_custom_io()
+        parameters['CUSTOM_IO'] = self.get_custom_io()
         return parameters
 
     def get_function(self):
@@ -64,16 +70,20 @@ class MaltFunctionNode(bpy.types.Node, MaltNode):
                 return pass_type
         return ''
     
-    def get_pass_material(self):
-        if self.get_pass_type() != '' and 'PASS_MATERIAL' in self.malt_parameters.materials.keys():
-            return self.malt_parameters.materials['PASS_MATERIAL'].material
-    
     def get_custom_io(self):
-        material = self.get_pass_material()
-        if material:
-            tree = material.malt.shader_nodes
-            if tree:
-                return tree.get_custom_io()
+        tree = None
+        if self.get_pass_type() != '':
+            graph = self.id_data.get_pipeline_graph(self.pass_type)
+            if graph.language == 'Python':
+                if 'PASS_GRAPH' in self.malt_parameters.graphs.keys():
+                    tree = self.malt_parameters.graphs['PASS_GRAPH'].graph
+            else:
+                if 'PASS_MATERIAL' in self.malt_parameters.materials.keys():
+                    material = self.malt_parameters.materials['PASS_MATERIAL'].material
+                    if material:
+                        tree = material.malt.shader_nodes
+        if tree:
+            return tree.get_custom_io()
         return []
 
     def get_source_socket_reference(self, socket):
@@ -109,7 +119,11 @@ class MaltFunctionNode(bpy.types.Node, MaltNode):
                 initialization = transpiler.global_reference(self.get_source_name(), name)
                 nonlocal post_parameter_initialization
                 post_parameter_initialization += transpiler.asignment(parameter, initialization)
-            add_implicit_parameter('PASS_MATERIAL')
+            graph = self.id_data.get_pipeline_graph(self.pass_type)
+            if graph.language == 'Python':
+                add_implicit_parameter('PASS_GRAPH')
+            else:
+                add_implicit_parameter('PASS_MATERIAL')
             add_implicit_parameter('CUSTOM_IO')
 
         return transpiler.call(function, source_name, parameters, post_parameter_initialization)
@@ -117,7 +131,11 @@ class MaltFunctionNode(bpy.types.Node, MaltNode):
     def draw_buttons(self, context, layout):
         if self.pass_type != '':
             layout.operator('wm.malt_callback', text='Reload Sockets', icon='FILE_REFRESH').callback.set(self.setup)
-            self.malt_parameters.draw_parameter(layout, 'PASS_MATERIAL', None, is_node_socket=True)
+            graph = self.id_data.get_pipeline_graph(self.pass_type)
+            if graph.language == 'Python':
+                self.malt_parameters.draw_parameter(layout, 'PASS_GRAPH', None, is_node_socket=True)
+            else:
+                self.malt_parameters.draw_parameter(layout, 'PASS_MATERIAL', None, is_node_socket=True)
     
 classes = [
     MaltFunctionNode,

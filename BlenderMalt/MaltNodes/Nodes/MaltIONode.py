@@ -128,8 +128,8 @@ class MaltIONode(bpy.types.Node, MaltNode):
             index = graph_io.custom_output_start_index
             shader_type = graph_io.shader_type #TODO: Move to graph.generate_source()
         except:
-            index = None
-            shader_type = None
+            index = 0
+            shader_type = ''
         for key, parameter in self.get_custom_parameters().items():
             if parameter.is_output:
                 socket = self.inputs[key]
@@ -151,7 +151,6 @@ class MaltIONode(bpy.types.Node, MaltNode):
                     custom_passes.remove(custom_passes.find(self.custom_pass))
                     #self.custom_pass = 'Default'
                 row.operator('wm.malt_callback', text='', icon='REMOVE').callback.set(remove)
-
     
     def draw_buttons_ext(self, context, layout):
         if self.allow_custom_parameters:

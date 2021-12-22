@@ -7,9 +7,6 @@ from Malt.PipelineGraph import *
 from Malt.PipelineNode import PipelineNode
 
 from Malt.GL.GL import *
-from Malt.GL.RenderTarget import RenderTarget
-from Malt.GL.Texture import Texture
-from Malt.GL.Texture import internal_format_to_vector_type, internal_format_to_sampler_type, internal_format_to_data_format
 
 from Malt.Library.Render import Common
 from Malt.Library.Render import DepthToCompositeDepth
@@ -20,7 +17,7 @@ from Malt.Library.Pipelines.NPR_Pipeline.NPR_LightShaders import NPR_LightShader
 
 from Malt.Library.Nodes import Unpack8bitTextures
 
-from Malt.Library.Pipelines.NPR_Pipeline.Nodes import ScreenPass, PrePass, MainPass, CompositeLayers, SSAA, LineRender
+from Malt.Library.Pipelines.NPR_Pipeline.Nodes import ScreenPass, PrePass, MainPass, CompositeLayers, SSAA, LineRender, RenderLayers
 
 _COMMON_HEADER = '''
 #include "NPR_Pipeline.glsl"
@@ -74,7 +71,7 @@ class NPR_Pipeline(Pipeline):
         default_material_path = os.path.join(os.path.dirname(__file__), 'default.mesh.glsl')
         self.parameters.world['Material.Default'] = MaterialParameter(default_material_path, '.mesh.glsl')
         
-        self.parameters.world['Render Layer'] = Parameter('Render Layer', Type.GRAPH)
+        self.parameters.world['Render'] = Parameter('Render', Type.GRAPH)
         self.render_layer_nodes = {}
 
         self.common_buffer = Common.CommonBuffer()
@@ -100,12 +97,6 @@ class NPR_Pipeline(Pipeline):
             'Line Color' : GL_RGBA16F,
             'Line Width' : GL_R16F,
         }
-    
-    def get_render_layer_custom_outputs(self):
-        return {}
-    
-    def get_render_outputs(self):
-        return super().get_render_outputs() | self.get_render_layer_custom_outputs()
     
     def get_samples(self):
         if self.samples is None:
@@ -166,22 +157,17 @@ class NPR_Pipeline(Pipeline):
             ]
         )
         screen.setup_reflection(self, "void SCREEN_SHADER(vec2 uv){ }")
-
-        def texture_type_to_parameter(texture_type):
-            sampler_type = internal_format_to_sampler_type(texture_type)
-            if sampler_type == 'sampler2D':
-                return Parameter('', Type.TEXTURE)
-            else:
-                return Parameter(sampler_type, Type.OTHER)
         
         MainPass.NODE.get_custom_outputs = self.get_mesh_shader_custom_outputs
 
         render_layer = PythonPipelineGraph(
             name='Render Layer',
-            nodes = [ScreenPass.NODE, PrePass.NODE, MainPass.NODE, Unpack8bitTextures.NODE, CompositeLayers.NODE, SSAA.NODE, LineRender.NODE],
+            nodes = [ScreenPass.NODE, PrePass.NODE, MainPass.NODE, Unpack8bitTextures.NODE, CompositeLayers.NODE, LineRender.NODE],
             graph_io = [
-                PipelineGraphIO(
+                PythonGraphIO(
                     name = 'Render Layer',
+                    dynamic_input_types= PythonGraphIO.COMMON_IO_TYPES,
+                    dynamic_output_types= PythonGraphIO.COMMON_IO_TYPES,
                     function = PipelineNode.static_reflect(
                         name = 'Render Layer',
                         inputs = {
@@ -189,25 +175,35 @@ class NPR_Pipeline(Pipeline):
                         },
                         outputs = {
                             'Color' : Parameter('', Type.TEXTURE),
-                        } | {k : texture_type_to_parameter(t) for k,t in self.get_render_layer_custom_outputs().items()},
+                        },
+                    )
+                )
+            ]
+        )
+
+        render = PythonPipelineGraph(
+            name='Render',
+            nodes = [ScreenPass.NODE, RenderLayers.NODE, Unpack8bitTextures.NODE, SSAA.NODE, LineRender.NODE],
+            graph_io = [
+                PythonGraphIO(
+                    name = 'Render',
+                    dynamic_output_types= PythonGraphIO.COMMON_IO_TYPES,
+                    function = PipelineNode.static_reflect(
+                        name = 'Render',
+                        inputs = {
+                            'Scene' : Parameter('Scene', Type.OTHER),
+                        },
+                        outputs = {
+                            'Color' : Parameter('', Type.TEXTURE),
+                        },
                     )
                 )
             ]
         )
         
-        self.graphs |= {e.name : e for e in [mesh, screen, render_layer]}
+        self.graphs |= {e.name : e for e in [mesh, screen, render_layer, render]}
 
         self.npr_light_shaders.setup_graphs(self, self.graphs)
-
-    def setup_render_targets(self, resolution):
-        self.render_layer_custom_output_accumulate_textures = {}
-        self.render_layer_custom_output_accumulate_fbos = {}
-        
-        if self.is_final_render:
-            for key, texture_format in self.get_render_layer_custom_outputs().items():
-                texture = Texture(resolution, texture_format)
-                self.render_layer_custom_output_accumulate_textures[key] = texture
-                self.render_layer_custom_output_accumulate_fbos[key] = RenderTarget([texture])
     
     def get_scene_batches(self, scene):
         opaque_batches = {}
@@ -227,10 +223,6 @@ class NPR_Pipeline(Pipeline):
             self.samples = None
         
         self.is_new_frame = is_new_frame
-
-        if is_new_frame:
-            for fbo in self.render_layer_custom_output_accumulate_fbos.values():
-                fbo.clear([(0,0,0,0)])
         
         sample_offset = self.get_sample(scene.world_parameters['Samples.Width'])
 
@@ -239,13 +231,14 @@ class NPR_Pipeline(Pipeline):
         self.npr_lighting.load(self, scene, opaque_batches, transparent_batches, sample_offset, self.sample_count)
 
         self.common_buffer.load(scene, resolution, sample_offset, self.sample_count)
-
-        self.draw_layer_count = 0
-        self.transparency_layers = scene.world_parameters['Transparency.Layers']
+        
         result = None
-        for i in range(self.transparency_layers):
-            result = self.draw_layer(scene)
-            self.draw_layer_count += 1
+        graph = scene.world_parameters['Render']
+        if graph:
+            IN = {'Scene' : scene}
+            OUT = {'Color' : None}
+            self.graphs['Render'].run_source(self, graph['source'], graph['parameters'], IN, OUT)
+            result = OUT['Color']
 
         #COMPOSITE DEPTH
         composite_depth = None
@@ -255,25 +248,7 @@ class NPR_Pipeline(Pipeline):
         return {
             'COLOR' : result,
             'DEPTH' : composite_depth,
-        } | self.render_layer_custom_output_accumulate_textures
-    
-    def draw_layer(self, scene):
-        graph = scene.world_parameters['Render Layer']
-        if graph:
-            IN = {'Scene' : scene}
-            OUT = {'Color' : None}
-            graph['parameters']['SCENE'] = scene
-            
-            self.graphs['Render Layer'].run_source(self, graph['source'], graph['parameters'], IN, OUT)
-            
-            #TODO: AOV transparency ???
-            if self.draw_layer_count == 0:
-                for key, fbo in self.render_layer_custom_output_accumulate_fbos.items():
-                    if key in OUT and OUT[key]:
-                        if internal_format_to_data_format(OUT[key].internal_format) == GL_FLOAT:
-                            # TEMPORAL SUPER-SAMPLING ACCUMULATION
-                            self.blend_texture(OUT[key], fbo, 1.0 / (self.sample_count + 1))
-            return OUT['Color']
+        }
 
 
 PIPELINE = NPR_Pipeline
