@@ -95,7 +95,7 @@ class NPR_Pipeline(Pipeline):
                 GLSLGraphIO(
                     name='PRE_PASS_PIXEL_SHADER',
                     define='CUSTOM_PRE_PASS',
-                    io_wrap='SHADOW_OR_PRE_PASS',
+                    io_wrap='PRE_PASS',
                     shader_type='PIXEL_SHADER',
                     dynamic_output_types=GLSLGraphIO.COMMON_OUTPUT_TYPES,
                     custom_output_start_index=2,
