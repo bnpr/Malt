@@ -54,6 +54,7 @@ class MainPass(PipelineNode):
             self.setup_render_targets(self.pipeline.resolution, pre_pass.t_depth, custom_io)
             self.resolution = self.pipeline.resolution
             self.custom_io = custom_io
+            print(custom_io)
         
         UBOS = {'COMMON_UNIFORMS' : self.pipeline.common_buffer}
         callbacks = [
@@ -65,6 +66,13 @@ class MainPass(PipelineNode):
             'IN_NORMAL_DEPTH': t_normal_depth,
             'IN_ID': t_id,
         }
+        for io in custom_io:
+            if io['io'] == 'in':
+                if io['type'] == 'Texture':#TODO
+                    from Malt.SourceTranspiler import GLSLTranspiler
+                    glsl_name = GLSLTranspiler.custom_io_reference('IN', 'MAIN_PASS_PIXEL_SHADER', io['name'])
+                    textures[glsl_name] = inputs[io['name']]
+                    
         self.fbo.clear([(0,0,0,0)] * len(self.fbo.targets))
         self.pipeline.draw_scene_pass(self.fbo, batches, 'MAIN_PASS', self.pipeline.default_shader['MAIN_PASS'], 
             UBOS, {}, textures, callbacks, GL_EQUAL)
