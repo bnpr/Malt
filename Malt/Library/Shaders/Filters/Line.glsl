@@ -215,12 +215,12 @@ struct LineExpandOutput
 };
 
 LineExpandOutput line_expand(vec2 uv, int max_width, float aa_offset, 
-                             sampler2D line_color_texture, sampler2D line_width_texture, int line_width_channel,
+                             sampler2D line_color_texture, sampler2D line_width_texture, int line_width_channel, float line_width_scale,
                              sampler2D depth_texture, int depth_channel, usampler2D id_texture, int id_channel)
 {
     vec2 resolution = vec2(textureSize(line_color_texture,0));
 
-    int max_half_width = max_width;
+    int max_half_width = int(ceil(max_width / 2.0));
 
     float depth = texture(depth_texture, uv)[depth_channel];
     uint id = texture(id_texture, uv)[id_channel];
@@ -236,7 +236,7 @@ LineExpandOutput line_expand(vec2 uv, int max_width, float aa_offset,
             float offset_length = length(offset);
             vec2 offset_uv = uv + offset / resolution;
 
-            float offset_width = texture(line_width_texture, offset_uv)[line_width_channel];
+            float offset_width = texture(line_width_texture, offset_uv)[line_width_channel] * line_width_scale;
 
             if(offset_width > 0 && offset_length <= offset_width / 2.0)
             {

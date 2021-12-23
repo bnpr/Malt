@@ -32,6 +32,7 @@ uniform sampler2D line_color_texture;
 
 uniform sampler2D line_width_texture;
 uniform int line_width_channel;
+uniform float line_width_scale = 1.0;
 
 uniform float aa_offset = 0.0;
 
@@ -44,7 +45,7 @@ void main()
     vec2 uv = screen_uv();
     vec4 line_color = line_expand(
         uv, brute_force_range, aa_offset,
-        line_color_texture, line_width_texture, line_width_channel,
+        line_color_texture, line_width_texture, line_width_channel, line_width_scale,
         depth_texture, depth_channel, id_texture, id_channel
     ).color;
 

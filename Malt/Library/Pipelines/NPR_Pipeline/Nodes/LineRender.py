@@ -19,6 +19,7 @@ class LineRender(PipelineNode):
         inputs['Line Color'] = Parameter('', Type.TEXTURE)
         inputs['Line Width'] = Parameter('', Type.TEXTURE)
         inputs['Max Width'] = Parameter(10, Type.INT)
+        inputs['Line Scale'] = Parameter(1.0, Type.FLOAT)
         inputs['Normal Depth'] = Parameter('', Type.TEXTURE)
         inputs['ID'] = Parameter('', Type.TEXTURE)
         return inputs
@@ -51,6 +52,7 @@ class LineRender(PipelineNode):
         _SHADER.textures['id_texture'] = inputs['ID']
         _SHADER.textures['line_color_texture'] = inputs['Line Color']
         _SHADER.textures['line_width_texture'] = inputs['Line Width']
+        _SHADER.uniforms['line_width_scale'].set_value(inputs['Line Scale'])
         _SHADER.uniforms['brute_force_range'].set_value(inputs['Max Width'])
         
         self.pipeline.draw_screen_pass(_SHADER, self.fbo_color)
