@@ -490,6 +490,8 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
             make_row(True)
             row = layout.row(align=True)
             row.template_ID(self.graphs[key], "graph")
+        else:
+            make_row(True)
             
         return True
 
