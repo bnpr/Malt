@@ -418,28 +418,29 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
             pass
 
         def make_row(label_only = False):
+            result = layout
             nonlocal label
-            if label is None:
-                return layout
-            is_override = False
-            if '@' in label:
-                is_override = True
-                label = '⇲ '+label.split(' @ ')[1]
-            
             row = layout.row(align=True)
             result = row.split()
-            if not label_only:
-                result = result.split(factor=0.66)
-                result.alignment = 'RIGHT'
-            result.label(text=label)
+            is_override = '@' in key
             
-            if is_node_socket == False:            
-                if is_override:
-                    row.operator('wm.malt_callback', text='', icon='X').callback.set(
-                        lambda : self.remove_override(key))
-                else:
-                    row.operator('wm.malt_new_override', text='', icon='DECORATE_OVERRIDE').callback.set(
-                        lambda override_name: self.add_override(key, override_name))
+            if is_override:
+                if label is None:
+                    label = key
+                label = '⇲ '+label.split(' @ ')[-1]
+            
+            if label is not None:
+                if label_only == False and is_node_socket == False:          
+                    result = result.split(factor=0.66)
+                    result.alignment = 'RIGHT'
+                result.label(text=label)
+            
+            if is_override:
+                row.operator('wm.malt_callback', text='', icon='X').callback.set(
+                    lambda : self.remove_override(key))
+            else:
+                row.operator('wm.malt_new_override', text='', icon='DECORATE_OVERRIDE').callback.set(
+                    lambda override_name: self.add_override(key, override_name))
             
             if draw_callback:
                 draw_callback(row, self)
