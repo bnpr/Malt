@@ -66,10 +66,6 @@ class RenderLayers(PipelineNode):
                 self.setup_render_targets(self.pipeline.resolution, custom_io)
                 self.resolution = self.pipeline.resolution
                 self.custom_io = custom_io
-                print(custom_io)
-                print(self.opaque_targets.keys())
-                print(self.transparent_targets.keys())
-                print(self.color_targets.keys())
 
             self.fbo_color.clear([(0,0,0,0)]*len(self.fbo_color.targets))
             self.fbo_transparent.clear([(0,0,0,0)]*len(self.fbo_transparent.targets))

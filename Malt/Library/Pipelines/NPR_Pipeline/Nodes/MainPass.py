@@ -54,7 +54,6 @@ class MainPass(PipelineNode):
             self.setup_render_targets(self.pipeline.resolution, pre_pass.t_depth, custom_io)
             self.resolution = self.pipeline.resolution
             self.custom_io = custom_io
-            print(custom_io)
         
         UBOS = {'COMMON_UNIFORMS' : self.pipeline.common_buffer}
         callbacks = [
