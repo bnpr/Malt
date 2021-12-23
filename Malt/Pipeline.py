@@ -175,7 +175,7 @@ class Pipeline():
     
     def copy_textures(self, target, color_sources=[], depth_source=None):
         for i, texture in enumerate(color_sources):
-            self.copy_shader.textures['IN_'+str(i)] = texture
+            self.copy_shader.textures[f'IN[{str(i)}]'] = texture
         self.copy_shader.textures['IN_DEPTH'] = depth_source
         self.draw_screen_pass(self.copy_shader, target)
     

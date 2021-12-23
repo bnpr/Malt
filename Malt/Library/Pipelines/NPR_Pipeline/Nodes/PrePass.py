@@ -92,7 +92,7 @@ class PrePass(PipelineNode):
         outputs['PrePass'] = self
         outputs['Normal Depth'] = self.t_normal_depth
         outputs['ID'] = self.t_id
-        outputs |= self.custom_targets
+        outputs.update(self.custom_targets)
 
 
 NODE = PrePass

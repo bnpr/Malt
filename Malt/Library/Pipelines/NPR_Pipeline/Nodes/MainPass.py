@@ -69,6 +69,6 @@ class MainPass(PipelineNode):
         self.pipeline.draw_scene_pass(self.fbo, batches, 'MAIN_PASS', self.pipeline.default_shader['MAIN_PASS'], 
             UBOS, {}, textures, callbacks, GL_EQUAL)
 
-        outputs |= self.custom_targets
+        outputs.update(self.custom_targets)
 
 NODE = MainPass

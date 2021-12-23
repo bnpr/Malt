@@ -17,7 +17,7 @@ from Malt.Library.Pipelines.NPR_Pipeline.NPR_LightShaders import NPR_LightShader
 
 from Malt.Library.Nodes import Unpack8bitTextures
 
-from Malt.Library.Pipelines.NPR_Pipeline.Nodes import ScreenPass, PrePass, MainPass, CompositeLayers, SSAA, LineRender, RenderLayers
+from Malt.Library.Pipelines.NPR_Pipeline.Nodes import ScreenPass, PrePass, MainPass, SSAA, LineRender, RenderLayers
 
 _COMMON_HEADER = '''
 #include "NPR_Pipeline.glsl"
@@ -39,12 +39,6 @@ _DEFAULT_SHADER_SRC='''
 void PRE_PASS_PIXEL_SHADER(inout PrePassOutput PO){ }
 
 void MAIN_PASS_PIXEL_SHADER() { }
-'''
-
-_BLEND_TRANSPARENCY_SHADER = None
-
-_BLEND_TRANSPARENCY_SHADER_SRC='''
-#include "Passes/BlendTransparency.glsl"
 '''
 
 class NPR_Pipeline(Pipeline):
@@ -79,10 +73,6 @@ class NPR_Pipeline(Pipeline):
         global _DEFAULT_SHADER
         if _DEFAULT_SHADER is None: _DEFAULT_SHADER = self.compile_material_from_source('Mesh', _DEFAULT_SHADER_SRC)
         self.default_shader = _DEFAULT_SHADER
-
-        global _BLEND_TRANSPARENCY_SHADER
-        if _BLEND_TRANSPARENCY_SHADER is None: _BLEND_TRANSPARENCY_SHADER = self.compile_shader_from_source(_BLEND_TRANSPARENCY_SHADER_SRC)
-        self.blend_transparency_shader = _BLEND_TRANSPARENCY_SHADER
     
     def get_samples(self):
         if self.samples is None:
@@ -148,7 +138,7 @@ class NPR_Pipeline(Pipeline):
         
         render_layer = PythonPipelineGraph(
             name='Render Layer',
-            nodes = [ScreenPass.NODE, PrePass.NODE, MainPass.NODE, Unpack8bitTextures.NODE, CompositeLayers.NODE, LineRender.NODE],
+            nodes = [ScreenPass.NODE, PrePass.NODE, MainPass.NODE, Unpack8bitTextures.NODE, LineRender.NODE],
             graph_io = [
                 PythonGraphIO(
                     name = 'Render Layer',
@@ -187,7 +177,7 @@ class NPR_Pipeline(Pipeline):
             ]
         )
         
-        self.graphs |= {e.name : e for e in [mesh, screen, render_layer, render]}
+        self.graphs.update({e.name : e for e in [mesh, screen, render_layer, render]})
 
         self.npr_light_shaders.setup_graphs(self, self.graphs)
     
