@@ -97,10 +97,8 @@ classes = [
 def register():
     for _class in classes: bpy.utils.register_class(_class)
     bpy.types.World.malt_graph_types = bpy.props.CollectionProperty(type=MaltGraphType)
-    #bpy.types.World.malt_custom_passes_index = bpy.props.IntProperty()
     
 def unregister():
-    del bpy.types.World.malt_custom_passes
-    #del bpy.types.World.malt_custom_passes_index
+    del bpy.types.World.malt_graph_types
     for _class in reversed(classes): bpy.utils.unregister_class(_class)
 
