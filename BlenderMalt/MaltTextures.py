@@ -18,7 +18,7 @@ def __load_texture(texture):
     w,h = texture.size
     channels = int(texture.channels)
     size = w*h*channels
-    sRGB = texture.colorspace_settings.name == 'sRGB'
+    sRGB = False
     if size == 0:
         return True
 
