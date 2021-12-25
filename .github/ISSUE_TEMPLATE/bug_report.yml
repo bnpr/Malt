@@ -1,0 +1,59 @@
+name: Bug Reports
+description: Open a new issue
+body:
+
+- type: markdown
+  attributes:
+    value: |
+      Before opening a new issue:
+      - Read the [readme](https://github.com/pragma37/Malt#malt), check that you meet the minimum requirements and have installed Malt properly.
+      - Make sure you are running the latest Malt version.
+      - Search [existing issues](https://github.com/bnpr/Malt/issues) to ensure it has not already been reported.
+
+- type: input
+  attributes:
+    label: Malt version
+    placeholder: Release
+  validations:
+    required: true
+
+- type: input
+  attributes:
+    label: Blender version
+    placeholder: Blender 3.0.0
+  validations:
+    required: true
+
+- type: input
+  attributes:
+    label: OS
+    placeholder: Windows 10 64 bits
+  validations:
+    required: true
+
+- type: input
+  attributes:
+    label: Hardware info
+    placeholder: Intel i7-4790K | 16GB RAM | Nvidia GTX 1060 6GB
+  validations:
+    required: true
+
+- type: textarea
+  attributes:
+    label: Issue description and reproduction steps
+  validations:
+    required: true
+
+- type: textarea
+  attributes:
+    label: Attachments
+    description: |
+      - The **Log file** from the Blender session where the bug happened.
+        You can find it in *Preferences > Addons > BlenderMalt > Open Session Log* or search for it in your system temporary folder.
+      - A zipped **.blend file** with a minimal example to reproduce the error. *(Unless the error is not file dependent)*
+      > Don't copy/paste the *Log* text. Drag and drop the files to upload them.
+  validations:
+    required: true
+
+
+

@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+
+contact_links:
+  - name: Q&A
+    url: https://github.com/bnpr/Malt/discussions/categories/q-a
+    about: Ask your *How to* questions.
+
+  - name: Feedback & Feature Requests
+    url: https://github.com/bnpr/Malt/discussions/categories/feedback-feature-requests
+    about: Post your feedback and feature requests.
+
