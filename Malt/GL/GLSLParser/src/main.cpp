@@ -1,4 +1,5 @@
 #include <string>
+#include <map>
 #include <iostream>
 
 #include <tao/pegtl.hpp>
@@ -18,7 +19,8 @@ using namespace tao::pegtl;
 
 struct line_comment : seq<STRING("//"), until<eol, any>> {};
 struct multiline_comment : seq<STRING("/*"), until<STRING("*/"), any>> {};
-struct _s_ : star<sor<line_comment, multiline_comment, space>> {};
+struct META;
+struct _s_ : star<not_at<META>, sor<line_comment, multiline_comment, space>> {};
 
 struct LPAREN : one<'('> {};
 struct RPAREN : one<')'> {};
@@ -40,20 +42,22 @@ struct FILE_PATH : plus<not_one<'"'>> {};
 struct QUOTED_FILE_PATH : seq<one<'"'>, FILE_PATH, one<'"'>> {};
 struct LINE_DIRECTIVE : seq<STRING("#line"), _s_, DIGITS, _s_, QUOTED_FILE_PATH> {};
 
-struct PAREN_SCOPE;
-struct PAREN_SCOPE : seq<LPAREN, until<RPAREN, sor<PAREN_SCOPE, any>>> {};
-struct META_PROP : seq<IDENTIFIER, _s_, PAREN_SCOPE> {};
-struct META_PROPS : list<seq<_s_, META_PROP, _s_>, seq<_s_, COMMA, _s_>> {};
-struct META : seq<STRING("META"), _s_, LPAREN, LPAREN, META_PROPS, RPAREN, RPAREN> {};
+struct _ms_ : star<space> {};
+struct META_PROP_VALUE : star<not_at<one<';'>>, any> {};
+struct META_PROP : seq<not_at<one<'@'>>, IDENTIFIER, _ms_, one<'='>, _ms_, META_PROP_VALUE, _ms_, one<';'>> {};
+struct META_PROPS : plus<seq<_ms_, META_PROP, _ms_>> {};
+struct META_MEMBER : seq<one<'@'>, _ms_, IDENTIFIER, _ms_, one<':'>, META_PROPS> {};
+struct META_MEMBERS : plus<seq<_ms_, META_MEMBER, _ms_>> {};
+struct META : seq<STRING("/*"), _ms_, STRING("META"), _ms_, META_MEMBERS, _ms_, STRING("*/")> {};
 
-struct MEMBER : seq<opt<PRECISION>, _s_, TYPE, _s_, IDENTIFIER, _s_, opt<ARRAY_SIZE>, _s_, opt<META>, _s_, END> {};
+struct MEMBER : seq<opt<PRECISION>, _s_, TYPE, _s_, IDENTIFIER, _s_, opt<ARRAY_SIZE>, _s_, END> {};
 struct MEMBERS : plus<seq<_s_, MEMBER, _s_>> {};
-struct STRUCT_DEF : seq<STRUCT, _s_, IDENTIFIER, _s_, LBRACE, _s_, opt<MEMBERS>, _s_, RBRACE> {};
+struct STRUCT_DEF : seq<opt<META>, _s_, STRUCT, _s_, IDENTIFIER, _s_, LBRACE, _s_, opt<MEMBERS>, _s_, RBRACE> {};
 
-struct PARAMETER : seq<opt<IO>, _s_, opt<PRECISION>, _s_, TYPE, _s_, IDENTIFIER, _s_, opt<ARRAY_SIZE>, _s_, opt<META>> {};
+struct PARAMETER : seq<opt<IO>, _s_, opt<PRECISION>, _s_, TYPE, _s_, IDENTIFIER, _s_, opt<ARRAY_SIZE>> {};
 struct PARAMETERS : list<seq<_s_, PARAMETER, _s_>, seq<_s_, COMMA, _s_>> {};
 struct FUNCTION_SIG : seq<TYPE, _s_, IDENTIFIER, _s_, LPAREN, _s_, opt<PARAMETERS>, _s_, RPAREN> {}; 
-struct FUNCTION_DEC : seq<FUNCTION_SIG, _s_, LBRACE> {}; 
+struct FUNCTION_DEC : seq<opt<META>, _s_, FUNCTION_SIG, _s_, LBRACE> {}; 
 
 struct GLSL_GRAMMAR : star<sor<LINE_DIRECTIVE, STRUCT_DEF, FUNCTION_DEC, any>> {};
 
@@ -70,8 +74,9 @@ using selector = parse_tree::selector
         IO,
         ARRAY_SIZE,
         FILE_PATH,
-        PAREN_SCOPE,
+        META_PROP_VALUE,
         META_PROP,
+        META_MEMBER,
         META,
         MEMBER,
         MEMBERS,
@@ -110,6 +115,36 @@ parse_tree::node* get(parse_tree::node* parent)
         }
     }
     return nullptr;
+}
+
+std::map<std::string, rapidjson::Value> get_meta_dict(parse_tree::node* meta, rapidjson::MemoryPoolAllocator<>& allocator)
+{
+    using namespace rapidjson;
+    std::map<std::string, Value> meta_dict = {};
+    if(meta)
+    {
+        for(auto& meta_member : meta->children)
+        {
+            std::string member_name = std::string(get<IDENTIFIER>(meta_member.get())->string_view());
+            Value member_meta = Value(kObjectType);
+            
+            for(auto& meta_prop : meta_member->children)
+            {
+                if(!meta_prop->is_type<META_PROP>())
+                {
+                    continue; //Other type of child
+                }
+                std::string prop_name = std::string(get<IDENTIFIER>(meta_prop.get())->string_view());
+                std::string prop_value = std::string(get<META_PROP_VALUE>(meta_prop.get())->string_view());
+                member_meta.AddMember(
+                    Value(prop_name.c_str(), allocator), Value(prop_value.c_str(), allocator), allocator
+                );
+            }
+            
+            meta_dict[member_name] = member_meta;
+        }
+    }
+    return meta_dict;
 }
 
 std::string remove_extra_whitespace(const std::string& str)
@@ -189,6 +224,9 @@ int main(int argc, char* argv[])
             parse_tree::node* members = get<MEMBERS>(child.get());
             if(!members) continue;
 
+            parse_tree::node* meta = get<META>(child.get());
+            auto meta_dict = get_meta_dict(meta, json.GetAllocator());
+
             for(auto& member : members->children)
             {
                 std::string name = std::string(get<IDENTIFIER>(member.get())->string_view());
@@ -206,18 +244,16 @@ int main(int argc, char* argv[])
                 member_def.AddMember("name", Value(name.c_str(), json.GetAllocator()), json.GetAllocator());
                 member_def.AddMember("type", Value(type.c_str(), json.GetAllocator()), json.GetAllocator());
                 member_def.AddMember("size", Value(array_size), json.GetAllocator());
-                Value meta_dic = Value(kObjectType);
-                parse_tree::node* meta = get<META>(member.get());
-                if(meta)
+                
+                if(meta_dict.count(name))
                 {
-                    for(auto& meta_prop : meta->children)
-                    {
-                        std::string name = std::string(get<IDENTIFIER>(meta_prop.get())->string_view());
-                        std::string value = std::string(get<PAREN_SCOPE>(meta_prop.get())->string_view());
-                        meta_dic.AddMember(Value(name.c_str(), json.GetAllocator()), Value(value.c_str(), json.GetAllocator()), json.GetAllocator());
-                    }
+                    member_def.AddMember("meta", meta_dict[name], json.GetAllocator());
                 }
-                member_def.AddMember("meta", meta_dic, json.GetAllocator());
+                else
+                {
+                    member_def.AddMember("meta", Value(kObjectType), json.GetAllocator());
+                }
+
                 members_array.PushBack(member_def, json.GetAllocator());
             }
         }
@@ -246,6 +282,9 @@ int main(int argc, char* argv[])
             parse_tree::node* parameters = get<PARAMETERS>(signature);
             if(!parameters) continue;
 
+            parse_tree::node* meta = get<META>(child.get());
+            auto meta_dict = get_meta_dict(meta, json.GetAllocator());
+
             for(auto& parameter : parameters->children)
             {
                 std::string name = std::string(get<IDENTIFIER>(parameter.get())->string_view());
@@ -271,18 +310,16 @@ int main(int argc, char* argv[])
                 parameter_dec.AddMember("type", Value(type.c_str(), json.GetAllocator()), json.GetAllocator());
                 parameter_dec.AddMember("size", Value(array_size), json.GetAllocator());
                 parameter_dec.AddMember("io", Value(io.c_str(), json.GetAllocator()), json.GetAllocator());
-                Value meta_dic = Value(kObjectType);
-                parse_tree::node* meta = get<META>(parameter.get());
-                if(meta)
+                
+                if(meta_dict.count(name))
                 {
-                    for(auto& meta_prop : meta->children)
-                    {
-                        std::string name = std::string(get<IDENTIFIER>(meta_prop.get())->string_view());
-                        std::string value = std::string(get<PAREN_SCOPE>(meta_prop.get())->string_view());
-                        meta_dic.AddMember(Value(name.c_str(), json.GetAllocator()), Value(value.c_str(), json.GetAllocator()), json.GetAllocator());
-                    }
+                    parameter_dec.AddMember("meta", meta_dict[name], json.GetAllocator());
                 }
-                parameter_dec.AddMember("meta", meta_dic, json.GetAllocator());
+                else
+                {
+                    parameter_dec.AddMember("meta", Value(kObjectType), json.GetAllocator());
+                }
+
                 parameters_array.PushBack(parameter_dec, json.GetAllocator());
             }
         }
