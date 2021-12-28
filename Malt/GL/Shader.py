@@ -295,7 +295,16 @@ def reflect_program_uniforms(program):
 
     uniforms = {}
 
+    query_indices = gl_buffer(GL_INT, uniform_count[0])
+    for i in range(len(query_indices)):
+        query_indices[i] = i
+    block_indices = gl_buffer(GL_INT, uniform_count[0])
+    glGetActiveUniformsiv(program, uniform_count[0], query_indices, GL_UNIFORM_BLOCK_INDEX, block_indices)
+
     for i in range(0, uniform_count[0]):
+        if block_indices[i] != -1:
+            continue #A built-in uniform or an Uniform Block
+
         glGetActiveUniform(program, i, max_string_length, string_length,
         array_length, uniform_type, uniform_name)
         name = buffer_to_string(uniform_name)
