@@ -147,6 +147,7 @@ def shader_preprocessor(shader_source, include_directories=[], definitions=[]):
     mcpp = os.path.join(dependencies_path, f'mcpp-{platform.system()}')
 
     args = [mcpp]
+    args.append('-C') #keep comments
     for directory in include_directories:
         args.append('-I'+directory)
     for definition in definitions:
