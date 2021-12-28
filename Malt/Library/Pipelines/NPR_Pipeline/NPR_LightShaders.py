@@ -28,6 +28,7 @@ class NPR_LightShaders():
         self.texture = None
         self.fbos = None
     
+    @classmethod
     def setup_graphs(self, pipeline, graphs):
         from Malt.Library.Pipelines.NPR_Pipeline.NPR_Pipeline import _COMMON_HEADER
         graphs['Light'] = GLSLPipelineGraph(

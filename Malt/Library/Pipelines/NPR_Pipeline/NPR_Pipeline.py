@@ -43,49 +43,26 @@ void MAIN_PASS_PIXEL_SHADER() { }
 
 class NPR_Pipeline(Pipeline):
 
-    def __init__(self):
-        super().__init__()
-
+    def __init__(self, plugins=[]):
         shader_dir = path.join(path.dirname(__file__), 'Shaders')
         if shader_dir not in self.SHADER_INCLUDE_PATHS:
             self.SHADER_INCLUDE_PATHS.append(shader_dir)
-
-        self.sampling_grid_size = 2
+        self.sampling_grid_size = 1
         self.samples = None
-
+        super().__init__(plugins)
+    
+    def setup_parameters(self):
+        super().setup_parameters()
         self.parameters.world['Samples.Grid Size'] = Parameter(8, Type.INT)
         self.parameters.world['Samples.Grid Size @ Preview'] = Parameter(4, Type.INT)
         self.parameters.world['Samples.Width'] = Parameter(1.0, Type.FLOAT)
-        
         default_material_path = os.path.join(os.path.dirname(__file__), 'default.mesh.glsl')
         self.parameters.world['Material.Default'] = MaterialParameter(default_material_path, '.mesh.glsl')
-        
         self.parameters.world['Render'] = Parameter('Render', Type.GRAPH)
-
-        self.common_buffer = Common.CommonBuffer()
-        self.npr_lighting = NPR_Lighting(self.parameters)
-        self.npr_light_shaders = NPR_LightShaders(self.parameters)
-        
-        self.composite_depth = DepthToCompositeDepth.CompositeDepth()
-
-        self.setup_graphs()
-        
-        global _DEFAULT_SHADER
-        if _DEFAULT_SHADER is None: _DEFAULT_SHADER = self.compile_material_from_source('Mesh', _DEFAULT_SHADER_SRC)
-        self.default_shader = _DEFAULT_SHADER
-    
-    def get_samples(self):
-        if self.samples is None:
-            self.samples = Sampling.get_RGSS_samples(self.sampling_grid_size, 1.0)
-        return self.samples
-    
-    def get_sample(self, width):
-        w, h = self.get_samples()[self.sample_count]
-        w*=width
-        h*=width
-        return w, h
     
     def setup_graphs(self):
+        super().setup_graphs()
+
         mesh = GLSLPipelineGraph(
             name='Mesh',
             graph_type=GLSLPipelineGraph.SCENE_GRAPH,
@@ -178,8 +155,28 @@ class NPR_Pipeline(Pipeline):
         )
         
         self.graphs.update({e.name : e for e in [mesh, screen, render_layer, render]})
-
-        self.npr_light_shaders.setup_graphs(self, self.graphs)
+        NPR_LightShaders.setup_graphs(self, self.graphs)
+    
+    def setup_resources(self):
+        super().setup_resources()
+        self.common_buffer = Common.CommonBuffer()
+        self.npr_lighting = NPR_Lighting(self.parameters)
+        self.npr_light_shaders = NPR_LightShaders(self.parameters)
+        self.composite_depth = DepthToCompositeDepth.CompositeDepth()
+        global _DEFAULT_SHADER
+        if _DEFAULT_SHADER is None: _DEFAULT_SHADER = self.compile_material_from_source('Mesh', _DEFAULT_SHADER_SRC)
+        self.default_shader = _DEFAULT_SHADER
+    
+    def get_samples(self):
+        if self.samples is None:
+            self.samples = Sampling.get_RGSS_samples(self.sampling_grid_size, 1.0)
+        return self.samples
+    
+    def get_sample(self, width):
+        w, h = self.get_samples()[self.sample_count]
+        w*=width
+        h*=width
+        return w, h
     
     def get_scene_batches(self, scene):
         opaque_batches = {}
@@ -205,7 +202,6 @@ class NPR_Pipeline(Pipeline):
         opaque_batches, transparent_batches = self.get_scene_batches(scene)
         
         self.npr_lighting.load(self, scene, opaque_batches, transparent_batches, sample_offset, self.sample_count)
-
         self.common_buffer.load(scene, resolution, sample_offset, self.sample_count)
         
         result = None

@@ -10,7 +10,6 @@ from Malt.GL.Shader import Shader, UBO, shader_preprocessor
 
 from Malt.PipelineParameters import *
 
-
 SHADER_DIR = path.join(path.dirname(__file__), 'Library', 'Shaders')
 
 class Pipeline():
@@ -21,27 +20,49 @@ class Pipeline():
     BLEND_SHADER = None
     COPY_SHADER = None
 
-    def __init__(self):
+    def __init__(self, plugins=[]):
         from multiprocessing.dummy import Pool
         self.pool = Pool(16)
-
-        self.parameters = PipelineParameters()
-        self.parameters.mesh['double_sided'] = Parameter(False, Type.BOOL)
-        self.parameters.mesh['precomputed_tangents'] = Parameter(False, Type.BOOL)
-
-        self.parameters.world['Material.Default'] = MaterialParameter('', '.mesh.glsl')
-        self.parameters.world['Material.Override'] = MaterialParameter('', '.mesh.glsl')
-
-        self.graphs = {}
 
         if SHADER_DIR not in Pipeline.SHADER_INCLUDE_PATHS:
             Pipeline.SHADER_INCLUDE_PATHS.append(SHADER_DIR)
 
         self.resolution = None
         self.sample_count = 0
-
         self.result = None
+        self.is_final_render = None
+        
+        plugins = [plugin for plugin in plugins if plugin.poll(self)]
+        self.setup_parameters()
+        for plugin in plugins:
+            plugin.register_pipeline_parameters(self.parameters)
+        self.setup_graphs()
+        for plugin in plugins:
+            plugin.register_pipeline_graphs(self.graphs)
+        for plugin in plugins:
+            plugin.register_graph_libraries(self.graphs)
+        self.setup_resources()
+    
+    def setup_parameters(self):
+        self.parameters = PipelineParameters()
+        self.parameters.mesh['double_sided'] = Parameter(False, Type.BOOL)
+        self.parameters.mesh['precomputed_tangents'] = Parameter(False, Type.BOOL)
+        self.parameters.world['Material.Default'] = MaterialParameter('', '.mesh.glsl')
+        self.parameters.world['Material.Override'] = MaterialParameter('', '.mesh.glsl')
+    
+    def get_parameters(self):
+        return self.parameters
 
+    def setup_graphs(self):
+        self.graphs = {}
+    
+    def get_graphs(self):
+        result = {}
+        for name, graph in self.graphs.items():
+            result[name] = graph.get_serializable_copy()
+        return result
+
+    def setup_resources(self):
         positions=[
              1.0,  1.0, 0.0,
              1.0, -1.0, 0.0,
@@ -52,7 +73,6 @@ class Pipeline():
             0, 1, 3,
             1, 2, 3,
         ]
-        
         self.quad = Mesh(positions, indices)
         
         if Pipeline.BLEND_SHADER is None:
@@ -64,19 +84,6 @@ class Pipeline():
             source = '''#include "Passes/CopyTextures.glsl"'''
             Pipeline.COPY_SHADER = self.compile_shader_from_source(source)
         self.copy_shader = Pipeline.COPY_SHADER
-        
-        self.default_shader = None
-
-        self.is_final_render = None
-
-    def get_parameters(self):
-        return self.parameters
-    
-    def get_graphs(self):
-        result = {}
-        for name, graph in self.graphs.items():
-            result[name] = graph.get_serializable_copy()
-        return result
     
     def get_render_outputs(self):
         return {
