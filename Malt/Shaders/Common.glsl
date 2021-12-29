@@ -3,8 +3,6 @@
 #ifndef COMMON_GLSL
 #define COMMON_GLSL
 
-#include "Common/Meta.glsl"
-
 #ifdef VERTEX_SHADER
 #define vertex_out out
 #else

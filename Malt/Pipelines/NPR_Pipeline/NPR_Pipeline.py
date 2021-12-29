@@ -67,6 +67,7 @@ class NPR_Pipeline(Pipeline):
             name='Mesh',
             graph_type=GLSLPipelineGraph.SCENE_GRAPH,
             default_global_scope=_COMMON_HEADER,
+            default_shader_src=_DEFAULT_SHADER_SRC,
             shaders=['PRE_PASS', 'MAIN_PASS', 'SHADOW_PASS'],
             graph_io=[
                 GLSLGraphIO(
@@ -96,12 +97,13 @@ class NPR_Pipeline(Pipeline):
                 ),
             ]
         )
-        mesh.setup_reflection(self, _DEFAULT_SHADER_SRC)
+        self.add_graph(mesh)
 
         screen = GLSLPipelineGraph(
             name='Screen',
             graph_type=GLSLPipelineGraph.GLOBAL_GRAPH,
             default_global_scope=_SCREEN_SHADER_HEADER,
+            default_shader_src="void SCREEN_SHADER(vec2 uv){ }",
             graph_io=[ 
                 GLSLGraphIO(
                     name='SCREEN_SHADER',
@@ -111,11 +113,10 @@ class NPR_Pipeline(Pipeline):
                 )
             ]
         )
-        screen.setup_reflection(self, "void SCREEN_SHADER(vec2 uv){ }")
+        self.add_graph(screen)
         
         render_layer = PythonPipelineGraph(
             name='Render Layer',
-            nodes = [ScreenPass.NODE, PrePass.NODE, MainPass.NODE, Unpack8bitTextures.NODE, LineRender.NODE],
             graph_io = [
                 PythonGraphIO(
                     name = 'Render Layer',
@@ -133,10 +134,11 @@ class NPR_Pipeline(Pipeline):
                 )
             ]
         )
+        render_layer.add_library(os.path.join(os.path.dirname(__file__), 'Nodes'))
+        self.add_graph(render_layer)
 
         render = PythonPipelineGraph(
             name='Render',
-            nodes = [ScreenPass.NODE, RenderLayers.NODE, Unpack8bitTextures.NODE, SSAA.NODE, LineRender.NODE],
             graph_io = [
                 PythonGraphIO(
                     name = 'Render',
@@ -153,9 +155,10 @@ class NPR_Pipeline(Pipeline):
                 )
             ]
         )
+        render.add_library(os.path.join(os.path.dirname(__file__), 'Nodes'))
+        self.add_graph(render)
         
-        self.graphs.update({e.name : e for e in [mesh, screen, render_layer, render]})
-        NPR_LightShaders.setup_graphs(self, self.graphs)
+        self.add_graph(NPR_LightShaders.get_graph())
     
     def setup_resources(self):
         super().setup_resources()

@@ -1,4 +1,4 @@
-# Copyright (c) 2020-2021 BNPR, Miguel Pozo and contributors. MIT license. 
+# Copyright (c) 2020-2021 BNPR, Miguel Pozo and contributors. MIT license.
 
 class PipelinePlugin():
 
@@ -11,8 +11,8 @@ class PipelinePlugin():
         pass
 
     @classmethod
-    def register_pipeline_graphs(self, graphs):
-        pass
+    def register_pipeline_graphs(self):
+        return []
 
     @classmethod
     def register_graph_libraries(self, graphs):

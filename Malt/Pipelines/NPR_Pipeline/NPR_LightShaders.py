@@ -11,7 +11,6 @@ from Malt.PipelineGraph import *
 
 import ctypes
 
-
 class NPR_LightShaders():
 
     def __init__(self, parameters):
@@ -29,12 +28,13 @@ class NPR_LightShaders():
         self.fbos = None
     
     @classmethod
-    def setup_graphs(self, pipeline, graphs):
+    def get_graph(self):
         from Malt.Pipelines.NPR_Pipeline.NPR_Pipeline import _COMMON_HEADER
-        graphs['Light'] = GLSLPipelineGraph(
+        return GLSLPipelineGraph(
             name='Light',
             graph_type=GLSLPipelineGraph.INTERNAL_GRAPH,
             default_global_scope=_COMMON_HEADER,
+            default_shader_src="void LIGHT_SHADER(LightShaderInput I, inout LightShaderOutput O) { }",
             graph_io=[ 
                 GLSLGraphIO(
                     name='LIGHT_SHADER',
@@ -42,7 +42,6 @@ class NPR_LightShaders():
                 )
             ]
         )
-        graphs['Light'].setup_reflection(pipeline, "void LIGHT_SHADER(LightShaderInput I, inout LightShaderOutput O) { }")
     
     def load(self, pipeline, depth_texture, scene, lights_buffer):
         self.custom_shading_count = 0

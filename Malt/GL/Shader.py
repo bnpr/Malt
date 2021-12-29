@@ -422,10 +422,9 @@ def reflect_program_uniform_blocks(program):
 
 USE_GLSLANG_VALIDATOR = False
 
-def glsl_reflection(code, root_path = None):
+def glsl_reflection(code, root_paths=[]):
     import tempfile, subprocess, json
     GLSLParser = os.path.join(os.path.dirname(__file__), 'GLSLParser', '.bin', 'GLSLParser')
-    root_path = os.path.normpath(root_path)
     
     tmp = tempfile.NamedTemporaryFile(delete=False)
     tmp.write(code.encode('utf-8'))
@@ -446,8 +445,9 @@ def glsl_reflection(code, root_path = None):
         for e in dic.values():
             path = e["file"]
             path = os.path.normpath(path)
-            try: path = os.path.relpath(path, root_path)
-            except: pass
+            for root_path in root_paths:
+                try: path = os.path.relpath(path, root_path)
+                except: pass
             e["file"] = path
     
     fix_paths(reflection["structs"])

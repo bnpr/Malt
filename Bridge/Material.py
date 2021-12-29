@@ -13,7 +13,7 @@ class Material():
         self.parameters = {}
         self.compiler_error = ''
         
-        compiled_material = pipeline.compile_material(path, search_paths, custom_passes)
+        compiled_material = pipeline.compile_material(path, search_paths)#, custom_passes)
         
         if isinstance(compiled_material, str):
             self.compiler_error = compiled_material

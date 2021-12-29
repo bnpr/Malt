@@ -14,7 +14,6 @@ SHADER_DIR = path.join(path.dirname(__file__), 'Shaders')
 
 class Pipeline():
 
-    GLSL_HEADER = ""
     SHADER_INCLUDE_PATHS = []
 
     BLEND_SHADER = None
@@ -38,9 +37,12 @@ class Pipeline():
             plugin.register_pipeline_parameters(self.parameters)
         self.setup_graphs()
         for plugin in plugins:
-            plugin.register_pipeline_graphs(self.graphs)
+            for graph in plugin.register_pipeline_graphs(self.graphs):
+                self.add_graph(graph)
         for plugin in plugins:
             plugin.register_graph_libraries(self.graphs)
+        for graph in self.graphs.values():
+            graph.setup_reflection()
         self.setup_resources()
     
     def setup_parameters(self):
@@ -55,6 +57,11 @@ class Pipeline():
 
     def setup_graphs(self):
         self.graphs = {}
+    
+    def add_graph(self, graph):
+        if graph.file_extension.endswith('glsl'):
+            graph.include_paths += self.SHADER_INCLUDE_PATHS
+        self.graphs[graph.name] = graph
     
     def get_graphs(self):
         result = {}
@@ -110,43 +117,15 @@ class Pipeline():
                     return full_path
         return None
     
-    def preprocess_shader_from_source(self, shader_source, include_paths=[], defines=[]):
-        return self.preprocess_shaders_from_source(shader_source, include_paths, [defines])[0]
+    def compile_shader_from_source(self, source, include_paths=[], defines=[]):
+        vertex_src = shader_preprocessor(source, include_paths + self.SHADER_INCLUDE_PATHS, defines + ['VERTEX_SHADER'])
+        pixel_src = shader_preprocessor(source, include_paths + self.SHADER_INCLUDE_PATHS, defines + ['PIXEL_SHADER'])
+        return Shader(vertex_src, pixel_src)
+            
+    def compile_material_from_source(self, material_type, source, include_paths=[]):
+        return self.graphs[material_type].compile_material(source, include_paths)
     
-    def preprocess_shaders_from_source(self, shader_source, include_paths=[], defines_lists=[]):
-        shader_source = Pipeline.GLSL_HEADER + shader_source
-        include_paths = include_paths + Pipeline.SHADER_INCLUDE_PATHS
-
-        def preprocess(params):
-            return shader_preprocessor(*params)
-        
-        params = []
-        for defines in defines_lists:
-            params.append((shader_source, include_paths, defines))
-
-        return self.pool.map(preprocess, params)
-    
-    def compile_shader_from_source(self, shader_source, include_paths=[], defines=[]):
-        return self.compile_shaders_from_source(shader_source, include_paths, {'shader': defines})['shader']
-        
-    def compile_shaders_from_source(self, shader_source, include_paths=[], shader_defines_map={}):
-        defines_lists = []
-        for defines in shader_defines_map.values():
-            defines_lists.append(['VERTEX_SHADER']+defines) 
-            defines_lists.append(['PIXEL_SHADER']+defines) 
-        preprocessed_sources = self.preprocess_shaders_from_source(shader_source, include_paths, defines_lists)
-        
-        results = {}
-        for shader in shader_defines_map:
-            vertex = preprocessed_sources.pop(0)
-            pixel = preprocessed_sources.pop(0)
-            results[shader] = Shader(vertex, pixel)
-        return results
-    
-    def compile_material_from_source(self, material_type, source, include_paths=[], custom_passes={}):
-        return self.graphs[material_type].compile_material(self, source, include_paths, custom_passes)
-    
-    def compile_material(self, shader_path, search_paths=[], custom_passes={}):
+    def compile_material(self, shader_path, search_paths=[]):
         try:
             file_dir = path.dirname(shader_path)
             source = '#include "{}"'.format(path.basename(shader_path))
@@ -154,7 +133,7 @@ class Pipeline():
             for graph in self.graphs.values():
                 if shader_path.endswith(graph.file_extension):
                     material_type = graph.name
-            return self.compile_material_from_source(material_type, source, [file_dir] + search_paths, custom_passes)
+            return self.compile_material_from_source(material_type, source, [file_dir] + search_paths)
         except Exception as e:
             import traceback
             traceback.print_exc()

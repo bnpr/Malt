@@ -20,7 +20,7 @@ def scan_dirs(path, file_callback):
         if e.is_file():
             file_callback(e)
         if e.is_dir():
-            scan_dirs(e)
+            scan_dirs(e, file_callback)
 
 import cProfile, io, pstats
 

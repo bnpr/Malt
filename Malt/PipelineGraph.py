@@ -1,3 +1,8 @@
+# Copyright (c) 2020-2021 BNPR, Miguel Pozo and contributors. MIT license.
+
+import sys
+
+
 class PipelineGraphIO():
 
     def __init__(self, name, dynamic_input_types = [], dynamic_output_types = [], function=None):
@@ -17,13 +22,30 @@ class PipelineGraph():
         self.language = language
         self.file_extension = file_extension
         self.graph_type = graph_type
+        self.libs = []
+        self.lib_files = []
+        self.include_paths = []
         self.functions = {}
         self.structs = {}
         self.graph_io = { io.name : io for io in graph_io } 
     
-    def setup_reflection(self, functions, structs):
-        self.functions = functions
-        self.structs = structs
+    def add_library(self, path):
+        import os
+        from Malt.Utils import scan_dirs
+        extension = self.file_extension.split('.')[-1]
+        if os.path.isdir(path):
+            self.include_paths.append(path)
+            def file_callback(file):
+                if file.path.endswith(extension):
+                    self.lib_files.append(file.path)
+            scan_dirs(path, file_callback)
+        else:
+            self.include_paths.append(os.path.dirname(path))
+            self.lib_files.append(path)
+        self.libs.append(path)
+    
+    def setup_reflection(self):
+        pass
     
     def generate_source(self, parameters):
         return ''
@@ -53,10 +75,11 @@ class GLSLGraphIO(PipelineGraphIO):
 
 class GLSLPipelineGraph(PipelineGraph):
 
-    def __init__(self, name, graph_type, default_global_scope, shaders=['SHADER'], graph_io=[]):
+    def __init__(self, name, graph_type, default_global_scope, default_shader_src, shaders=['SHADER'], graph_io=[]):
         file_extension = f'.{name.lower()}.glsl'
         super().__init__(name, 'GLSL', file_extension, graph_type, graph_io)
         self.default_global_scope = default_global_scope
+        self.default_shader_src = default_shader_src
         self.shaders = shaders
     
     def name_as_macro(self, name):
@@ -64,15 +87,18 @@ class GLSLPipelineGraph(PipelineGraph):
     
     def get_material_define(self):
         return f'IS_{self.name_as_macro(self.name)}_SHADER'
+    
+    def preprocess_shader_from_source(self, source, include_paths=[], defines=[]):
+        from Malt.GL.Shader import shader_preprocessor
+        return shader_preprocessor(source, self.include_paths + include_paths, [self.get_material_define()] + defines)
 
-    def setup_reflection(self, pipeline, source):
-        source = self.default_global_scope + source
-        source = pipeline.preprocess_shader_from_source(source, [], [self.get_material_define(), 'VERTEX_SHADER','PIXEL_SHADER','REFLECTION'])
-        root_path = pipeline.SHADER_INCLUDE_PATHS #TODO: pass a list
-        from Malt.Pipeline import SHADER_DIR
-        root_path = SHADER_DIR
-        from . GL.Shader import glsl_reflection
-        reflection = glsl_reflection(source, root_path)
+    def setup_reflection(self):
+        src = self.default_global_scope + self.default_shader_src
+        for file in self.lib_files:
+            src += f'\n#include "{file}"\n'
+        src = self.preprocess_shader_from_source(src, [], ['VERTEX_SHADER','PIXEL_SHADER','REFLECTION'])
+        from Malt.GL.Shader import glsl_reflection
+        reflection = glsl_reflection(src, self.include_paths)
         functions = reflection["functions"]
         structs = reflection["structs"]
         for io in self.graph_io.values():
@@ -85,7 +111,8 @@ class GLSLPipelineGraph(PipelineGraph):
         for name in [*structs.keys()]:
             if name.startswith('_'): #TODO: Upper???
                 structs.pop(name)
-        super().setup_reflection(functions, structs)
+        self.functions = functions
+        self.structs = structs
     
     def generate_source(self, parameters):
         import textwrap
@@ -94,7 +121,10 @@ class GLSLPipelineGraph(PipelineGraph):
         for graph_io in self.graph_io.values():
             if graph_io.name in parameters.keys() and graph_io.define:
                 code += '#define {}\n'.format(graph_io.define)
-        code += '\n\n' + self.default_global_scope + '\n\n' + parameters['GLOBAL'] + '\n\n'
+        code += '\n\n' + self.default_global_scope + '\n\n'
+        for file in self.lib_files:
+            code += f'#include "{file}"\n'
+        code += '\n\n' + parameters['GLOBAL'] + '\n\n'
         for graph_io in self.graph_io.values():
             if graph_io.name in parameters.keys():
                 code += GLSLTranspiler.preprocessor_wrap(graph_io.shader_type,
@@ -102,13 +132,14 @@ class GLSLPipelineGraph(PipelineGraph):
         code += '\n\n'
         return code
     
-    def compile_material(self, pipeline, source, include_paths=[], custom_passes=[]):
+    def compile_material(self, source, include_paths=[]):
+        from Malt.GL.Shader import Shader
         shaders = {}
         for shader in self.shaders:
-            shaders[shader] = [self.get_material_define(), shader]
-            for custom_pass in custom_passes:
-                shaders[f'{custom_pass}'] = [self.get_material_define(), shader, self.name_as_macro(custom_pass)]
-        return pipeline.compile_shaders_from_source(source, include_paths, shaders)
+            vertex_src = self.preprocess_shader_from_source(source, include_paths, [shader, 'VERTEX_SHADER'])
+            pixel_src = self.preprocess_shader_from_source(source, include_paths, [shader, 'PIXEL_SHADER'])
+            shaders[shader] = Shader(vertex_src, pixel_src)
+        return shaders
 
 class PythonGraphIO(PipelineGraphIO):
 
@@ -119,11 +150,33 @@ class PythonGraphIO(PipelineGraphIO):
 
 class PythonPipelineGraph(PipelineGraph):
     
-    def __init__(self, name, nodes, graph_io):
+    def __init__(self, name, graph_io):
         extension = f'-{name}.py'
         super().__init__(name, 'Python', extension, self.GLOBAL_GRAPH, graph_io)
         self.node_instances = {}
         self.nodes = {}
+
+    def get_serializable_copy(self):
+        result = super().get_serializable_copy()
+        result.nodes = None
+        result.node_instances = None
+        return result
+    
+    def setup_reflection(self):
+        import importlib.util
+        nodes = []
+        for file in self.lib_files:
+            try:
+                spec = importlib.util.spec_from_file_location("_dynamic_node_module_", file)
+                module = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(module)
+                nodes.append(module.NODE)
+            except:
+                import traceback
+                traceback.print_exc()
+                print('filepath : ', file)
+        self.functions = {}
+        self.structs = {}
         for node_class in nodes:
             reflection = node_class.reflect()
             self.functions[reflection['name']] = reflection
