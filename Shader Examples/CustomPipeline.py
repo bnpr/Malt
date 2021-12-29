@@ -1,6 +1,6 @@
 #Copyright (c) 2020-2021 BNPR, Miguel Pozo and contributors. MIT license.
 
-from Malt.Library.Pipelines.NPR_Pipeline.NPR_Pipeline import *
+from Malt.Pipelines.NPR_Pipeline.NPR_Pipeline import *
 
 from Malt.Utils import LOG
 

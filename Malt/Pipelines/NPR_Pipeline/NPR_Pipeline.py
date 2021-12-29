@@ -8,16 +8,16 @@ from Malt.PipelineNode import PipelineNode
 
 from Malt.GL.GL import *
 
-from Malt.Library.Render import Common
-from Malt.Library.Render import DepthToCompositeDepth
-from Malt.Library.Render import Sampling
+from Malt.Render import Common
+from Malt.Render import DepthToCompositeDepth
+from Malt.Render import Sampling
 
-from Malt.Library.Pipelines.NPR_Pipeline.NPR_Lighting import NPR_Lighting
-from Malt.Library.Pipelines.NPR_Pipeline.NPR_LightShaders import NPR_LightShaders
+from Malt.Pipelines.NPR_Pipeline.NPR_Lighting import NPR_Lighting
+from Malt.Pipelines.NPR_Pipeline.NPR_LightShaders import NPR_LightShaders
 
-from Malt.Library.Nodes import Unpack8bitTextures
+from Malt.Nodes import Unpack8bitTextures
 
-from Malt.Library.Pipelines.NPR_Pipeline.Nodes import ScreenPass, PrePass, MainPass, SSAA, LineRender, RenderLayers
+from Malt.Pipelines.NPR_Pipeline.Nodes import ScreenPass, PrePass, MainPass, SSAA, LineRender, RenderLayers
 
 _COMMON_HEADER = '''
 #include "NPR_Pipeline.glsl"

@@ -41,7 +41,7 @@ class MaltPipeline(bpy.types.PropertyGroup):
         pipeline = self.pipeline
         if pipeline == '':
             current_dir = os.path.dirname(os.path.abspath(__file__))
-            default_pipeline = os.path.join(current_dir,'.MaltPath','Malt','Library','Pipelines','NPR_Pipeline','NPR_Pipeline.py')
+            default_pipeline = os.path.join(current_dir,'.MaltPath','Malt','Pipelines','NPR_Pipeline','NPR_Pipeline.py')
             if platform.system() == 'Darwin':
                 # The NPR Pipeline doesn't work on OpenGL implementations limited to 16 sampler uniforms
                 default_pipeline = os.path.join(current_dir,'.MaltPath','Malt','Pipelines','MiniPipeline','MiniPipeline.py')

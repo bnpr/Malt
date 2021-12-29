@@ -4,7 +4,7 @@ from Malt.GL.Shader import UBO
 from Malt.GL.Texture import TextureArray
 from Malt.GL.RenderTarget import ArrayLayerTarget, RenderTarget
 
-from Malt.Library.Render import Lighting
+from Malt.Render import Lighting
 
 from Malt.PipelineParameters import MaterialParameter
 from Malt.PipelineGraph import *
@@ -30,7 +30,7 @@ class NPR_LightShaders():
     
     @classmethod
     def setup_graphs(self, pipeline, graphs):
-        from Malt.Library.Pipelines.NPR_Pipeline.NPR_Pipeline import _COMMON_HEADER
+        from Malt.Pipelines.NPR_Pipeline.NPR_Pipeline import _COMMON_HEADER
         graphs['Light'] = GLSLPipelineGraph(
             name='Light',
             graph_type=GLSLPipelineGraph.INTERNAL_GRAPH,

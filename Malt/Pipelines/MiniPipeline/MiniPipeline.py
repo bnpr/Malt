@@ -8,7 +8,7 @@ from Malt.GL.RenderTarget import RenderTarget
 from Malt.GL.Shader import Shader, UBO
 from Malt.GL.Texture import Texture
 
-from Malt.Library.Render import Common
+from Malt.Render import Common
 from Malt.Pipeline import *
 
 class MiniPipeline(Pipeline):

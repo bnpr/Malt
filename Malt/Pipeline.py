@@ -10,7 +10,7 @@ from Malt.GL.Shader import Shader, UBO, shader_preprocessor
 
 from Malt.PipelineParameters import *
 
-SHADER_DIR = path.join(path.dirname(__file__), 'Library', 'Shaders')
+SHADER_DIR = path.join(path.dirname(__file__), 'Shaders')
 
 class Pipeline():
 

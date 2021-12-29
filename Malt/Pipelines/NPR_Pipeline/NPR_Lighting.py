@@ -7,8 +7,8 @@ from Malt.GL.RenderTarget import ArrayLayerTarget, RenderTarget
 
 from Malt.PipelineParameters import Parameter, Type
 
-from Malt.Library.Render import Common
-from Malt.Library.Render import Lighting
+from Malt.Render import Common
+from Malt.Render import Lighting
 
 class NPR_Lighting():
 
