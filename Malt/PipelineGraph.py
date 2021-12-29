@@ -1,8 +1,5 @@
 # Copyright (c) 2020-2021 BNPR, Miguel Pozo and contributors. MIT license.
 
-import sys
-
-
 class PipelineGraphIO():
 
     def __init__(self, name, dynamic_input_types = [], dynamic_output_types = [], function=None):

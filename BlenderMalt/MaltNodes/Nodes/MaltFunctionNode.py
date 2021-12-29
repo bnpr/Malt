@@ -70,7 +70,7 @@ class MaltFunctionNode(bpy.types.Node, MaltNode):
     def get_pass_type(self):
         graph = self.id_data.get_pipeline_graph()
         if graph.language == 'Python':
-            pass_type = graph.nodes[self.function_type].get_pass_type()
+            pass_type = graph.functions[self.function_type]['pass_type']
             if pass_type:
                 return pass_type
         return ''
