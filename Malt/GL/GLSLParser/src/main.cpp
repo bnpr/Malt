@@ -19,8 +19,9 @@ using namespace tao::pegtl;
 
 struct line_comment : seq<STRING("//"), until<eol, any>> {};
 struct multiline_comment : seq<STRING("/*"), until<STRING("*/"), any>> {};
+struct preprocessor_directive : seq<STRING("#"), until<eol, any>> {};
 struct META;
-struct _s_ : star<not_at<META>, sor<line_comment, multiline_comment, space>> {};
+struct _s_ : star<not_at<META>, sor<line_comment, multiline_comment, preprocessor_directive, space>> {};
 
 struct LPAREN : one<'('> {};
 struct RPAREN : one<')'> {};
