@@ -1,6 +1,8 @@
 # Copyright (c) 2020-2021 BNPR, Miguel Pozo and contributors. MIT license.
 
 from os import path
+from Malt.GL.RenderTarget import RenderTarget
+from Malt.GL.Texture import Texture
 
 from Malt.Pipeline import *
 from Malt.PipelineGraph import *
@@ -150,6 +152,7 @@ class NPR_Pipeline(Pipeline):
                         },
                         outputs = {
                             'Color' : Parameter('', Type.TEXTURE),
+                            'Depth' : Parameter('', Type.TEXTURE),
                         },
                     )
                 )
@@ -218,12 +221,17 @@ class NPR_Pipeline(Pipeline):
             self.graphs['Render'].run_source(self, graph['source'], graph['parameters'], IN, OUT)
             result = OUT
             result['COLOR'] = result['Color']
+            result['DEPTH'] = result['Depth']
 
         #COMPOSITE DEPTH
-        '''
-        if is_final_render:
-            result['DEPTH'] = self.composite_depth.render(self, self.common_buffer, self.t_opaque_depth)
-        '''
+        if is_final_render and result['DEPTH'] is None:
+            if self.sample_count == len(self.samples) - 1:
+                normal_depth = Texture(resolution, GL_RGBA32F)
+                target = RenderTarget([normal_depth], Texture(resolution, GL_DEPTH_COMPONENT32F))
+                target.clear([(0,0,1,1)], 1)
+                self.common_buffer.load(scene, resolution)
+                self.draw_scene_pass(target, opaque_batches, 'PRE_PASS', self.default_shader, {'COMMON_UNIFORMS':self.common_buffer})
+                result['DEPTH'] = self.composite_depth.render(self, self.common_buffer, normal_depth, depth_channel=3)
         
         return result
 

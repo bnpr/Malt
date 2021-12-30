@@ -18,7 +18,7 @@ class CompositeDepth():
 
         self.shader = None
     
-    def render(self, pipeline, common_buffer, depth_texture):
+    def render(self, pipeline, common_buffer, depth_texture, depth_channel=0):
         if self.t is None or self.t.resolution != depth_texture.resolution:
             self.t = Texture(depth_texture.resolution, GL_R32F)
             self.fbo = RenderTarget([self.t])
@@ -29,6 +29,7 @@ class CompositeDepth():
             self.shader = _SHADER
         
         self.shader.textures['DEPTH_TEXTURE'] = depth_texture
+        self.shader.uniforms['DEPTH_CHANNEL'].set_value(depth_channel)
         self.shader.bind()
         common_buffer.bind(self.shader.uniform_blocks['COMMON_UNIFORMS'])
         pipeline.draw_screen_pass(self.shader, self.fbo)
