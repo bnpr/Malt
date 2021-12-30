@@ -42,7 +42,7 @@ class MaltSocket(bpy.types.NodeSocket):
     
     def get_source_global_reference(self):
         transpiler = self.id_data.get_transpiler()
-        return transpiler.global_reference(self.node.get_source_name(), transpiler.get_source_name(self.name)).replace('__','_')
+        return transpiler.global_reference(self.node.get_source_name(), self.name)
     
     def is_struct_member(self):
         return '.' in self.name

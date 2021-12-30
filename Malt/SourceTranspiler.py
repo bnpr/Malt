@@ -5,6 +5,10 @@ class SourceTranspiler():
     
     @classmethod
     def get_source_name(self, name):
+        name = name.replace('.','_').replace(' ', '_')
+        name = '_' + ''.join(char for char in name if char.isalnum() or char == '_')
+        while '__' in name:
+            name = name.replace('__','_')
         return name
 
     @classmethod
@@ -62,14 +66,6 @@ class SourceTranspiler():
 class GLSLTranspiler(SourceTranspiler):
 
     @classmethod
-    def get_source_name(self, name):
-        name = name.replace('.','_').replace(' ', '_')
-        name = '_' + ''.join(char for char in name if char.isalnum() or char == '_')
-        while '__' in name:
-            name = name.replace('__','_')
-        return name
-
-    @classmethod
     def asignment(self, name, asignment):
         return f'{name} = {asignment};\n'
 
@@ -81,7 +77,7 @@ class GLSLTranspiler(SourceTranspiler):
 
     @classmethod    
     def global_reference(self, node_name, parameter_name):
-        return f'U_0{node_name}_0_{parameter_name}'
+        return f"U_0{node_name}_0_{self.get_source_name(parameter_name)}".replace('__','_')
 
     @classmethod
     def global_declaration(self, type, size, name, initialization=None):
