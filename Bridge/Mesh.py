@@ -41,8 +41,8 @@ def load_mesh(msg):
 
         result.position = positions
         result.normal = normals
+        result.tangent = tangents
         result.uvs = uvs
-        result.tangents = tangents
         result.colors = colors
 
         def bind_VBO(VBO, index, element_size, gl_type=GL_FLOAT, gl_normalize=GL_FALSE):

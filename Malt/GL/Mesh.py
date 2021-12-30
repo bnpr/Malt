@@ -115,7 +115,7 @@ class MeshCustomLoad(Mesh):
     def __init__(self):
         self.position = None
         self.normal = None
-        self.tangents = []
+        self.tangent = None
         self.uvs = []
         self.colors = []
 
