@@ -199,6 +199,19 @@ class MaltRenderEngine(bpy.types.RenderEngine):
         
         return scene
     
+    def get_AOVs(self, scene):
+        #TODO: Hardcoded for now
+        result = {}
+        try:
+            render_tree = scene.world.malt_parameters.graphs['Render'].graph
+            for io in render_tree.get_custom_io('Render'):
+                if io['io'] in ['out', 'inout'] and io['type'] == 'Texture':
+                    result[io['name']] = GL.GL_RGBA32F
+        except:
+            import traceback
+            traceback.print_exc()
+        return result        
+    
     def update_render_passes(self, scene=None, renderlayer=None):
         bridge = MaltPipeline.get_bridge(scene.world, True)
         render_outputs = bridge.render_outputs
@@ -206,7 +219,8 @@ class MaltRenderEngine(bpy.types.RenderEngine):
             self.register_pass(scene, renderlayer, "Combined", 4, "RGBA", 'COLOR')
         if 'DEPTH' in render_outputs.keys():
             self.register_pass(scene, renderlayer, "Depth", 1, "R", 'VALUE')
-        for output, format in render_outputs.items():
+        from itertools import chain
+        for output, format in chain(render_outputs.items(), self.get_AOVs(scene).items()):
             if output not in ('COLOR', 'DEPTH'):
                 #TODO: 'COLOR' vs 'VECTOR' ???
                 self.register_pass(scene, renderlayer, output, 4, "RGBA", 'COLOR')
@@ -228,8 +242,9 @@ class MaltRenderEngine(bpy.types.RenderEngine):
         
         MaltMaterial.track_shader_changes(force_update=True, async_compilation=False)
 
+        AOVs = self.get_AOVs(scene)
         scene = self.get_scene(None, depsgraph, True, overrides)
-        self.bridge.render(0, resolution, scene, True)
+        self.bridge.render(0, resolution, scene, True, AOVs=AOVs)
 
         buffers = None
         finished = False
@@ -242,11 +257,11 @@ class MaltRenderEngine(bpy.types.RenderEngine):
         
         size = self.size_x * self.size_y
 
-        for output, format in self.bridge.render_outputs.items():
+        from itertools import chain
+        for output in chain(self.bridge.render_outputs.keys(), AOVs.keys()):
             if output not in ('COLOR', 'DEPTH'):
                 self.add_pass(output, 4, 'RGBA')
         
-
         result = self.begin_result(0, 0, self.size_x, self.size_y, layer=depsgraph.view_layer.name)
         passes = result.layers[0].passes
         
@@ -255,7 +270,10 @@ class MaltRenderEngine(bpy.types.RenderEngine):
             if key == 'Combined': buffer_name = 'COLOR'
             if key == 'Depth': buffer_name = 'DEPTH'
             rect_ptr = CBlenderMalt.get_rect_ptr(value.as_pointer())
-            ctypes.memmove(rect_ptr, buffers[buffer_name].buffer(), size*4*value.channels)
+            try:
+                ctypes.memmove(rect_ptr, buffers[buffer_name].buffer(), size*4*value.channels)
+            except:
+                pass
         
         self.end_result(result)
         # Delete the scene. Otherwise we get memory leaks.

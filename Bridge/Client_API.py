@@ -231,13 +231,14 @@ class Bridge():
         self.viewport_ids.remove(viewport_id)
 
     @bridge_method
-    def render(self, viewport_id, resolution, scene, scene_update, renderdoc_capture=False):
+    def render(self, viewport_id, resolution, scene, scene_update, renderdoc_capture=False, AOVs={}):
         assert(viewport_id in self.viewport_ids or viewport_id == 0)
 
         new_buffers = None
         if viewport_id not in self.render_buffers.keys() or self.render_buffers[viewport_id]['__resolution'] != resolution:
             self.render_buffers[viewport_id] = {'__resolution' : resolution}
-            for key, texture_format in self.render_outputs.items():
+            from itertools import chain
+            for key, texture_format in chain(self.render_outputs.items(), AOVs.items()):
                 buffer_type = ctypes.c_float
                 if viewport_id != 0 and self.viewport_bit_depth == 8:
                     buffer_type = ctypes.c_byte

@@ -207,24 +207,25 @@ class NPR_Pipeline(Pipeline):
         self.npr_lighting.load(self, scene, opaque_batches, transparent_batches, sample_offset, self.sample_count)
         self.common_buffer.load(scene, resolution, sample_offset, self.sample_count)
         
-        result = None
+        result = {
+            'COLOR': None,
+            'DEPTH': None,
+        }
         graph = scene.world_parameters['Render']
         if graph:
             IN = {'Scene' : scene}
             OUT = {'Color' : None}
             self.graphs['Render'].run_source(self, graph['source'], graph['parameters'], IN, OUT)
-            result = OUT['Color']
+            result = OUT
+            result['COLOR'] = result['Color']
 
-        '''
         #COMPOSITE DEPTH
-        composite_depth = None
+        '''
         if is_final_render:
-            composite_depth = self.composite_depth.render(self, self.common_buffer, self.t_opaque_depth)
+            result['DEPTH'] = self.composite_depth.render(self, self.common_buffer, self.t_opaque_depth)
         '''
         
-        return {
-            'COLOR' : result,
-        }
+        return result
 
 
 PIPELINE = NPR_Pipeline
