@@ -146,7 +146,7 @@ class MaltIONode(bpy.types.Node, MaltNode):
         return src
     
     def draw_buttons(self, context, layout):
-        return #only 1 custom pass signature for now
+        return #TODO: only 1 custom pass signature for now
         if self.allow_custom_pass and (self.is_output or self.allow_custom_parameters):
             row = layout.row(align=True)
             row.prop(self, 'custom_pass', text='Custom Pass')

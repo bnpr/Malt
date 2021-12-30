@@ -73,7 +73,6 @@ class MaltNode():
             remove = []
             for e in current.keys():
                 if e not in new:
-                    #TODO: deactivate linked, don't delete them?
                     remove.append(current[e])
             for e in remove:
                 current.remove(e)
