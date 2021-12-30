@@ -270,10 +270,8 @@ class MaltRenderEngine(bpy.types.RenderEngine):
             if key == 'Combined': buffer_name = 'COLOR'
             if key == 'Depth': buffer_name = 'DEPTH'
             rect_ptr = CBlenderMalt.get_rect_ptr(value.as_pointer())
-            try:
+            if hasattr(buffers[buffer_name], 'buffer'):
                 ctypes.memmove(rect_ptr, buffers[buffer_name].buffer(), size*4*value.channels)
-            except:
-                pass
         
         self.end_result(result)
         # Delete the scene. Otherwise we get memory leaks.
