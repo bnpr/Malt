@@ -127,11 +127,7 @@ class UBO():
         glBindBufferRange(GL_UNIFORM_BUFFER, uniform_block['bind'], self.buffer[0], 0, min(self.size, uniform_block['size']))
     
     def __del__(self):
-        try:
-            glDeleteBuffers(1, self.buffer[0])
-        except:
-            #TODO: Make sure GL objects are deleted in the correct context
-            pass
+        glDeleteBuffers(1, self.buffer[0])
 
 
 def shader_preprocessor(shader_source, include_directories=[], definitions=[]):

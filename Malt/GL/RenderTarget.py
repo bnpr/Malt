@@ -81,11 +81,7 @@ class RenderTarget():
         glClear(flags)
     
     def __del__(self):
-        try:
-            glDeleteFramebuffers(1, self.FBO)
-        except:
-            #TODO: Make sure GL objects are deleted in the correct context
-            pass
+        glDeleteFramebuffers(1, self.FBO)
 
 
 class TargetBase():

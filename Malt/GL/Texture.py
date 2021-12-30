@@ -41,11 +41,7 @@ class Texture():
         glBindTexture(GL_TEXTURE_2D, self.texture[0])
     
     def __del__(self):
-        try:
-            glDeleteTextures(1, self.texture)
-        except:
-            #TODO: Make sure GL objects are deleted in the correct context
-            pass
+        glDeleteTextures(1, self.texture)
 
 
 class TextureArray():
@@ -77,11 +73,7 @@ class TextureArray():
         glBindTexture(GL_TEXTURE_2D_ARRAY, self.texture[0])
     
     def __del__(self):
-        try:
-            glDeleteTextures(1, self.texture)
-        except:
-            #TODO: Make sure GL objects are deleted in the correct context
-            pass
+        glDeleteTextures(1, self.texture)
 
 
 class CubeMap():
@@ -114,11 +106,7 @@ class CubeMap():
         glBindTexture(GL_TEXTURE_CUBE_MAP, self.texture[0])
     
     def __del__(self):
-        try:
-            glDeleteTextures(1, self.texture)
-        except:
-            #TODO: Make sure GL objects are deleted in the correct context
-            pass
+        glDeleteTextures(1, self.texture)
 
 
 class CubeMapArray():
@@ -151,11 +139,7 @@ class CubeMapArray():
         glBindTexture(GL_TEXTURE_CUBE_MAP_ARRAY, self.texture[0])
     
     def __del__(self):
-        try:
-            glDeleteTextures(1, self.texture)
-        except:
-            #TODO: Make sure GL objects are deleted in the correct context
-            pass
+        glDeleteTextures(1, self.texture)
 
 
 class Gradient():
@@ -184,11 +168,8 @@ class Gradient():
         glBindTexture(GL_TEXTURE_1D, self.texture[0])
     
     def __del__(self):
-        try:
-            glDeleteTextures(1, self.texture)
-        except:
-            #TODO: Make sure GL objects are deleted in the correct context
-            pass
+        glDeleteTextures(1, self.texture)
+
 
 def internal_format_to_data_format(internal_format):
     name = GL_ENUMS[internal_format]

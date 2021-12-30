@@ -91,29 +91,25 @@ class Mesh():
             glBindVertexArray(0)
     
     def __del__(self):
-        try:
-            if self.VAO:
-                glDeleteVertexArrays(1, self.VAO)
-            
-            def delete_buffer(buffer):
-                if buffer:
-                    glDeleteBuffers(1, buffer)
+        if self.VAO:
+            glDeleteVertexArrays(1, self.VAO)
+        
+        def delete_buffer(buffer):
+            if buffer:
+                glDeleteBuffers(1, buffer)
 
-            delete_buffer(self.EBO)
-            delete_buffer(self.position)
-            delete_buffer(self.normal)
-            delete_buffer(self.tangent)
-            for uv in self.uvs:
-                delete_buffer(uv)
-            for color in self.colors:
-                delete_buffer(color)
-        except:
-            #TODO: Make sure GL objects are deleted in the correct context
-            pass
+        delete_buffer(self.EBO)
+        delete_buffer(self.position)
+        delete_buffer(self.normal)
+        delete_buffer(self.tangent)
+        for uv in self.uvs:
+            delete_buffer(uv)
+        for color in self.colors:
+            delete_buffer(color)
             
 
 #Class for custom mesh loading
-#See BlenderMalt/MaltMeshes.py
+#See Bridge/Mesh.py
 class MeshCustomLoad(Mesh):
 
     def __init__(self):
