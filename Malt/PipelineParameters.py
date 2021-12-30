@@ -30,7 +30,6 @@ class Type():
     @classmethod
     def to_string(cls, type):
         return cls.string_list()[type]
-    
     @classmethod
     def from_string(cls, type):
         return cls.string_list().index(type)
@@ -77,12 +76,6 @@ class MaterialParameter(Parameter):
     def __init__(self, default_path, extension, filter=None):
         super().__init__(default_path, Type.MATERIAL, 1, filter)
         self.extension = extension
-
-'''
-class GraphParameter(Parameter):
-    def __init__(self, graph_type, filter=None):
-        super().__init__(graph_type, Type.GRAPH, 1, filter)
-'''
 
 def gl_type_to_malt_type(gl_type):
     from Malt.GL import GL
