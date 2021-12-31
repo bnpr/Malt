@@ -191,8 +191,9 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                 main_name = key.split(' @ ')[0]
                 rna[key]['active'] = rna[main_name]['active'] and rna[key]['active']
                 if rna[key]['active']:
-                    parameter = Parameter(rna[main_name]['default'], rna[main_name]['type'], rna[main_name]['size'])
-                    setup_parameter(key, parameter)
+                    if rna[key]['type'] != rna[main_name]['type'] or rna[key]['size'] != rna[main_name]['size']:
+                        parameter = Parameter(rna[main_name]['default'], rna[main_name]['type'], rna[main_name]['size'], rna[main_name]['filter'])
+                        setup_parameter(key, parameter)
         
         for key, value in rna.items():
             rna_prop = rna[key]
