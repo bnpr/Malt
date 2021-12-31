@@ -23,7 +23,8 @@ class RenderLayers(PipelineNode):
     def reflect_inputs(cls):
         inputs = {}
         inputs['Scene'] = Parameter('Scene', Type.OTHER)
-        inputs['Transparent Layers'] = Parameter(2, Type.INT)
+        inputs['Transparent Layers'] = Parameter(4, Type.INT)
+        inputs['Transparent Layers @ Preview'] = Parameter(2, Type.INT)
         return inputs
     
     @classmethod

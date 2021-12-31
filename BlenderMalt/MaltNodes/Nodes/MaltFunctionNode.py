@@ -13,7 +13,7 @@ class MaltFunctionNode(bpy.types.Node, MaltNode):
         if pass_type != '':
             self.pass_graph_type, self.pass_graph_io_type = pass_type.split('.')
 
-        function = self.get_function()
+        function = self.get_function(skip_overrides=False)
         if self.first_setup:
             self.name = function['name']
 
@@ -55,7 +55,7 @@ class MaltFunctionNode(bpy.types.Node, MaltNode):
         parameters['CUSTOM_IO'] = self.get_custom_io()
         return parameters
 
-    def get_function(self):
+    def get_function(self, skip_overrides=True):
         graph = self.id_data.get_pipeline_graph()
         function = None
         if self.function_type in graph.functions:
@@ -65,6 +65,8 @@ class MaltFunctionNode(bpy.types.Node, MaltNode):
         from copy import deepcopy
         function = deepcopy(function)
         function['parameters'] += self.get_custom_io()
+        if skip_overrides:
+           function['parameters'] = [p for p in function['parameters'] if '@' not in p['name']]
         return function
     
     def get_pass_type(self):

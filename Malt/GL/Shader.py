@@ -442,7 +442,10 @@ def glsl_reflection(code, root_paths=[]):
             path = e["file"]
             path = os.path.normpath(path)
             for root_path in root_paths:
-                try: path = os.path.relpath(path, root_path)
+                try:
+                    _path = os.path.relpath(e["file"], root_path)
+                    if len(_path) < len(path):
+                        path = _path
                 except: pass
             e["file"] = path
     

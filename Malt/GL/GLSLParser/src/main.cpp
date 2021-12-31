@@ -53,12 +53,12 @@ struct META : seq<STRING("/*"), _ms_, STRING("META"), _ms_, META_MEMBERS, _ms_, 
 
 struct MEMBER : seq<opt<PRECISION>, _s_, TYPE, _s_, IDENTIFIER, _s_, opt<ARRAY_SIZE>, _s_, END> {};
 struct MEMBERS : plus<seq<_s_, MEMBER, _s_>> {};
-struct STRUCT_DEF : seq<opt<META>, _s_, STRUCT, _s_, IDENTIFIER, _s_, LBRACE, _s_, opt<MEMBERS>, _s_, RBRACE> {};
+struct STRUCT_DEF : seq<opt<META, _ms_>, STRUCT, _s_, IDENTIFIER, _s_, LBRACE, _s_, opt<MEMBERS>, _s_, RBRACE> {};
 
 struct PARAMETER : seq<opt<IO>, _s_, opt<PRECISION>, _s_, TYPE, _s_, IDENTIFIER, _s_, opt<ARRAY_SIZE>> {};
 struct PARAMETERS : list<seq<_s_, PARAMETER, _s_>, seq<_s_, COMMA, _s_>> {};
 struct FUNCTION_SIG : seq<TYPE, _s_, IDENTIFIER, _s_, LPAREN, _s_, opt<PARAMETERS>, _s_, RPAREN> {}; 
-struct FUNCTION_DEC : seq<opt<META>, _s_, FUNCTION_SIG, _s_, LBRACE> {}; 
+struct FUNCTION_DEC : seq<opt<META, _ms_>, FUNCTION_SIG, _s_, LBRACE> {}; 
 
 struct GLSL_GRAMMAR : star<sor<LINE_DIRECTIVE, STRUCT_DEF, FUNCTION_DEC, any>> {};
 

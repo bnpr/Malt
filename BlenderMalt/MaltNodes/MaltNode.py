@@ -77,6 +77,8 @@ class MaltNode():
             for e in remove:
                 current.remove(e)
             for i, (name, dic) in enumerate(new.items()):
+                if '@' in name:
+                    continue #Skip overrides
                 type = dic['type']
                 size = dic['size'] if 'size' in dic else 0
                 if name not in current:
@@ -97,21 +99,26 @@ class MaltNode():
         setup(self.inputs, inputs)
         setup(self.outputs, outputs)
         parameters = {}
-        for name, input in self.inputs.items():
+        for name, input in inputs.items():
             parameter = None
-            if name in inputs.keys() and isinstance(inputs[name]['type'], Parameter):
-                parameter = inputs[name]['type']
-            elif input.array_size == 0:
+            type = input['type']
+            size = input['size'] if 'size' in input else 0
+            if isinstance(type, Parameter):
+                parameter = type
+            else:
+                if size == 0:
+                    try:
+                        parameter = Parameter.from_glsl_type(type)
+                    except:
+                        parameter = Parameter(type, Type.OTHER)
+                else:
+                    parameter = Parameter(type, Type.OTHER)
                 try:
-                    parameter = Parameter.from_glsl_type(input.data_type)
-                except:
-                    parameter = Parameter(inputs[name]['type'], Type.OTHER)
-                try:
-                    parameter.default_value = eval(inputs[name]['meta']['value'])
+                    parameter.default_value = eval(input['meta']['value'])
                 except:
                     pass
             if parameter:
-                parameters[input.name] = parameter
+                parameters[name] = parameter
         self.malt_parameters.setup(parameters, skip_private=False)
         self.setup_socket_shapes()
         if self.first_setup:
