@@ -933,7 +933,7 @@ class MaltArrayIndexNode(bpy.types.Node, MaltNode):
     def malt_update(self):
         inputs = { 
             'array' : {'type': '', 'size': 1},
-            'index' : {'type': Parameter(0, Type.INT) }
+            'index' : {'type': 'int', 'meta':{'value': '0'} }
         }
         outputs = { 'element' : {'type': ''} }
         
