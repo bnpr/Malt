@@ -184,6 +184,10 @@ class MaltTree(bpy.types.NodeTree):
         self.disable_updates = False
 
     def update(self):
+        self.update_ext()
+    
+    def update_ext(self, force_track_shader_changes=True):
+        print('tree update', self.name)
         if self.disable_updates:
             return
 
@@ -208,8 +212,9 @@ class MaltTree(bpy.types.NodeTree):
             pathlib.Path(source_dir).mkdir(parents=True, exist_ok=True)
             with open(source_path,'w') as f:
                 f.write(source)
-            from BlenderMalt import MaltMaterial
-            MaltMaterial.track_shader_changes()
+            if force_track_shader_changes:
+                from BlenderMalt import MaltMaterial
+                MaltMaterial.track_shader_changes()
         except:
             import traceback
             traceback.print_exc()
@@ -228,12 +233,14 @@ def setup_node_trees():
     for name, graph in graphs.items():
         preload_menus(graph.structs, graph.functions)
     
-    track_library_changes(force_update=True, disable_tree_updates=True)
+    track_library_changes(force_update=True, is_initial_setup=True)
     
     for tree in bpy.data.node_groups:
         if tree.bl_idname == 'MaltTree':
             tree.reload_nodes()
-            tree.update()
+            tree.update_ext(force_track_shader_changes=False)
+    from BlenderMalt import MaltMaterial
+    MaltMaterial.track_shader_changes()
 
 __LIBRARIES = {}    
 def get_libraries():
@@ -246,9 +253,23 @@ def get_empty_library():
     }
 __TIMESTAMP = time.time()
 
-def track_library_changes(force_update=False, disable_tree_updates=False):
+def track_library_changes(force_update=False, is_initial_setup=False):
     if bpy.context.scene.render.engine != 'MALT' and force_update == False:
         return 1
+    
+    bridge = MaltPipeline.get_bridge()
+    graphs = MaltPipeline.get_bridge().graphs
+    updated_graphs = []
+    if is_initial_setup == False:
+        for name, graph in graphs.items():
+            if graph.needs_reload():
+                updated_graphs.append(name)
+        if len(updated_graphs) > 0:        
+            print(updated_graphs, 'needs_reload')
+            bridge.reload_graphs(updated_graphs)
+            for graph_name in updated_graphs:
+                graph = graphs[graph_name]
+                preload_menus(graph.structs, graph.functions)
 
     global __LIBRARIES
     global __TIMESTAMP
@@ -287,16 +308,18 @@ def track_library_changes(force_update=False, disable_tree_updates=False):
             __LIBRARIES[path] = reflection
             preload_menus(reflection['structs'], reflection['functions'])
         
-        if disable_tree_updates == False:
-            for tree in bpy.data.node_groups:
-                if isinstance(tree, MaltTree):
-                    src_path = tree.get_library_path()
-                    if src_path and src_path in needs_update:
-                        tree.update()
+    if is_initial_setup == False and max(len(needs_update), len(updated_graphs)) > 0:
+        for tree in bpy.data.node_groups:
+            if isinstance(tree, MaltTree):
+                src_path = tree.get_library_path()
+                if tree.graph_type in updated_graphs or (src_path and src_path in needs_update):
+                    tree.reload_nodes()
+                    tree.update_ext(force_track_shader_changes=False)
+        from BlenderMalt import MaltMaterial
+        MaltMaterial.track_shader_changes()
     
     __TIMESTAMP = start_time
     return 0.1
-
 
 
 class NODE_PT_MaltNodeTree(bpy.types.Panel):

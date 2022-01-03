@@ -324,22 +324,32 @@ def main(pipeline_path, viewport_bit_depth, connection_addresses, shared_dic, lo
 
             glfw.poll_events()
 
-            while connections['SHADER REFLECTION'].poll():
-                msg = connections['SHADER REFLECTION'].recv()
-                LOG.debug('REFLECT SHADER : {}'.format(msg))
-                paths = msg['paths']
-                results = {}
-                from Malt.GL.Shader import glsl_reflection, shader_preprocessor
-                for path in paths:
-                    root_path = os.path.dirname(path)
-                    src = '#include "{}"\n'.format(path)
-                    src = shader_preprocessor(src, [root_path])
-                    reflection = glsl_reflection(src, root_path)
-                    reflection['paths'] = set([path])
-                    for struct in reflection['structs'].values(): reflection['paths'].add(struct['file'])
-                    for function in reflection['functions'].values(): reflection['paths'].add(function['file'])
-                    results[path] = reflection
-                connections['SHADER REFLECTION'].send(results)
+            while connections['REFLECTION'].poll():
+                msg = connections['REFLECTION'].recv()
+                if msg['msg_type'] == 'SHADER REFLECTION':
+                    LOG.debug('REFLECT SHADER : {}'.format(msg))
+                    paths = msg['paths']
+                    results = {}
+                    from Malt.GL.Shader import glsl_reflection, shader_preprocessor
+                    for path in paths:
+                        root_path = os.path.dirname(path)
+                        src = '#include "{}"\n'.format(path)
+                        src = shader_preprocessor(src, [root_path])
+                        reflection = glsl_reflection(src, root_path)
+                        reflection['paths'] = set([path])
+                        for struct in reflection['structs'].values(): reflection['paths'].add(struct['file'])
+                        for function in reflection['functions'].values(): reflection['paths'].add(function['file'])
+                        results[path] = reflection
+                    connections['REFLECTION'].send(results)
+                if msg['msg_type'] == 'GRAPH RELOAD':
+                    graph_types = msg['graph_types']
+                    print('reloading')
+                    for type in graph_types:
+                        pipeline.graphs[type].setup_reflection()
+                    for viewport in viewports.values():
+                        viewport.pipeline.graphs = pipeline.graphs
+                    graphs = pipeline.get_graphs()
+                    connections['REFLECTION'].send(graphs)
 
             while connections['MAIN'].poll():
                 msg = connections['MAIN'].recv()

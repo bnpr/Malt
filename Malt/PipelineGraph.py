@@ -1,5 +1,8 @@
 # Copyright (c) 2020-2021 BNPR, Miguel Pozo and contributors. MIT license.
 
+from Malt.Utils import scan_dirs
+
+
 class PipelineGraphIO():
 
     def __init__(self, name, dynamic_input_types = [], dynamic_output_types = [], function=None):
@@ -24,7 +27,8 @@ class PipelineGraph():
         self.include_paths = []
         self.functions = {}
         self.structs = {}
-        self.graph_io = { io.name : io for io in graph_io } 
+        self.graph_io = { io.name : io for io in graph_io }
+        self.timestamp = 0
     
     def add_library(self, path):
         import os
@@ -41,8 +45,21 @@ class PipelineGraph():
             self.lib_files.append(path)
         self.libs.append(path)
     
+    def needs_reload(self):
+        extension = self.file_extension.split('.')[-1]
+        needs_reload = False
+        def file_callback(file):
+            if file.path.endswith(extension) and file.stat().st_mtime > self.timestamp:
+                nonlocal needs_reload
+                print(file.path, 'updated')
+                needs_reload = True
+        for path in self.include_paths:
+            scan_dirs(path, file_callback)
+        return needs_reload
+    
     def setup_reflection(self):
-        pass
+        import time
+        self.timestamp = time.time()
     
     def generate_source(self, parameters):
         return ''
@@ -90,6 +107,7 @@ class GLSLPipelineGraph(PipelineGraph):
         return shader_preprocessor(source, self.include_paths + include_paths, [self.get_material_define()] + defines)
 
     def setup_reflection(self):
+        super().setup_reflection()
         src = self.default_global_scope + self.default_shader_src
         for file in self.lib_files:
             src += f'\n#include "{file}"\n'
@@ -160,8 +178,10 @@ class PythonPipelineGraph(PipelineGraph):
         return result
     
     def setup_reflection(self):
+        super().setup_reflection()
         import importlib.util
         nodes = []
+        self.node_instances = {}
         for file in self.lib_files:
             try:
                 spec = importlib.util.spec_from_file_location("_dynamic_node_module_", file)

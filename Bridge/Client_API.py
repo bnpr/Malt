@@ -76,7 +76,7 @@ class Bridge():
             listeners[name] = listener
             malt_to_bridge[name] = address
 
-        for name in ['MAIN','SHADER REFLECTION']: add_connection(name)
+        for name in ['MAIN','REFLECTION']: add_connection(name)
 
         from . import start_server
         self.process = mp.Process(target=start_server, args=[pipeline_path, viewport_bit_depth, malt_to_bridge, self.shared_dict, self.lock, sys.stdout.log_path, debug_mode, renderdoc_path])
@@ -160,8 +160,19 @@ class Bridge():
     
     @bridge_method
     def reflect_source_libraries(self, paths):
-        self.connections['SHADER REFLECTION'].send({'paths': paths})
-        return self.connections['SHADER REFLECTION'].recv()
+        self.connections['REFLECTION'].send({
+            'msg_type': 'SHADER REFLECTION',
+            'paths': paths
+        })
+        return self.connections['REFLECTION'].recv()
+    
+    @bridge_method
+    def reload_graphs(self, graph_types):
+        self.connections['REFLECTION'].send({
+            'msg_type': 'GRAPH RELOAD',
+            'graph_types': graph_types
+        })
+        self.graphs.update(self.connections['REFLECTION'].recv())
     
     @bridge_method
     def get_shared_buffer(self, ctype, size):
