@@ -35,10 +35,11 @@ struct Vertex
 struct PrePassOutput
 {
     vec3 normal;
-    float depth_offset;
-    bool offset_position;
     uvec4 id;
     vec4 surface_color;
+    float surface_color_transmission;
+    float depth_offset;
+    bool offset_position;
 };
 
 #ifdef VERTEX_SHADER
@@ -181,10 +182,11 @@ void main()
 
     PrePassOutput PPO;
     PPO.normal = NORMAL;
-    PPO.depth_offset = 0;
-    PPO.offset_position = true;
     PPO.id = ID;
     PPO.surface_color = vec4(0,0,0,1);
+    PPO.surface_color_transmission = 1;
+    PPO.depth_offset = 0;
+    PPO.offset_position = true;
 
     float depth = gl_FragCoord.z;
     vec3 offset_position = POSITION;
@@ -234,8 +236,7 @@ void main()
             {
                 discard;
             }
-            //TODO: Take alpha probability into account for multiply color ?
-            OUT_SHADOW_MULTIPLY_COLOR = PPO.surface_color.rgb;// * saturate(1.0 - PPO.surface_color.a);
+            OUT_SHADOW_MULTIPLY_COLOR = PPO.surface_color.rgb * mix(saturate(1.0 - PPO.surface_color.a), 1, PPO.surface_color_transmission);
         }
     }
     #endif
