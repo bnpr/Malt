@@ -187,7 +187,6 @@ class MaltTree(bpy.types.NodeTree):
         self.update_ext()
     
     def update_ext(self, force_track_shader_changes=True):
-        print('tree update', self.name)
         if self.disable_updates:
             return
 
@@ -265,7 +264,6 @@ def track_library_changes(force_update=False, is_initial_setup=False):
             if graph.needs_reload():
                 updated_graphs.append(name)
         if len(updated_graphs) > 0:        
-            print(updated_graphs, 'needs_reload')
             bridge.reload_graphs(updated_graphs)
             for graph_name in updated_graphs:
                 graph = graphs[graph_name]

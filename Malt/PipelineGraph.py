@@ -51,7 +51,6 @@ class PipelineGraph():
         def file_callback(file):
             if file.path.endswith(extension) and file.stat().st_mtime > self.timestamp:
                 nonlocal needs_reload
-                print(file.path, 'updated')
                 needs_reload = True
         for path in self.include_paths:
             scan_dirs(path, file_callback)
@@ -191,7 +190,7 @@ class PythonPipelineGraph(PipelineGraph):
             except:
                 import traceback
                 traceback.print_exc()
-                print('filepath : ', file)
+                print('FILEPATH : ', file)
         self.functions = {}
         self.structs = {}
         for node_class in nodes:

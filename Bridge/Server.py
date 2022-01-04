@@ -183,10 +183,7 @@ class Viewport():
         
         if scene_update or self.scene is None:
             for key, proxy in scene.proxys.items():
-                try:
-                    proxy.resolve()
-                except:
-                    print('RESOLVE ERROR', key, proxy)
+                proxy.resolve()
             
             for obj in scene.objects:
                 obj.matrix = (ctypes.c_float * 16)(*obj.matrix)
@@ -340,7 +337,6 @@ def main(pipeline_path, viewport_bit_depth, connection_addresses, shared_dic, lo
                     connections['REFLECTION'].send(results)
                 if msg['msg_type'] == 'GRAPH RELOAD':
                     graph_types = msg['graph_types']
-                    print('reloading')
                     for type in graph_types:
                         pipeline.graphs[type].setup_reflection()
                     for viewport in viewports.values():
