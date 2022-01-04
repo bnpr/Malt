@@ -182,14 +182,11 @@ class Viewport():
         self.stat_time_start = time.perf_counter()
         
         if scene_update or self.scene is None:
-            for mesh in scene.meshes:
-                if mesh is None:
-                    continue
-                for i, submesh in enumerate(mesh):
-                    submesh.mesh = Bridge.Mesh.MESHES[submesh.mesh][i]
-            
-            for material in scene.materials:
-                material.shader = Bridge.Material.get_shader(material.shader['path'], material.shader['parameters'])
+            for key, proxy in scene.proxys.items():
+                try:
+                    proxy.resolve()
+                except:
+                    print('RESOLVE ERROR', key, proxy)
             
             for obj in scene.objects:
                 obj.matrix = (ctypes.c_float * 16)(*obj.matrix)

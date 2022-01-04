@@ -104,7 +104,8 @@ def load_mesh(object, name):
     from . import MaltPipeline
     MaltPipeline.get_bridge().load_mesh(name, mesh_data)
 
-    return [name for i in range(material_count)]
+    from Bridge.Proxys import MeshProxy
+    return [MeshProxy(name, i) for i in range(material_count)]
 
 def get_load_buffer(name, ctype, size):
     from . import MaltPipeline

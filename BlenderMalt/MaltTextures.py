@@ -9,7 +9,7 @@ def get_texture(texture):
     name = texture.name_full
     if name not in __TEXTURES or __TEXTURES[name] is None:
         __TEXTURES[name] = __load_texture(texture)
-    return name
+    return __TEXTURES[name]
 
 
 def __load_texture(texture):
@@ -24,7 +24,9 @@ def __load_texture(texture):
     texture.pixels.foreach_get(buffer.as_np_array())
     
     MaltPipeline.get_bridge().load_texture(texture.name_full, buffer, (w,h), channels, sRGB)
-    return True
+    
+    from Bridge.Proxys import TextureProxy
+    return TextureProxy(texture.name_full)
 
 __GRADIENTS = {}
 __GRADIENT_RESOLUTION = 256
@@ -38,7 +40,7 @@ def get_gradient(texture):
     name = texture.name_full
     if name not in __GRADIENTS or __GRADIENTS[name] is None or name in __GRADIENTS_WORKAROUND:
         __GRADIENTS[name] = __load_gradient(texture)
-    return name
+    return __GRADIENTS[name]
 
 def __load_gradient(texture):
     pixels = []
@@ -47,7 +49,8 @@ def __load_gradient(texture):
         pixels.extend(pixel)
     nearest = texture.color_ramp.interpolation == 'CONSTANT'
     MaltPipeline.get_bridge().load_gradient(texture.name_full, pixels, nearest)
-    return True
+    from Bridge.Proxys import GradientProxy
+    return GradientProxy(texture.name_full)
 
 def copy_color_ramp(old, new):
     new.color_mode = old.color_mode

@@ -49,10 +49,7 @@ def get_shader(path, parameters):
 
         for name, parameter in parameters.items():
             if name in pass_shader_copy.textures.keys():
-                if parameter in Texture.TEXTURES:
-                    pass_shader_copy.textures[name] = Texture.TEXTURES[parameter]
-                elif parameter in Texture.GRADIENTS:
-                    pass_shader_copy.textures[name] = Texture.GRADIENTS[parameter]
+                pass_shader_copy.textures[name] = parameter
             elif name in pass_shader_copy.uniforms.keys():
                 pass_shader_copy.uniforms[name].set_value(parameter)
     

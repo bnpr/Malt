@@ -52,8 +52,5 @@ class Scene():
         self.frame = 0
         self.time = 0
 
-        self.materials = []
-        self.meshes = []
-
         self.batches = None
 

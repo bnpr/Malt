@@ -243,7 +243,7 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
             rna[property]['active'] = False
             self.id_data.update_tag()
 
-    def get_parameters(self, overrides, resources):
+    def get_parameters(self, overrides, proxys):
         if '_RNA_UI' not in self.keys():
             return {}
         rna = self.get_rna()
@@ -253,15 +253,15 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                 continue
             if rna[key]['active'] == False:
                 continue
-            parameters[key] = self.get_parameter(key, overrides, resources)
+            parameters[key] = self.get_parameter(key, overrides, proxys)
         return parameters
     
-    def get_parameter(self, key, overrides, resources):
+    def get_parameter(self, key, overrides, proxys):
         from . MaltNodes.MaltNodeTree import MaltTree
         from . MaltNodes.MaltNode import MaltNode
         if self.parent and self.override_from_parents[key].boolean == False:
             try:
-                return self.parent.malt_parameters.get_parameter(key, overrides, resources)
+                return self.parent.malt_parameters.get_parameter(key, overrides, proxys)
             except:
                 pass
         if key not in self.get_rna().keys():
@@ -271,7 +271,7 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                         for input in node.inputs:
                             if key == input.get_source_global_reference():
                                 try:
-                                    return node.malt_parameters.get_parameter(input.name, overrides, resources)
+                                    return node.malt_parameters.get_parameter(input.name, overrides, proxys)
                                 except:
                                     pass
             raise Exception()
@@ -295,29 +295,33 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
         elif rna[key]['type'] == Type.TEXTURE:
             texture = self.textures[key].texture
             if texture:
-                return MaltTextures.get_texture(texture)
+                texture_key = ('texture', texture.name_full)
+                if texture_key not in proxys.keys():
+                    proxys[texture_key] = MaltTextures.get_texture(texture)
+                return proxys[texture_key]
             else:
                 return None
         elif rna[key]['type'] == Type.GRADIENT:
             texture = self.gradients[key].texture
             if texture:
-                return MaltTextures.get_gradient(texture)
+                gradient_key = ('gradient', texture.name_full)
+                if gradient_key not in proxys.keys():
+                    proxys[gradient_key] = MaltTextures.get_gradient(texture)
+                return proxys[gradient_key]
             else:
                 return None
         elif rna[key]['type'] == Type.MATERIAL:
             material = self.materials[key].material
             extension = self.materials[key].extension
             if material:
-                materials = resources['materials']
-                material_name = material.name_full
-                if material_name not in materials.keys():
-                    shader = {
-                        'path': material.malt.get_source_path(),
-                        'parameters': material.malt.parameters.get_parameters(overrides, resources)
-                    }
-                    material_parameters = material.malt_parameters.get_parameters(overrides, resources)
-                    materials[material_name] = Scene.Material(shader, material_parameters)
-                return materials[material_name]
+                material_key = ('material', material.name_full)
+                if material_key not in proxys.keys():
+                    path = material.malt.get_source_path()
+                    shader_parameters = material.malt.parameters.get_parameters(overrides, proxys)
+                    material_parameters = material.malt_parameters.get_parameters(overrides, proxys)
+                    from Bridge.Proxys import MaterialProxy
+                    proxys[material_key] = MaterialProxy(path, shader_parameters, material_parameters)
+                return proxys[material_key]
             else:
                 return None
         elif rna[key]['type'] == Type.GRAPH:
@@ -328,7 +332,7 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                 result['source'] = graph.get_generated_source()
                 result['parameters'] = {}
                 for node in graph.nodes:
-                    result['parameters'][node.get_source_name()] = node.get_parameters(overrides, resources)
+                    result['parameters'][node.get_source_name()] = node.get_parameters(overrides, proxys)
                 return result
             else:
                 return None

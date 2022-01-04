@@ -107,7 +107,7 @@ class NPR_LightsGroupsBuffer():
 
         self.UBO.load_data(self.data)
 
-        for material in scene.materials:
+        for material in scene.batches.keys():
             for shader in material.shader.values():
                 if 'MATERIAL_LIGHT_GROUPS' in shader.uniforms.keys():
                     shader.uniforms['MATERIAL_LIGHT_GROUPS'].set_value(material.parameters['Light Groups.Light'])
