@@ -92,8 +92,25 @@ class MaltPipeline(bpy.types.PropertyGroup):
     def draw_ui(self, layout):
         layout.use_property_split = True
         layout.use_property_decorate = False
-        layout.prop(self, 'pipeline')
+        row = layout.row(align=True)
+        row.prop(self, 'pipeline')
+        row.operator('wm.malt_reload_pipeline', text='', icon='FILE_REFRESH')
         layout.prop(self, 'viewport_bit_depth')
+
+
+class OT_MaltReloadPipeline(bpy.types.Operator):
+    bl_idname = "wm.malt_reload_pipeline"
+    bl_label = "Malt Reload Pipeline"
+
+    @classmethod
+    def poll(cls, context):
+        return context.scene.render.engine == 'MALT' and context.scene.world is not None
+
+    def execute(self, context):
+        import Bridge
+        Bridge.reload()
+        context.scene.world.malt.update_pipeline(context)
+        return {'FINISHED'}
 
 
 class MALT_PT_Pipeline(bpy.types.Panel):
@@ -106,13 +123,14 @@ class MALT_PT_Pipeline(bpy.types.Panel):
 
     @classmethod
     def poll(cls, context):
-        return context.scene.render.engine == 'MALT' and context.world is not None
+        return context.scene.render.engine == 'MALT' and context.scene.world is not None
 
     def draw(self, context):
         context.scene.world.malt.draw_ui(self.layout)
 
 classes = (
     MaltPipeline,
+    OT_MaltReloadPipeline,
     MALT_PT_Pipeline,
 )
 
