@@ -4,7 +4,7 @@ from Malt.GL.RenderTarget import RenderTarget
 from Malt.PipelineNode import PipelineNode
 from Malt.PipelineParameters import Parameter, Type
 
-class SSAA(PipelineNode):
+class SuperSamplingAA(PipelineNode):
 
     def __init__(self, pipeline):
         PipelineNode.__init__(self, pipeline)
@@ -40,4 +40,4 @@ class SSAA(PipelineNode):
             self.pipeline.blend_texture(inputs['Color'], self.fbo, 1.0 / (self.pipeline.sample_count + 1))
             outputs['Color'] = self.t_color
 
-NODE = SSAA
+NODE = SuperSamplingAA

@@ -17,10 +17,6 @@ from Malt.Render import Sampling
 from Malt.Pipelines.NPR_Pipeline.NPR_Lighting import NPR_Lighting
 from Malt.Pipelines.NPR_Pipeline.NPR_LightShaders import NPR_LightShaders
 
-from Malt.Nodes import Unpack8bitTextures
-
-from Malt.Pipelines.NPR_Pipeline.Nodes import ScreenPass, PrePass, MainPass, SSAA, LineRender, RenderLayers
-
 _COMMON_HEADER = '''
 #include "NPR_Pipeline.glsl"
 #include "Node Utils/node_utils.glsl"
@@ -136,7 +132,9 @@ class NPR_Pipeline(Pipeline):
                 )
             ]
         )
-        render_layer.add_library(os.path.join(os.path.dirname(__file__), 'Nodes'))
+        render_layer.add_library(os.path.join(os.path.dirname(__file__),'..','..','Nodes'))
+        render_layer.add_library(os.path.join(os.path.dirname(__file__), 'Nodes', 'Common'))
+        render_layer.add_library(os.path.join(os.path.dirname(__file__), 'Nodes', 'RenderLayer'))
         self.add_graph(render_layer)
 
         render = PythonPipelineGraph(
@@ -158,7 +156,9 @@ class NPR_Pipeline(Pipeline):
                 )
             ]
         )
-        render.add_library(os.path.join(os.path.dirname(__file__), 'Nodes'))
+        render.add_library(os.path.join(os.path.dirname(__file__),'..','..','Nodes'))
+        render.add_library(os.path.join(os.path.dirname(__file__), 'Nodes', 'Common'))
+        render.add_library(os.path.join(os.path.dirname(__file__), 'Nodes', 'Render'))
         self.add_graph(render)
         
         self.add_graph(NPR_LightShaders.get_graph())
