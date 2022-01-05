@@ -361,34 +361,65 @@ def insert_node(layout, type, label, settings = {}):
     return operator
 
 __FUNCTION_MENUES = {}
+__FUNCTION_FOLDERS = {}
 
-def get_functions_menu(file):
+def get_functions_menu(file_path):
     global __FUNCTION_MENUES
 
-    if file not in __FUNCTION_MENUES.keys():
-        file_to_label = file.replace('\\', '/').replace('/', ' - ').replace('.glsl', '').replace('_',' ')
+    path_to_label = file_path.replace('\\', '/').replace('.glsl', '').replace('_',' ')
+    folders = path_to_label.split('/')
+    file = folders[-1]
+    folders = folders[:-1]
+
+    for i in range(len(folders)):
+        key = tuple(folders[:i+1])
+        is_leaf = i == len(folders) - 1
+        if key not in __FUNCTION_FOLDERS.keys():
+            class_name = 'MALT_MT_function_folders_' + str(len(__FUNCTION_FOLDERS))
+            def draw(self, context):
+                submenues = {}
+                if is_leaf:
+                    folder_path = '/'.join(key)
+                    for k, menu in __FUNCTION_MENUES.items():
+                        if k.startswith(folder_path):
+                            submenues[k] = menu
+                else:
+                    for k, menu in __FUNCTION_FOLDERS.items():
+                        if tuple(folders[:i+2]) == k:
+                            submenues[k] = menu
+                for k in sorted(submenues.keys()):
+                    self.layout.menu(submenues[k])
+            menu_type = type(class_name, (bpy.types.Menu,), {
+                "bl_space_type": 'NODE_EDITOR',
+                "bl_label": folders[i],
+                "draw": draw,
+            })
+            bpy.utils.register_class(menu_type)
+            __FUNCTION_FOLDERS[key] = class_name
+
+    if file_path not in __FUNCTION_MENUES.keys():
         class_name = 'MALT_MT_functions_' + str(len(__FUNCTION_MENUES))
-        
         def draw(self, context):
             graph = get_pipeline_graph(context)
             if graph:
                 library_functions = context.space_data.node_tree.get_library()['functions']
                 for name, function in chain(graph.functions.items(), library_functions.items()):
-                    if function['file'] == file:
+                    if function['file'] == file_path:
                         insert_node(self.layout, "MaltFunctionNode", name.replace('_', ' '), settings={
                             'function_type' : repr(name)
                         })
-
         menu_type = type(class_name, (bpy.types.Menu,), {
             "bl_space_type": 'NODE_EDITOR',
-            "bl_label": file_to_label,
+            "bl_label": file,
             "draw": draw,
         })
         bpy.utils.register_class(menu_type)
-
-        __FUNCTION_MENUES[file] = class_name
+        __FUNCTION_MENUES[file_path] = class_name
     
-    return __FUNCTION_MENUES[file]
+    if len(folders) > 0:
+        return folders[0], __FUNCTION_FOLDERS[tuple(folders[:1])]
+    else:
+        return file, __FUNCTION_MENUES[file_path]
 
 __STRUCT_MENUES = {}
 
@@ -432,8 +463,12 @@ class MALT_MT_NodeFunctions(bpy.types.Menu):
             library_functions = context.space_data.node_tree.get_library()['functions']
             for name, function in chain(library_functions.items(), graph.functions.items()):
                 files.add(function['file'])
-            for file in sorted(files):
-                self.layout.menu(get_functions_menu(file))
+            menues = {}
+            for file in files:
+                k, menu = get_functions_menu(file)
+                menues[k] = menu
+            for key in sorted(menues.keys()):
+                self.layout.menu(menues[key])
 
 class MALT_MT_NodeStructs(bpy.types.Menu):
     
