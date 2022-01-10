@@ -2,9 +2,12 @@
 
 bl_info = {
     "name": "BlenderMalt",
-    "author" : "Miguel Pozo",
     "description" : "Extensible Python Render Engine",
+    "author" : "Miguel Pozo",
+    "version": (1,0,0,'beta'),
     "blender" : (2, 80, 0),
+    "doc_url": "https://malt3d.com",
+    "tracker_url": "https://github.com/bnpr/Malt/issues",
     "category": "Render"
 }
 
