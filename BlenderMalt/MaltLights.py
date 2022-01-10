@@ -7,19 +7,16 @@ class MaltLight(bpy.types.PropertyGroup):
 
     def sync_data(self, context):
         light = self.id_data
-        light.color = self.color
         #light.shadow_soft_size = self.radius
         if light.type == 'SPOT':
             light.cutoff_distance = self.radius
             light.spot_size = self.spot_angle
             light.spot_blend = self.spot_blend_angle / self.spot_angle
 
-    color : bpy.props.FloatVectorProperty(
-        name='Color',
-        default=(1,1,1),
-        subtype='COLOR',
-        update=sync_data,
-    )
+    def strength_get(self): return self.id_data.energy
+    def strength_set(self, value): self.id_data.energy = value
+    strength : bpy.props.FloatProperty(name='Strength', get=strength_get, set=strength_set)
+    
     radius : bpy.props.FloatProperty(
         name='Radius',
         default=5,
@@ -43,7 +40,8 @@ class MaltLight(bpy.types.PropertyGroup):
     )
 
     def draw_ui(self, layout):
-        layout.prop(self, 'color')
+        layout.prop(self.id_data, 'color')
+        layout.prop(self, 'strength')
         if self.id_data.type != 'SUN':
             layout.prop(self, 'radius')
         if self.id_data.type == 'SPOT':
