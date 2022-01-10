@@ -33,7 +33,11 @@ class CommonBuffer():
 
         self.UBO.load_data(self.data)
     
-    def bind(self, location):
-        self.UBO.bind(location)
+    def bind(self, block):
+        self.UBO.bind(block)
+    
+    def shader_callback(self, shader):
+        if 'COMMON_UNIFORMS' in shader.uniform_blocks:
+            self.bind(shader.uniform_blocks['COMMON_UNIFORMS'])
 
 

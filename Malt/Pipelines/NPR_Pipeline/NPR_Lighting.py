@@ -5,91 +5,7 @@ from Malt.GL.Shader import UBO
 from Malt.GL.Texture import TextureArray, CubeMapArray
 from Malt.GL.RenderTarget import ArrayLayerTarget, RenderTarget
 
-from Malt.PipelineParameters import Parameter, Type
-
-from Malt.Render import Common
 from Malt.Render import Lighting
-
-class NPR_Lighting():
-
-    def __init__(self, parameters):
-        parameters.world['ShadowMaps.Sun.Cascades.Distribution Scalar'] = Parameter(0.9, Type.FLOAT)
-        parameters.world['ShadowMaps.Sun.Cascades.Count'] = Parameter(4, Type.INT)
-        parameters.world['ShadowMaps.Sun.Cascades.Count @ Preview'] = Parameter(2, Type.INT)
-        parameters.world['ShadowMaps.Sun.Cascades.Max Distance'] = Parameter(100, Type.FLOAT)
-        parameters.world['ShadowMaps.Sun.Cascades.Max Distance @ Preview'] = Parameter(25, Type.FLOAT)
-        parameters.world['ShadowMaps.Sun.Resolution'] = Parameter(2048, Type.INT)
-        parameters.world['ShadowMaps.Spot.Resolution'] = Parameter(2048, Type.INT)
-        parameters.world['ShadowMaps.Spot.Resolution @ Preview'] = Parameter(512, Type.INT)
-        parameters.world['ShadowMaps.Point.Resolution'] = Parameter(2048, Type.INT)
-        parameters.world['ShadowMaps.Point.Resolution @ Preview'] = Parameter(512, Type.INT)
-        parameters.light['Light Group'] = Parameter(1, Type.INT)
-        parameters.material['Light Groups.Light'] = Parameter([1,0,0,0], Type.INT, 4, '.mesh.glsl')
-        parameters.material['Light Groups.Shadow'] = Parameter([1,0,0,0], Type.INT, 4, '.mesh.glsl')
-        self.lights_buffer = Lighting.get_lights_buffer()
-        self.light_groups_buffer = NPR_LightsGroupsBuffer()
-        self.shadowmaps_opaque, self.shadowmaps_transparent = get_shadow_maps()
-        self.common_buffer = Common.CommonBuffer()
-    
-    def load(self, pipeline, scene, opaque_batches, transparent_batches, sample_offset, sample_count):
-        self.lights_buffer.load(scene, 
-            scene.world_parameters['ShadowMaps.Sun.Cascades.Count'], 
-            scene.world_parameters['ShadowMaps.Sun.Cascades.Distribution Scalar'],
-            scene.world_parameters['ShadowMaps.Sun.Cascades.Max Distance'], sample_offset)
-        self.light_groups_buffer.load(scene)
-        self.shadowmaps_opaque.load(scene,
-            scene.world_parameters['ShadowMaps.Spot.Resolution'],
-            scene.world_parameters['ShadowMaps.Sun.Resolution'],
-            scene.world_parameters['ShadowMaps.Point.Resolution'],
-            scene.world_parameters['ShadowMaps.Sun.Cascades.Count'])
-        self.shadowmaps_transparent.load(scene,
-            scene.world_parameters['ShadowMaps.Spot.Resolution'],
-            scene.world_parameters['ShadowMaps.Sun.Resolution'],
-            scene.world_parameters['ShadowMaps.Point.Resolution'],
-            scene.world_parameters['ShadowMaps.Sun.Cascades.Count'])
-        
-        UBOS = {
-            'COMMON_UNIFORMS' : self.common_buffer,
-            'SCENE_LIGHTS' : self.lights_buffer
-        }
-
-        def render_shadowmaps(lights, fbos_opaque, fbos_transparent, sample_offset = sample_offset):
-            for light_index, light_matrices_pair in enumerate(lights.items()):
-                light, matrices = light_matrices_pair
-                for matrix_index, camera_projection_pair in enumerate(matrices): 
-                    camera, projection = camera_projection_pair
-                    i = light_index * len(matrices) + matrix_index
-                    self.common_buffer.load(scene, fbos_opaque[i].resolution, sample_offset, sample_count, camera, projection)
-                    def get_light_group_batches(batches):
-                        result = {}
-                        for material, meshes in batches.items():
-                            if material and light.parameters['Light Group'] in material.parameters['Light Groups.Shadow']:
-                                result[material] = meshes
-                        return result
-                    #TODO: Callback
-                    pipeline.draw_scene_pass(fbos_opaque[i], get_light_group_batches(opaque_batches), 
-                        'SHADOW_PASS', pipeline.default_shader['SHADOW_PASS'], UBOS)
-                    pipeline.draw_scene_pass(fbos_transparent[i], get_light_group_batches(transparent_batches), 
-                        'SHADOW_PASS', pipeline.default_shader['SHADOW_PASS'], UBOS)
-        
-        render_shadowmaps(self.lights_buffer.spots,
-            self.shadowmaps_opaque.spot_fbos, self.shadowmaps_transparent.spot_fbos)
-        
-        glEnable(GL_DEPTH_CLAMP)
-        render_shadowmaps(self.lights_buffer.suns,
-            self.shadowmaps_opaque.sun_fbos, self.shadowmaps_transparent.sun_fbos)
-        glDisable(GL_DEPTH_CLAMP)
-
-        render_shadowmaps(self.lights_buffer.points,
-            self.shadowmaps_opaque.point_fbos, self.shadowmaps_transparent.point_fbos, (0,0))
-    
-    def shader_callback(self, shader):
-        if 'SCENE_LIGHTS' in shader.uniform_blocks:
-            self.lights_buffer.bind(shader.uniform_blocks['SCENE_LIGHTS'])
-        self.light_groups_buffer.shader_callback(shader)
-        self.shadowmaps_opaque.shader_callback(shader)
-        self.shadowmaps_transparent.shader_callback(shader)
-
 
 class NPR_LightsGroupsBuffer():
 
@@ -114,15 +30,7 @@ class NPR_LightsGroupsBuffer():
 
     def shader_callback(self, shader):
         if 'LIGHT_GROUPS' in shader.uniform_blocks:
-            self.UBO.bind(shader.uniform_blocks['LIGHT_GROUPS'])
-
-
-_SHADOWMAPS = None
-
-def get_shadow_maps():
-    global _SHADOWMAPS
-    if _SHADOWMAPS is None: _SHADOWMAPS = (NPR_ShadowMaps(), NPR_TransparentShadowMaps())
-    return _SHADOWMAPS        
+            self.UBO.bind(shader.uniform_blocks['LIGHT_GROUPS'])    
 
 
 class NPR_ShadowMaps(Lighting.ShadowMaps):

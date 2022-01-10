@@ -112,9 +112,12 @@ class GLUniform():
 
 class UBO():
 
+    BINDS = {}
+
     def __init__(self):
         self.size = 0
         self.buffer = gl_buffer(GL_INT, 1)
+        self.location = None
         glGenBuffers(1, self.buffer)
     
     def load_data(self, structure):
@@ -124,7 +127,11 @@ class UBO():
         glBindBuffer(GL_UNIFORM_BUFFER, 0)
 
     def bind(self, uniform_block):
-        glBindBufferRange(GL_UNIFORM_BUFFER, uniform_block['bind'], self.buffer[0], 0, min(self.size, uniform_block['size']))
+        location = uniform_block['bind']
+        if self.location != location or self.BINDS[location] != self:
+            glBindBufferRange(GL_UNIFORM_BUFFER, location, self.buffer[0], 0, min(self.size, uniform_block['size']))
+            self.location = location
+            self.BINDS[location] = self
     
     def __del__(self):
         glDeleteBuffers(1, self.buffer[0])

@@ -3,6 +3,7 @@ from Malt.GL.Texture import Texture
 from Malt.GL.RenderTarget import RenderTarget
 from Malt.PipelineNode import PipelineNode
 from Malt.PipelineParameters import Parameter, Type
+from Malt.Scene import TextureShaderResource
 
 class MainPass(PipelineNode):
 
@@ -17,7 +18,7 @@ class MainPass(PipelineNode):
     @classmethod
     def reflect_inputs(cls):
         inputs = {}
-        inputs['PrePass'] = Parameter('PrePass', Type.OTHER)
+        inputs['Scene'] = Parameter('Scene', Type.OTHER)
         inputs['Normal Depth'] = Parameter('', Type.TEXTURE)
         inputs['ID'] = Parameter('', Type.TEXTURE)
         return inputs
@@ -39,42 +40,34 @@ class MainPass(PipelineNode):
         outputs = parameters['OUT']
         custom_io = parameters['CUSTOM_IO']
         
-        pre_pass = inputs['PrePass']
+        scene = inputs['Scene']
+        if scene is None:
+            return
         t_normal_depth = inputs['Normal Depth']
         t_id = inputs['ID']
 
-        if t_normal_depth is None:
-            t_normal_depth = pre_pass.t_normal_depth
-        if t_id is None:
-            t_id = pre_pass.t_id
+        shader_resources = scene.shader_resources.copy()
+        if t_normal_depth:
+            shader_resources['IN_NORMAL_DEPTH'] = TextureShaderResource('IN_NORMAL_DEPTH', t_normal_depth)
+        if t_id:
+            shader_resources['IN_ID'] = TextureShaderResource('IN_ID', t_id),
         
-        batches = pre_pass.batches
-
         if self.pipeline.resolution != self.resolution or self.custom_io != custom_io:
-            self.setup_render_targets(self.pipeline.resolution, pre_pass.t_depth, custom_io)
+            t_depth = shader_resources['T_DEPTH'].texture
+            self.setup_render_targets(self.pipeline.resolution, t_depth, custom_io)
             self.resolution = self.pipeline.resolution
             self.custom_io = custom_io
         
-        UBOS = {'COMMON_UNIFORMS' : self.pipeline.common_buffer}
-        callbacks = [
-            self.pipeline.npr_lighting.shader_callback,
-            self.pipeline.npr_light_shaders.shader_callback,
-        ]
-
-        textures = {
-            'IN_NORMAL_DEPTH': t_normal_depth,
-            'IN_ID': t_id,
-        }
         for io in custom_io:
             if io['io'] == 'in':
                 if io['type'] == 'Texture':#TODO
                     from Malt.SourceTranspiler import GLSLTranspiler
                     glsl_name = GLSLTranspiler.custom_io_reference('IN', 'MAIN_PASS_PIXEL_SHADER', io['name'])
-                    textures[glsl_name] = inputs[io['name']]
+                    shader_resources['CUSTOM_IO'+glsl_name] = TextureShaderResource(glsl_name, inputs[io['name']])
                     
         self.fbo.clear([(0,0,0,0)] * len(self.fbo.targets))
-        self.pipeline.draw_scene_pass(self.fbo, batches, 'MAIN_PASS', self.pipeline.default_shader['MAIN_PASS'], 
-            UBOS, {}, textures, callbacks, GL_EQUAL)
+        self.pipeline.draw_scene_pass(self.fbo, scene.batches, 'MAIN_PASS', self.pipeline.default_shader['MAIN_PASS'], 
+            shader_resources, GL_EQUAL)
 
         outputs.update(self.custom_targets)
 

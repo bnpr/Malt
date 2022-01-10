@@ -6,16 +6,13 @@ from Malt.GL.RenderTarget import ArrayLayerTarget, RenderTarget
 
 from Malt.Render import Lighting
 
-from Malt.PipelineParameters import MaterialParameter
 from Malt.PipelineGraph import *
 
 import ctypes
 
 class NPR_LightShaders():
 
-    def __init__(self, parameters):
-        parameters.light['Shader'] = MaterialParameter('', '.light.glsl')
-
+    def __init__(self):
         class C_NPR_LightShadersBuffer(ctypes.Structure):
             _fields_ = [
                 ('custom_shading_index', ctypes.c_int*Lighting.MAX_LIGHTS),
@@ -27,23 +24,7 @@ class NPR_LightShaders():
         self.texture = None
         self.fbos = None
     
-    @classmethod
-    def get_graph(self):
-        from Malt.Pipelines.NPR_Pipeline.NPR_Pipeline import _COMMON_HEADER
-        return GLSLPipelineGraph(
-            name='Light',
-            graph_type=GLSLPipelineGraph.INTERNAL_GRAPH,
-            default_global_scope=_COMMON_HEADER,
-            default_shader_src="void LIGHT_SHADER(LightShaderInput I, inout LightShaderOutput O) { }",
-            graph_io=[ 
-                GLSLGraphIO(
-                    name='LIGHT_SHADER',
-                    shader_type='PIXEL_SHADER',
-                )
-            ]
-        )
-    
-    def load(self, pipeline, depth_texture, scene, lights_buffer):
+    def load(self, pipeline, depth_texture, scene):
         self.custom_shading_count = 0
         for i, light in enumerate(scene.lights):
             custom_shading_index = -1
@@ -69,8 +50,8 @@ class NPR_LightShaders():
             material = light.parameters['Shader']
             if material.shader and 'SHADER' in material.shader.keys():
                 shader = material.shader['SHADER']
-                pipeline.common_buffer.bind(shader.uniform_blocks['COMMON_UNIFORMS'])
-                lights_buffer.bind(shader.uniform_blocks['SCENE_LIGHTS'])
+                for resource in scene.shader_resources:
+                    resource.shader_callback(shader)
                 shader.textures['IN_DEPTH'] = depth_texture
                 if 'LIGHT_INDEX' in shader.uniforms:
                     light_index = scene.lights.index(light)

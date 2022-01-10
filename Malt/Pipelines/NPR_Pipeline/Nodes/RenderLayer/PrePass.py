@@ -3,14 +3,17 @@ from Malt.GL.Texture import Texture
 from Malt.GL.RenderTarget import RenderTarget
 from Malt.PipelineNode import PipelineNode
 from Malt.PipelineParameters import Parameter, Type
+from Malt.Scene import TextureShaderResource
+
+from Malt.Pipelines.NPR_Pipeline.NPR_LightShaders import NPR_LightShaders
 
 class PrePass(PipelineNode):
 
     def __init__(self, pipeline):
         PipelineNode.__init__(self, pipeline)
         self.resolution = None
-        self.batches = None
         self.custom_io = []
+        self.npr_light_shaders = NPR_LightShaders()
     
     @staticmethod
     def get_pass_type():
@@ -25,7 +28,7 @@ class PrePass(PipelineNode):
     @classmethod
     def reflect_outputs(cls):
         outputs = {}
-        outputs['PrePass'] = Parameter('PrePass', Type.OTHER)
+        outputs['Scene'] = Parameter('Scene', Type.OTHER)
         outputs['Normal Depth'] = Parameter('', Type.TEXTURE)
         outputs['ID'] = Parameter('', Type.TEXTURE)
         return outputs
@@ -62,21 +65,20 @@ class PrePass(PipelineNode):
             self.resolution = self.pipeline.resolution
             self.custom_io = custom_io
         
+        import copy
+        scene = copy.copy(scene)
         opaque_batches, transparent_batches = self.pipeline.get_scene_batches(scene)
-        self.batches = opaque_batches if is_opaque_pass else transparent_batches
+        scene.batches = opaque_batches if is_opaque_pass else transparent_batches
         
-        UBOS = {'COMMON_UNIFORMS' : self.pipeline.common_buffer}
-        callbacks = [self.pipeline.npr_lighting.shader_callback]
-
-        textures = {
-            'IN_OPAQUE_DEPTH': self.t_opaque_depth,
-            'IN_TRANSPARENT_DEPTH': self.t_transparent_depth,
-            'IN_LAST_ID': self.t_last_layer_id,
-        }
+        shader_resources = scene.shader_resources.copy()
+        shader_resources.update({
+            'IN_OPAQUE_DEPTH': TextureShaderResource('IN_OPAQUE_DEPTH', self.t_opaque_depth),
+            'IN_TRANSPARENT_DEPTH': TextureShaderResource('IN_TRANSPARENT_DEPTH', self.t_transparent_depth),
+            'IN_LAST_ID': TextureShaderResource('IN_LAST_ID', self.t_last_layer_id),
+        })
         self.fbo.clear([(0,0,1,1), (0,0,0,0)] + [(0,0,0,0)]*len(self.custom_targets), 1)
 
-        self.pipeline.draw_scene_pass(self.fbo, self.batches, 'PRE_PASS', self.pipeline.default_shader['PRE_PASS'],
-            UBOS, {}, textures, callbacks)
+        self.pipeline.draw_scene_pass(self.fbo, scene.batches, 'PRE_PASS', self.pipeline.default_shader['PRE_PASS'], shader_resources)
 
         if is_opaque_pass:
             self.fbo_last_layer_id.clear([(0,0,0,0)])
@@ -87,9 +89,17 @@ class PrePass(PipelineNode):
             self.pipeline.copy_textures(self.fbo_transparent_depth, [], self.t_depth)
 
         #CUSTOM LIGHT SHADERS
-        self.pipeline.npr_light_shaders.load(self.pipeline, self.t_depth, scene, self.pipeline.npr_lighting.lights_buffer)
+        self.npr_light_shaders.load(self.pipeline, self.t_depth, scene)
 
-        outputs['PrePass'] = self
+        scene.shader_resources = scene.shader_resources.copy()
+        scene.shader_resources.update({
+            'LIGHTS_CUSTOM_SHADING': self.npr_light_shaders,
+            'IN_NORMAL_DEPTH': TextureShaderResource('IN_NORMAL_DEPTH', self.t_normal_depth),
+            'IN_ID': TextureShaderResource('IN_ID', self.t_id),
+            'T_DEPTH': TextureShaderResource('', self.t_depth), #just pass the reference
+        })
+
+        outputs['Scene'] = scene
         outputs['Normal Depth'] = self.t_normal_depth
         outputs['ID'] = self.t_id
         outputs.update(self.custom_targets)

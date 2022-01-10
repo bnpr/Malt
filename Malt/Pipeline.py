@@ -222,9 +222,7 @@ class Pipeline():
             
         return result
     
-    def draw_scene_pass(self, render_target, scene_batches, pass_name=None, default_shader=None, 
-        uniform_blocks={}, uniforms={}, textures={}, shader_callbacks=[], 
-        depth_test_function=GL_LEQUAL):
+    def draw_scene_pass(self, render_target, scene_batches, pass_name=None, default_shader=None, shader_resources={}, depth_test_function=GL_LEQUAL):
         glDisable(GL_BLEND)
         glEnable(GL_DEPTH_TEST)
         glDepthFunc(depth_test_function)
@@ -240,22 +238,10 @@ class Pipeline():
             if material and pass_name in material.shader and material.shader[pass_name]:
                 shader = material.shader[pass_name]
             
-            for name, uniform in uniforms.items():
-                if name in shader.uniforms:
-                    shader.uniforms[name].set_value(uniform)
-            
-            for name, texture in textures.items():
-                if name in shader.textures:
-                    shader.textures[name] = texture
-            
-            for callback in shader_callbacks:
-                callback(shader)
+            for resource in shader_resources.values():
+                resource.shader_callback(shader)
             
             shader.bind()
-
-            for name, block in uniform_blocks.items():
-                if name in shader.uniform_blocks:
-                    block.bind(shader.uniform_blocks[name])
             
             precomputed_tangents_uniform = shader.uniforms.get('PRECOMPUTED_TANGENTS')
             _precomputed_tangents = None

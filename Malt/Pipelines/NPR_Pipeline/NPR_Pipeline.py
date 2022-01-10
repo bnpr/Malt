@@ -14,9 +14,6 @@ from Malt.Render import Common
 from Malt.Render import DepthToCompositeDepth
 from Malt.Render import Sampling
 
-from Malt.Pipelines.NPR_Pipeline.NPR_Lighting import NPR_Lighting
-from Malt.Pipelines.NPR_Pipeline.NPR_LightShaders import NPR_LightShaders
-
 _COMMON_HEADER = '''
 #include "NPR_Pipeline.glsl"
 #include "Node Utils/node_utils.glsl"
@@ -57,6 +54,10 @@ class NPR_Pipeline(Pipeline):
         default_material_path = os.path.join(os.path.dirname(__file__), 'default.mesh.glsl')
         self.parameters.world['Material.Default'] = MaterialParameter(default_material_path, '.mesh.glsl')
         self.parameters.world['Render'] = Parameter('Render', Type.GRAPH)
+        self.parameters.light['Light Group'] = Parameter(1, Type.INT)
+        self.parameters.light['Shader'] = MaterialParameter('', '.light.glsl')
+        self.parameters.material['Light Groups.Light'] = Parameter([1,0,0,0], Type.INT, 4, '.mesh.glsl')
+        self.parameters.material['Light Groups.Shadow'] = Parameter([1,0,0,0], Type.INT, 4, '.mesh.glsl')
     
     def setup_graphs(self):
         super().setup_graphs()
@@ -112,6 +113,20 @@ class NPR_Pipeline(Pipeline):
             ]
         )
         self.add_graph(screen)
+
+        light = GLSLPipelineGraph(
+            name='Light',
+            graph_type=GLSLPipelineGraph.INTERNAL_GRAPH,
+            default_global_scope=_COMMON_HEADER,
+            default_shader_src="void LIGHT_SHADER(LightShaderInput I, inout LightShaderOutput O) { }",
+            graph_io=[ 
+                GLSLGraphIO(
+                    name='LIGHT_SHADER',
+                    shader_type='PIXEL_SHADER',
+                )
+            ]
+        )
+        self.add_graph(light)
         
         render_layer = PythonPipelineGraph(
             name='Render Layer',
@@ -161,13 +176,10 @@ class NPR_Pipeline(Pipeline):
         render.add_library(os.path.join(os.path.dirname(__file__), 'Nodes', 'Render'))
         self.add_graph(render)
         
-        self.add_graph(NPR_LightShaders.get_graph())
     
     def setup_resources(self):
         super().setup_resources()
         self.common_buffer = Common.CommonBuffer()
-        self.npr_lighting = NPR_Lighting(self.parameters)
-        self.npr_light_shaders = NPR_LightShaders(self.parameters)
         self.composite_depth = DepthToCompositeDepth.CompositeDepth()
         global _DEFAULT_SHADER
         if _DEFAULT_SHADER is None: _DEFAULT_SHADER = self.compile_material_from_source('Mesh', _DEFAULT_SHADER_SRC)
@@ -207,8 +219,10 @@ class NPR_Pipeline(Pipeline):
 
         opaque_batches, transparent_batches = self.get_scene_batches(scene)
         
-        self.npr_lighting.load(self, scene, opaque_batches, transparent_batches, sample_offset, self.sample_count)
         self.common_buffer.load(scene, resolution, sample_offset, self.sample_count)
+        scene.shader_resources = {
+            'COMMON_UNIFORMS' : self.common_buffer
+        }
         
         result = {
             'COLOR': None,
@@ -230,7 +244,7 @@ class NPR_Pipeline(Pipeline):
                 target = RenderTarget([normal_depth], Texture(resolution, GL_DEPTH_COMPONENT32F))
                 target.clear([(0,0,1,1)], 1)
                 self.common_buffer.load(scene, resolution)
-                self.draw_scene_pass(target, opaque_batches, 'PRE_PASS', self.default_shader, {'COMMON_UNIFORMS':self.common_buffer})
+                self.draw_scene_pass(target, opaque_batches, 'PRE_PASS', self.default_shader, scene.shader_resources)
                 result['DEPTH'] = self.composite_depth.render(self, self.common_buffer, normal_depth, depth_channel=3)
         
         return result

@@ -53,4 +53,22 @@ class Scene():
         self.time = 0
 
         self.batches = None
+        self.shader_resorces = {}
+
+class ShaderResource():
+    
+    def shader_callback(self, shader):
+        pass
+
+class TextureShaderResource():
+
+    def __init__(self, name, texture):
+        self.name = name
+        self.texture = texture
+    
+    def shader_callback(self, shader):
+        if self.name in shader.textures.keys():
+            shader.textures[self.name] = self.texture
+
+        
 
