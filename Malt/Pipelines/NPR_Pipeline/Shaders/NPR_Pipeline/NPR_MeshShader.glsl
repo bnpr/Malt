@@ -195,7 +195,7 @@ void main()
     {
         PRE_PASS_PIXEL_SHADER(PPO);
 
-        if(PPO.surface_color.a == 0)
+        if(PPO.surface_color.a <= 0)
         {
             discard;
         }
