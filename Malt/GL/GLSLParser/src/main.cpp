@@ -43,7 +43,7 @@ struct FILE_PATH : plus<not_one<'"'>> {};
 struct QUOTED_FILE_PATH : seq<one<'"'>, FILE_PATH, one<'"'>> {};
 struct LINE_DIRECTIVE : seq<STRING("#line"), _s_, DIGITS, _s_, QUOTED_FILE_PATH> {};
 
-struct _ms_ : star<space> {};
+struct _ms_ : star<sor<space, preprocessor_directive>> {};
 struct META_PROP_VALUE : star<not_at<one<';'>>, any> {};
 struct META_PROP : seq<not_at<one<'@'>>, IDENTIFIER, _ms_, one<'='>, _ms_, META_PROP_VALUE, _ms_, one<';'>> {};
 struct META_PROPS : plus<seq<_ms_, META_PROP, _ms_>> {};
