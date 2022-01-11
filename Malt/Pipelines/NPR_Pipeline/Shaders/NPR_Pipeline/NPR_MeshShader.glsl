@@ -508,60 +508,70 @@ LineDetectionOutput get_line_detection()
     return result;
 }
 
-float get_line_simple(float width, float depth_threshold, float normal_threshold)
-{
-    #if defined(PIXEL_SHADER) && defined(MAIN_PASS)
-    {
-        LineDetectionOutput lo = get_line_detection();
+//#define swap(type, a, b) { type temp = a; a = b; b = temp; }
+//#define order(type, a, b) { if(a > b) swap(a, b, type); }
 
-        bool line = any(lo.id_boundary) || 
-                    lo.delta_distance > depth_threshold ||
-                    lo.delta_angle > normal_threshold;
-        
-        return float(line) * width;
-    }
-    #else
+void _fix_range(inout float value, inout float range)
+{
+    if(range < 0)
     {
-        return 0.0;
+        range = abs(range);
+        value -= range;
     }
-    #endif
 }
 
-float get_line_advanced(
-    float id_boundary_width,
-    float min_depth_threshold, float max_depth_threshold, float min_depth_width, float max_depth_width,
-    float min_angle_threshold, float max_angle_threshold, float min_angle_width, float max_angle_width
+/*META
+    @depth_width_range: init=0;
+*/
+
+float get_line_width(
+    float line_width_scale, vec4 id_boundary_width,
+    float depth_width, float depth_width_range, float depth_threshold, float depth_threshold_range,
+    float normal_width, float normal_width_range, float normal_threshold, float normal_threshold_range
 )
 {
     #if defined(PIXEL_SHADER) && defined(MAIN_PASS)
     {
         LineDetectionOutput lo = get_line_detection();
 
-        float line = any(lo.id_boundary) ? id_boundary_width : 0.0;
+        float line = 0;
+
+        vec4 id = vec4(lo.id_boundary) * id_boundary_width;
         
-        if(lo.delta_distance > min_depth_threshold)
+        for(int i = 0; i < 4; i++)
+        {
+            line = max(line, id[i]);
+        }
+
+        _fix_range(depth_width, depth_width_range);
+        _fix_range(depth_threshold, depth_threshold_range);
+
+        if(lo.delta_distance > depth_threshold)
         {
             float depth = map_range_clamped(
                 lo.delta_distance, 
-                min_depth_threshold, max_depth_threshold,
-                min_depth_width, max_depth_width
+                depth_threshold, depth_threshold + depth_threshold_range,
+                depth_width, depth_width + depth_width_range
             );
 
             line = max(line, depth);
         }
-        if(lo.delta_angle > min_angle_threshold)
+
+        _fix_range(normal_width, normal_width_range);
+        _fix_range(normal_threshold, normal_threshold_range);
+
+        if(lo.delta_angle > normal_threshold)
         {
             float angle = map_range_clamped(
                 lo.delta_angle, 
-                min_angle_threshold, max_angle_threshold,
-                min_angle_width, max_angle_width
+                normal_threshold, normal_threshold + normal_threshold_range,
+                normal_width, normal_width + normal_width_range
             );
 
             line = max(line, angle);
         }
 
-        return line;
-        
+        return line * line_width_scale;
     }
     #else
     {
