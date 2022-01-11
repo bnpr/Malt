@@ -149,20 +149,24 @@ def shader_preprocessor(shader_source, include_directories=[], definitions=[]):
     dependencies_path = os.path.join(os.path.dirname(__file__), '..', f'.Dependencies-{py_version}')
     mcpp = os.path.join(dependencies_path, f'mcpp-{platform.system()}')
 
-    args = [mcpp]
-    args.append('-C') #keep comments
+    command = f'"{mcpp}"'
+    command += ' -C' #keep comments
     for directory in include_directories:
-        args.append('-I'+directory)
+        command += f' -I"{directory}"'
     for definition in definitions:
-        args.append('-D'+definition)
-    args.append(tmp.name)
-
+        command += f' -D"{definition}"'
+    command += f' "{tmp.name}"'
+    
+    if platform.system() == 'Windows':
+        #run with utf8 code page to support non-ascii paths
+        command = f'CHCP 65001 > nul && {command}'
+    
     try:
-        result = subprocess.run(args, stdout = subprocess.PIPE, stderr=subprocess.PIPE)
+        result = subprocess.run(command, shell=True, stdout = subprocess.PIPE, stderr=subprocess.PIPE)
     except PermissionError:
         import stat
         os.chmod(mcpp, os.stat(mcpp).st_mode | stat.S_IEXEC)
-        result = subprocess.run(args, stdout = subprocess.PIPE, stderr=subprocess.PIPE)
+        result = subprocess.run(command, shell=True, stdout = subprocess.PIPE, stderr=subprocess.PIPE)
     finally:
         os.remove(tmp.name)
         if result.returncode != 0:
@@ -426,19 +430,25 @@ def reflect_program_uniform_blocks(program):
 USE_GLSLANG_VALIDATOR = False
 
 def glsl_reflection(code, root_paths=[]):
-    import tempfile, subprocess, json
+    import tempfile, subprocess, json, platform
+    
     GLSLParser = os.path.join(os.path.dirname(__file__), 'GLSLParser', '.bin', 'GLSLParser')
     
     tmp = tempfile.NamedTemporaryFile(delete=False)
     tmp.write(code.encode('utf-8'))
     tmp.close()
+
+    command = f'"{GLSLParser}" "{tmp.name}"'
+    if platform.system() == 'Windows':
+        #run with utf8 code page to support non-ascii paths
+        command = f'CHCP 65001 > nul && {command}'
     
     try:
-        json_string = subprocess.check_output([GLSLParser, tmp.name])
+        json_string = subprocess.check_output(command, shell=True)
     except PermissionError:
         import stat
         os.chmod(GLSLParser, os.stat(GLSLParser).st_mode | stat.S_IEXEC)
-        json_string = subprocess.check_output([GLSLParser, tmp.name])
+        json_string = subprocess.check_output(command, shell=True)
     
     os.remove(tmp.name)
     
