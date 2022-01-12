@@ -50,8 +50,9 @@ class MaltGraphType(bpy.types.PropertyGroup):
 
     custom_passes : bpy.props.CollectionProperty(type=MaltCustomPasses)
 
-def setup_default_passes(graphs):
-    world = bpy.context.scene.world
+def setup_default_passes(graphs, world=None):
+    if world is None:
+        world = bpy.context.scene.world
     for name, graph in graphs.items():
         if graph.graph_type == graph.SCENE_GRAPH:
             if name not in world.malt_graph_types:

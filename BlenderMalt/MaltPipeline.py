@@ -74,8 +74,6 @@ class MaltPipeline(bpy.types.PropertyGroup):
         for graph in bridge.graphs.keys():
             self.graph_types.add().name = graph
 
-        from BlenderMalt.MaltNodes import MaltCustomPasses
-        MaltCustomPasses.setup_default_passes(bridge.graphs)
         setup_all_ids()
     
     def _set_pipeline(self, value):
@@ -167,6 +165,9 @@ def setup_parameters(ids):
     }
 
     for bid in ids:
+        if isinstance(bid, bpy.types.World):
+            from BlenderMalt.MaltNodes import MaltCustomPasses
+            MaltCustomPasses.setup_default_passes(get_bridge().graphs, bid)
         for cls, parameters in class_parameters_map.items():
             if isinstance(bid, cls):
                 bid.malt_parameters.setup(parameters)
