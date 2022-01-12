@@ -77,6 +77,11 @@ class MaterialParameter(Parameter):
         super().__init__(default_path, Type.MATERIAL, 1, filter)
         self.extension = extension
 
+class GraphParameter(Parameter):
+    def __init__(self, default_path, graph_type, filter=None):
+        super().__init__(default_path, Type.GRAPH, 1, filter)
+        self.graph_type = graph_type
+
 def gl_type_to_malt_type(gl_type):
     from Malt.GL import GL
     types = {

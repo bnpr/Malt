@@ -51,9 +51,9 @@ class NPR_Pipeline(Pipeline):
         self.parameters.world['Samples.Grid Size'] = Parameter(8, Type.INT)
         self.parameters.world['Samples.Grid Size @ Preview'] = Parameter(4, Type.INT)
         self.parameters.world['Samples.Width'] = Parameter(1.0, Type.FLOAT)
-        default_material_path = os.path.join(os.path.dirname(__file__), 'default.mesh.glsl')
-        self.parameters.world['Material.Default'] = MaterialParameter(default_material_path, '.mesh.glsl')
-        self.parameters.world['Render'] = Parameter('Render', Type.GRAPH)
+        defaults_path = os.path.join(os.path.dirname(__file__), 'Defaults', 'defaults')
+        self.parameters.world['Material.Default'] = MaterialParameter((defaults_path, 'Default Mesh'), '.mesh.glsl')
+        self.parameters.world['Render'] = GraphParameter((defaults_path, 'Default Render'), 'Render')
         self.parameters.light['Light Group'] = Parameter(1, Type.INT)
         self.parameters.light['Shader'] = MaterialParameter('', '.light.glsl')
         self.parameters.material['Light Groups.Light'] = Parameter([1,0,0,0], Type.INT, 4, '.mesh.glsl')
@@ -83,6 +83,11 @@ class NPR_Pipeline(Pipeline):
                     shader_type='PIXEL_SHADER',
                     dynamic_input_types=GLSLGraphIO.COMMON_INPUT_TYPES,
                     dynamic_output_types=GLSLGraphIO.COMMON_OUTPUT_TYPES,
+                    default_dynamic_outputs={
+                        'Color': 'vec4',
+                        'Line Color': 'vec4',
+                        'Line Width': 'float',
+                    }
                 ),
                 GLSLGraphIO(
                     name='VERTEX_DISPLACEMENT_SHADER',
@@ -106,9 +111,12 @@ class NPR_Pipeline(Pipeline):
             graph_io=[ 
                 GLSLGraphIO(
                     name='SCREEN_SHADER',
+                    shader_type='PIXEL_SHADER',
                     dynamic_input_types= GLSLGraphIO.COMMON_INPUT_TYPES,
                     dynamic_output_types= GLSLGraphIO.COMMON_OUTPUT_TYPES,
-                    shader_type='PIXEL_SHADER',
+                    default_dynamic_outputs={
+                        'Color': 'vec4',
+                    }
                 )
             ]
         )

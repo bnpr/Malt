@@ -148,20 +148,46 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                 self.materials[name].extension = parameter.extension
                 shader_path = parameter.default_value
                 if shader_path and shader_path != '':
-                    material_name = name + ' : ' + os.path.basename(shader_path)
-                    if material_name not in bpy.data.materials:
-                        bpy.data.materials.new(material_name)
-                        material = bpy.data.materials[material_name]
-                        material.malt.shader_source = shader_path    
-                
-                    material = self.materials[name].material
-                    if type_changed or (material and rna[name]['default'] == material.malt.shader_source):
-                        self.materials[name].material = bpy.data.materials[material_name]
-            
+                    if isinstance(shader_path, str):
+                        material_name = name + ' : ' + os.path.basename(shader_path)
+                        if material_name not in bpy.data.materials:
+                            bpy.data.materials.new(material_name)
+                            material = bpy.data.materials[material_name]
+                            material.malt.shader_source = shader_path
+                        material = self.materials[name].material
+                        if type_changed or (material and rna[name]['default'] == material.malt.shader_source):
+                            self.materials[name].material = bpy.data.materials[material_name]
+                    
+                    if isinstance(shader_path, tuple):
+                        blend_path, material_name = parameter.default_value
+                        blend_path += '.blend'
+                        if material_name not in bpy.data.node_groups:
+                            internal_dir = 'Material'
+                            bpy.ops.wm.append(
+                                filepath=os.path.join(blend_path, internal_dir, material_name),
+                                directory=os.path.join(blend_path, internal_dir),
+                                filename=material_name
+                            )    
+                        if type_changed:
+                            self.materials[name].material = bpy.data.materials[material_name]
+                    
             if parameter.type == Type.GRAPH:
                 if name not in self.graphs:
-                    self.graphs.add().name = name                
-                self.graphs[name].type = parameter.default_value
+                    self.graphs.add().name = name
+                self.graphs[name].type = parameter.graph_type
+                if parameter.default_value and isinstance(parameter.default_value, tuple):
+                    blend_path, tree_name = parameter.default_value
+                    blend_path += '.blend'
+                    if tree_name not in bpy.data.node_groups:
+                        internal_dir = 'NodeTree'
+                        bpy.ops.wm.append(
+                            filepath=os.path.join(blend_path, internal_dir, tree_name),
+                            directory=os.path.join(blend_path, internal_dir),
+                            filename=tree_name
+                        )
+                    if type_changed:
+                        self.graphs[name].graph = bpy.data.node_groups[tree_name]
+                    assert(parameter.graph_type == self.graphs[name].graph.graph_type)
 
             if name not in self.override_from_parents:
                 self.override_from_parents.add().name = name

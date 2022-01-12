@@ -74,6 +74,8 @@ class MaltPipeline(bpy.types.PropertyGroup):
         for graph in bridge.graphs.keys():
             self.graph_types.add().name = graph
 
+        from BlenderMalt.MaltNodes import MaltCustomPasses
+        MaltCustomPasses.setup_default_passes(bridge.graphs)
         setup_all_ids()
     
     def _set_pipeline(self, value):

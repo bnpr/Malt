@@ -1,6 +1,6 @@
 # Copyright (c) 2020-2021 BNPR, Miguel Pozo and contributors. MIT license. 
 
-from Malt.PipelineParameters import Type, Parameter, MaterialParameter
+from Malt.PipelineParameters import Type, Parameter, MaterialParameter, GraphParameter
 import bpy    
 from BlenderMalt.MaltNodes.MaltNode import MaltNode
 
@@ -35,13 +35,13 @@ class MaltFunctionNode(bpy.types.Node, MaltNode):
             if graph.graph_type == graph.GLOBAL_GRAPH:
                 if graph.language == 'Python':
                     self.malt_parameters.setup(
-                        {'PASS_GRAPH': Parameter('Render Layer', Type.GRAPH)},
+                        {'PASS_GRAPH': GraphParameter(None, graph.name)},
                         replace_parameters=False,
                         skip_private=False
                     )
                 else:
                     self.malt_parameters.setup(
-                        {'PASS_MATERIAL': MaterialParameter('', graph.file_extension)},
+                        {'PASS_MATERIAL': MaterialParameter(None, graph.file_extension)},
                         replace_parameters=False,
                         skip_private=False
                     )

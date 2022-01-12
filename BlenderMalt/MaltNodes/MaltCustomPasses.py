@@ -61,8 +61,24 @@ def setup_default_passes(graphs):
                 graph_type.custom_passes.add().name = 'Default'
             for custom_pass in graph_type.custom_passes:
                 for name, io in graph.graph_io.items():
+                    is_new = False
                     if name not in custom_pass.io:
                         custom_pass.io.add().name = name
+                        is_new = True
+                    custom_io = custom_pass.io[name]
+                    if is_new:
+                        def add_io_parameter(name, type, is_output):
+                            parameters = custom_io.outputs if is_output else custom_io.inputs
+                            if name not in parameters:
+                                parameters.add().name = name
+                                parameters[name].graph_type = graph_type.name
+                                parameters[name].io_type = io.name
+                                parameters[name].is_output = is_output
+                                parameters[name].parameter = type
+                        for key, type in io.default_dynamic_inputs.items():
+                            add_io_parameter(key, type, False)
+                        for key, type in io.default_dynamic_outputs.items():
+                            add_io_parameter(key, type, True)
 
 class OT_MaltAddCustomPass(bpy.types.Operator):
     bl_idname = "wm.malt_add_custom_pass"

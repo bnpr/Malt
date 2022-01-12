@@ -5,10 +5,13 @@ from Malt.Utils import scan_dirs
 
 class PipelineGraphIO():
 
-    def __init__(self, name, dynamic_input_types = [], dynamic_output_types = [], function=None):
+    def __init__(self, name, dynamic_input_types = [], dynamic_output_types = [], 
+    default_dynamic_inputs = {}, default_dynamic_outputs = {}, function=None):
         self.name = name
         self.dynamic_input_types = dynamic_input_types
         self.dynamic_output_types = dynamic_output_types
+        self.default_dynamic_inputs = default_dynamic_inputs
+        self.default_dynamic_outputs = default_dynamic_outputs
         self.function = function
 
 class PipelineGraph():
@@ -77,8 +80,9 @@ class GLSLGraphIO(PipelineGraphIO):
         'int','ivec2','ivec3','ivec4',
     ]
     
-    def __init__(self, name, define = None, io_wrap=None, dynamic_input_types = [], dynamic_output_types = [], shader_type=None, custom_output_start_index=0):
-        super().__init__(name, dynamic_input_types, dynamic_output_types)
+    def __init__(self, name, define = None, io_wrap=None, dynamic_input_types = [], dynamic_output_types = [], 
+    default_dynamic_inputs = {}, default_dynamic_outputs = {}, shader_type=None, custom_output_start_index=0):
+        super().__init__(name, dynamic_input_types, dynamic_output_types, default_dynamic_inputs, default_dynamic_outputs)
         self.define = define
         self.io_wrap = io_wrap
         self.shader_type = shader_type
@@ -159,8 +163,10 @@ class PythonGraphIO(PipelineGraphIO):
 
     COMMON_IO_TYPES = ['Texture']
 
-    def __init__(self, name, dynamic_input_types = [], dynamic_output_types = [], function=None):
-        super().__init__(name, dynamic_input_types, dynamic_output_types, function)
+    def __init__(self, name, dynamic_input_types = [], dynamic_output_types = [],
+    default_dynamic_inputs = {}, default_dynamic_outputs = {}, function=None):
+        super().__init__(name, dynamic_input_types, dynamic_output_types, 
+            default_dynamic_inputs, default_dynamic_outputs, function)
 
 class PythonPipelineGraph(PipelineGraph):
     
