@@ -20,16 +20,16 @@ class SceneLighting(PipelineNode):
     def reflect_inputs(cls):
         inputs = {}
         inputs['Scene'] = Parameter('Scene', Type.OTHER)
-        inputs['Sun Cascades Distribution Scalar'] = Parameter(0.9, Type.FLOAT)
-        inputs['Sun Cascades Count'] = Parameter(4, Type.INT)
-        inputs['Sun Cascades Count @ Preview'] = Parameter(2, Type.INT)
-        inputs['Sun Cascades Max Distance'] = Parameter(100, Type.FLOAT)
-        inputs['Sun Cascades Max Distance @ Preview'] = Parameter(25, Type.FLOAT)
-        inputs['Sun Resolution'] = Parameter(2048, Type.INT)
-        inputs['Spot Resolution'] = Parameter(2048, Type.INT)
-        inputs['Spot Resolution @ Preview'] = Parameter(512, Type.INT)
         inputs['Point Resolution'] = Parameter(2048, Type.INT)
         inputs['Point Resolution @ Preview'] = Parameter(512, Type.INT)
+        inputs['Spot Resolution'] = Parameter(2048, Type.INT)
+        inputs['Spot Resolution @ Preview'] = Parameter(512, Type.INT)
+        inputs['Sun Resolution'] = Parameter(2048, Type.INT)
+        inputs['Sun Max Distance'] = Parameter(100, Type.FLOAT)
+        inputs['Sun Max Distance @ Preview'] = Parameter(25, Type.FLOAT)
+        inputs['Sun CSM Count'] = Parameter(4, Type.INT)
+        inputs['Sun CSM Count @ Preview'] = Parameter(2, Type.INT)
+        inputs['Sun CSM Distribution'] = Parameter(0.9, Type.FLOAT)
         return inputs
     
     @classmethod
@@ -50,20 +50,20 @@ class SceneLighting(PipelineNode):
         opaque_batches, transparent_batches = self.pipeline.get_scene_batches(scene)
 
         self.lights_buffer.load(scene, 
-            inputs['Sun Cascades Count'], 
-            inputs['Sun Cascades Distribution Scalar'],
-            inputs['Sun Cascades Max Distance'], sample_offset)
+            inputs['Sun CSM Count'], 
+            inputs['Sun CSM Distribution'],
+            inputs['Sun Max Distance'], sample_offset)
         self.light_groups_buffer.load(scene)
         self.shadowmaps_opaque.load(scene,
             inputs['Spot Resolution'],
             inputs['Sun Resolution'],
             inputs['Point Resolution'],
-            inputs['Sun Cascades Count'])
+            inputs['Sun CSM Count'])
         self.shadowmaps_transparent.load(scene,
             inputs['Spot Resolution'],
             inputs['Sun Resolution'],
             inputs['Point Resolution'],
-            inputs['Sun Cascades Count'])
+            inputs['Sun CSM Count'])
         
         shader_resources = scene.shader_resources.copy()
         shader_resources['COMMON_UNIFORMS'] = self.common_buffer
