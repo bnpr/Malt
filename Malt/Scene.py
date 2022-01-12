@@ -53,7 +53,7 @@ class Scene():
         self.time = 0
 
         self.batches = None
-        self.shader_resorces = {}
+        self.shader_resources = {}
 
 class ShaderResource():
     
