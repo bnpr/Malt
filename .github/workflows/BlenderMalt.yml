@@ -7,6 +7,8 @@ jobs:
   release:
     runs-on: ubuntu-latest
     steps:
+    - uses: actions/checkout@v2
+    
     - uses: nelonoel/branch-name@v1.0.1
     
     - name: Rollback Release
@@ -17,9 +19,6 @@ jobs:
         delete_orphan_tag: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    
-    - name: Checkout code
-      uses: actions/checkout@v2
 
     - name: Create Release
       id: create_release
@@ -32,24 +31,6 @@ jobs:
         draft: false
         prerelease: ${{ env.BRANCH_NAME != 'Release' }}
         body_path: SPONSORS.md
-    
-    - uses: actions/checkout@v2
-      
-    - name: Zip Shader Examples
-      shell: python
-      run: |
-        import shutil
-        shutil.make_archive('Shader Examples', 'zip', 'Shader Examples')
-    
-    - name: Release Shader Examples
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ${{ github.workspace }}/Shader Examples.zip
-        asset_name: Shader-Examples.zip
-        asset_content_type: application/zip
     
     outputs:
       upload_url: ${{ steps.create_release.outputs.upload_url}}  
