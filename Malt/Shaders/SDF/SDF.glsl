@@ -1,5 +1,3 @@
-//Copyright (c) 2020-2021 BNPR, Miguel Pozo and contributors. MIT license.
-
 #ifndef SDF_SDF_GLSL
 #define SDF_SDF_GLSL
 

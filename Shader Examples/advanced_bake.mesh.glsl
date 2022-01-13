@@ -1,5 +1,3 @@
-//Copyright (c) 2020-2021 BNPR, Miguel Pozo and contributors. MIT license.
-
 #if defined(VERTEX_SHADER) && (defined(PRE_PASS) || defined(MAIN_PASS))
 #define CUSTOM_MAIN
 #endif

@@ -1,5 +1,3 @@
-# Copyright (c) 2020-2021 BNPR, Miguel Pozo and contributors. MIT license. 
-
 import os
 import bpy
 from Malt.PipelineParameters import Type, Parameter, MaterialParameter

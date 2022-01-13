@@ -1,5 +1,3 @@
-//Copyright (c) 2020-2021 BNPR, Miguel Pozo and contributors. MIT license.
-
 #include "NPR_Pipeline.glsl"
 
 uniform int ao_samples = 16;

@@ -1,5 +1,3 @@
-# Copyright (c) 2020-2021 BNPR, Miguel Pozo and contributors. MIT license. 
-
 import logging as LOG
 
 def dump_function(function):

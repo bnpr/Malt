@@ -1,5 +1,3 @@
-//Copyright (c) 2020-2021 BNPR, Miguel Pozo and contributors. MIT license.
-
 /// NPR Pipeline for mesh materials.
 /// Includes a simplified API for writing shaders.
 

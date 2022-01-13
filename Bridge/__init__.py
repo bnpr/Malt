@@ -1,5 +1,3 @@
-# Copyright (c) 2020-2021 BNPR, Miguel Pozo and contributors. MIT license. 
-
 def reload():
     import importlib
     from . import Client_API, Server, Material, Mesh, Texture

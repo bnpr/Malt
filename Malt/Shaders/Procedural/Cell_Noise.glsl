@@ -1,5 +1,3 @@
-//Copyright (c) 2021 BlenderNPR and contributors. MIT license.
-
 #ifndef PROCEDURAL_CELL_NOISE_GLSL
 #define PROCEDURAL_CELL_NOISE_GLSL
 

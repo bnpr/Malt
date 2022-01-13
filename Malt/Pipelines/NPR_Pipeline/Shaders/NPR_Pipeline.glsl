@@ -1,5 +1,3 @@
-//Copyright (c) 2020-2021 BNPR, Miguel Pozo and contributors. MIT license.
-
 //Every NPR_Pipeline shader should include this file regardless of its type.
 //IS_MESH_SHADER and the likes are defined by the pipeline itself based on the shader file extension.
 

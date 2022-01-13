@@ -1,5 +1,3 @@
-//Copyright (c) 2020-2021 BNPR, Miguel Pozo and contributors. MIT license.
-
 #ifndef COMMON_QUATERNION_GLSL
 #define COMMON_QUATERNION_GLSL
 

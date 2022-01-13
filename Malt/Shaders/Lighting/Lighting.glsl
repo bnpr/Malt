@@ -1,5 +1,3 @@
-//Copyright (c) 2020-2021 BNPR, Miguel Pozo and contributors. MIT license.
-
 #ifndef COMMON_LIGHTING_GLSL
 #define COMMON_LIGHTING_GLSL
 

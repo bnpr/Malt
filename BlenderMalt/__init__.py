@@ -1,5 +1,3 @@
-# Copyright (c) 2020-2021 BNPR, Miguel Pozo and contributors. MIT license. 
-
 bl_info = {
     "name": "BlenderMalt",
     "description" : "Extensible Python Render Engine",

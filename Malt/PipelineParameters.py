@@ -1,5 +1,3 @@
-# Copyright (c) 2020-2021 BNPR, Miguel Pozo and contributors. MIT license. 
-
 class PipelineParameters():
 
     def __init__(self, scene={}, world={}, camera={}, object={}, material={}, mesh={}, light={}):

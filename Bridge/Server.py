@@ -1,5 +1,3 @@
-# Copyright (c) 2020-2021 BNPR, Miguel Pozo and contributors. MIT license. 
-
 import os, sys, time, ctypes, os, copy
 import cProfile, pstats, io
 import multiprocessing.connection as connection

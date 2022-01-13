@@ -1,5 +1,3 @@
-//Copyright (c) 2021 BlenderNPR and contributors. MIT license.
-
 #ifndef COMMON_HASH_GLSL
 #define COMMON_HASH_GLSL
 

@@ -1,5 +1,3 @@
-// Copyright (c) 2020-2021 BNPR, Miguel Pozo and contributors. MIT license.
-
 #ifdef _WIN32
 #define EXPORT extern "C" __declspec( dllexport )
 #else

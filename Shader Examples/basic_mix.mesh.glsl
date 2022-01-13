@@ -1,5 +1,3 @@
-//Copyright (c) 2020-2021 BNPR, Miguel Pozo and contributors. MIT license.
-
 #include "NPR_Pipeline.glsl"
 
 uniform vec3 ambient_color = vec3(0.1,0.1,0.1);

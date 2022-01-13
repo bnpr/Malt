@@ -1,10 +1,8 @@
-# Copyright (c) 2020-2021 BNPR, Miguel Pozo and contributors. MIT license. 
-
 import bpy    
 from BlenderMalt.MaltNodes.MaltNode import MaltNode
 from BlenderMalt.MaltProperties import MaltPropertyGroup
-
 from BlenderMalt.MaltNodes.MaltCustomPasses import *
+
 
 class MaltIONode(bpy.types.Node, MaltNode):
     

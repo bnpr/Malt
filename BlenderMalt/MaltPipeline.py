@@ -1,5 +1,3 @@
-# Copyright (c) 2020-2021 BNPR, Miguel Pozo and contributors. MIT license. 
-
 import os, platform, time
 import bpy
 from BlenderMalt.MaltUtils import malt_path_getter, malt_path_setter

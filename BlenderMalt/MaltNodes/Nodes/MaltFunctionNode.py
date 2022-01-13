@@ -1,8 +1,7 @@
-# Copyright (c) 2020-2021 BNPR, Miguel Pozo and contributors. MIT license. 
-
 from Malt.PipelineParameters import Type, Parameter, MaterialParameter, GraphParameter
 import bpy    
 from BlenderMalt.MaltNodes.MaltNode import MaltNode
+
 
 class MaltFunctionNode(bpy.types.Node, MaltNode):
     

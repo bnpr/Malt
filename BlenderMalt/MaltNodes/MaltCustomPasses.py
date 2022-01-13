@@ -1,5 +1,4 @@
 import bpy
-
 from BlenderMalt import MaltPipeline
 
 class MaltIOParameter(bpy.types.PropertyGroup):

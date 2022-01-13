@@ -1,5 +1,3 @@
-# Copyright (c) 2020-2021 BNPR, Miguel Pozo and contributors. MIT license. 
-
 import os, time
 from itertools import chain
 from Malt.SourceTranspiler import GLSLTranspiler, PythonTranspiler

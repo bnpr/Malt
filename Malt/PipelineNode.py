@@ -1,4 +1,3 @@
-
 class PipelineNode():
 
     def __init__(self, pipeline):

@@ -1,5 +1,3 @@
-//Copyright (c) 2020-2021 BNPR, Miguel Pozo and contributors. MIT license.
-
 #ifndef NPR_LIGHTING_GLSL
 #define NPR_LIGHTING_GLSL
 

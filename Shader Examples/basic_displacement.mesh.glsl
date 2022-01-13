@@ -1,5 +1,3 @@
-//Copyright (c) 2020-2021 BNPR, Miguel Pozo and contributors. MIT license.
-
 #define CUSTOM_VERTEX_DISPLACEMENT
 
 #include "NPR_Pipeline.glsl"

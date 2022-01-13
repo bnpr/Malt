@@ -1,5 +1,3 @@
-# Copyright (c) 2020-2021 BNPR, Miguel Pozo and contributors. MIT license. 
-
 from Malt.GL import Texture
 from Malt.GL.GL import *
 

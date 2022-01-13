@@ -1,6 +1,4 @@
-# Copyright (c) 2020-2021 BNPR, Miguel Pozo and contributors. MIT license. 
 from Malt.Utils import LOG
-
 from Malt.GL import Mesh
 from Malt.GL.GL import *
 
