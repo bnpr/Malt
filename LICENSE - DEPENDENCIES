@@ -1,0 +1,79 @@
+Malt:
+
+PyOpenGL
+BSD License
+http://pyopengl.sourceforge.net
+https://github.com/mcfletch/pyopengl/blob/master/license.txt
+
+pyGLFW
+MIT License
+https://github.com/FlorianRhiem/pyGLFW
+https://github.com/FlorianRhiem/pyGLFW/blob/master/LICENSE.txt
+
+GLFW
+zlib License
+https://www.glfw.org/
+https://github.com/glfw/glfw/blob/master/LICENSE.md
+
+mcpp
+MIT License
+https://github.com/pragma37/mcpp
+https://github.com/pragma37/mcpp/blob/master/LICENSE
+
+multipledispatch
+BSD License
+http://github.com/mrocklin/multipledispatch/
+https://github.com/mrocklin/multipledispatch/blob/master/LICENSE.txt
+
+numpy
+BSD License
+https://www.numpy.org
+https://github.com/numpy/numpy/blob/main/LICENSE.txt
+https://github.com/numpy/numpy/blob/main/LICENSES_bundled.txt
+
+psutil
+BSD License
+https://github.com/giampaolo/psutil
+https://github.com/giampaolo/psutil/blob/master/LICENSE
+
+pyrr
+BSD License
+https://github.com/adamlwgriffiths/Pyrr
+https://github.com/adamlwgriffiths/Pyrr/blob/master/LICENSE
+
+six
+MIT License
+https://github.com/benjaminp/six
+https://github.com/benjaminp/six/blob/master/LICENSE
+
+GLSLParser:
+
+PEGTL
+Boost Software License
+https://github.com/taocpp/PEGTL
+https://github.com/taocpp/PEGTL/blob/main/LICENSE_1_0.txt
+
+rapidjson
+MIT License
+https://github.com/Tencent/rapidjson
+https://github.com/Tencent/rapidjson/blob/master/license.txt
+
+Bridge:
+
+ipc
+The Unlicense
+https://github.com/jarikomppa/ipc
+https://github.com/jarikomppa/ipc/blob/master/LICENSE
+
+renderdoc (renderdoc_app.h)
+MIT License
+https://renderdoc.org/
+https://github.com/baldurk/renderdoc/blob/v1.x/LICENSE.md
+
+BlenderMalt:
+
+blender
+GNU GPL
+https://blender.org
+https://github.com/blender/blender/blob/master/doc/license/GPL3-license.txt
+
