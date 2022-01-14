@@ -128,7 +128,7 @@ class MaltFunctionNode(bpy.types.Node, MaltNode):
         parameters = []
         post_parameter_initialization = ''
         for input in self.inputs:
-            if input.is_struct_member():
+            if input.active and input.is_struct_member():
                 initialization = input.get_source_initialization()
                 if initialization:
                     post_parameter_initialization += transpiler.asignment(input.get_source_reference(), initialization)

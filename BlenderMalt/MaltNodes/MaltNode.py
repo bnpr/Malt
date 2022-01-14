@@ -73,7 +73,10 @@ class MaltNode():
                 if e not in new:
                     remove.append(current[e])
             for e in remove:
-                current.remove(e)
+                if len(e.links) == 0:
+                    current.remove(e)
+                else:
+                    e.active = False
             for i, (name, dic) in enumerate(new.items()):
                 if '@' in name:
                     continue #Skip overrides
@@ -91,7 +94,7 @@ class MaltNode():
                     current[name].default_initialization = dic['meta']['init']
                 except:
                     current[name].default_initialization = ''
-                
+                current[name].active = True
                 current.move(current.keys().index(name), i)
 
         setup(self.inputs, inputs)
@@ -149,6 +152,8 @@ class MaltNode():
     def sockets_to_global_parameters(self, sockets, transpiler):
         code = ''
         for socket in sockets:
+            if socket.active == False:
+                continue
             if socket.data_type != '' and socket.get_linked() is None and socket.is_struct_member() == False:
                 code += transpiler.global_declaration(socket.data_type, socket.array_size, socket.get_source_global_reference())
         return code
@@ -169,8 +174,8 @@ class MaltNode():
         return False
     
     def draw_socket(self, context, layout, socket, text):
-        draw_parameter = socket.is_output == False and socket.is_linked == False and socket.default_initialization == ''
-        if socket.is_struct_member() and (socket.get_struct_socket().is_linked or socket.get_struct_socket().default_initialization != ''):
+        draw_parameter = socket.is_output == False and socket.get_linked() is None and socket.default_initialization == ''
+        if socket.is_struct_member() and (socket.get_struct_socket().get_linked() or socket.get_struct_socket().default_initialization != ''):
             draw_parameter = False
         if draw_parameter:
             column = layout.column()

@@ -65,10 +65,15 @@ class MaltIONode(bpy.types.Node, MaltNode):
         graph = self.id_data.get_pipeline_graph()
         return graph.graph_io[self.io_type].function
     
+    def get_custom_pass_io(self):
+        if self.allow_custom_pass and self.allow_custom_parameters:
+            world = bpy.context.scene.world
+            return world.malt_graph_types[self.id_data.graph_type].custom_passes[self.custom_pass].io[self.io_type]
+    
     def get_custom_parameters(self):
         if self.allow_custom_parameters:
             if self.allow_custom_pass:
-                io = bpy.context.scene.world.malt_graph_types[self.id_data.graph_type].custom_passes[self.custom_pass].io[self.io_type]
+                io = self.get_custom_pass_io()
                 return io.outputs if self.is_output else io.inputs
             else:
                 return self.custom_parameters
@@ -105,6 +110,8 @@ class MaltIONode(bpy.types.Node, MaltNode):
             function = self.get_function()
             custom_outputs = ''
             for socket in self.inputs:
+                if socket.active == False:
+                    continue
                 if self.is_custom_socket(socket):
                     custom_outputs += transpiler.asignment(self.get_source_socket_reference(socket), socket.get_source_initialization())
                 else:
@@ -165,32 +172,32 @@ class MaltIONode(bpy.types.Node, MaltNode):
                         tree.reload_nodes()
                         tree.update()
             layout.operator("wm.malt_callback", text='Reload', icon='FILE_REFRESH').callback.set(refresh)
-            row = layout.row()
-            owner = self
-            parameters_key = 'custom_parameters'
+            def draw_parameters_list(owner, parameters_key):
+                row = layout.row()
+                index_key = f'{parameters_key}_index'
+                row.template_list('COMMON_UL_UI_List', '', owner, parameters_key, owner, index_key)
+                col = row.column()
+                parameters = getattr(owner, parameters_key)
+                index = getattr(owner, index_key)
+                def add_custom_socket():
+                    new_param = parameters.add()
+                    new_param.graph_type = self.id_data.graph_type
+                    new_param.io_type = self.io_type
+                    new_param.is_output = self.is_output
+                    name = f"Custom {'Output' if new_param.is_output else 'Input'}"
+                    i = 1
+                    #TODO: Check against default parameters
+                    while f'{name} {i}' in parameters.keys():
+                        i += 1
+                    new_param.name = f'{name} {i}'
+                col.operator("wm.malt_callback", text='', icon='ADD').callback.set(add_custom_socket)
+                def remove_custom_socket():
+                    parameters.remove(index)
+                col.operator("wm.malt_callback", text='', icon='REMOVE').callback.set(remove_custom_socket)
             if self.allow_custom_pass:
-                owner = context.scene.world.malt_graph_types[self.id_data.graph_type].custom_passes[self.custom_pass].io[self.io_type]
-                parameters_key = 'outputs' if self.is_output else 'inputs'
-            index_key = f'{parameters_key}_index'
-            row.template_list('COMMON_UL_UI_List', '', owner, parameters_key, owner, index_key)
-            parameters = getattr(owner, parameters_key)
-            index = getattr(owner, index_key)
-            col = row.column()
-            def add_custom_socket():
-                new_param = parameters.add()
-                new_param.graph_type = self.id_data.graph_type
-                new_param.io_type = self.io_type
-                new_param.is_output = self.is_output
-                name = f"Custom {'Output' if new_param.is_output else 'Input'}"
-                i = 1
-                #TODO: Check against default parameters
-                while f'{name} {i}' in parameters.keys():
-                    i += 1
-                new_param.name = f'{name} {i}'
-            col.operator("wm.malt_callback", text='', icon='ADD').callback.set(add_custom_socket)
-            def remove_custom_socket():
-                parameters.remove(index)
-            col.operator("wm.malt_callback", text='', icon='REMOVE').callback.set(remove_custom_socket)
+                draw_parameters_list(self.get_custom_pass_io(), 'outputs' if self.is_output else 'inputs')
+            else:
+                draw_parameters_list(self, 'custom_parameters')
     
     
 classes = [

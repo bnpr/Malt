@@ -136,8 +136,8 @@ class MaltTree(bpy.types.NodeTree):
         
         def add_node_inputs(node, list):
             for input in node.inputs:
-                if input.is_linked:
-                    new_node = input.links[0].from_node
+                if input.get_linked():
+                    new_node = input.get_linked().node
                     if new_node not in list:
                         add_node_inputs(new_node, list)
                         list.append(new_node)
@@ -198,6 +198,7 @@ class MaltTree(bpy.types.NodeTree):
                     if (link.from_socket.array_size != link.to_socket.array_size or 
                         (link.from_socket.data_type != link.to_socket.data_type and
                         self.cast(link.from_socket.data_type, link.to_socket.data_type) is None)):
+                        #TODO: handle reroute nodes
                         self.links.remove(link)
                 except:
                     pass

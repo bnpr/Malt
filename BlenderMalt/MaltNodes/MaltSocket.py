@@ -24,11 +24,14 @@ class MaltSocket(bpy.types.NodeSocket):
     default_initialization: bpy.props.StringProperty(default='')
     
     show_in_material_panel: bpy.props.BoolProperty(default=True)
+    
+    active: bpy.props.BoolProperty(default=True)
 
     def is_instantiable_type(self):
         return self.data_type.startswith('sampler') == False
 
     def get_source_reference(self, target_type=None):
+        assert(self.active)
         if not self.is_instantiable_type() and not self.is_output and self.get_linked() is not None:
             self.get_linked().get_source_reference()
         else:
@@ -39,6 +42,7 @@ class MaltSocket(bpy.types.NodeSocket):
             return reference
     
     def get_source_global_reference(self):
+        assert(self.active)
         transpiler = self.id_data.get_transpiler()
         return transpiler.global_reference(self.node.get_source_name(), self.name)
     
@@ -55,11 +59,12 @@ class MaltSocket(bpy.types.NodeSocket):
         return None
     
     def get_source_initialization(self):
-        if self.is_linked:
+        assert(self.active)
+        if self.get_linked():
             return self.get_linked().get_source_reference(self.data_type)
         elif self.default_initialization != '':
             return self.default_initialization
-        elif self.is_struct_member() and (self.get_struct_socket().is_linked or self.get_struct_socket().default_initialization != ''):
+        elif self.is_struct_member() and (self.get_struct_socket().get_linked() or self.get_struct_socket().default_initialization != ''):
             return None
         else:
             return self.get_source_global_reference()
@@ -77,7 +82,7 @@ class MaltSocket(bpy.types.NodeSocket):
                         return None
                     return get_linked_internal(sockets[0])
                 else:
-                    return linked
+                    return linked if linked.active else None
         return get_linked_internal(self)
     
     def get_ui_label(self):
@@ -90,7 +95,10 @@ class MaltSocket(bpy.types.NodeSocket):
             return f'{self.name} : ({type})'
     
     def draw(self, context, layout, node, text):
-        if context.region.type != 'UI' or self.get_source_global_reference() == self.get_source_initialization():
+        if self.active == False:
+            layout.active = False
+            layout.label(text=text)
+        elif context.region.type != 'UI' or self.get_source_global_reference() == self.get_source_initialization():
             text = self.get_ui_label()
             node.draw_socket(context, layout, self, text)
             if context.region.type == 'UI':
@@ -117,7 +125,11 @@ class MaltSocket(bpy.types.NodeSocket):
                 self.display_shape = 'SQUARE'
 
     def draw_color(self, context, node):
-        return get_type_color(self.data_type)
+        color = get_type_color(self.data_type)
+        if self.active == False:
+            color = list(color)
+            color[3] = 0.25
+        return color
 
 
 classes = [
