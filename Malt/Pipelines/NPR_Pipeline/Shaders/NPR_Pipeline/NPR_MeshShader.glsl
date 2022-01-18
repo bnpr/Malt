@@ -479,7 +479,7 @@ vec4 get_matcap(sampler2D matcap_texture)
 
 float get_rim_light(float angle, float rim_length, float thickness, float thickness_falloff)
 {
-    return rim_light(NORMAL, angle * DEGREES_TO_RADIANS, rim_length, rim_length, thickness, thickness_falloff);
+    return rim_light(NORMAL, radians(angle), rim_length, rim_length, thickness, thickness_falloff);
 }
 
 LineDetectionOutput get_line_detection()

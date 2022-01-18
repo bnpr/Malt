@@ -19,13 +19,7 @@
 
 #define PI M_PI
 
-#define DEGREES_TO_RADIANS (PI / 180.0)
-#define RADIANS_TO_DEGREES (180.0 / PI)
-
 //These are defined as macros to make them work across different types. (Poor Man's Generics)
-
-#define degrees_to_radians(angle) ((angle) * DEGREES_TO_RADIANS)
-#define radians_to_degrees(angle) ((angle) * RADIANS_TO_DEGREES)
 
 #define saturate(value) clamp((value), 0, 1)
 
