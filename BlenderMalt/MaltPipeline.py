@@ -3,15 +3,16 @@ import bpy
 from BlenderMalt.MaltUtils import malt_path_getter, malt_path_setter
 from . import MaltMaterial, MaltMeshes, MaltTextures
 
-__BRIDGE = None
-__PIPELINE_PARAMETERS = None
-TIMESTAMP = time.time()
+_BRIDGE = None
+_PIPELINE_PARAMETERS = None
+_WORLD = None
+_TIMESTAMP = time.time()
 
 def get_bridge(world=None, force_creation=False):
-    global __BRIDGE
-    bridge = __BRIDGE
+    global _BRIDGE
+    bridge = _BRIDGE
     if (bridge and bridge.lost_connection) or (bridge is None and force_creation):
-        __BRIDGE = None
+        _BRIDGE = None
         try:
             if world is None:
                 bpy.context.scene.world.malt.update_pipeline(bpy.context)
@@ -19,21 +20,13 @@ def get_bridge(world=None, force_creation=False):
                 world.malt.update_pipeline(bpy.context)
         except:
             pass
-    return __BRIDGE
-
-def set_bridge(bridge):
-    global __BRIDGE
-    __BRIDGE = bridge
-
-def set_pipeline_parameters(parameters):
-    global __PIPELINE_PARAMETERS
-    __PIPELINE_PARAMETERS = parameters
+    return _BRIDGE
 
 class MaltPipeline(bpy.types.PropertyGroup):
 
     def update_pipeline(self, context):
-        global TIMESTAMP
-        TIMESTAMP = time.time()
+        global _TIMESTAMP
+        _TIMESTAMP = time.time()
         
         #TODO: Sync all scenes. Only one active pipeline per Blender instance is supported atm.
         pipeline = self.pipeline
@@ -68,8 +61,10 @@ class MaltPipeline(bpy.types.PropertyGroup):
         params.world['Viewport.Resolution Scale'] = Parameter(1.0 , Type.FLOAT)
         params.world['Viewport.Smooth Interpolation'] = Parameter(True , Type.BOOL)
 
-        set_bridge(bridge)
-        set_pipeline_parameters(params)
+        global _BRIDGE, _PIPELINE_PARAMETERS, _WORLD
+        _BRIDGE = bridge
+        _PIPELINE_PARAMETERS = params
+        _WORLD = context.scene.world.name_full
         
         MaltMaterial.reset_materials()
         MaltMeshes.reset_meshes()
@@ -81,11 +76,6 @@ class MaltPipeline(bpy.types.PropertyGroup):
             self.graph_types.add().name = graph
 
         setup_all_ids()
-    
-    def _set_pipeline(self, value):
-        self['pipeline'] = value.replace('\\','/')
-    def _get_pipeline(self):
-        return self.get('pipeline','').replace('\\','/')
 
     pipeline : bpy.props.StringProperty(name="Malt Pipeline", subtype='FILE_PATH', update=update_pipeline,
         set=malt_path_setter('pipeline'), get=malt_path_getter('pipeline'))
@@ -159,8 +149,8 @@ def setup_all_ids():
     MaltMaterial.track_shader_changes(force_update=True)
 
 def setup_parameters(ids):
-    global __PIPELINE_PARAMETERS
-    pipeline_parameters = __PIPELINE_PARAMETERS
+    global _PIPELINE_PARAMETERS
+    pipeline_parameters = _PIPELINE_PARAMETERS
 
     class_parameters_map = {
         bpy.types.Scene : pipeline_parameters.scene,
@@ -185,15 +175,18 @@ def setup_parameters(ids):
 
 @bpy.app.handlers.persistent
 def depsgraph_update(scene, depsgraph):
-    global __BRIDGE
+    global _BRIDGE, _WORLD
 
     if scene.render.engine != 'MALT':
         # Don't do anything if Malt is not the active renderer,
         # but make sure we setup all IDs the next time Malt is enabled
-        __BRIDGE = None
+        _BRIDGE = None
         return
+    
+    if scene.world is None or scene.world.name_full != _WORLD:
+        _BRIDGE = None 
 
-    if __BRIDGE is None:
+    if _BRIDGE is None:
         scene.world.malt.update_pipeline(bpy.context)
         return
 
@@ -240,8 +233,8 @@ def depsgraph_update(scene, depsgraph):
 
 @bpy.app.handlers.persistent
 def load_scene(dummy1=None,dummy2=None):
-    global __BRIDGE
-    __BRIDGE = None
+    global _BRIDGE
+    _BRIDGE = None
 
 @bpy.app.handlers.persistent
 def load_scene_post(dummy1=None,dummy2=None):
@@ -268,7 +261,7 @@ def track_pipeline_changes():
         path = bpy.path.abspath(malt.pipeline, library=malt.id_data.library)
         if os.path.exists(path):
             stats = os.stat(path)
-            if stats.st_mtime > TIMESTAMP:
+            if stats.st_mtime > _TIMESTAMP:
                 malt.update_pipeline(bpy.context)
     except:
         import traceback
