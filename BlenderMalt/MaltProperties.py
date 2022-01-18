@@ -185,7 +185,8 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                         )
                     if type_changed:
                         self.graphs[name].graph = bpy.data.node_groups[tree_name]
-                    assert(parameter.graph_type == self.graphs[name].graph.graph_type)
+                    if self.graphs[name].graph is not None:
+                        assert(parameter.graph_type == self.graphs[name].graph.graph_type)
 
             if name not in self.override_from_parents:
                 self.override_from_parents.add().name = name
