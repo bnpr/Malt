@@ -44,13 +44,21 @@ class MaltPipeline(bpy.types.PropertyGroup):
                 # The NPR Pipeline doesn't work on OpenGL implementations limited to 16 sampler uniforms
                 default_pipeline = os.path.join(current_dir,'.MaltPath','Malt','Pipelines','MiniPipeline','MiniPipeline.py')
             pipeline = default_pipeline
+        
+        preferences = bpy.context.preferences.addons['BlenderMalt'].preferences
 
-        debug_mode = bool(bpy.context.preferences.addons['BlenderMalt'].preferences.debug_mode)
-        renderdoc_path = bpy.context.preferences.addons['BlenderMalt'].preferences.renderdoc_path
+        debug_mode = bool(preferences.debug_mode)
+        renderdoc_path = preferences.renderdoc_path
+        plugin_dirs = []
+        if os.path.exists(preferences.plugins_dir):
+            plugin_dirs.append(preferences.plugins_dir)
+        plugin_dir = bpy.path.abspath(self.plugins_dir, library=self.id_data.library)
+        if os.path.exists(plugin_dir):
+            plugin_dirs.append(plugin_dir)
         
         path = bpy.path.abspath(pipeline, library=self.id_data.library)
         import Bridge
-        bridge = Bridge.Client_API.Bridge(path, int(self.viewport_bit_depth), debug_mode, renderdoc_path)
+        bridge = Bridge.Client_API.Bridge(path, int(self.viewport_bit_depth), debug_mode, renderdoc_path, plugin_dirs)
         from Malt.Utils import LOG
         LOG.info('Blender {} {} {}'.format(bpy.app.version_string, bpy.app.build_branch, bpy.app.build_hash))
         params = bridge.get_parameters()
@@ -81,6 +89,9 @@ class MaltPipeline(bpy.types.PropertyGroup):
 
     pipeline : bpy.props.StringProperty(name="Malt Pipeline", subtype='FILE_PATH', update=update_pipeline,
         set=malt_path_setter('pipeline'), get=malt_path_getter('pipeline'))
+    
+    plugins_dir : bpy.props.StringProperty(name="Local Plugins", subtype='DIR_PATH',
+        set=malt_path_setter('plugins_dir'), get=malt_path_getter('plugins_dir'))
 
     viewport_bit_depth : bpy.props.EnumProperty(items=[('8', '8', ''),('32', '32', '')], 
         name="Bit Depth (Viewport)", update=update_pipeline)
@@ -93,6 +104,7 @@ class MaltPipeline(bpy.types.PropertyGroup):
         row = layout.row(align=True)
         row.prop(self, 'pipeline')
         row.operator('wm.malt_reload_pipeline', text='', icon='FILE_REFRESH')
+        layout.prop(self, 'plugins_dir')
         layout.prop(self, 'viewport_bit_depth')
 
 

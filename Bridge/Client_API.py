@@ -28,7 +28,7 @@ class IOCapture(io.StringIO):
 
 class Bridge():
 
-    def __init__(self, pipeline_path, viewport_bit_depth=8, debug_mode=False, renderdoc_path=None):
+    def __init__(self, pipeline_path, viewport_bit_depth=8, debug_mode=False, renderdoc_path=None, plugins_paths=[]):
         super().__init__()
 
         import sys
@@ -77,7 +77,17 @@ class Bridge():
         for name in ['MAIN','REFLECTION']: add_connection(name)
 
         from . import start_server
-        self.process = mp.Process(target=start_server, args=[pipeline_path, viewport_bit_depth, malt_to_bridge, self.shared_dict, self.lock, sys.stdout.log_path, debug_mode, renderdoc_path])
+        self.process = mp.Process(target=start_server, kwargs={
+            'pipeline_path': pipeline_path, 
+            'viewport_bit_depth': viewport_bit_depth, 
+            'connection_addresses': malt_to_bridge, 
+            'shared_dic': self.shared_dict,
+            'lock': self.lock,
+            'log_path': sys.stdout.log_path,
+            'debug_mode': debug_mode,
+            'renderdoc_path': renderdoc_path,
+            'plugins_paths': plugins_paths,
+        })
         self.process.daemon = True
         self.process.start()
 

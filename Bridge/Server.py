@@ -1,3 +1,4 @@
+import importlib
 import os, sys, time, ctypes, os, copy
 import cProfile, pstats, io
 import multiprocessing.connection as connection
@@ -8,6 +9,7 @@ from Malt.GL import GL
 from Malt.GL.GL import *
 from Malt.GL.RenderTarget import RenderTarget
 from Malt.GL.Texture import Texture
+from Malt.PipelinePlugin import load_plugins_from_dir
 
 import Bridge.Mesh, Bridge.Material, Bridge.Texture
 from . import ipc as ipc
@@ -248,7 +250,8 @@ class Viewport():
 
 PROFILE = False
 
-def main(pipeline_path, viewport_bit_depth, connection_addresses, shared_dic, lock, log_path, debug_mode):
+def main(pipeline_path, viewport_bit_depth, connection_addresses,
+    shared_dic, lock, log_path, debug_mode, plugins_paths):
     log_level = LOG.DEBUG if debug_mode else LOG.INFO
     setup_logging(log_path, log_level)
     LOG.info('DEBUG MODE: {}'.format(debug_mode))
@@ -287,7 +290,10 @@ def main(pipeline_path, viewport_bit_depth, connection_addresses, shared_dic, lo
 
     pipeline_class = module.PIPELINE
     pipeline_class.SHADER_INCLUDE_PATHS.append(pipeline_dir)
-    pipeline = pipeline_class()
+    plugins = []
+    for dir in plugins_paths:
+        plugins += load_plugins_from_dir(dir)
+    pipeline = pipeline_class(plugins)
 
     params = pipeline.get_parameters()
     graphs = pipeline.get_graphs()

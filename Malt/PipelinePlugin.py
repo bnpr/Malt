@@ -1,3 +1,5 @@
+from Malt.Utils import isinstance_str
+
 class PipelinePlugin():
 
     @classmethod
@@ -17,4 +19,26 @@ class PipelinePlugin():
         pass
 
 
-
+def load_plugins_from_dir(dir):
+    import sys, os, importlib
+    if dir not in sys.path:
+        sys.path.append(dir)
+    plugins=[]
+    for e in os.scandir(dir):
+        if (e.path.startswith('.') or e.path.startswith('_') or 
+            e.is_file() and e.path.endswith('.py') == False):
+            continue
+        try:
+            '''
+            spec = importlib.util.spec_from_file_location("_dynamic_plugin_module_", e.path)
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+            '''
+            module = importlib.import_module(e.name)
+            importlib.reload(module)
+            plugins.append(module.PLUGIN)
+        except:
+            import traceback
+            traceback.print_exc()
+            print('FILEPATH : ', e.path)
+    return plugins

@@ -29,13 +29,13 @@ class Pipeline():
         self.result = None
         self.is_final_render = None
         
-        plugins = [plugin for plugin in plugins if plugin.poll(self)]
+        plugins = [plugin for plugin in plugins if plugin.poll_pipeline(self)]
         self.setup_parameters()
         for plugin in plugins:
             plugin.register_pipeline_parameters(self.parameters)
         self.setup_graphs()
         for plugin in plugins:
-            for graph in plugin.register_pipeline_graphs(self.graphs):
+            for graph in plugin.register_pipeline_graphs():
                 self.add_graph(graph)
         for plugin in plugins:
             plugin.register_graph_libraries(self.graphs)

@@ -32,7 +32,8 @@ class Preferences(bpy.types.AddonPreferences):
     renderdoc_path : bpy.props.StringProperty(name="RenderDoc Path", subtype='FILE_PATH',
         set=malt_path_setter('renderdoc_path'), get=malt_path_getter('renderdoc_path'))
     
-    malt_library_path : bpy.props.StringProperty(name="Malt Library Path", subtype='DIR_PATH')
+    plugins_dir : bpy.props.StringProperty(name="Global Plugins", subtype='DIR_PATH',
+        set=malt_path_setter('plugins_dir'), get=malt_path_getter('plugins_dir'))
     
     render_fps_cap : bpy.props.IntProperty(name="Max Viewport Render Framerate", default=30)
     
@@ -52,9 +53,9 @@ class Preferences(bpy.types.AddonPreferences):
             row.enabled = False
             row.operator('wm.path_open', text="Open Session Log")
 
+        layout.prop(self, "plugins_dir")
         layout.prop(self, "setup_vs_code")
         layout.prop(self, "renderdoc_path")
-        layout.prop(self, "malt_library_path")
         layout.prop(self, "render_fps_cap")
         layout.prop(self, "debug_mode")
 

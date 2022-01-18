@@ -20,6 +20,13 @@ def scan_dirs(path, file_callback):
         if e.is_dir():
             scan_dirs(e, file_callback)
 
+def isinstance_str(object, class_name):
+    classes = [object.__class__, *object.__class__.__bases__]
+    for cls in classes:
+        if cls.__name__ == class_name:
+            return True
+    return False
+
 import cProfile, io, pstats
 
 def profile_function(function):
