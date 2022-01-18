@@ -61,7 +61,7 @@ vec4 gaussian_blur(sampler2D input_texture, vec2 uv, float radius, float sigma)
 
 #include "Common/Math.glsl"
 
-vec4 fast_blur(sampler2D input_texture, vec2 uv, float radius, float distribution_exponent, int samples)
+vec4 jitter_blur(sampler2D input_texture, vec2 uv, float radius, float distribution_exponent, int samples)
 {
     vec2 resolution = textureSize(input_texture, 0);
     vec4 result = vec4(0);

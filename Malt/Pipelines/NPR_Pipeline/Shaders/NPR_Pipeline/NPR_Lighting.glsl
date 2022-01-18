@@ -3,10 +3,6 @@
 
 #include "Lighting/Lighting.glsl"
 
-// TODO: Lower the number of texture units used.
-// Combine opaque and transparent ids in the same sampler 
-// and use a single rgba texture for color + depth.
-
 uniform usampler2DArray SHADOWMAPS_ID_SPOT;
 uniform usampler2DArray SHADOWMAPS_ID_SUN;
 uniform usamplerCubeArray SHADOWMAPS_ID_POINT;

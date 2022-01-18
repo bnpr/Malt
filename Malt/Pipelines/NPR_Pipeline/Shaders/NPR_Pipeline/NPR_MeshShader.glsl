@@ -506,9 +506,6 @@ LineDetectionOutput get_line_detection()
     return result;
 }
 
-//#define swap(type, a, b) { type temp = a; a = b; b = temp; }
-//#define order(type, a, b) { if(a > b) swap(a, b, type); }
-
 void _fix_range(inout float value, inout float range)
 {
     if(range < 0)
@@ -517,10 +514,6 @@ void _fix_range(inout float value, inout float range)
         value -= range;
     }
 }
-
-/*META
-    @depth_width_range: init=0;
-*/
 
 float get_line_width(
     float line_width_scale, vec4 id_boundary_width,
