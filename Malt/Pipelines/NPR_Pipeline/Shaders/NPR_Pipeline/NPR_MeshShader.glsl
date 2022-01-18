@@ -578,24 +578,6 @@ float get_line_width(
     #endif
 }
 
-vec4 get_random_vector(float seed)
-{
-    #ifdef PIXEL_SHADER
-    {
-        return random_vector(random_per_pixel, seed);
-    }
-    #else
-    {
-        return random_vector(random_per_sample, seed);
-    }
-    #endif
-}
-
-float get_random(float seed)
-{
-    return get_random_vector(seed).x;
-}
-
 bool is_shadow_pass()
 {
     #ifdef SHADOW_PASS

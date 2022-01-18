@@ -26,7 +26,7 @@ vec3 bevel_ex
 
     for(int i = 0; i < samples; i++)
     {
-        vec2 offset = random_vector(random_per_pixel, i).xy;
+        vec2 offset = random_per_pixel(i).xy;
         if(length(offset) > 1)
         {
             offset = normalize(offset);

@@ -68,8 +68,9 @@ vec4 fast_blur(sampler2D input_texture, vec2 uv, float radius, float distributio
 
     for(int i = 0; i < samples;  i++)
     {
-        float angle = random_per_pixel(i) * PI * 2;
-        float length = random_per_pixel(1e2 + i);
+        vec4 random = random_per_pixel(i);
+        float angle = random.x * PI * 2;
+        float length = random.y;
         length = pow(length, distribution_exponent) * radius;
         float x = cos(angle) * length;
         float y = sin(angle) * length;

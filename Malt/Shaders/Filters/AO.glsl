@@ -12,7 +12,7 @@ float ao_ex(sampler2D depth_texture, int depth_channel, vec3 position, vec3 norm
     for(int i = 0; i < samples; i++)
     {
         // Generate a random TBN matrix
-        vec3 random_vec = random_vector(random_per_pixel, i).xyz;
+        vec3 random_vec = random_per_pixel(i).xyz;
         random_vec.xyz = random_vec.xyz * 2.0 - 1.0;
 
         vec3 normal = transform_normal(CAMERA, normal);
@@ -20,7 +20,7 @@ float ao_ex(sampler2D depth_texture, int depth_channel, vec3 position, vec3 norm
         vec3 bitangent = cross(normal, tangent);
         mat3 TBN = mat3(tangent, bitangent, normal);
 
-        vec3 random_offset = random_vector(random_per_pixel, samples+i).xyz;
+        vec3 random_offset = random_per_pixel(samples+i).xyz;
         // Make samples close to the center more likely, based on distribution exponent
         random_offset = normalize(random_offset) * pow(length(random_offset), distribution_exponent);
         random_offset *= radius;
