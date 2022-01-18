@@ -31,7 +31,32 @@ _DEFAULT_SHADER_SRC='''
 
 void PRE_PASS_PIXEL_SHADER(inout PrePassOutput PO){ }
 
-void MAIN_PASS_PIXEL_SHADER() { }
+#ifdef MAIN_PASS
+layout (location = 0) out vec4 OUT_0;
+layout (location = 1) out vec4 OUT_1;
+layout (location = 2) out vec4 OUT_2;
+layout (location = 3) out vec4 OUT_3;
+layout (location = 4) out vec4 OUT_4;
+layout (location = 5) out vec4 OUT_5;
+layout (location = 6) out vec4 OUT_6;
+layout (location = 7) out vec4 OUT_7;
+#endif //MAIN_PASS
+
+void MAIN_PASS_PIXEL_SHADER()
+{    
+    #ifdef MAIN_PASS
+    {
+        OUT_0 = vec4(1,1,0,1);
+        OUT_1 = vec4(1,1,0,1);
+        OUT_2 = vec4(1,1,0,1);
+        OUT_3 = vec4(1,1,0,1);
+        OUT_4 = vec4(1,1,0,1);
+        OUT_5 = vec4(1,1,0,1);
+        OUT_6 = vec4(1,1,0,1);
+        OUT_7 = vec4(1,1,0,1);
+    }
+    #endif //MAIN_PASS
+}
 '''
 
 class NPR_Pipeline(Pipeline):
