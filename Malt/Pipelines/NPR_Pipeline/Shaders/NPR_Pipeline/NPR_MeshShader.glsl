@@ -34,8 +34,8 @@ struct PrePassOutput
 {
     vec3 normal;
     uvec4 id;
-    vec4 surface_color;
-    float surface_color_transmission;
+    float opacity;
+    vec3 transparent_shadowmap_color;
     float depth_offset;
     bool offset_position;
 };
@@ -181,8 +181,8 @@ void main()
     PrePassOutput PPO;
     PPO.normal = NORMAL;
     PPO.id = ID;
-    PPO.surface_color = vec4(0,0,0,1);
-    PPO.surface_color_transmission = 1;
+    PPO.opacity = 1;
+    PPO.transparent_shadowmap_color = vec3(0);
     PPO.depth_offset = 0;
     PPO.offset_position = true;
 
@@ -193,13 +193,13 @@ void main()
     {
         PRE_PASS_PIXEL_SHADER(PPO);
 
-        if(PPO.surface_color.a <= 0)
+        if(PPO.opacity <= 0)
         {
             discard;
         }
         else if(!Settings.Transparency)
         {
-            PPO.surface_color.a = 1.0;
+            PPO.opacity = 1.0;
         }
 
         offset_position = POSITION - view_direction() * PPO.depth_offset;
@@ -230,11 +230,11 @@ void main()
         if(Settings.Transparency)
         {
             float pass_through = hash(vec2(ID.x, SAMPLE_COUNT)).x;
-            if(pass_through > PPO.surface_color.a)
+            if(pass_through > PPO.opacity)
             {
                 discard;
             }
-            OUT_SHADOW_MULTIPLY_COLOR = PPO.surface_color.rgb * mix(saturate(1.0 - PPO.surface_color.a), 1, PPO.surface_color_transmission);
+            OUT_SHADOW_MULTIPLY_COLOR = PPO.transparent_shadowmap_color;
         }
     }
     #endif
