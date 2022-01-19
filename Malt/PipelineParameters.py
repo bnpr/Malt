@@ -58,18 +58,40 @@ class Parameter():
         return Parameter(value, type, size)
     
     @classmethod
-    def from_glsl_type(cls, glsl_type):
+    def from_glsl_type(cls, glsl_type, subtype=None):
         type, size = glsl_type_to_malt_type(glsl_type)
         value = None
         if type is Type.INT:
-            value = tuple([1] * size)
+            value = tuple([0] * size)
         if type is Type.FLOAT:
-            value = tuple([1.0] * size)
+            value = tuple([0.0] * size)
         if type is Type.BOOL:
             value = tuple([False] * size)
         if value and len(value) == 1:
             value = value[0]
-        return Parameter(value, type, size)
+        overrides = {
+            ('vec3',None):(0.5,0.5,0.5),
+            ('vec4',None):(0.5,0.5,0.5,1.0),
+            ('vec3','Color'):(0.5,0.5,0.5),
+            ('vec4','Color'):(0.5,0.5,0.5,1.0),
+            ('vec3','Normal'):(1.0,0.0,0.0),
+            ('vec4','Quaternion'):(0.0,0.0,0.0,1.0),
+            ('mat3',None):(
+                1.0,0.0,0.0,
+                0.0,1.0,0.0,
+                0.0,0.0,1.0,
+            ),
+            ('mat4',None):(
+                1.0,0.0,0.0,0.0,
+                0.0,1.0,0.0,0.0,
+                0.0,0.0,1.0,0.0,
+                0.0,0.0,0.0,1.0,
+            ),
+        }
+        override = overrides.get((glsl_type, subtype))
+        if override is not None:
+            value = override
+        return Parameter(value, type, size, subtype=subtype)
 
 class MaterialParameter(Parameter):
     def __init__(self, default_path, extension, filter=None):

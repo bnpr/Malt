@@ -452,6 +452,22 @@ def glsl_reflection(code, root_paths=[]):
     
     reflection = json.loads(json_string)
 
+    from Malt.GL.GLSLEval import glsl_eval
+
+    for function in reflection["functions"].values():
+        for parameter in function["parameters"]:
+            try:
+                parameter['meta']['default'] = glsl_eval(parameter['meta']['default'])
+            except:
+                pass
+    
+    for struct in reflection["structs"].values():
+        for member in struct["members"]:
+            try:
+                member['meta']['default'] = glsl_eval(member['meta']['default'])
+            except:
+                pass
+
     def fix_paths(dic):
         for e in dic.values():
             path = e["file"]

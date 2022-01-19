@@ -90,11 +90,14 @@ class MaltNode():
                 else:
                     current[name].data_type = type
                     current[name].array_size = size
-                try:
-                    current[name].default_initialization = dic['meta']['init']
-                except:
-                    current[name].default_initialization = ''
                 current[name].active = True
+                current[name].default_initialization = ''
+                try:
+                    default = dic['meta']['default']
+                    if isinstance(default, str):
+                        current[name].default_initialization = default
+                except:
+                    pass
                 current.move(current.keys().index(name), i)
 
         setup(self.inputs, inputs)
@@ -104,22 +107,24 @@ class MaltNode():
             parameter = None
             type = input['type']
             size = input['size'] if 'size' in input else 0
+            try:
+                subtype = input['meta']['subtype']
+            except:
+                subtype = None
             if isinstance(type, Parameter):
                 parameter = type
             else:
                 if size == 0:
                     try:
-                        parameter = Parameter.from_glsl_type(type)
+                        parameter = Parameter.from_glsl_type(type, subtype)
                     except:
                         parameter = Parameter(type, Type.OTHER)
                 else:
                     parameter = Parameter(type, Type.OTHER)
                 try:
-                    parameter.default_value = eval(input['meta']['value'])
-                except:
-                    pass
-                try:
-                    parameter.subtype = input['meta']['subtype']
+                    default = input['meta']['default']
+                    if isinstance(default, str) == False:
+                        parameter.default_value = default
                 except:
                     pass
             if parameter:
