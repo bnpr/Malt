@@ -118,6 +118,10 @@ class MaltNode():
                     parameter.default_value = eval(input['meta']['value'])
                 except:
                     pass
+                try:
+                    parameter.subtype = input['meta']['subtype']
+                except:
+                    pass
             if parameter:
                 parameters[name] = parameter
         self.malt_parameters.setup(parameters, skip_private=False)

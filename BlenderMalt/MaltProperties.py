@@ -194,6 +194,7 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
             rna[name]['active'] = True
             rna[name]["default"] = parameter.default_value
             rna[name]['type'] = parameter.type
+            rna[name]['malt_subtype'] = parameter.subtype
             rna[name]['size'] = parameter.size
             rna[name]['filter'] = parameter.filter
         
@@ -217,17 +218,17 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                 rna[key]['active'] = rna[main_name]['active'] and rna[key]['active']
                 if rna[key]['active']:
                     if rna[key]['type'] != rna[main_name]['type'] or rna[key]['size'] != rna[main_name]['size']:
-                        parameter = Parameter(rna[main_name]['default'], rna[main_name]['type'], rna[main_name]['size'], rna[main_name]['filter'])
+                        parameter = Parameter(rna[main_name]['default'], rna[main_name]['type'],
+                            rna[main_name]['size'], rna[main_name]['filter'], rna[main_name]['malt_subtype'])
                         setup_parameter(key, parameter)
         
         for key, value in rna.items():
             rna_prop = rna[key]
             if rna_prop['active'] == False:
                 continue
-            #TODO: for now we assume we want floats as colors
-            # ideally it should be opt-in in the UI,
-            # so we can give them propper min/max values
-            if rna_prop['type'] == Type.FLOAT and rna_prop['size'] >= 3:
+            #Default to color since it's the most common use case
+            malt_subtype = rna_prop.get('malt_subtype')
+            if rna_prop['type'] == Type.FLOAT and rna_prop['size'] >= 3 and (malt_subtype is None or malt_subtype == 'Color'):
                 rna_prop['subtype'] = 'COLOR'
                 rna_prop['use_soft_limits'] = True
                 rna_prop['soft_min'] = 0.0
@@ -239,7 +240,7 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
             if bpy.app.version[0] >= 3:
                 if rna_prop['type'] in (Type.FLOAT, Type.INT):
                     ui = self.id_properties_ui(key)
-                    if rna_prop['type'] == Type.FLOAT and rna_prop['size'] >= 3:
+                    if rna_prop['subtype'] == 'COLOR':
                         ui.update(default=rna_prop['default'], subtype='COLOR', soft_min = 0.0, soft_max = 1.0)
                     else:
                         dic = ui.as_dict()
@@ -259,7 +260,7 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
         if main_prop['type'] == Type.MATERIAL:
             property[new_name] =  MaterialParameter(main_prop['default'], self.materials[property_name].extension)
         else:
-            property[new_name] = Parameter(main_prop['default'], main_prop['type'], main_prop['size'])
+            property[new_name] = Parameter(main_prop['default'], main_prop['type'], main_prop['size'], main_prop['filter'], main_prop['malt_subtype'])
         self.setup(property, replace_parameters= False)
     
     def remove_override(self, property):

@@ -173,6 +173,7 @@ def track_shader_changes(force_update=False, async_compilation=True):
                 path = material.malt.get_source_path()
                 if path in compiled_materials.keys():
                     material.malt.compiler_error = compiled_materials[path].compiler_error
+                    #TODO: Use parent parameters as defaults for materials with nodes
                     material.malt.parameters.setup(compiled_materials[path].parameters)
             for screen in bpy.data.screens:
                 for area in screen.areas:

@@ -33,9 +33,10 @@ class Type():
         return cls.string_list().index(type)
 
 class Parameter():
-    def __init__(self, default_value, type, size=1, filter=None):
+    def __init__(self, default_value, type, size=1, filter=None, subtype=None):
         self.default_value = default_value
         self.type = type
+        self.subtype = subtype
         self.size = size
         self.filter = filter
     
@@ -72,12 +73,12 @@ class Parameter():
 
 class MaterialParameter(Parameter):
     def __init__(self, default_path, extension, filter=None):
-        super().__init__(default_path, Type.MATERIAL, 1, filter)
+        super().__init__(default_path, Type.MATERIAL, 1, filter, extension)
         self.extension = extension
 
 class GraphParameter(Parameter):
     def __init__(self, default_path, graph_type, filter=None):
-        super().__init__(default_path, Type.GRAPH, 1, filter)
+        super().__init__(default_path, Type.GRAPH, 1, filter, graph_type)
         self.graph_type = graph_type
 
 def gl_type_to_malt_type(gl_type):
