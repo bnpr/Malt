@@ -50,7 +50,7 @@ class MainPass(PipelineNode):
         if t_normal_depth:
             shader_resources['IN_NORMAL_DEPTH'] = TextureShaderResource('IN_NORMAL_DEPTH', t_normal_depth)
         if t_id:
-            shader_resources['IN_ID'] = TextureShaderResource('IN_ID', t_id),
+            shader_resources['IN_ID'] = TextureShaderResource('IN_ID', t_id)
         
         if self.pipeline.resolution != self.resolution or self.custom_io != custom_io:
             t_depth = shader_resources['T_DEPTH'].texture

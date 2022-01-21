@@ -454,15 +454,15 @@ def glsl_reflection(code, root_paths=[]):
 
     from Malt.GL.GLSLEval import glsl_eval
 
-    for function in reflection["functions"].values():
-        for parameter in function["parameters"]:
+    for function in reflection['functions'].values():
+        for parameter in function['parameters']:
             try:
                 parameter['meta']['default'] = glsl_eval(parameter['meta']['default'])
             except:
                 pass
     
-    for struct in reflection["structs"].values():
-        for member in struct["members"]:
+    for struct in reflection['structs'].values():
+        for member in struct['members']:
             try:
                 member['meta']['default'] = glsl_eval(member['meta']['default'])
             except:
@@ -470,18 +470,18 @@ def glsl_reflection(code, root_paths=[]):
 
     def fix_paths(dic):
         for e in dic.values():
-            path = e["file"]
+            path = e['file']
             path = os.path.normpath(path)
             for root_path in root_paths:
                 try:
-                    _path = os.path.relpath(e["file"], root_path)
+                    _path = os.path.relpath(e['file'], root_path)
                     if len(_path) < len(path):
                         path = _path
                 except: pass
-            e["file"] = path
+            e['file'] = path
     
-    fix_paths(reflection["structs"])
-    fix_paths(reflection["functions"])
+    fix_paths(reflection['structs'])
+    fix_paths(reflection['functions'])
 
     return reflection
 

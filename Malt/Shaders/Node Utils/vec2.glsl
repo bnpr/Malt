@@ -1,8 +1,6 @@
 #ifndef VEC2_GLSL
 #define VEC2_GLSL
 
-vec2 vec2_property(vec2 v) { return v; }
-
 vec2 vec2_add(vec2 a, vec2 b){ return a+b; }
 vec2 vec2_subtract(vec2 a, vec2 b){ return a-b; }
 vec2 vec2_multiply(vec2 a, vec2 b){ return a*b; }
@@ -34,12 +32,9 @@ float vec2_dot_product(vec2 a, vec2 b){ return dot(a,b); }
 bool vec2_equal(vec2 a, vec2 b){ return a == b; }
 bool vec2_not_equal(vec2 a, vec2 b){ return a != b; }
 
-vec2 vec2_if_else(bool condition, vec2 a, vec2 b){ return condition ? a : b; }
+vec2 vec2_if_else(bool condition, vec2 if_true, vec2 if_false){ return condition ? if_true : if_false; }
 
 vec2 vec2_join(float x, float y) { return vec2(x,y);}
 void vec2_split(vec2 v, out float x, out float y){ x=v.x; y=v.y; }
-vec2 vec2_from_float(float f) { return vec2(f); }
-vec2 vec2_from_vec3(vec3 v) { return v.xy; }
-vec2 vec2_from_vec4(vec4 v) { return v.xy; }
 
 #endif //VEC2_GLSL

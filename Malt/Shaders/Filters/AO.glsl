@@ -4,9 +4,16 @@
 #include "Common/Math.glsl"
 #include "Common/Transform.glsl"
 
-//Loosely based on https://learnopengl.com/Advanced-Lighting/SSAO
-float ao_ex(sampler2D depth_texture, int depth_channel, vec3 position, vec3 normal, int samples, float radius, float distribution_exponent, float bias)
+/*  META
+    @position: subtype=Vector; default=POSITION;
+    @normal: subtype=Normal; default=NORMAL;
+    @samples: default=8;
+    @radius: default=1.0;
+    @distribution_exponent: default=5.0;
+*/
+float ao(sampler2D depth_texture, int depth_channel, vec3 position, vec3 normal, int samples, float radius, float distribution_exponent, float bias)
 {
+    //Loosely based on https://learnopengl.com/Advanced-Lighting/SSAO
     float occlusion = 0;
 
     for(int i = 0; i < samples; i++)

@@ -28,7 +28,7 @@
 
 #define snap(value, range) (round((value) / (range)) * (range))
 
-#include "Hash.glsl"
+#include "Common.glsl"
 
 vec4 random_per_sample(float seed)
 {

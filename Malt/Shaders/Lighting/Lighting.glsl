@@ -73,6 +73,10 @@ ShadowData spot_shadow(vec3 position, Light light, sampler2DArray shadowmap, flo
 ShadowData sun_shadow(vec3 position, Light light, sampler2DArray shadowmap, float bias, out int cascade);
 ShadowData point_shadow(vec3 position, Light light, samplerCubeArray shadowmap, float bias);
 
+/*  META
+    @position: subtype=Vector; default=POSITION;
+    @normal: subtype=Normal; default=NORMAL;
+*/
 LitSurface lit_surface(vec3 position, vec3 normal, Light light, bool shadows)
 {
     LitSurface S;

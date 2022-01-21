@@ -501,15 +501,11 @@ def add_node_ui(self, context):
 def node_header_ui(self, context):
     if context.space_data.tree_type != 'MaltTree' or context.space_data.node_tree is None:
         return
-    #self.layout.use_property_split=True
-    #self.layout.alignment = 'LEFT'
     def recompile():
         context.space_data.node_tree.update()
     self.layout.operator("wm.malt_callback", text='', icon='FILE_REFRESH').callback.set(recompile)
     self.layout.prop(context.space_data.node_tree, 'library_source',text='')
     self.layout.prop_search(context.space_data.node_tree, 'graph_type', context.scene.world.malt, 'graph_types',text='')
-
-    #self.layout.prop(context.space_data.node_tree, 'edit_material',text='')
 
     
 classes = [

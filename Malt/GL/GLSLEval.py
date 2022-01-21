@@ -24,5 +24,7 @@ def vec4(*args):
     return glsl_vector(4, *args)
 
 def glsl_eval(str):
+    true = True
+    false = False
     return eval(str)
 

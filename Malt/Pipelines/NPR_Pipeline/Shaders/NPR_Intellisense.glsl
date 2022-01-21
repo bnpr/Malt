@@ -1,6 +1,5 @@
-
-//This is a hacky way to get text editor autocompletion on user shaders.
-//It doesn't have any effect while rendering
+//This is just for getting text editor autocompletion on user shaders.
+//It doesn't have any effect at runtime
 #ifdef __INTELLISENSE__
 
 #define VERTEX_SHADER

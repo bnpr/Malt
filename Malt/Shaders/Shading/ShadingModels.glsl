@@ -1,161 +1,123 @@
 #ifndef SHADING_MODELS_GLSL
 #define SHADING_MODELS_GLSL
 
-// The following formulas follow the naming conventions explained in the LitSurface struct declaration (Lighing.glsl)
-// X is for tangent and Y for bitangent. (ie. XoH means dot(tangent, halfway_vector))
-// (a) parameter stands for roughness factor (0..1)
-// Dot products should be clamped to (MIN_DOT..1)
+#include "Shading/BRDF.glsl"
 
-//Division by PI has been factored out for a more intuitive artistic workflow
-//https://seblagarde.wordpress.com/2012/01/08/pi-or-not-to-pi-in-game-lighting-equation/
-
-//UTILS
-
-#define MIN_DOT 1e-10
-
-float safe_dot(vec3 a, vec3 b)
+vec3 diffuse_lit_surface(LitSurface LS)
 {
-    return clamp(dot(a,b), MIN_DOT, 1.0);
+    return clamp(LS.NoL, 0, 1) * LS.light_color * LS.shadow_multiply;
 }
 
-float roughness_to_shininess(float roughness)
+vec3 _diffuse_half_lit_surface_common(LitSurface LS)
 {
-    return 2.0 / pow(max(0.1, roughness), 3);
+    vec3 diffuse = vec3(map_range_clamped(LS.NoL, -1, 1, 0, 1));
+    vec3 shadow = map_range_clamped(LS.shadow_multiply, vec3(0),vec3(1),vec3(0.5),vec3(1));
+    return min(diffuse, shadow);
 }
 
-// DIFFUSE BRDFs
-
-float BRDF_lambert(float NoL)
+vec3 diffuse_half_lit_surface(LitSurface LS)
 {
-    return NoL;
+    return _diffuse_half_lit_surface_common(LS) * LS.light_color;
 }
 
-float F_schlick(float VoH, float F0, float F90); //Forward declaration, definition in Fresnel section
-
-//https://disney-animation.s3.amazonaws.com/library/s2012_pbs_disney_brdf_notes_v2.pdf
-float BRDF_burley(float NoL, float NoV, float VoH, float a)
+vec3 diffuse_gradient_lit_surface(LitSurface LS, sampler1D gradient)
 {
-    float f90 = 0.5 + 2.0 * a * VoH*VoH;
-
-    return F_schlick(NoL, 1.0, f90) * F_schlick(NoV, 1.0, f90) * NoL;
+    return rgb_gradient(gradient, _diffuse_half_lit_surface_common(LS)) * LS.light_color;
 }
 
-//https://mimosa-pudica.net/improved-oren-nayar.html
-float BRDF_oren_nayar(float NoL, float NoV, float LoV, float a)
+float _specular_shadowing(float NoL, float specular)
 {
-    float s = LoV - NoL * NoV;
-    float t = s <= 0 ? 1.0 : max(NoL, NoV);
-    float A = 1.0 - 0.5 * (a*a / (a*a + 0.33) + 0.17 * (a*a / (a*a + 0.13)));
-    float B = 0.45 * (a*a / (a*a + 0.09));
-
-    return NoL * (A + B * (s / t));
+    return clamp(specular * (1.0 - pow(1.0 - max(NoL, 0), 20.0)), 0, 1);
 }
 
-// SPECULAR BRDFs
-//http://graphicrants.blogspot.com/2013/08/specular-brdf-reference.html
-
-float BRDF_specular_cook_torrance(float D, float F, float G, float NoL, float NoV)
+float _specular_common_lit_surface(LitSurface LS, float roughness)
 {
-    return (D * F * G) / (4.0 * NoL * NoV) * NoL * PI;
+    float VoR = dot(LS.V, LS.R);
+    VoR = _specular_shadowing(LS.NoL, VoR);
+    return pow(VoR, roughness_to_shininess(roughness));
 }
 
-// Specular Normal Distribution Functions
-
-float D_phong(float VoR, float a)
+vec3 specular_lit_surface(LitSurface LS, float roughness)
 {
-    return pow(VoR, roughness_to_shininess(a));
+    return _specular_common_lit_surface(LS, roughness) * LS.light_color * LS.shadow_multiply;
 }
 
-float D_blinn_phong(float NoH, float a)
+vec3 specular_gradient_lit_surface(LitSurface LS, float roughness, sampler1D gradient)
 {
-    return pow(NoH, roughness_to_shininess(a));
+    return texture(gradient, _specular_common_lit_surface(LS, roughness)).rgb * LS.light_color * LS.shadow_multiply;
 }
 
-float D_ward(float NoL, float NoV, float NoH, float XoH, float YoH, float aX, float aY)
+float _specular_anisotropic_lit_surface_common(LitSurface LS, vec3 tangent, float anisotropy, float roughness)
 {
-    float e = -2.0 * ((pow(XoH / aX, 2) + pow(YoH / aY, 2)) / (1.0 + NoH));
-    return (1.0 / sqrt(NoL * NoV)) * (NoL / (4.0 * PI * aX * aY)) * exp(e);
+    vec2 a = vec2(anisotropy, 1.0 - anisotropy);
+    a *= roughness;
+    vec3 bitangent = normalize(cross(LS.N, tangent));
+
+    float NoL = max(dot(LS.N, LS.L), MIN_DOT);
+    float NoV = max(dot(LS.N, LS.V), MIN_DOT);
+    float NoH = max(dot(LS.H, LS.N), MIN_DOT);
+    float XoH = dot(LS.H, tangent);
+    float YoH = dot(LS.H, bitangent);
+
+    float specular = D_ward(NoL, NoV, XoH, XoH, YoH, a.x, a.y);
+
+    return _specular_shadowing(NoL, specular);
 }
 
-float D_beckmann(float NoH, float a)
+vec3 specular_anisotropic_lit_surface(LitSurface LS, vec3 tangent, float anisotropy, float roughness)
 {
-    return (1.0 / (PI * a*a * pow(NoH, 4.0))) * exp((NoH*NoH - 1.0) / (a*a * NoH*NoH));
+    return _specular_anisotropic_lit_surface_common(LS, tangent, anisotropy, roughness) * LS.light_color * LS.shadow_multiply;
 }
 
-float D_GGX(float NoH, float a)
+vec3 specular_anisotropic_gradient_lit_surface(LitSurface LS, vec3 tangent, float anisotropy, float roughness, sampler1D gradient)
 {
-    return (a*a) / (PI * pow(NoH*NoH * (a*a - 1.0) + 1.0, 2.0));
+    return texture(gradient, _specular_anisotropic_lit_surface_common(LS, tangent, anisotropy, roughness)).rgb * LS.light_color * LS.shadow_multiply;
 }
 
-float D_GGX_anisotropic(float NoH, float XoH, float YoH, float ax, float ay)
+vec3 toon_lit_surface(LitSurface LS, float size, float gradient_size, float specularity, float offset)
 {
-    return (1.0 / (PI * ax*ay)) * (1.0 / (pow((XoH*XoH) / (ax*ax) + (YoH*YoH) / (ay*ay) + NoH*NoH, 2.0)));
+    float D = mix(LS.NoL, dot(LS.V, LS.R), specularity);
+
+    float angle = acos(D);
+    float delta = angle / PI;
+    delta -= offset;
+
+    gradient_size = min(size, gradient_size);
+
+    float value = 1.0 - map_range_clamped(delta, size - gradient_size, size, 0.0, 1.0);
+
+    float color_at_05 =  1.0 - map_range_clamped(0.5, size - gradient_size, size, 0.0, 1.0);
+
+    return min(LS.shadow ? color_at_05 : 1.0, value) * LS.light_color;
 }
 
-// Specular Geometric Shadowing Functions
-
-float G_implicit(float NoL, float NoV)
+/*  META
+    @normal: subtype=Normal; default=NORMAL;
+    @angle: default=0.0;
+    @rim_length: default=2.0;
+    @length_fallof: default=0.1;
+    @thickness: default=0.1;
+    @thickness_fallof: default=0.0;
+*/
+float rim_light(vec3 normal, float angle, float rim_length, float length_falloff, float thickness, float thickness_falloff)
 {
-    return NoL*NoV;
-}
+    vec2 angle_vec = vec2(cos(angle), sin(angle));
 
-float G_neumann(float NoL, float NoV)
-{
-    return (NoL*NoV) / max(NoL, NoV);
-}
+    vec3 r = cross(transform_normal(CAMERA, view_direction()), transform_normal(CAMERA, normal));
+    vec2 r2d = normalize(r.xy);
 
-float G_cook_torrance(float NoH, float NoV, float NoL, float VoH)
-{
-    return min(1.0, min((2.0 * NoH * NoV) / VoH, (2.0 * NoH * NoL) / VoH));
-}
+    float angle_dot = dot(r2d, angle_vec);
+    angle_dot = angle_dot * 0.5 + 0.5;
+    float facing_dot = dot(view_direction(), normal);
+    facing_dot = 1.0 - facing_dot;
 
-float G_kelemen(float NoL, float NoV, float VoH)
-{
-    return (NoL*NoV) / VoH*VoH;
-}
+    length_falloff = max(1e-6, length_falloff);
+    thickness_falloff = max(1e-6, thickness_falloff);
 
-float _G1_beckmann(float NoLV, float a)
-{
-    float c = NoLV / (a * sqrt(1.0 - NoLV*NoLV));
+    float angle_result = map_range_clamped(angle_dot, 1.0 - rim_length, 1.0 - (rim_length - length_falloff), 0.0, 1.0);
+    float facing_result = map_range_clamped(facing_dot * angle_result, 1.0 - thickness, 1.0 - (thickness - thickness_falloff), 0.0, 1.0);
 
-    if(c >= 1.6) return 1.0;
-
-    return (3.535*c + 2.181*c*c) / (1.0 + 2.276*c + 2.577*c*c);
-}
-
-float G_beckmann(float NoL, float NoV, float a)
-{
-    return _G1_beckmann(NoL, a) * _G1_beckmann(NoV, a);
-}
-
-float _G1_GGX(float NoLV, float a)
-{
-    return (2 * NoLV) / (NoLV + (sqrt(a*a + (1 - a*a) * NoLV*NoLV)));
-}
-
-float G_GGX(float NoL, float NoV, float a)
-{
-    return _G1_GGX(NoL, a) * _G1_GGX(NoV, a);
-}
-
-// Specular Fresnel Functions
-
-float F_schlick(float VoH, float F0, float F90)
-{
-    return F0 + (F90 - F0) * pow(1.0 - VoH, 5.0);
-}
-
-float F_cook_torrance(float VoH, float F0)
-{
-    float n = (1.0 + sqrt(F0)) / (1.0 - sqrt(F0));
-    float c = VoH;
-    float g = sqrt(n*n + c*c - 1.0);
-
-    float A = (g - c) / (g + c);
-    float B = ((g + c) * c - 1.0) / ((g - c) * c + 1.0);
-
-    return 0.5 * A*A * (1.0 + B*B);
+    return angle_result * facing_result;
 }
 
 #endif //SHADING_MODELS_GLSL
-

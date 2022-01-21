@@ -3,10 +3,14 @@
 
 #include "Common/Hash.glsl"
 
-vec4 noise(vec4 coord, vec4 tile_size)
+/*  META
+    @coord: subtype=Vector; default=vec4(POSITION,0);
+    @tile_size: subtype=Vector; default=vec4(1);
+*/
+vec4 noise_ex(vec4 coord, bool tile, vec4 tile_size)
 {
     tile_size = round(tile_size);
-    if(tile_size != vec4(0))
+    if(tile)
     {
         coord = mod(coord, tile_size);
     }
@@ -31,7 +35,7 @@ vec4 noise(vec4 coord, vec4 tile_size)
                 {
                     vec4 offset = vec4(x,y,z,w);
                     vec4 corner = origin + offset;
-                    if(tile_size != vec4(0))
+                    if(tile)
                     {
                         corner = mod(corner, tile_size);
                     }
@@ -54,9 +58,13 @@ vec4 noise(vec4 coord, vec4 tile_size)
     return mix(w_results[0], w_results[1], factor.w) * 0.5 + 0.5;
 }
 
+
+/*  META
+    @coord: subtype=Vector; default=vec4(POSITION,0);
+*/
 vec4 noise(vec4 coord)
 {
-    return noise(coord, vec4(0));
+    return noise_ex(coord, false, vec4(0));
 }
 
 #endif // PROCEDURAL_NOISE_GLSL

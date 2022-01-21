@@ -4,11 +4,18 @@
 #include "Common/Math.glsl"
 #include "Common/Transform.glsl"
 
-vec3 bevel_ex
+/*  META
+    @id: default=ID[0];
+    @samples: default=8;
+    @radius: default=1.0;
+    @distribution_exponent: default=5.0;
+    @hard_bevel_max_dot: default=0.5;
+*/
+vec3 bevel
 (
     sampler2D normal_texture, sampler2D depth_texture, int depth_channel,
     uint id, bool filter_by_id, usampler2D id_texture, int id_channel,
-    int samples, float radius, float distribution_pow,
+    int samples, float radius, float distribution_exponent,
     bool hard_bevel, float hard_bevel_max_dot
 )
 {
@@ -32,9 +39,9 @@ vec3 bevel_ex
             offset = normalize(offset);
         }
         offset = offset * 2.0 - 1.0;
-        if(distribution_pow > 1)
+        if(distribution_exponent > 1)
         {
-            offset = pow(abs(offset), vec2(distribution_pow)) * sign(offset);
+            offset = pow(abs(offset), vec2(distribution_exponent)) * sign(offset);
         }
         offset *= screen_radius;
 
@@ -80,7 +87,7 @@ vec3 bevel_ex
     if(hard_bevel)
     {
         float mix_factor = 1.0 - (closest_distance / screen_radius);
-        mix_factor = saturate(pow(mix_factor, distribution_pow) * distribution_pow);
+        mix_factor = saturate(pow(mix_factor, distribution_exponent) * distribution_exponent);
         return normalize(mix(NORMAL, normalize(NORMAL + normalize(normal)), mix_factor));
     }
     else

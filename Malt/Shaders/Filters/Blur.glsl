@@ -1,6 +1,10 @@
 #ifndef BLUR_GLSL
 #define BLUR_GLSL
 
+/*  META
+    @uv: default=screen_uv();
+    @radius: default=5.0;
+*/
 vec4 box_blur(sampler2D input_texture, vec2 uv, float radius, bool circular)
 {
     vec2 resolution = textureSize(input_texture, 0);
@@ -38,6 +42,11 @@ float _gaussian_weight_2d(vec2 v, float sigma)
     return (1.0 / (2*PI*sigma2)) * exp(-(dot(v,v) / (2.0*sigma2)));
 }
 
+/*  META
+    @uv: default=screen_uv();
+    @radius: default=5.0;
+    @sigma: default=1.0;
+*/
 vec4 gaussian_blur(sampler2D input_texture, vec2 uv, float radius, float sigma)
 {
     vec2 resolution = textureSize(input_texture, 0);
@@ -61,6 +70,12 @@ vec4 gaussian_blur(sampler2D input_texture, vec2 uv, float radius, float sigma)
 
 #include "Common/Math.glsl"
 
+/*  META
+    @uv: default=screen_uv();
+    @radius: default=5.0;
+    @distribution_exponent: default=5.0;
+    @samples: default=8;
+*/
 vec4 jitter_blur(sampler2D input_texture, vec2 uv, float radius, float distribution_exponent, int samples)
 {
     vec2 resolution = textureSize(input_texture, 0);

@@ -12,23 +12,24 @@ from Malt.Render import Common
 from Malt.Render import DepthToCompositeDepth
 from Malt.Render import Sampling
 
-_COMMON_HEADER = '''
-#include "NPR_Pipeline.glsl"
+_SCREEN_SHADER_HEADER='''
+#include "NPR_ScreenShader.glsl"
 #include "Node Utils/node_utils.glsl"
 '''
 
-_SCREEN_SHADER_HEADER= _COMMON_HEADER + '''
-#ifdef PIXEL_SHADER
-void SCREEN_SHADER(vec2 uv);
-void main(){ PIXEL_SETUP_INPUT(); SCREEN_SHADER(UV[0]); }
-#endif //PIXEL_SHADER
+_MESH_SHADER_HEADER='''
+#include "NPR_MeshShader.glsl"
+#include "Node Utils/node_utils.glsl"
+'''
+
+_LIGHT_SHADER_HEADER='''
+#include "NPR_LightShader.glsl"
+#include "Node Utils/node_utils.glsl"
 '''
 
 _DEFAULT_SHADER = None
 
 _DEFAULT_SHADER_SRC='''
-#include "NPR_Pipeline.glsl"
-
 void PRE_PASS_PIXEL_SHADER(inout PrePassOutput PO){ }
 
 #ifdef MAIN_PASS
@@ -88,7 +89,7 @@ class NPR_Pipeline(Pipeline):
         mesh = GLSLPipelineGraph(
             name='Mesh',
             graph_type=GLSLPipelineGraph.SCENE_GRAPH,
-            default_global_scope=_COMMON_HEADER,
+            default_global_scope=_MESH_SHADER_HEADER,
             default_shader_src=_DEFAULT_SHADER_SRC,
             shaders=['PRE_PASS', 'MAIN_PASS', 'SHADOW_PASS'],
             graph_io=[
@@ -130,7 +131,7 @@ class NPR_Pipeline(Pipeline):
             name='Screen',
             graph_type=GLSLPipelineGraph.GLOBAL_GRAPH,
             default_global_scope=_SCREEN_SHADER_HEADER,
-            default_shader_src="void SCREEN_SHADER(vec2 uv){ }",
+            default_shader_src="void SCREEN_SHADER(){ }",
             graph_io=[ 
                 GLSLGraphIO(
                     name='SCREEN_SHADER',
@@ -148,7 +149,7 @@ class NPR_Pipeline(Pipeline):
         light = GLSLPipelineGraph(
             name='Light',
             graph_type=GLSLPipelineGraph.INTERNAL_GRAPH,
-            default_global_scope=_COMMON_HEADER,
+            default_global_scope=_LIGHT_SHADER_HEADER,
             default_shader_src="void LIGHT_SHADER(LightShaderInput I, inout LightShaderOutput O) { }",
             graph_io=[ 
                 GLSLGraphIO(

@@ -3,6 +3,9 @@
 
 #include "Common/Quaternion.glsl"
 
+/*  META
+    @t: subtype=Vector;
+*/
 mat4 mat4_translation(vec3 t)
 {
     mat4 m = mat4(1.0);
@@ -10,6 +13,9 @@ mat4 mat4_translation(vec3 t)
     return m;
 }
 
+/*  META
+    @q: subtype=Quaternion; default=vec4(0,0,0,1);
+*/
 mat4 mat4_rotation(vec4 q)
 {
     return mat4(mat3(
@@ -19,6 +25,9 @@ mat4 mat4_rotation(vec4 q)
     ));
 }
 
+/*  META
+    @e: subtype=Euler;
+*/
 mat4 mat4_rotation(vec3 e)
 {
     mat4 x = mat4_rotation(quaternion_from_axis_angle(vec3(1,0,0), e.x));
@@ -28,9 +37,20 @@ mat4 mat4_rotation(vec3 e)
     return z * y * x;
 }
 
+/*  META
+    @s: subtype=Vector; default=vec3(1);
+*/
 mat4 mat4_scale(vec3 s)
 {
     return mat4(mat3(s.x,0,0, 0,s.y,0, 0,0,s.z));
+}
+
+/*  META
+    @matrix: default=mat4(1);
+*/
+bool is_ortho(mat4 matrix)
+{
+    return matrix[3][3] == 1.0;
 }
 
 #endif // COMMON_MATRIX_GLSL

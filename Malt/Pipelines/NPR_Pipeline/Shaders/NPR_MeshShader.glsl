@@ -1,8 +1,4 @@
-/// NPR Pipeline for mesh materials.
-/// Includes a simplified API for writing shaders.
-
 #include "NPR_Intellisense.glsl"
-#include "Common/Hash.glsl"
 #include "Common.glsl"
 
 // Global material settings. Can be modified in the material panel UI
@@ -284,291 +280,87 @@ void main()
 
 #endif //PIXEL_SHADER
 
-//NPR PIPELINE SIMPLIFIED API
+#include "NPR_Pipeline/NPR_Filters.glsl"
+#include "NPR_Pipeline/NPR_Shading.glsl"
 
-#include "NPR_Shading.glsl"
-#include "Shading/Rim.glsl"
-#include "Filters/AO.glsl"
-#include "Filters/Bevel.glsl"
-#include "Filters/Curvature.glsl"
-#include "Filters/Line.glsl"
-
-vec3 get_diffuse()
+vec3 npr_mesh_diffuse_shading()
 {
     vec3 result = vec3(0);
     for(int i = 0; i < 4; i++)
     {
-        result += scene_diffuse(POSITION, NORMAL, MATERIAL_LIGHT_GROUPS[i], Settings.Receive_Shadow, Settings.Self_Shadow);
+        result += npr_diffuse_shading(POSITION, NORMAL, MATERIAL_LIGHT_GROUPS[i], Settings.Receive_Shadow, Settings.Self_Shadow);
     }
     return result;
 }
 
-vec3 get_diffuse_half()
+vec3 npr_mesh_diffuse_half_shading()
 {
     vec3 result = vec3(0);
     for(int i = 0; i < 4; i++)
     {
-        result += scene_diffuse_half(POSITION, NORMAL, MATERIAL_LIGHT_GROUPS[i], Settings.Receive_Shadow, Settings.Self_Shadow);
+        result += npr_diffuse_half_shading(POSITION, NORMAL, MATERIAL_LIGHT_GROUPS[i], Settings.Receive_Shadow, Settings.Self_Shadow);
     }
     return result;
 }
 
-vec3 get_diffuse_gradient(sampler1D gradient_texture)
+vec3 npr_mesh_diffuse_gradient_shading(sampler1D gradient_texture)
 {
     vec3 result = vec3(0);
     for(int i = 0; i < 4; i++)
     {
-        result += scene_diffuse_gradient(POSITION, NORMAL, gradient_texture, MATERIAL_LIGHT_GROUPS[i], Settings.Receive_Shadow, Settings.Self_Shadow);
+        result += npr_diffuse_gradient_shading(POSITION, NORMAL, gradient_texture, MATERIAL_LIGHT_GROUPS[i], Settings.Receive_Shadow, Settings.Self_Shadow);
     }
     return result;
 }
 
-vec3 get_specular(float roughness)
+vec3 npr_mesh_specular_shading(float roughness)
 {
     vec3 result = vec3(0);
     for(int i = 0; i < 4; i++)
     {
-        result += scene_specular(POSITION, NORMAL, roughness, MATERIAL_LIGHT_GROUPS[i], Settings.Receive_Shadow, Settings.Self_Shadow);
+        result += npr_specular_shading(POSITION, NORMAL, roughness, MATERIAL_LIGHT_GROUPS[i], Settings.Receive_Shadow, Settings.Self_Shadow);
     }
     return result;
 }
 
-vec3 get_specular_gradient(sampler1D gradient_texture, float roughness)
+vec3 npr_mesh_specular_gradient_shading(sampler1D gradient_texture, float roughness)
 {
     vec3 result = vec3(0);
     for(int i = 0; i < 4; i++)
     {
-        result += scene_specular_gradient(POSITION, NORMAL, roughness, gradient_texture, MATERIAL_LIGHT_GROUPS[i], Settings.Receive_Shadow, Settings.Self_Shadow);
+        result += npr_specular_gradient_shading(POSITION, NORMAL, roughness, gradient_texture, MATERIAL_LIGHT_GROUPS[i], Settings.Receive_Shadow, Settings.Self_Shadow);
     }
     return result;
 }
 
-vec3 get_specular_anisotropic(float roughness, float anisotropy, vec3 tangent)
+vec3 npr_mesh_specular_anisotropic_shading(float roughness, float anisotropy, vec3 tangent)
 {
     vec3 result = vec3(0);
     for(int i = 0; i < 4; i++)
     {
-        result += scene_specular_anisotropic(POSITION, NORMAL, tangent, anisotropy, roughness, MATERIAL_LIGHT_GROUPS[i], Settings.Receive_Shadow, Settings.Self_Shadow);
+        result += npr_specular_anisotropic_shading(POSITION, NORMAL, tangent, anisotropy, roughness, MATERIAL_LIGHT_GROUPS[i], Settings.Receive_Shadow, Settings.Self_Shadow);
     }
     return result;
 }
 
-vec3 get_specular_anisotropic_gradient(sampler1D gradient_texture, float roughness, float anisotropy, vec3 tangent)
+vec3 npr_mesh_specular_anisotropic_gradient_shading(sampler1D gradient_texture, float roughness, float anisotropy, vec3 tangent)
 {
     vec3 result = vec3(0);
     for(int i = 0; i < 4; i++)
     {
-        result += scene_specular_anisotropic_gradient(POSITION, NORMAL, tangent, anisotropy, roughness, gradient_texture, MATERIAL_LIGHT_GROUPS[i], Settings.Receive_Shadow, Settings.Self_Shadow);
+        result += npr_specular_anisotropic_gradient_shading(POSITION, NORMAL, tangent, anisotropy, roughness, gradient_texture, MATERIAL_LIGHT_GROUPS[i], Settings.Receive_Shadow, Settings.Self_Shadow);
     }
     return result;
 }
 
-vec3 get_toon(float size, float gradient_size, float specularity, float offset)
+vec3 npr_mesh_toon_shading(float size, float gradient_size, float specularity, float offset)
 {
     vec3 result = vec3(0);
     for(int i = 0; i < 4; i++)
     {
-        result += scene_toon(POSITION, NORMAL, size, gradient_size, specularity, offset, MATERIAL_LIGHT_GROUPS[i], Settings.Receive_Shadow, Settings.Self_Shadow);
+        result += npr_toon_shading(POSITION, NORMAL, size, gradient_size, specularity, offset, MATERIAL_LIGHT_GROUPS[i], Settings.Receive_Shadow, Settings.Self_Shadow);
     }
     return result;
-}
-
-float get_ao(int samples, float radius)
-{
-    #if defined(PIXEL_SHADER) && defined(MAIN_PASS)
-    {
-        float ao = ao_ex(IN_NORMAL_DEPTH, 3, POSITION, normalize(NORMAL), samples, radius, 5.0, 0);
-        ao = pow(ao, 5.0); //Pow for more contrast
-        //TODO: For some reason, using pow causes some values to go below 0 ?!?!?!?
-        ao = max(0, ao);
-        return ao;
-    }
-    #else
-    {
-        return 1.0;
-    }
-    #endif
-}
-
-float get_curvature()
-{
-    #if defined(PIXEL_SHADER) && defined(MAIN_PASS)
-    {
-        vec3 x = transform_normal(inverse(CAMERA), vec3(1,0,0));
-        vec3 y = transform_normal(inverse(CAMERA), vec3(0,1,0));
-        return curvature(IN_NORMAL_DEPTH, screen_uv(), 1.0, x, y);
-    }
-    #else
-    {
-        return 0.5;
-    }
-    #endif
-}
-
-float get_surface_curvature(float depth_range /*0.5*/)
-{
-    #if defined(PIXEL_SHADER) && defined(MAIN_PASS)
-    {
-        vec3 x = transform_normal(inverse(CAMERA), vec3(1,0,0));
-        vec3 y = transform_normal(inverse(CAMERA), vec3(0,1,0));
-        return surface_curvature(IN_NORMAL_DEPTH, IN_NORMAL_DEPTH, 3, screen_uv(), 1.0, x, y, depth_range);
-    }
-    #else
-    {
-        return 0.5;
-    }
-    #endif
-}
-
-vec3 get_soft_bevel(int samples, float radius, float distribution_pow, bool only_self)
-{
-    #if defined(PIXEL_SHADER) && defined(MAIN_PASS)
-    {
-        uint id = texture(IN_ID, screen_uv())[0];
-        return bevel_ex(
-            IN_NORMAL_DEPTH, IN_NORMAL_DEPTH, 3,
-            id, only_self, IN_ID, 0,
-            samples, radius, distribution_pow,
-            false, 1);
-    }
-    #endif
-    return NORMAL;
-}
-
-vec3 get_hard_bevel(int samples, float radius, float distribution_pow, bool only_self, float max_dot)
-{
-    #if defined(PIXEL_SHADER) && defined(MAIN_PASS)
-    {
-        uint id = texture(IN_ID, screen_uv())[0];
-        return bevel_ex(
-            IN_NORMAL_DEPTH, IN_NORMAL_DEPTH, 3,
-            id, only_self, IN_ID, 0,
-            samples, radius, distribution_pow,
-            true, max_dot);
-    }
-    #endif
-    return NORMAL;
-}
-
-bool get_is_front_facing()
-{
-    #ifdef PIXEL_SHADER
-    {
-        return gl_FrontFacing;
-    }
-    #endif
-    return true;
-}
-
-float get_facing()
-{
-    float d = dot(NORMAL, view_direction());
-    return d;
-    return clamp(d, 0.0, 1.0);
-}
-
-float get_fresnel()
-{
-    return 1.0 - get_facing();
-}
-
-vec4 get_matcap(sampler2D matcap_texture)
-{
-    return texture(matcap_texture, matcap_uv(NORMAL));
-}
-
-float get_rim_light(float angle, float rim_length, float thickness, float thickness_falloff)
-{
-    return rim_light(NORMAL, radians(angle), rim_length, rim_length, thickness, thickness_falloff);
-}
-
-LineDetectionOutput get_line_detection()
-{
-    LineDetectionOutput result;
-
-    #if defined(PIXEL_SHADER) && defined(MAIN_PASS)
-    {
-        result = line_detection(
-            POSITION,
-            NORMAL, true_normal(),
-            1,
-            1,
-            LINE_DEPTH_MODE_NEAR,
-            screen_uv(),
-            IN_NORMAL_DEPTH,
-            3,
-            IN_NORMAL_DEPTH,
-            IN_ID
-        );
-    }
-    #endif
-
-    return result;
-}
-
-void _fix_range(inout float value, inout float range)
-{
-    if(range < 0)
-    {
-        range = abs(range);
-        value -= range;
-    }
-}
-
-float get_line_width(
-    float line_width_scale, vec4 id_boundary_width,
-    float depth_width, float depth_width_range, float depth_threshold, float depth_threshold_range,
-    float normal_width, float normal_width_range, float normal_threshold, float normal_threshold_range
-)
-{
-    #if defined(PIXEL_SHADER) && defined(MAIN_PASS)
-    {
-        LineDetectionOutput lo = get_line_detection();
-
-        float line = 0;
-
-        vec4 id = vec4(lo.id_boundary) * id_boundary_width;
-        
-        for(int i = 0; i < 4; i++)
-        {
-            line = max(line, id[i]);
-        }
-
-        _fix_range(depth_width, depth_width_range);
-        _fix_range(depth_threshold, depth_threshold_range);
-
-        if(lo.delta_distance > depth_threshold)
-        {
-            float depth = map_range_clamped(
-                lo.delta_distance, 
-                depth_threshold, depth_threshold + depth_threshold_range,
-                depth_width, depth_width + depth_width_range
-            );
-
-            line = max(line, depth);
-        }
-
-        _fix_range(normal_width, normal_width_range);
-        _fix_range(normal_threshold, normal_threshold_range);
-
-        if(lo.delta_angle > normal_threshold)
-        {
-            float angle = map_range_clamped(
-                lo.delta_angle, 
-                normal_threshold, normal_threshold + normal_threshold_range,
-                normal_width, normal_width + normal_width_range
-            );
-
-            line = max(line, angle);
-        }
-
-        return line * line_width_scale;
-    }
-    #else
-    {
-        return 0.0;
-    }
-    #endif
 }
 
 bool is_shadow_pass()

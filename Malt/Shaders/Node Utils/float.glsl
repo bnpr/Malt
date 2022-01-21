@@ -1,8 +1,6 @@
 #ifndef FLOAT_GLSL
 #define FLOAT_GLSL
 
-float float_property(float f) { return f; }
-
 float float_add(float a, float b){ return a+b; }
 float float_subtract(float a, float b){ return a-b; }
 float float_multiply(float a, float b){ return a*b; }
@@ -42,8 +40,6 @@ bool float_greater_or_equal(float a, float b){ return a >= b; }
 bool float_less(float a, float b){ return a < b; }
 bool float_less_or_equal(float a, float b){ return a <= b; }
 
-float float_if_else(bool condition, float a, float b){ return condition ? a : b; }
-
-float float_from_int(int i) { return float(i); }
+float float_if_else(bool condition, float if_true, float if_false){ return condition ? if_true : if_false; }
 
 #endif //FLOAT_GLSL

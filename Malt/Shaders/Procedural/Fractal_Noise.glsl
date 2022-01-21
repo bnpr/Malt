@@ -3,14 +3,19 @@
 
 #include "Noise.glsl"
 
-vec4 fractal_noise(vec4 coord, int octaves, vec4 tile_size)
+/*  META
+    @coord: subtype=Vector; default=vec4(POSITION,0);
+    @octaves: default=3;
+    @tile_size: subtype=Vector; default=vec4(1);
+*/
+vec4 fractal_noise_ex(vec4 coord, int octaves, bool tile, vec4 tile_size)
 {
     vec4 result = vec4(0);
     float strength = 0.5;
 
     for (int i = 0; i < octaves; i++) 
     {
-        result += strength * noise(coord, tile_size);
+        result += strength * noise_ex(coord, tile, tile_size);
         coord *= 2.0;
         tile_size *= 2.0;
         strength *= 0.5;
@@ -18,9 +23,14 @@ vec4 fractal_noise(vec4 coord, int octaves, vec4 tile_size)
     return result;
 }
 
+
+/*  META
+    @coord: subtype=Vector; default=vec4(POSITION,0);
+    @octaves: default=3;
+*/
 vec4 fractal_noise(vec4 coord, int octaves)
 {
-    return fractal_noise(coord, octaves, vec4(0));
+    return fractal_noise_ex(coord, octaves, false, vec4(0));
 }
 
 #endif // PROCEDURAL_FRACTAL_NOISE_GLSL

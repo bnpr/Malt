@@ -31,7 +31,12 @@ uniform LIGHTS_CUSTOM_SHADING
 
 uniform sampler2DArray IN_LIGHT_CUSTOM_SHADING;
 
-LitSurface NPR_lit_surface(vec3 position, vec3 normal, uint id, Light light, int light_index, bool shadows, bool self_shadows)
+/*  META
+    @position: subtype=Vector; default=POSITION;
+    @normal: subtype=Normal; default=NORMAL;
+    @id: default=ID[0];
+*/
+LitSurface npr_lit_surface(vec3 position, vec3 normal, uint id, Light light, int light_index, bool shadows, bool self_shadows)
 {
     LitSurface S = lit_surface(position, normal, light, false);
 

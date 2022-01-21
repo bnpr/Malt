@@ -3,7 +3,7 @@
 #ifdef VERTEX_SHADER
 void main()
 {
-    gl_Position = vec4(in_position, 1);
+    DEFAULT_SCREEN_VERTEX_SHADER();
 }
 #endif
 

@@ -54,7 +54,12 @@ vertex_out vec4 IO_COLOR[4];
 flat vertex_out uvec4 IO_ID;
 
 #include "Common/Color.glsl"
+#include "Common/Hash.glsl"
+#include "Common/Mapping.glsl"
 #include "Common/Math.glsl"
+#include "Common/Matrix.glsl"
+#include "Common/Normal.glsl"
+#include "Common/Quaternion.glsl"
 #include "Common/Transform.glsl"
 
 #ifdef VERTEX_SHADER
@@ -112,6 +117,13 @@ void DEFAULT_VERTEX_SHADER()
     COLOR[3]=in_color3;
 
     VERTEX_SETUP_OUTPUT();
+}
+
+void DEFAULT_SCREEN_VERTEX_SHADER()
+{
+    IO_POSITION = in_position;
+    IO_UV[0] = in_position.xy * 0.5 + 0.5;
+    gl_Position = vec4(in_position, 1);
 }
 
 #endif //VERTEX_SHADER

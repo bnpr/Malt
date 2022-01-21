@@ -3,6 +3,12 @@
 
 #include "Common/Math.glsl"
 
+/*  META
+    @uv: default=screen_uv();
+    @width: default=1.0;
+    @x: subtype=Normal; default=vec3(1,0,0);
+    @y: subtype=Normal; default=vec3(0,1,0);
+*/
 // x and y must be the screen x and y axis in the same coordinate space as the texture normals
 float curvature(sampler2D normal_texture, vec2 uv, float width, vec3 x, vec3 y)
 {
@@ -28,13 +34,20 @@ float curvature(sampler2D normal_texture, vec2 uv, float width, vec3 x, vec3 y)
 
 #include "Filters/Line.glsl"
 
+/*  META
+    @uv: default=screen_uv();
+    @width: default=1.0;
+    @x: subtype=Normal; default=vec3(1,0,0);
+    @y: subtype=Normal; default=vec3(0,1,0);
+    @depth_range: default=0.1;
+*/
 // Like curvature, but discard depth discontinuities
 float surface_curvature(sampler2D normal_texture, sampler2D depth_texture, int depth_channel, 
     vec2 uv, float width, vec3 x, vec3 y, float depth_range)
 {
     float curvature = curvature(normal_texture, uv, width, x, y);
 
-    float delta_depth = line_detection_depth(depth_texture, depth_channel, uv, width, LINE_DEPTH_MODE_ANY);
+    float delta_depth = _line_detection_depth(depth_texture, depth_channel, uv, width, LINE_DEPTH_MODE_ANY);
 
     delta_depth /= depth_range;
     delta_depth = clamp(delta_depth, 0, 1);

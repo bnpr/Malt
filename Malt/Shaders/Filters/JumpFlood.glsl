@@ -1,6 +1,9 @@
 #ifndef JUMP_FLOOD_GLSL
 #define JUMP_FLOOD_GLSL
 
+/*  META
+    @width: default=1.0;
+*/
 //input should be a texture where x and y are screen space uvs.
 //samples with values == vec(-1,-1) are ignored
 //More info : https://medium.com/@bgolus/the-quest-for-very-wide-outlines-ba82ed442cd9#c5bb

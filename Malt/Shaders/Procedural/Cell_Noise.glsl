@@ -10,11 +10,15 @@ struct CellNoiseResult
     float cell_distance;
 };
 
-CellNoiseResult cell_noise(vec4 coord, vec4 tile_size)
+/*  META
+    @coord: subtype=Vector; default=vec4(POSITION,0);
+    @tile_size: subtype=Vector; default=vec4(1);
+*/
+CellNoiseResult cell_noise_ex(vec4 coord, bool tile, vec4 tile_size)
 {
     vec4 real_coord = coord;
     tile_size = round(tile_size);
-    if(tile_size != vec4(0))
+    if(tile)
     {
         coord = mod(coord, tile_size);
     }
@@ -36,7 +40,7 @@ CellNoiseResult cell_noise(vec4 coord, vec4 tile_size)
                 vec4 real_corner = real_origin + offset;
                 vec4 corner = origin + offset;
                 vec4 next_corner = corner + vec4(0,0,0,1);
-                if(tile_size != vec4(0))
+                if(tile)
                 {
                     corner = mod(corner, tile_size);
                     next_corner = mod(next_corner, tile_size);
@@ -58,9 +62,13 @@ CellNoiseResult cell_noise(vec4 coord, vec4 tile_size)
     return r;
 }
 
+
+/*  META
+    @coord: subtype=Vector; default=vec4(POSITION,0);
+*/
 CellNoiseResult cell_noise(vec4 coord)
 {
-    return cell_noise(coord, vec4(0));
+    return cell_noise_ex(coord, false, vec4(0));
 }
 
 #endif // PROCEDURAL_CELL_NOISE_GLSL

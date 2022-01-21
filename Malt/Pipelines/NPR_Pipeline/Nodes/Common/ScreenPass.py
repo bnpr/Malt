@@ -2,7 +2,9 @@ from Malt.GL import GL
 from Malt.GL.Texture import Texture
 from Malt.GL.RenderTarget import RenderTarget
 from Malt.PipelineNode import PipelineNode
-from Malt.PipelineParameters import Parameter, Type, MaterialParameter
+from Malt.PipelineParameters import Parameter, Type
+from Malt.Scene import TextureShaderResource
+
 
 class ScreenPass(PipelineNode):
 
@@ -17,11 +19,31 @@ class ScreenPass(PipelineNode):
     def get_pass_type():
         return 'Screen.SCREEN_SHADER'
     
+    @classmethod
+    def reflect_inputs(cls):
+        inputs = {}
+        inputs['Scene'] = Parameter('Scene', Type.OTHER)
+        inputs['Normal Depth'] = Parameter('', Type.TEXTURE)
+        inputs['ID'] = Parameter('', Type.TEXTURE)
+        return inputs
+    
     def execute(self, parameters):
         inputs = parameters['IN']
         outputs = parameters['OUT']
         material = parameters['PASS_MATERIAL']
         custom_io = parameters['CUSTOM_IO']
+
+        scene = inputs['Scene']
+        if scene is None:
+            return
+        t_normal_depth = inputs['Normal Depth']
+        t_id = inputs['ID']
+
+        shader_resources = scene.shader_resources.copy()
+        if t_normal_depth:
+            shader_resources['IN_NORMAL_DEPTH'] = TextureShaderResource('IN_NORMAL_DEPTH', t_normal_depth)
+        if t_id:
+            shader_resources['IN_ID'] = TextureShaderResource('IN_ID', t_id)
 
         if self.pipeline.resolution != self.resolution or self.custom_io != custom_io:
             self.texture_targets = {}
