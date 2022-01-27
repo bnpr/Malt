@@ -10,14 +10,19 @@
 #define NPR_FILTERS_ACTIVE
 #endif
 
-float ao(int samples, float radius)
+/*  META
+    @samples: default=32;
+    @radius: default=1.0;
+    @distribution_exponent: default=5.0;
+*/
+float ao(int samples, float radius, float distribution_exponent)
 {
     #ifdef NPR_FILTERS_ACTIVE
     {
-        float ao = ao(IN_NORMAL_DEPTH, 3, POSITION, normalize(NORMAL), samples, radius, 5.0, 0);
-        ao = pow(ao, 5.0); //Pow for more contrast
+        float ao = ao(IN_NORMAL_DEPTH, 3, POSITION, normalize(NORMAL), samples, radius, distribution_exponent, 0);
+        //ao = pow(ao, 1.0); //Pow for more contrast
         //TODO: For some reason, using pow causes some values to go below 0 ?!?!?!?
-        ao = max(0, ao);
+        //ao = max(0, ao);
         return ao;
     }
     #else
@@ -42,7 +47,10 @@ float curvature()
     #endif
 }
 
-float surface_curvature(float depth_range /*0.5*/)
+/*  META
+    @depth_range: default=0.1;
+*/
+float surface_curvature(float depth_range)
 {
     #ifdef NPR_FILTERS_ACTIVE
     {
@@ -57,7 +65,12 @@ float surface_curvature(float depth_range /*0.5*/)
     #endif
 }
 
-vec3 soft_bevel(int samples, float radius, float distribution_pow, bool only_self)
+/*  META
+    @samples: default=32;
+    @radius: default=0.02;
+    @distribution_exponent: default=2.0;
+*/
+vec3 soft_bevel(int samples, float radius, float distribution_exponent, bool only_self)
 {
     #ifdef NPR_FILTERS_ACTIVE
     {
@@ -65,14 +78,19 @@ vec3 soft_bevel(int samples, float radius, float distribution_pow, bool only_sel
         return bevel(
             IN_NORMAL_DEPTH, IN_NORMAL_DEPTH, 3,
             id, only_self, IN_ID, 0,
-            samples, radius, distribution_pow,
+            samples, radius, distribution_exponent,
             false, 1);
     }
     #endif
     return NORMAL;
 }
 
-vec3 hard_bevel(int samples, float radius, float distribution_pow, bool only_self, float max_dot)
+/*  META
+    @samples: default=32;
+    @radius: default=0.01;
+    @max_dot: default=0.75;
+*/
+vec3 hard_bevel(int samples, float radius, float max_dot, bool only_self)
 {
     #ifdef NPR_FILTERS_ACTIVE
     {
@@ -80,7 +98,7 @@ vec3 hard_bevel(int samples, float radius, float distribution_pow, bool only_sel
         return bevel(
             IN_NORMAL_DEPTH, IN_NORMAL_DEPTH, 3,
             id, only_self, IN_ID, 0,
-            samples, radius, distribution_pow,
+            samples, radius, 1.0,
             true, max_dot);
     }
     #endif
@@ -119,6 +137,14 @@ void _fix_range(inout float value, inout float range)
     }
 }
 
+/*  META
+    @line_width_scale: default=2.0;
+    @id_boundary_width: subtype=Data; default=vec4(1);
+    @depth_width: default=1.0;
+    @depth_threshold: default=0.5;
+    @normal_width: default=1.0;
+    @normal_threshold: default=0.5;
+*/
 float line_width(
     float line_width_scale, vec4 id_boundary_width,
     float depth_width, float depth_width_range, float depth_threshold, float depth_threshold_range,

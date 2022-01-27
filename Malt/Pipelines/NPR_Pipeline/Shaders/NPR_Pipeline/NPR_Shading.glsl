@@ -18,6 +18,7 @@
 /*  META
     @position: subtype=Vector; default=POSITION;
     @normal: subtype=Normal; default=NORMAL;
+    @light_group: default=1;
     @shadows: default=true;
     @self_shadows: default=true;
 */
@@ -28,6 +29,7 @@ vec3 diffuse_shading(vec3 position, vec3 normal, int light_group, bool shadows, 
 /*  META
     @position: subtype=Vector; default=POSITION;
     @normal: subtype=Normal; default=NORMAL;
+    @light_group: default=1;
     @shadows: default=true;
     @self_shadows: default=true;
 */
@@ -38,6 +40,7 @@ vec3 diffuse_half_shading(vec3 position, vec3 normal, int light_group, bool shad
 /*  META
     @position: subtype=Vector; default=POSITION;
     @normal: subtype=Normal; default=NORMAL;
+    @light_group: default=1;
     @shadows: default=true;
     @self_shadows: default=true;
 */
@@ -49,6 +52,7 @@ vec3 diffuse_gradient_shading(vec3 position, vec3 normal, sampler1D gradient, in
     @position: subtype=Vector; default=POSITION;
     @normal: subtype=Normal; default=NORMAL;
     @roughness: default=0.5;
+    @light_group: default=1;
     @shadows: default=true;
     @self_shadows: default=true;
 */
@@ -60,6 +64,7 @@ vec3 specular_shading(vec3 position, vec3 normal, float roughness, int light_gro
     @position: subtype=Vector; default=POSITION;
     @normal: subtype=Normal; default=NORMAL;
     @roughness: default=0.5;
+    @light_group: default=1;
     @shadows: default=true;
     @self_shadows: default=true;
 */
@@ -73,6 +78,7 @@ vec3 specular_gradient_shading(vec3 position, vec3 normal, float roughness, samp
     @tangent: subtype=Normal; default=radial_tangent(NORMAL, vec3(0,0,1));
     @anisotropy: default=0.5;
     @roughness: default=0.5;
+    @light_group: default=1;
     @shadows: default=true;
     @self_shadows: default=true;
 */
@@ -86,6 +92,7 @@ vec3 specular_anisotropic_shading(vec3 position, vec3 normal, vec3 tangent, floa
     @tangent: subtype=Normal; default=radial_tangent(NORMAL, vec3(0,0,1));
     @anisotropy: default=0.5;
     @roughness: default=0.5;
+    @light_group: default=1;
     @shadows: default=true;
     @self_shadows: default=true;
 */
@@ -97,6 +104,7 @@ vec3 specular_anisotropic_gradient_shading(vec3 position, vec3 normal, vec3 tang
     @position: subtype=Vector; default=POSITION;
     @normal: subtype=Normal; default=NORMAL;
     @size: default=0.49;
+    @light_group: default=1;
     @shadows: default=true;
     @self_shadows: default=true;
 */
