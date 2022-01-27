@@ -13,8 +13,8 @@ class MiniPipeline(Pipeline):
 
     DEFAULT_SHADER = None
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, plugins=[]):
+        super().__init__(plugins)
 
         self.parameters.world['Background Color'] = Parameter((0.5,0.5,0.5,1), Type.FLOAT, 4)
 
@@ -59,11 +59,11 @@ class MiniPipeline(Pipeline):
     def do_render(self, resolution, scene, is_final_render, is_new_frame):
         self.common_buffer.load(scene, resolution)
         
-        UBOS = { 'COMMON_UNIFORMS' : self.common_buffer }
+        shader_resources = { 'COMMON_UNIFORMS' : self.common_buffer }
 
         self.fbo_main.clear([scene.world_parameters['Background Color']], 1)
 
-        self.draw_scene_pass(self.fbo_main, scene.batches, 'MAIN_PASS', self.default_shader['MAIN_PASS'], UBOS)
+        self.draw_scene_pass(self.fbo_main, scene.batches, 'MAIN_PASS', self.default_shader['MAIN_PASS'], shader_resources)
 
         return { 'COLOR' : self.t_main_color }
 
