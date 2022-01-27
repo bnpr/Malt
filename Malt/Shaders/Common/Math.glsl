@@ -39,7 +39,7 @@ vec2 screen_uv(); //FORWARD DECLARATION
 
 vec4 random_per_pixel(float seed) 
 {
-    return vec4(screen_uv(), float(SAMPLE_COUNT), seed);
+    return hash(vec4(screen_uv(), float(SAMPLE_COUNT), seed));
 }
 
 #endif // COMMON_MATH_GLSL
