@@ -16,6 +16,8 @@ void SCREEN_SHADER();
 
 void main()
 {
+    PIXEL_SETUP_INPUT();
+    
     vec4 normal_depth =  texture(IN_NORMAL_DEPTH, UV[0]);
     POSITION = screen_to_camera(UV[0], normal_depth.w);
     POSITION = transform_point(inverse(CAMERA), POSITION);

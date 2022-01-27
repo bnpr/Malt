@@ -34,12 +34,12 @@ class ScreenPass(PipelineNode):
         custom_io = parameters['CUSTOM_IO']
 
         scene = inputs['Scene']
-        if scene is None:
-            return
         t_normal_depth = inputs['Normal Depth']
         t_id = inputs['ID']
 
-        shader_resources = scene.shader_resources.copy()
+        shader_resources = {}
+        if scene:
+            shader_resources = scene.shader_resources.copy()
         if t_normal_depth:
             shader_resources['IN_NORMAL_DEPTH'] = TextureShaderResource('IN_NORMAL_DEPTH', t_normal_depth)
         if t_id:
