@@ -65,7 +65,7 @@ _VS_CODE_SETTINGS = '''
     "files.associations": {{
         "*.glsl": "cpp"
     }},
-    "C_Cpp.default.includePath": ["{}","{}"],
+    "C_Cpp.default.includePath": ["{}"],
     "C_Cpp.default.forcedInclude": ["{}"],
     "C_Cpp.autoAddFileAssociations": true,
     "C_Cpp.default.cppStandard": "c++03",
@@ -82,9 +82,8 @@ def setup_vs_code(dummy):
         if bpy.context.preferences.addons['BlenderMalt'].preferences.setup_vs_code:
             shaders_path = path.join(__MALT_PATH, 'Malt', 'Shaders')
             intellisense_path = path.join(shaders_path, 'Intellisense', 'intellisense.glsl')
-            library_path = bpy.context.preferences.addons['BlenderMalt'].preferences.malt_library_path
 
-            vscode_settings = _VS_CODE_SETTINGS.format(shaders_path, library_path, intellisense_path, __MALT_PATH, __MALT_DEPENDENCIES_PATH)
+            vscode_settings = _VS_CODE_SETTINGS.format(shaders_path, intellisense_path, __MALT_PATH, __MALT_DEPENDENCIES_PATH)
             vscode_settings = vscode_settings.replace('\\','\\\\')
 
             settings_dir = bpy.path.abspath('//.vscode')
