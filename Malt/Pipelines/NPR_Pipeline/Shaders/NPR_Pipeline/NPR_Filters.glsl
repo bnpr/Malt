@@ -10,7 +10,7 @@
 #define NPR_FILTERS_ACTIVE
 #endif
 
-float npr_ao(int samples, float radius)
+float ao(int samples, float radius)
 {
     #ifdef NPR_FILTERS_ACTIVE
     {
@@ -27,7 +27,7 @@ float npr_ao(int samples, float radius)
     #endif
 }
 
-float npr_curvature()
+float curvature()
 {
     #ifdef NPR_FILTERS_ACTIVE
     {
@@ -42,7 +42,7 @@ float npr_curvature()
     #endif
 }
 
-float npr_surface_curvature(float depth_range /*0.5*/)
+float surface_curvature(float depth_range /*0.5*/)
 {
     #ifdef NPR_FILTERS_ACTIVE
     {
@@ -57,7 +57,7 @@ float npr_surface_curvature(float depth_range /*0.5*/)
     #endif
 }
 
-vec3 npr_soft_bevel(int samples, float radius, float distribution_pow, bool only_self)
+vec3 soft_bevel(int samples, float radius, float distribution_pow, bool only_self)
 {
     #ifdef NPR_FILTERS_ACTIVE
     {
@@ -72,7 +72,7 @@ vec3 npr_soft_bevel(int samples, float radius, float distribution_pow, bool only
     return NORMAL;
 }
 
-vec3 npr_hard_bevel(int samples, float radius, float distribution_pow, bool only_self, float max_dot)
+vec3 hard_bevel(int samples, float radius, float distribution_pow, bool only_self, float max_dot)
 {
     #ifdef NPR_FILTERS_ACTIVE
     {
@@ -87,7 +87,7 @@ vec3 npr_hard_bevel(int samples, float radius, float distribution_pow, bool only
     return NORMAL;
 }
 
-LineDetectionOutput npr_line_detection()
+LineDetectionOutput line_detection()
 {
     LineDetectionOutput result;
 
@@ -119,7 +119,7 @@ void _fix_range(inout float value, inout float range)
     }
 }
 
-float npr_line_width(
+float line_width(
     float line_width_scale, vec4 id_boundary_width,
     float depth_width, float depth_width_range, float depth_threshold, float depth_threshold_range,
     float normal_width, float normal_width_range, float normal_threshold, float normal_threshold_range
@@ -127,7 +127,7 @@ float npr_line_width(
 {
     #ifdef NPR_FILTERS_ACTIVE
     {
-        LineDetectionOutput lo = npr_line_detection();
+        LineDetectionOutput lo = line_detection();
 
         float line = 0;
 

@@ -369,11 +369,24 @@ def get_functions_menu(file):
             graph = get_pipeline_graph(context)
             if graph:
                 library_functions = context.space_data.node_tree.get_library()['functions']
+                functions = {}
+                overloads = {}
                 for name, function in chain(graph.functions.items(), library_functions.items()):
-                    if function['file'] == file:
-                        insert_node(self.layout, "MaltFunctionNode", name.replace('_', ' '), settings={
-                            'function_type' : repr(name)
-                        })
+                    if function['file'] != file:
+                        continue
+                    functions[name] = function
+                    if function['name'] not in overloads.keys():
+                        overloads[function['name']] = 0
+                    overloads[function['name']] += 1
+                for name, function in functions.items():
+                    label = name
+                    if overloads[function['name']] == 1:
+                        # Only use the signature as label when there are multiple overloads in the same file
+                        label = function['name']
+                    label = label.replace('_', ' ')
+                    insert_node(self.layout, "MaltFunctionNode", label, settings={
+                        'function_type' : repr(name)
+                    })
 
         menu_type = type(class_name, (bpy.types.Menu,), {
             "bl_space_type": 'NODE_EDITOR',

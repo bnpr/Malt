@@ -87,12 +87,13 @@ class MaltSocket(bpy.types.NodeSocket):
     
     def get_ui_label(self):
         type = self.data_type
+        name = self.name.replace('_',' ')
         if self.array_size > 0:
             type += f'[{self.array_size}]'
         if self.is_output:
-            return f'({type}) : {self.name}'
+            return f'({type}) : {name}'
         else:
-            return f'{self.name} : ({type})'
+            return f'{name} : ({type})'
     
     def draw(self, context, layout, node, text):
         if self.active == False:

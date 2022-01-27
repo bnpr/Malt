@@ -205,7 +205,7 @@ class MaltNode():
         return ntree.bl_idname == 'MaltTree'
     
     def draw_label(self):
-        return self.name
+        return self.name.replace('_', ' ')
 
     
 classes = []
