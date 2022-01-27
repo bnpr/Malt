@@ -17,7 +17,7 @@ vec3 vec3_from_float(float f) { return vec3(f); }
 vec3 vec3_from_vec2(vec2 v) { return vec3(v, 0); }
 vec3 vec3_from_vec4(vec4 v) { return v.xyz; }
 
-vec4 vec4_from_float(float f) { return vec4(f); }
+vec4 vec4_from_float(float f) { return vec4(f, f, f, 1); }
 vec4 vec4_from_vec2(vec2 v) { return vec4(v, 0, 1); }
 vec4 vec4_from_vec3(vec3 v) { return vec4(v, 1); }
 
