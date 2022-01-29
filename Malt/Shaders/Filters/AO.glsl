@@ -5,6 +5,7 @@
 #include "Common/Transform.glsl"
 
 /*  META
+    @meta: internal=true;
     @position: subtype=Vector; default=POSITION;
     @normal: subtype=Normal; default=NORMAL;
     @samples: default=8;

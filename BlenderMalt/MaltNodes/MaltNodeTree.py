@@ -374,6 +374,8 @@ def get_functions_menu(file):
                 for name, function in chain(graph.functions.items(), library_functions.items()):
                     if function['file'] != file:
                         continue
+                    if function['meta'].get('internal'):
+                        continue
                     functions[name] = function
                     if function['name'] not in overloads.keys():
                         overloads[function['name']] = 0
@@ -412,6 +414,8 @@ def get_structs_menu(file):
             if graph:
                 library_structs = context.space_data.node_tree.get_library()['structs']
                 for name, struct in chain(graph.structs.items(), library_structs.items()):
+                    if struct['meta'].get('internal'):
+                        continue
                     if struct['file'] == file:
                         insert_node(self.layout, "MaltStructNode", name.replace('_', ' '), settings={
                             'struct_type' : repr(name)
@@ -439,6 +443,8 @@ class MALT_MT_NodeFunctions(bpy.types.Menu):
             files = set()
             library_functions = context.space_data.node_tree.get_library()['functions']
             for name, function in chain(library_functions.items(), graph.functions.items()):
+                if function['meta'].get('internal'):
+                    continue
                 files.add(function['file'])
             for file in sorted(files):
                 self.layout.menu(get_functions_menu(file))
@@ -453,6 +459,8 @@ class MALT_MT_NodeStructs(bpy.types.Menu):
             files = set()
             library_structs = context.space_data.node_tree.get_library()['structs']
             for name, struct in chain(library_structs.items(), graph.structs.items()):
+                if struct['meta'].get('internal'):
+                    continue
                 files.add(struct['file'])
             for file in sorted(files):
                 self.layout.menu(get_structs_menu(file))

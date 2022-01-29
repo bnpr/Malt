@@ -1,9 +1,10 @@
 #include "NPR_Intellisense.glsl"
 #include "Common.glsl"
 
-// Global material settings. Can be modified in the material panel UI
+/* META @meta: internal=true; */
 struct NPR_Settings
 {
+    // Global material settings. Can be modified in the material panel UI
     bool Receive_Shadow;
     bool Self_Shadow;
     bool Transparency;

@@ -3,11 +3,13 @@
 
 #include "Shading/BRDF.glsl"
 
+/* META @meta: internal=true; */
 vec3 diffuse_lit_surface(LitSurface LS)
 {
     return clamp(LS.NoL, 0, 1) * LS.light_color * LS.shadow_multiply;
 }
 
+/* META @meta: internal=true; */
 vec3 _diffuse_half_lit_surface_common(LitSurface LS)
 {
     vec3 diffuse = vec3(map_range_clamped(LS.NoL, -1, 1, 0, 1));
@@ -15,11 +17,13 @@ vec3 _diffuse_half_lit_surface_common(LitSurface LS)
     return min(diffuse, shadow);
 }
 
+/* META @meta: internal=true; */
 vec3 diffuse_half_lit_surface(LitSurface LS)
 {
     return _diffuse_half_lit_surface_common(LS) * LS.light_color;
 }
 
+/* META @meta: internal=true; */
 vec3 diffuse_gradient_lit_surface(LitSurface LS, sampler1D gradient)
 {
     return rgb_gradient(gradient, _diffuse_half_lit_surface_common(LS)) * LS.light_color;
@@ -30,6 +34,7 @@ float _specular_shadowing(float NoL, float specular)
     return clamp(specular * (1.0 - pow(1.0 - max(NoL, 0), 20.0)), 0, 1);
 }
 
+/* META @meta: internal=true; */
 float _specular_common_lit_surface(LitSurface LS, float roughness)
 {
     float VoR = dot(LS.V, LS.R);
@@ -37,16 +42,19 @@ float _specular_common_lit_surface(LitSurface LS, float roughness)
     return pow(VoR, roughness_to_shininess(roughness));
 }
 
+/* META @meta: internal=true; */
 vec3 specular_lit_surface(LitSurface LS, float roughness)
 {
     return _specular_common_lit_surface(LS, roughness) * LS.light_color * LS.shadow_multiply;
 }
 
+/* META @meta: internal=true; */
 vec3 specular_gradient_lit_surface(LitSurface LS, float roughness, sampler1D gradient)
 {
     return texture(gradient, _specular_common_lit_surface(LS, roughness)).rgb * LS.light_color * LS.shadow_multiply;
 }
 
+/* META @meta: internal=true; */
 float _specular_anisotropic_lit_surface_common(LitSurface LS, vec3 tangent, float anisotropy, float roughness)
 {
     vec2 a = vec2(anisotropy, 1.0 - anisotropy);
@@ -64,16 +72,19 @@ float _specular_anisotropic_lit_surface_common(LitSurface LS, vec3 tangent, floa
     return _specular_shadowing(NoL, specular);
 }
 
+/* META @meta: internal=true; */
 vec3 specular_anisotropic_lit_surface(LitSurface LS, vec3 tangent, float anisotropy, float roughness)
 {
     return _specular_anisotropic_lit_surface_common(LS, tangent, anisotropy, roughness) * LS.light_color * LS.shadow_multiply;
 }
 
+/* META @meta: internal=true; */
 vec3 specular_anisotropic_gradient_lit_surface(LitSurface LS, vec3 tangent, float anisotropy, float roughness, sampler1D gradient)
 {
     return texture(gradient, _specular_anisotropic_lit_surface_common(LS, tangent, anisotropy, roughness)).rgb * LS.light_color * LS.shadow_multiply;
 }
 
+/* META @meta: internal=true; */
 vec3 toon_lit_surface(LitSurface LS, float size, float gradient_size, float specularity, float offset)
 {
     float D = mix(LS.NoL, dot(LS.V, LS.R), specularity);

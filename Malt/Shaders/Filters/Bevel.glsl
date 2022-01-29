@@ -5,6 +5,7 @@
 #include "Common/Transform.glsl"
 
 /*  META
+    @meta: internal=true;
     @id: default=ID[0];
     @samples: default=8;
     @radius: default=1.0;

@@ -34,14 +34,15 @@ float curvature(sampler2D normal_texture, vec2 uv, float width, vec3 x, vec3 y)
 
 #include "Filters/Line.glsl"
 
+// Like curvature, but discard depth discontinuities
 /*  META
+    @meta: internal=true;
     @uv: default=screen_uv();
     @width: default=1.0;
     @x: subtype=Normal; default=vec3(1,0,0);
     @y: subtype=Normal; default=vec3(0,1,0);
     @depth_range: default=0.1;
 */
-// Like curvature, but discard depth discontinuities
 float surface_curvature(sampler2D normal_texture, sampler2D depth_texture, int depth_channel, 
     vec2 uv, float width, vec3 x, vec3 y, float depth_range)
 {

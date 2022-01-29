@@ -32,6 +32,7 @@ uniform LIGHTS_CUSTOM_SHADING
 uniform sampler2DArray IN_LIGHT_CUSTOM_SHADING;
 
 /*  META
+    @meta: internal=true;
     @position: subtype=Vector; default=POSITION;
     @normal: subtype=Normal; default=NORMAL;
     @id: default=ID[0];

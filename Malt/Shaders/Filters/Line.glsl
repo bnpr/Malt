@@ -60,11 +60,12 @@ struct LineDetectionOutput
 };
 
 /*  META
+    @meta: internal=true;
     @position: subtype=Vector; default=POSITION;
     @normal: subtype=Normal; default=NORMAL;
     @true_normal: subtype=Normal; default=true_normal();
     @width: default=1.0;
-    @LINE_DEPTH_MODE: subtype:ENUM(Near, Far, Any);
+    @LINE_DEPTH_MODE: subtype=ENUM(Near, Far, Any);
     @uv: default=screen_uv();
 */
 LineDetectionOutput line_detection(
@@ -147,6 +148,7 @@ LineDetectionOutput line_detection(
 }
 
 
+/* META @meta: internal=true; */
 struct LineExpandOutput
 {
     vec4 color;
@@ -154,6 +156,7 @@ struct LineExpandOutput
 };
 
 /*  META
+    @meta: internal=true;
     @uv: default=screen_uv();
     @max_width: default=10;
 */
