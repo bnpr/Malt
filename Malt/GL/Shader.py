@@ -478,11 +478,28 @@ def glsl_reflection(code, root_paths=[]):
                     if len(_path) < len(path):
                         path = _path
                 except: pass
-            e['file'] = path
+            e['file'] = path.replace('\\','/')
     
     fix_paths(reflection['structs'])
     fix_paths(reflection['functions'])
 
+    functions = {}
+    for key, function in reflection['functions'].items():
+        new_key = function['file'].replace('/',' - ').replace('.glsl',' - ') + function['name']
+        if function['name'].isupper() or function['name'].startswith('_'):
+            new_key = function['name']
+        if new_key not in functions.keys():
+            functions[new_key] = []
+        functions[new_key].append(function)
+    reflection['functions'] = {}
+    for key, functions in functions.items():
+        if len(functions) == 1:
+            reflection['functions'][key] = functions[0]
+        else:
+            for function in functions:
+                new_key = key + ' - ' + function['signature']
+                reflection['functions'][new_key] = function
+    
     return reflection
 
 

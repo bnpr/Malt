@@ -1,17 +1,17 @@
 #ifndef NODE_UTILS_GLSL
 #define NODE_UTILS_GLSL
 
-#include "common.glsl"
-#include "conversion.glsl"
-#include "bool.glsl"
-#include "float.glsl"
-#include "int.glsl"
-#include "packing.glsl"
-#include "properties.glsl"
-#include "sampler.glsl"
-#include "vec2.glsl"
-#include "vec3.glsl"
-#include "vec4.glsl"
+#include "Node Utils/common.glsl"
+#include "Node Utils/conversion.glsl"
+#include "Node Utils/bool.glsl"
+#include "Node Utils/float.glsl"
+#include "Node Utils/int.glsl"
+#include "Node Utils/packing.glsl"
+#include "Node Utils/properties.glsl"
+#include "Node Utils/sampler.glsl"
+#include "Node Utils/vec2.glsl"
+#include "Node Utils/vec3.glsl"
+#include "Node Utils/vec4.glsl"
 
 // Basic common API
 #include "Common.glsl"

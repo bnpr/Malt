@@ -91,10 +91,10 @@ class MaltTree(bpy.types.NodeTree):
     def cast(self, from_type, to_type):
         cast_function = f'{to_type}_from_{from_type}'
         lib = self.get_full_library()
-        if cast_function in lib['functions']:
-            #TODO: If more than 1 parameter, check if they have default values
-            if len(lib['functions'][cast_function]['parameters']) == 1:
-                return cast_function
+        for function in lib['functions'].values():
+            if function['name'] == cast_function and len(function['parameters']) == 1:
+                #TODO: If more than 1 parameter, check if they have default values?
+                return function['name']
         return None
     
     def get_struct_type(self, struct_type):
@@ -379,10 +379,9 @@ def get_functions_menu(file):
                         overloads[function['name']] = 0
                     overloads[function['name']] += 1
                 for name, function in functions.items():
-                    label = name
-                    if overloads[function['name']] == 1:
-                        # Only use the signature as label when there are multiple overloads in the same file
-                        label = function['name']
+                    label = function['name']
+                    if overloads[function['name']] > 1:
+                        label = function['signature']
                     label = label.replace('_', ' ')
                     insert_node(self.layout, "MaltFunctionNode", label, settings={
                         'function_type' : repr(name)
