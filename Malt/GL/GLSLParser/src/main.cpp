@@ -220,13 +220,23 @@ int main(int argc, char* argv[])
             struct_def.AddMember("name", Value(name.c_str(), json.GetAllocator()), json.GetAllocator());
             struct_def.AddMember("file", Value(current_file.c_str(), json.GetAllocator()), json.GetAllocator());
             struct_def.AddMember("members", Value(kArrayType), json.GetAllocator());
+            
+            parse_tree::node* meta = get<META>(child.get());
+            auto meta_dict = get_meta_dict(meta, json.GetAllocator());
+
+            if(meta_dict.count("meta"))
+            {
+                struct_def.AddMember("meta", meta_dict["meta"], json.GetAllocator());
+            }
+            else
+            {
+                struct_def.AddMember("meta", Value(kObjectType), json.GetAllocator());
+            }
+            
             Value& members_array = struct_def["members"];
 
             parse_tree::node* members = get<MEMBERS>(child.get());
             if(!members) continue;
-
-            parse_tree::node* meta = get<META>(child.get());
-            auto meta_dict = get_meta_dict(meta, json.GetAllocator());
 
             for(auto& member : members->children)
             {
@@ -278,13 +288,23 @@ int main(int argc, char* argv[])
             function_dec.AddMember("file", Value(current_file.c_str(), json.GetAllocator()), json.GetAllocator());
             function_dec.AddMember("signature", Value(signature_str.c_str(), json.GetAllocator()), json.GetAllocator());
             function_dec.AddMember("parameters", Value(kArrayType), json.GetAllocator());
+
+            parse_tree::node* meta = get<META>(child.get());
+            auto meta_dict = get_meta_dict(meta, json.GetAllocator());
+
+            if(meta_dict.count("meta"))
+            {
+                function_dec.AddMember("meta", meta_dict["meta"], json.GetAllocator());
+            }
+            else
+            {
+                function_dec.AddMember("meta", Value(kObjectType), json.GetAllocator());
+            }
+
             Value& parameters_array = function_dec["parameters"];
 
             parse_tree::node* parameters = get<PARAMETERS>(signature);
             if(!parameters) continue;
-
-            parse_tree::node* meta = get<META>(child.get());
-            auto meta_dict = get_meta_dict(meta, json.GetAllocator());
 
             for(auto& parameter : parameters->children)
             {
