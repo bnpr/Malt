@@ -29,7 +29,7 @@ _LIGHT_SHADER_HEADER='''
 _DEFAULT_SHADER = None
 
 _DEFAULT_SHADER_SRC='''
-void PRE_PASS_PIXEL_SHADER(inout PrePassOutput PO){ }
+void PRE_PASS_PIXEL_SHADER(inout PrePassOutput PPO){ }
 
 #ifdef MAIN_PASS
 layout (location = 0) out vec4 OUT_0;
@@ -212,7 +212,7 @@ class NPR_Pipeline(Pipeline):
         super().setup_resources()
         self.composite_depth = DepthToCompositeDepth.CompositeDepth()
         global _DEFAULT_SHADER
-        if _DEFAULT_SHADER is None: _DEFAULT_SHADER = self.compile_material_from_source('Mesh', _DEFAULT_SHADER_SRC)
+        if _DEFAULT_SHADER is None: _DEFAULT_SHADER = self.compile_material_from_source('Mesh', _MESH_SHADER_HEADER + _DEFAULT_SHADER_SRC)
         self.default_shader = _DEFAULT_SHADER
     
     def get_samples(self):
