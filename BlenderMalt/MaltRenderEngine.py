@@ -175,7 +175,7 @@ class MaltRenderEngine(bpy.types.RenderEngine):
                 malt_light = obj.data.malt
 
                 light = Scene.Light()
-                light.color = tuple(obj.data.color * obj.data.energy)
+                light.color = tuple(obj.data.color * malt_light.strength)
                 light.position = tuple(obj.matrix_world.translation)
                 light.direction = tuple(obj.matrix_world.to_quaternion() @ Vector((0.0,0.0,-1.0)))
                 light.radius = malt_light.radius

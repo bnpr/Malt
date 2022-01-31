@@ -11,9 +11,7 @@ class MaltLight(bpy.types.PropertyGroup):
             light.spot_size = self.spot_angle
             light.spot_blend = self.spot_blend_angle / self.spot_angle
 
-    def strength_get(self): return self.id_data.energy
-    def strength_set(self, value): self.id_data.energy = value
-    strength : bpy.props.FloatProperty(name='Strength', get=strength_get, set=strength_set)
+    strength : bpy.props.FloatProperty(name='Strength', default=1)
     
     radius : bpy.props.FloatProperty(
         name='Radius',
