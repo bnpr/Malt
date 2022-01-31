@@ -159,7 +159,7 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                     if isinstance(shader_path, tuple):
                         blend_path, material_name = parameter.default_value
                         blend_path += '.blend'
-                        if material_name not in bpy.data.node_groups:
+                        if material_name not in bpy.data.materials:
                             internal_dir = 'Material'
                             bpy.ops.wm.append(
                                 filepath=os.path.join(blend_path, internal_dir, material_name),
