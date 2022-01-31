@@ -75,7 +75,7 @@ class NPR_Pipeline(Pipeline):
         self.parameters.world['Samples.Grid Size @ Preview'] = Parameter(4, Type.INT)
         self.parameters.world['Samples.Width'] = Parameter(1.0, Type.FLOAT)
         defaults_path = os.path.join(os.path.dirname(__file__), 'Defaults', 'defaults')
-        self.parameters.world['Material.Default'] = MaterialParameter((defaults_path, 'Default Mesh'), '.mesh.glsl')
+        self.parameters.world['Material.Default'] = MaterialParameter((defaults_path, 'Malt - Default Mesh Material'), '.mesh.glsl')
         self.parameters.world['Render'] = GraphParameter((defaults_path, 'Default Render'), 'Render')
         self.parameters.light['Light Group'] = Parameter(1, Type.INT)
         self.parameters.light['Shader'] = MaterialParameter('', '.light.glsl')
