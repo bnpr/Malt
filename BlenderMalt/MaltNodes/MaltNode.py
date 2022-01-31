@@ -77,6 +77,7 @@ class MaltNode():
                     current.remove(e)
                 else:
                     e.active = False
+            socket_index = 0
             for i, (name, dic) in enumerate(new.items()):
                 if '@' in name:
                     continue #Skip overrides
@@ -98,7 +99,9 @@ class MaltNode():
                         current[name].default_initialization = default
                 except:
                     pass
-                current.move(current.keys().index(name), i)
+                if current.find(name) != socket_index:
+                    current.move(current.find(name), socket_index)
+                socket_index += 1
 
         setup(self.inputs, inputs)
         setup(self.outputs, outputs)

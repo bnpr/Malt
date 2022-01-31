@@ -172,64 +172,74 @@ def setup_parameters(ids):
             if isinstance(bid, cls):
                 bid.malt_parameters.setup(parameters)
 
+_ON_DEPSGRAPH_UPDATE = False
 
 @bpy.app.handlers.persistent
 def depsgraph_update(scene, depsgraph):
-    global _BRIDGE, _WORLD
-
-    if scene.render.engine != 'MALT':
-        # Don't do anything if Malt is not the active renderer,
-        # but make sure we setup all IDs the next time Malt is enabled
-        _BRIDGE = None
-        return
+    global _BRIDGE, _WORLD, _ON_DEPSGRAPH_UPDATE
     
-    if scene.world is None or scene.world.name_full != _WORLD:
-        _BRIDGE = None 
-
-    if _BRIDGE is None:
-        scene.world.malt.update_pipeline(bpy.context)
+    if _ON_DEPSGRAPH_UPDATE:
         return
+    _ON_DEPSGRAPH_UPDATE = True
+    try:
+        if scene.render.engine != 'MALT':
+            # Don't do anything if Malt is not the active renderer,
+            # but make sure we setup all IDs the next time Malt is enabled
+            _BRIDGE = None
+            return
+        
+        if scene.world is None or scene.world.name_full != _WORLD:
+            _BRIDGE = None 
 
-    ids = []
-    class_data_map = {
-        bpy.types.Scene : bpy.data.scenes,
-        bpy.types.World : bpy.data.worlds,
-        bpy.types.Camera : bpy.data.cameras,
-        bpy.types.Object : bpy.data.objects,
-        bpy.types.Material : bpy.data.materials,
-        bpy.types.Mesh : bpy.data.meshes,
-        bpy.types.Curve : bpy.data.curves,
-        bpy.types.MetaBall : bpy.data.metaballs,
-        bpy.types.Light : bpy.data.lights,
-    }
-    for update in depsgraph.updates:
-        # Try to avoid as much re-setups as possible. 
-        # Ideally we would do it only on ID creation.
-        if update.is_updated_geometry == True or update.is_updated_transform == False:
-            for cls, data in class_data_map.items():
-                if isinstance(update.id, cls):
-                    ids.append(data[update.id.name])
-    setup_parameters(ids)
+        if _BRIDGE is None:
+            scene.world.malt.update_pipeline(bpy.context)
+            return
 
-    from . MaltNodes.MaltNodeTree import MaltTree
+        ids = []
+        class_data_map = {
+            bpy.types.Scene : bpy.data.scenes,
+            bpy.types.World : bpy.data.worlds,
+            bpy.types.Camera : bpy.data.cameras,
+            bpy.types.Object : bpy.data.objects,
+            bpy.types.Material : bpy.data.materials,
+            bpy.types.Mesh : bpy.data.meshes,
+            bpy.types.Curve : bpy.data.curves,
+            bpy.types.MetaBall : bpy.data.metaballs,
+            bpy.types.Light : bpy.data.lights,
+        }
+        for update in depsgraph.updates:
+            # Try to avoid as much re-setups as possible. 
+            # Ideally we would do it only on ID creation.
+            if update.is_updated_geometry == True or update.is_updated_transform == False:
+                for cls, data in class_data_map.items():
+                    if isinstance(update.id, cls):
+                        ids.append(data[update.id.name])
+        setup_parameters(ids)
 
-    redraw = False
-    for update in depsgraph.updates:
-        if update.is_updated_geometry:
-            if isinstance(update.id, bpy.types.Object):
-                MaltMeshes.unload_mesh(update.id)
-        if isinstance(update.id, bpy.types.Image):
-            MaltTextures.unload_texture(update.id)
-            redraw = True
-        elif isinstance(update.id, bpy.types.Texture):
-            MaltTextures.unload_gradients(update.id)
-            redraw = True
-        elif isinstance(update.id, MaltTree):
-            redraw = True
-    if redraw:
-        for screen in bpy.data.screens:
-            for area in screen.areas:
-                area.tag_redraw()
+        from . MaltNodes.MaltNodeTree import MaltTree
+
+        redraw = False
+        for update in depsgraph.updates:
+            if update.is_updated_geometry:
+                if isinstance(update.id, bpy.types.Object):
+                    MaltMeshes.unload_mesh(update.id)
+            if isinstance(update.id, bpy.types.Image):
+                MaltTextures.unload_texture(update.id)
+                redraw = True
+            elif isinstance(update.id, bpy.types.Texture):
+                MaltTextures.unload_gradients(update.id)
+                redraw = True
+            elif isinstance(update.id, MaltTree):
+                redraw = True
+        if redraw:
+            for screen in bpy.data.screens:
+                for area in screen.areas:
+                    area.tag_redraw()
+    except:
+        import traceback
+        traceback.print_exc()
+    finally:
+        _ON_DEPSGRAPH_UPDATE = False
 
 @bpy.app.handlers.persistent
 def load_scene(dummy1=None,dummy2=None):
