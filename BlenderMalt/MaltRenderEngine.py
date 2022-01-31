@@ -149,7 +149,7 @@ class MaltRenderEngine(bpy.types.RenderEngine):
                 if len(obj.material_slots) > 0:
                     for i, slot in enumerate(obj.material_slots):
                         material = default_material
-                        if slot.material:
+                        if slot.material and slot.material.malt.get_source_path() != '':
                             material_name = slot.material.name_full
                             material_key = ('material',material_name)
                             if material_key not in scene.proxys.keys():
