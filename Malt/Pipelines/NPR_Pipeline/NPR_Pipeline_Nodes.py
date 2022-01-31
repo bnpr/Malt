@@ -221,12 +221,12 @@ class NPR_Pipeline_Nodes(NPR_Pipeline):
         result.update(self.render_layer_custom_output_accumulate_textures)
         return result
     
-    def draw_layer(self, batches, scene, background_color=(0,0,0,0)):
+    def draw_layer(self, batches, scene, background_color=(0,0,0,0), prepass_query=None):
         clear_colors = [background_color, (0,0,0,1), (-1,-1,-1,-1)]
         clear_colors.extend([(0)*4] * len(self.mesh_shader_custom_output_textures))
         self.fbo_main.clear(clear_colors)
         
-        result = super().draw_layer(batches, scene, background_color)
+        result = super().draw_layer(batches, scene, background_color, prepass_query)
         
         IN = {
             'Color' : result,
