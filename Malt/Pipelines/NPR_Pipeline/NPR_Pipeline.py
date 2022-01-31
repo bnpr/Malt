@@ -8,7 +8,6 @@ from Malt.PipelineNode import PipelineNode
 
 from Malt.GL.GL import *
 
-from Malt.Render import Common
 from Malt.Render import DepthToCompositeDepth
 from Malt.Render import Sampling
 
@@ -211,7 +210,6 @@ class NPR_Pipeline(Pipeline):
     
     def setup_resources(self):
         super().setup_resources()
-        self.common_buffer = Common.CommonBuffer()
         self.composite_depth = DepthToCompositeDepth.CompositeDepth()
         global _DEFAULT_SHADER
         if _DEFAULT_SHADER is None: _DEFAULT_SHADER = self.compile_material_from_source('Mesh', _DEFAULT_SHADER_SRC)

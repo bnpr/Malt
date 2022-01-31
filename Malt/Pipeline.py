@@ -6,6 +6,7 @@ from Malt.GL.GL import *
 from Malt.GL.Mesh import Mesh
 from Malt.GL.Shader import Shader, UBO, shader_preprocessor
 
+from Malt.Render import Common
 from Malt.PipelineParameters import *
 
 SHADER_DIR = path.join(path.dirname(__file__), 'Shaders')
@@ -68,6 +69,7 @@ class Pipeline():
         return result
 
     def setup_resources(self):
+        self.common_buffer = Common.CommonBuffer()
         positions=[
              1.0,  1.0, 0.0,
              1.0, -1.0, 0.0,
@@ -137,7 +139,7 @@ class Pipeline():
             traceback.print_exc()
             return str(e)
     
-    def draw_screen_pass(self, shader, target, blend = False):
+    def draw_screen_pass(self, shader, target, blend = False, common_buffer=None):
         #Allow screen passes draw to gl_FragDepth
         glEnable(GL_DEPTH_TEST)
         glDepthFunc(GL_ALWAYS)
@@ -146,6 +148,9 @@ class Pipeline():
             glEnable(GL_BLEND)
         else:
             glDisable(GL_BLEND)
+        if common_buffer is None:
+            common_buffer = self.common_buffer
+        common_buffer.shader_callback(shader)
         target.bind()
         shader.bind()
         self.quad.draw()
@@ -295,6 +300,7 @@ class Pipeline():
         if self.needs_more_samples() == False:
             return self.result
         
+        self.common_buffer.load(scene, resolution)
         self.result = self.do_render(resolution, scene, is_final_render, is_new_frame)
         
         self.sample_count += 1

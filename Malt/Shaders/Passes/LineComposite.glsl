@@ -33,7 +33,7 @@ void main()
 {
     PIXEL_SETUP_INPUT();
 
-    vec2 uv = screen_uv();
+    vec2 uv = UV[0];
     vec4 line_color = line_expand(
         uv, brute_force_range,
         line_color_texture, line_width_texture, line_width_channel, line_width_scale,

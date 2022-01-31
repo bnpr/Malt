@@ -6,7 +6,6 @@ from Malt.GL.RenderTarget import RenderTarget
 from Malt.GL.Shader import Shader, UBO
 from Malt.GL.Texture import Texture
 
-from Malt.Render import Common
 from Malt.Pipeline import *
 
 class MiniPipeline(Pipeline):
@@ -17,8 +16,6 @@ class MiniPipeline(Pipeline):
         super().__init__(plugins)
 
         self.parameters.world['Background Color'] = Parameter((0.5,0.5,0.5,1), Type.FLOAT, 4)
-
-        self.common_buffer = Common.CommonBuffer()
         
         if MiniPipeline.DEFAULT_SHADER is None: 
             source = '''
@@ -56,9 +53,7 @@ class MiniPipeline(Pipeline):
         self.t_main_color = Texture(resolution, GL_RGBA32F)
         self.fbo_main = RenderTarget([self.t_main_color], self.t_depth)
         
-    def do_render(self, resolution, scene, is_final_render, is_new_frame):
-        self.common_buffer.load(scene, resolution)
-        
+    def do_render(self, resolution, scene, is_final_render, is_new_frame):        
         shader_resources = { 'COMMON_UNIFORMS' : self.common_buffer }
 
         self.fbo_main.clear([scene.world_parameters['Background Color']], 1)
