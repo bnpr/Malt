@@ -482,6 +482,8 @@ def to_json_rna_path_node_workaround(malt_property_group, path_from_group):
     tree = malt_property_group.id_data
     assert(isinstance(tree, bpy.types.NodeTree))
     for node in tree.nodes:
+        if hasattr(node, 'malt_parameters') == False:
+            continue
         if node.malt_parameters.as_pointer() == malt_property_group.as_pointer():
             path = 'nodes["{}"].{}'.format(node.name, path_from_group)
             return json.dumps(('NodeTree', tree.name_full, path))
