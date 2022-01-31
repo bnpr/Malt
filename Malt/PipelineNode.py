@@ -14,7 +14,8 @@ class PipelineNode():
             'type' : 'void',
             'file' : 'Render',
             'parameters' : [],
-            'pass_type' : cls.get_pass_type()
+            'pass_type' : cls.get_pass_type(),
+            'meta' : {},
         }
         for name, input in inputs.items():
             dictionary['parameters'].append({
@@ -22,6 +23,7 @@ class PipelineNode():
                 'type' : input,
                 'size' : input.size,
                 'io' : 'in',
+                'meta' : {},
             })
         for name, output in outputs.items():
             dictionary['parameters'].append({
@@ -29,6 +31,7 @@ class PipelineNode():
                 'type' : output,
                 'size' : output.size,
                 'io' : 'out',
+                'meta' : {},
             })
         return dictionary
     
