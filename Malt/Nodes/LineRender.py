@@ -55,6 +55,7 @@ class LineRender(PipelineNode):
         _SHADER.uniforms['line_width_scale'].set_value(inputs['Line Scale'])
         _SHADER.uniforms['brute_force_range'].set_value(inputs['Max Width'])
         
+        self.pipeline.common_buffer.shader_callback(_SHADER)
         self.pipeline.draw_screen_pass(_SHADER, self.fbo_color)
 
         outputs['Color'] = self.t_color

@@ -22,7 +22,7 @@ class ScreenPass(PipelineNode):
     @classmethod
     def reflect_inputs(cls):
         inputs = {}
-        inputs['Layer Only'] = Parameter(False, Type.BOOL)
+        inputs['Layer Only'] = Parameter(True, Type.BOOL)
         inputs['Scene'] = Parameter('Scene', Type.OTHER)
         inputs['Normal Depth'] = Parameter('', Type.TEXTURE)
         inputs['ID'] = Parameter('', Type.TEXTURE)
@@ -34,7 +34,7 @@ class ScreenPass(PipelineNode):
         material = parameters['PASS_MATERIAL']
         custom_io = parameters['CUSTOM_IO']
 
-        layer_mode = inputs['Layer Only']
+        deferred_mode = inputs['Layer Only']
         scene = inputs['Scene']
         t_normal_depth = inputs['Normal Depth']
         t_id = inputs['ID']
@@ -70,8 +70,8 @@ class ScreenPass(PipelineNode):
             self.pipeline.common_buffer.bind(shader.uniform_blocks['COMMON_UNIFORMS'])
             for resource in shader_resources.values():
                 resource.shader_callback(shader)
-            shader.uniforms['RENDER_LAYER_MODE'].set_value(layer_mode)
-            shader.bind()
+            shader.uniforms['RENDER_LAYER_MODE'].set_value(True)
+            shader.uniforms['DEFERRED_MODE'].set_value(deferred_mode)
             self.pipeline.draw_screen_pass(shader, self.render_target)
         
         for io in custom_io:

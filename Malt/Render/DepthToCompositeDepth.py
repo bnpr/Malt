@@ -28,8 +28,7 @@ class CompositeDepth():
         
         self.shader.textures['DEPTH_TEXTURE'] = depth_texture
         self.shader.uniforms['DEPTH_CHANNEL'].set_value(depth_channel)
-        self.shader.bind()
-        common_buffer.bind(self.shader.uniform_blocks['COMMON_UNIFORMS'])
+        common_buffer.shader_callback(self.shader)
         pipeline.draw_screen_pass(self.shader, self.fbo)
         return self.t
 

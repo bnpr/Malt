@@ -139,7 +139,7 @@ class Pipeline():
             traceback.print_exc()
             return str(e)
     
-    def draw_screen_pass(self, shader, target, blend = False, common_buffer=None):
+    def draw_screen_pass(self, shader, target, blend = False):
         #Allow screen passes draw to gl_FragDepth
         glEnable(GL_DEPTH_TEST)
         glDepthFunc(GL_ALWAYS)
@@ -148,9 +148,6 @@ class Pipeline():
             glEnable(GL_BLEND)
         else:
             glDisable(GL_BLEND)
-        if common_buffer is None:
-            common_buffer = self.common_buffer
-        common_buffer.shader_callback(shader)
         target.bind()
         shader.bind()
         self.quad.draw()
