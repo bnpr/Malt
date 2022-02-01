@@ -115,11 +115,11 @@ void main()
         Vertex v = V;
 
         v.position = POSITION + TANGENT * Settings.Vertex_Displacement_Offset;
-        vec3 displaced_tangent = v.position + VERTEX_DISPLACEMENT_WRAPPER(s);
+        vec3 displaced_tangent = v.position + VERTEX_DISPLACEMENT_WRAPPER(v);
         TANGENT = normalize(displaced_tangent - displaced_position);
 
         v.position = POSITION + BITANGENT * Settings.Vertex_Displacement_Offset;
-        vec3 displaced_bitangent = v.position + VERTEX_DISPLACEMENT_WRAPPER(s);
+        vec3 displaced_bitangent = v.position + VERTEX_DISPLACEMENT_WRAPPER(v);
         BITANGENT = normalize(displaced_bitangent - displaced_position);
         
         POSITION = displaced_position;
