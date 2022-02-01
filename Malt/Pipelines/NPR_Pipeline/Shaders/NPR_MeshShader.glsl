@@ -314,6 +314,11 @@ vec3 diffuse_gradient_shading(sampler1D gradient_texture)
     return result;
 }
 
+/*  META
+    @tangent: subtype=Normal; default=radial_tangent(NORMAL, vec3(0,0,1));
+    @anisotropy: default=0.5;
+    @roughness: default=0.5;
+*/
 vec3 specular_shading(float roughness)
 {
     vec3 result = vec3(0);
@@ -324,6 +329,9 @@ vec3 specular_shading(float roughness)
     return result;
 }
 
+/*  META
+    @roughness: default=0.5;
+*/
 vec3 specular_gradient_shading(sampler1D gradient_texture, float roughness)
 {
     vec3 result = vec3(0);
@@ -334,6 +342,11 @@ vec3 specular_gradient_shading(sampler1D gradient_texture, float roughness)
     return result;
 }
 
+/*  META
+    @roughness: default=0.5;
+    @anisotropy: default=0.5;
+    @tangent: subtype=Normal; default=radial_tangent(NORMAL, vec3(0,0,1));
+*/
 vec3 specular_anisotropic_shading(float roughness, float anisotropy, vec3 tangent)
 {
     vec3 result = vec3(0);
@@ -344,6 +357,11 @@ vec3 specular_anisotropic_shading(float roughness, float anisotropy, vec3 tangen
     return result;
 }
 
+/*  META
+    @roughness: default=0.5;
+    @anisotropy: default=0.5;
+    @tangent: subtype=Normal; default=radial_tangent(NORMAL, vec3(0,0,1));
+*/
 vec3 specular_anisotropic_gradient_shading(sampler1D gradient_texture, float roughness, float anisotropy, vec3 tangent)
 {
     vec3 result = vec3(0);
