@@ -14,12 +14,13 @@
     @samples: default=32;
     @radius: default=1.0;
     @distribution_exponent: default=5.0;
+    @bias: default=0.01;
 */
-float ao(int samples, float radius, float distribution_exponent)
+float ao(int samples, float radius, float distribution_exponent, float bias)
 {
     #ifdef NPR_FILTERS_ACTIVE
     {
-        float ao = ao(IN_NORMAL_DEPTH, 3, POSITION, normalize(NORMAL), samples, radius, distribution_exponent, 0);
+        float ao = ao(IN_NORMAL_DEPTH, 3, POSITION, true_normal(), samples, radius, distribution_exponent, bias);
         //ao = pow(ao, 1.0); //Pow for more contrast
         //TODO: For some reason, using pow causes some values to go below 0 ?!?!?!?
         //ao = max(0, ao);

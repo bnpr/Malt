@@ -11,6 +11,7 @@
     @samples: default=8;
     @radius: default=1.0;
     @distribution_exponent: default=5.0;
+    @bias: default=0.01;
 */
 float ao(sampler2D depth_texture, int depth_channel, vec3 position, vec3 normal, int samples, float radius, float distribution_exponent, float bias)
 {
