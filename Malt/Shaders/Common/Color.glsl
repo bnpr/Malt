@@ -86,4 +86,15 @@ vec3 rgb_gradient(sampler1D gradient, vec3 uvw)
     );
 }
 
+vec4 rgb_gradient(sampler1D gradient, vec4 uvw)
+{
+    return vec4
+    (
+        texture(gradient, uvw.r).r,
+        texture(gradient, uvw.g).g,
+        texture(gradient, uvw.b).b,
+        texture(gradient, uvw.a).a
+    );
+}
+
 #endif // COMMON_COLOR_GLSL
