@@ -110,7 +110,7 @@ vec3 sample_normal_map(sampler2D normal_texture, int uv_index, vec2 uv)
 
 /*  META
     @normal: subtype=Normal; default=NORMAL;
-    @axis: subtype=Normal; 0,0,1);
+    @axis: subtype=Normal; default=(0,0,1);
 */
 vec3 radial_tangent(vec3 normal, vec3 axis)
 {
