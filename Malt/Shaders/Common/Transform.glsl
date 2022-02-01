@@ -51,11 +51,11 @@ vec3 view_direction()
 {
     if (is_ortho(PROJECTION))
     {
-        return transform_normal(inverse(CAMERA), vec3(0,0,1));
+        return transform_normal(inverse(CAMERA), vec3(0,0,-1));
     }
     else
     {
-        return normalize(camera_position() - POSITION);
+        return normalize(POSITION - camera_position());
     }
 }
 

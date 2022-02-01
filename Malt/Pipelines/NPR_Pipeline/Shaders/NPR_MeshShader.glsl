@@ -199,7 +199,7 @@ void main()
             PPO.opacity = 1.0;
         }
 
-        offset_position = POSITION - view_direction() * PPO.depth_offset;
+        offset_position = POSITION + view_direction() * PPO.depth_offset;
 
         #ifdef SHADOW_PASS
         {

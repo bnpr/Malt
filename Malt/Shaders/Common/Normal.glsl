@@ -17,7 +17,7 @@ vec3 true_normal()
 
 float facing()
 {
-    return dot(NORMAL, view_direction());
+    return dot(NORMAL, -view_direction());
 }
 
 bool is_front_facing()

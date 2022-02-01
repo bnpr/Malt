@@ -12,7 +12,7 @@ vec3 transform_normal(mat4 matrix, vec3 normal);
 vec2 matcap_uv(vec3 normal)
 {
 	vec3 N = transform_normal(CAMERA, normal);
-	vec3 I = transform_normal(CAMERA, view_direction());
+	vec3 I = transform_normal(CAMERA, -view_direction());
 
 	vec3 x = vec3(1,0,0);
 	vec3 tangent = normalize(x - I * dot(x, I));

@@ -114,12 +114,12 @@ float rim_light(vec3 normal, float angle, float rim_length, float length_falloff
 {
     vec2 angle_vec = vec2(cos(angle), sin(angle));
 
-    vec3 r = cross(transform_normal(CAMERA, view_direction()), transform_normal(CAMERA, normal));
+    vec3 r = cross(transform_normal(CAMERA, -view_direction()), transform_normal(CAMERA, normal));
     vec2 r2d = normalize(r.xy);
 
     float angle_dot = dot(r2d, angle_vec);
     angle_dot = angle_dot * 0.5 + 0.5;
-    float facing_dot = dot(view_direction(), normal);
+    float facing_dot = dot(-view_direction(), normal);
     facing_dot = 1.0 - facing_dot;
 
     length_falloff = max(1e-6, length_falloff);

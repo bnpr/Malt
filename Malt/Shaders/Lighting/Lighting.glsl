@@ -97,7 +97,7 @@ LitSurface lit_surface(vec3 position, vec3 normal, Light light, bool shadows)
         S.L = normalize(light.position - position);
     }
 
-    S.V = view_direction();
+    S.V = -view_direction();
     S.R = reflect(-S.L, S.N);
     S.H = normalize(S.L + S.V);
     S.NoL = dot(S.N,S.L);

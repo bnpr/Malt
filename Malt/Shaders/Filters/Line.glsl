@@ -110,7 +110,7 @@ LineDetectionOutput line_detection(
         {
             //TODO: Use ray-plane intersection here too.
             delta_distance = abs(sampled_position.z - position.z);
-            delta_distance *= dot(true_normal, view_direction());
+            delta_distance *= dot(true_normal, -view_direction());
         }
         else
         {
