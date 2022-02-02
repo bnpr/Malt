@@ -527,6 +527,25 @@ def node_header_ui(self, context):
     self.layout.prop(context.space_data.node_tree, 'library_source',text='')
     self.layout.prop_search(context.space_data.node_tree, 'graph_type', context.scene.world.malt, 'graph_types',text='')
 
+@bpy.app.handlers.persistent
+def depsgraph_update(scene, depsgraph):
+    # Show the active material node tree in the Node Editor
+    update = False
+    for deps_update in depsgraph.updates:
+        if isinstance(deps_update.id, bpy.types.Scene):
+            update = True
+    node_tree = None
+    try:
+        material = bpy.context.object.active_material
+        node_tree = material.malt.shader_nodes
+    except:
+        pass
+    if node_tree and update:
+        for screen in bpy.data.screens:
+            for area in screen.areas:
+                for space in area.spaces:
+                    if space.type ==  'NODE_EDITOR' and space.tree_type == 'MaltTree' and space.pin == False:
+                        space.node_tree = node_tree
     
 classes = [
     MaltTree,
@@ -546,9 +565,12 @@ def register():
     bpy.types.NODE_HT_header.append(node_header_ui)
 
     bpy.app.timers.register(track_library_changes, persistent=True)
+    bpy.app.handlers.depsgraph_update_post.append(depsgraph_update)
+
     
 
 def unregister():
+    bpy.app.handlers.depsgraph_update_post.remove(depsgraph_update)
     bpy.app.timers.unregister(track_library_changes)
     
     bpy.types.NODE_MT_add.remove(add_node_ui)
