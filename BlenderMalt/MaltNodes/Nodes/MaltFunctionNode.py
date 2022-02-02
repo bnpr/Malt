@@ -12,7 +12,7 @@ class MaltFunctionNode(bpy.types.Node, MaltNode):
         if pass_type != '':
             self.pass_graph_type, self.pass_graph_io_type = pass_type.split('.')
 
-        function = self.get_function(skip_overrides=False)
+        function = self.get_function(skip_overrides=False, find_replacement=True)
         if self.first_setup:
             self.name = function['name']
 
@@ -53,20 +53,55 @@ class MaltFunctionNode(bpy.types.Node, MaltNode):
         parameters = MaltNode.get_parameters(self, overrides, resources)
         parameters['CUSTOM_IO'] = self.get_custom_io()
         return parameters
+    
+    def find_replacement_function(self):
+        library = self.id_data.get_full_library()['functions']
+        for key, function in library.items():
+            try:
+                for replace in eval(function['meta']['replace']).split(','):
+                    if replace in self.function_type:
+                        self.function_type = key
+                        return function
+            except:
+                pass
+        parameters = set()
+        from itertools import chain
+        for socket in chain(self.inputs.keys(), self.outputs.keys()):
+            parameters.add(socket)
+        key, function = None, None
+        matching_parameters = 0
+        total_parameters = 0
+        for _key, _function in library.items():
+            if _function['name'] in self.function_type:
+                matching_count = 0
+                for parameter in _function['parameters']:
+                    if parameter['name'] in parameters:
+                        matching_count += 1
+                if (key is None or matching_count > matching_parameters or 
+                (matching_count == matching_parameters and len(_function['parameters']) < total_parameters)):
+                    total_parameters = len(_function['parameters'])
+                    key = _key
+                    function = _function
+        if _key:
+            self.function_type = key
+            return function
 
-    def get_function(self, skip_overrides=True):
+    def get_function(self, skip_overrides=True, find_replacement=False):
         graph = self.id_data.get_pipeline_graph()
         function = None
         if self.function_type in graph.functions:
             function = graph.functions[self.function_type]
-        else:
+        elif self.function_type in self.id_data.get_library()['functions']:
             function = self.id_data.get_library()['functions'][self.function_type]
-        from copy import deepcopy
-        function = deepcopy(function)
-        function['parameters'] += self.get_custom_io()
-        if skip_overrides:
-           function['parameters'] = [p for p in function['parameters'] if '@' not in p['name']]
-        return function
+        elif find_replacement:
+            function = self.find_replacement_function()
+        if function:
+            from copy import deepcopy
+            function = deepcopy(function)
+            function['parameters'] += self.get_custom_io()
+            if skip_overrides:
+                function['parameters'] = [p for p in function['parameters'] if '@' not in p['name']]
+            return function
     
     def get_pass_type(self):
         graph = self.id_data.get_pipeline_graph()
