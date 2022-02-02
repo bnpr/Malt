@@ -1,7 +1,5 @@
 from Malt.PipelineParameters import Parameter
 
-from . import Texture
-
 MATERIAL_SHADERS = {}
 
 class Material():
