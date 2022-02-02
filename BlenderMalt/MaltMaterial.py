@@ -43,7 +43,20 @@ class MaltMaterial(bpy.types.PropertyGroup):
         row = layout.row()
         row.active = self.shader_nodes is None
         row.prop(self, 'shader_source')
-        layout.prop_search(self, 'shader_nodes', bpy.data, 'node_groups')
+
+        def nodes_add_or_duplicate():
+            if self.shader_nodes:
+                self.shader_nodes = self.shader_nodes.copy()
+            else:
+                self.shader_nodes = bpy.data.node_groups.new(f'{self.id_data.name} Node Tree', 'MaltTree')
+            self.id_data.update_tag()
+            self.shader_nodes.update_tag()
+        row = layout.row(align=True)
+        row.template_ID(self, "shader_nodes")
+        if self.shader_nodes:
+            row.operator('wm.malt_callback', text='', icon='DUPLICATE').callback.set(nodes_add_or_duplicate)
+        else:
+            row.operator('wm.malt_callback', text='New', icon='ADD').callback.set(nodes_add_or_duplicate)
 
         source_path = self.get_source_path()
 

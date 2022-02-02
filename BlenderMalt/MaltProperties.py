@@ -49,6 +49,15 @@ class MaltGraphPropertyWrapper(bpy.types.PropertyGroup):
     graph : bpy.props.PointerProperty(type=bpy.types.NodeTree, poll=poll)
     type : bpy.props.StringProperty()
 
+    def add_or_duplicate(self):
+        if self.graph:
+            self.graph = self.graph.copy()
+        else:
+            self.graph = bpy.data.node_groups.new(f'{self.type} Node Tree', 'MaltTree')
+            self.graph.graph_type = self.type
+        self.id_data.update_tag()
+        self.graph.update_tag()
+
 class MaltPropertyGroup(bpy.types.PropertyGroup):
 
     bools : bpy.props.CollectionProperty(type=MaltBoolPropertyWrapper)
@@ -521,6 +530,12 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
             make_row(True)
             row = layout.row(align=True)
             row.template_ID(self.graphs[key], "graph")
+            if self.graphs[key].graph:
+                row.operator('wm.malt_callback', text='', icon='DUPLICATE').callback.set(
+                    self.graphs[key].add_or_duplicate)
+            else:
+                row.operator('wm.malt_callback', text='New', icon='ADD').callback.set(
+                    self.graphs[key].add_or_duplicate)
         else:
             make_row(True)
             
