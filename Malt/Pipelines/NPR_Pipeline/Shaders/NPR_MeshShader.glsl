@@ -212,6 +212,7 @@ void main()
 
         if(PPO.depth_offset != 0)
         {
+            //TODO: If the depth_offset is driven by an uniform, it should be be always calculated!!!
             depth = project_point(PROJECTION * CAMERA, offset_position).z;
             float far = gl_DepthRange.far;
             float near = gl_DepthRange.near;
