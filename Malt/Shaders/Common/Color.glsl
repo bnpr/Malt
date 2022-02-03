@@ -86,7 +86,7 @@ vec3 rgb_gradient(sampler1D gradient, vec3 uvw)
     );
 }
 
-vec4 rgb_gradient(sampler1D gradient, vec4 uvw)
+vec4 rgba_gradient(sampler1D gradient, vec4 uvw)
 {
     return vec4
     (
