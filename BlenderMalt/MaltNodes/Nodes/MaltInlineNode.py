@@ -55,10 +55,7 @@ class MaltInlineNode(bpy.types.Node, MaltNode):
     
     def draw_socket(self, context, layout, socket, text):
         if socket.is_output == False:
-            layout = layout.split(factor=0.66)
-            row = layout.row(align=True).split(factor=0.1)
-            row.alignment = 'LEFT'
-            MaltNode.draw_socket(self, context, row, socket, socket.name)
+            MaltNode.draw_socket(self, context, layout, socket, socket.name)
             layout.prop(socket, 'data_type', text='')
         else:
             MaltNode.draw_socket(self, context, layout, socket, socket.name)
