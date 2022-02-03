@@ -114,7 +114,7 @@ LineDetectionOutput line_detection()
     {
         result = line_detection(
             POSITION,
-            NORMAL, true_normal(),
+            NORMAL, NORMAL, //TODO: true_normal() doesn't work on screen shaders or alpha clipped meshes
             1,
             LINE_DEPTH_MODE_NEAR,
             screen_uv(),
