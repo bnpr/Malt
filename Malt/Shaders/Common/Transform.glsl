@@ -4,6 +4,7 @@
 #include "Common.glsl"
 
 /*  META
+    @matrix: default=mat4(1);
     @point: subtype=Vector;
 */
 vec3 transform_point(mat4 matrix, vec3 point)
@@ -12,6 +13,7 @@ vec3 transform_point(mat4 matrix, vec3 point)
 }
 
 /*  META
+    @matrix: default=mat4(1);
     @point: subtype=Vector;
 */
 vec3 project_point(mat4 matrix, vec3 point)
@@ -21,6 +23,7 @@ vec3 project_point(mat4 matrix, vec3 point)
 }
 
 /*  META
+    @matrix: default=mat4(1);
     @direction: subtype=Vector;
 */
 vec3 transform_direction(mat4 matrix, vec3 direction)
@@ -29,6 +32,7 @@ vec3 transform_direction(mat4 matrix, vec3 direction)
 }
 
 /*  META
+    @matrix: default=mat4(1);
     @normal: subtype=Normal;
 */
 vec3 transform_normal(mat4 matrix, vec3 normal)
