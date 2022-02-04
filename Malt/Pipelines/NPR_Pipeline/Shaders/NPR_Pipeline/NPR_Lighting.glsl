@@ -19,15 +19,19 @@ uniform sampler2DArray TRANSPARENT_SHADOWMAPS_COLOR_SPOT;
 uniform sampler2DArray TRANSPARENT_SHADOWMAPS_COLOR_SUN;
 uniform samplerCubeArray TRANSPARENT_SHADOWMAPS_COLOR_POINT;
 
-uniform LIGHT_GROUPS
+layout(std140) uniform LIGHT_GROUPS
 {
-    int LIGHT_GROUP_INDEX[MAX_LIGHTS];
+    //Use ivec4 so the ints are tightly packed
+    ivec4 LIGHT_GROUP_INDEX[MAX_LIGHTS/4+1];
 };
+#define LIGHT_GROUP_INDEX(light_index) LIGHT_GROUP_INDEX[(light_index)/4][(light_index)%4]
 
-uniform LIGHTS_CUSTOM_SHADING
+layout(std140) uniform LIGHTS_CUSTOM_SHADING
 {
-    int CUSTOM_SHADING_INDEX[MAX_LIGHTS];
+    //Use ivec4 so the ints are tightly packed
+    ivec4 CUSTOM_SHADING_INDEX[MAX_LIGHTS/4+1];
 };
+#define CUSTOM_SHADING_INDEX(light_index) CUSTOM_SHADING_INDEX[(light_index)/4][(light_index)%4];
 
 uniform sampler2DArray IN_LIGHT_CUSTOM_SHADING;
 
@@ -43,7 +47,7 @@ LitSurface npr_lit_surface(vec3 position, vec3 normal, uint id, Light light, int
 
     S.light_color = light.color * S.P;
 
-    int custom_shading_index = CUSTOM_SHADING_INDEX[light_index];
+    int custom_shading_index = CUSTOM_SHADING_INDEX(light_index);
     if(custom_shading_index >= 0)
     {
         S.light_color = texelFetch(IN_LIGHT_CUSTOM_SHADING, ivec3(screen_pixel(), custom_shading_index), 0).rgb;

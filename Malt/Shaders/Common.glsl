@@ -40,10 +40,12 @@ layout(std140) uniform BATCH_MODELS
 {
     uniform mat4 BATCH_MODEL[MAX_BATCH_SIZE];
 };
-uniform BATCH_IDS
+layout(std140) uniform BATCH_IDS
 {
-    uniform uint BATCH_ID[MAX_BATCH_SIZE];
+    //Use uvec4 so the uints are tightly packed
+    uniform uvec4 BATCH_ID[MAX_BATCH_SIZE/4+1];
 };
+#define BATCH_ID(index) BATCH_ID[(index)/4][(index)%4]
 
 vertex_out vec3 IO_POSITION;
 vertex_out vec3 IO_NORMAL;
@@ -94,7 +96,7 @@ void VERTEX_SETUP_OUTPUT()
 void DEFAULT_VERTEX_SHADER()
 {
     MODEL = BATCH_MODEL[gl_InstanceID];
-    ID = uvec4(BATCH_ID[gl_InstanceID],0,0,0);
+    ID = uvec4(BATCH_ID(gl_InstanceID),0,0,0);
 
     POSITION = transform_point(MODEL, in_position);
     NORMAL = transform_normal(MODEL, in_normal);

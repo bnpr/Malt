@@ -8,7 +8,7 @@
     vec3 result = vec3(0,0,0);\
     for (int i = 0; i < LIGHTS.lights_count; i++)\
     {\
-        if(LIGHT_GROUP_INDEX[i] != light_group) continue;\
+        if(LIGHT_GROUP_INDEX(i) != light_group) continue;\
         Light L = LIGHTS.lights[i];\
         LitSurface LS = npr_lit_surface(position, normal, ID.x, L, i, shadows, self_shadows);\
         result += (callback);\
