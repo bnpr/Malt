@@ -33,8 +33,6 @@ struct PrePassOutput
     uvec4 id;
     float opacity;
     vec3 transparent_shadowmap_color;
-    float depth_offset;
-    bool offset_position;
 };
 
 #ifdef VERTEX_SHADER
@@ -167,6 +165,9 @@ uniform usampler2D IN_ID;
 #ifdef CUSTOM_PRE_PASS
 void PRE_PASS_PIXEL_SHADER(inout PrePassOutput PPO);
 #endif
+#ifdef CUSTOM_DEPTH_OFFSET
+void DEPTH_OFFSET(inout float depth_offset, inout bool offset_position);
+#endif
 #ifdef MAIN_PASS
 void MAIN_PASS_PIXEL_SHADER();
 #endif
@@ -180,8 +181,6 @@ void main()
     PPO.id = ID;
     PPO.opacity = 1;
     PPO.transparent_shadowmap_color = vec3(0);
-    PPO.depth_offset = 0;
-    PPO.offset_position = true;
 
     float depth = gl_FragCoord.z;
     vec3 offset_position = POSITION;
@@ -198,26 +197,29 @@ void main()
         {
             PPO.opacity = 1.0;
         }
+    }
+    #endif
 
-        offset_position = POSITION + view_direction() * PPO.depth_offset;
-
+    #ifdef CUSTOM_DEPTH_OFFSET
+    {
+        float depth_offset = 0;
+        bool offset_position = false;
+        DEPTH_OFFSET(depth_offset, offset_position);
+        
         #ifdef SHADOW_PASS
         {
-            if(!PPO.offset_position)
-            {
-                PPO.depth_offset = 0;
-            }
+            if(!offset_position) depth_offset = 0;
         }
         #endif
+        
+        vec3 position = POSITION + view_direction() * depth_offset;
 
-        if(PPO.depth_offset != 0)
-        {
-            //TODO: If the depth_offset is driven by an uniform, it should be be always calculated!!!
-            depth = project_point(PROJECTION * CAMERA, offset_position).z;
-            float far = gl_DepthRange.far;
-            float near = gl_DepthRange.near;
-            gl_FragDepth = (((far-near) * depth) + near + far) / 2.0;
-        }
+        depth = project_point(PROJECTION * CAMERA, position).z;
+        float far = gl_DepthRange.far;
+        float near = gl_DepthRange.near;
+        gl_FragDepth = (((far-near) * depth) + near + far) / 2.0;
+
+        if(offset_position) POSITION = position;
     }
     #endif
 
@@ -266,13 +268,8 @@ void main()
 
     #ifdef MAIN_PASS
     {
-        if(PPO.offset_position)
-        {
-            POSITION = offset_position;
-        }
         NORMAL = texelFetch(IN_NORMAL_DEPTH, ivec2(gl_FragCoord.xy), 0).xyz;
         ID = texelFetch(IN_ID, ivec2(gl_FragCoord.xy), 0);
-
         MAIN_PASS_PIXEL_SHADER();
     }
     #endif

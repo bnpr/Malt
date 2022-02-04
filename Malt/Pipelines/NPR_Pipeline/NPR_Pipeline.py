@@ -30,6 +30,7 @@ _DEFAULT_SHADER = None
 
 _DEFAULT_SHADER_SRC='''
 void PRE_PASS_PIXEL_SHADER(inout PrePassOutput PPO){ }
+void DEPTH_OFFSET(inout float depth_offset, inout bool offset_position){ }
 
 #ifdef MAIN_PASS
 layout (location = 0) out vec4 OUT_0;
@@ -99,6 +100,11 @@ class NPR_Pipeline(Pipeline):
                     shader_type='PIXEL_SHADER',
                     dynamic_output_types=GLSLGraphIO.COMMON_OUTPUT_TYPES,
                     custom_output_start_index=2,
+                ),
+                GLSLGraphIO(
+                    name='DEPTH_OFFSET',
+                    define='CUSTOM_DEPTH_OFFSET',
+                    shader_type='PIXEL_SHADER',
                 ),
                 GLSLGraphIO(
                     name='MAIN_PASS_PIXEL_SHADER',
