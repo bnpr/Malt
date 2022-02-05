@@ -532,23 +532,25 @@ def node_header_ui(self, context):
 
 @bpy.app.handlers.persistent
 def depsgraph_update(scene, depsgraph):
+    if scene.render.engine != 'MALT':
+        return
     # Show the active material node tree in the Node Editor
-    update = False
     for deps_update in depsgraph.updates:
-        if isinstance(deps_update.id, bpy.types.Scene):
-            update = True
+        if isinstance(deps_update.id, bpy.types.NodeTree):
+            return
     node_tree = None
     try:
         material = bpy.context.object.active_material
         node_tree = material.malt.shader_nodes
     except:
         pass
-    if node_tree and update:
+    if node_tree:
         for screen in bpy.data.screens:
             for area in screen.areas:
                 for space in area.spaces:
                     if space.type ==  'NODE_EDITOR' and space.tree_type == 'MaltTree' and space.pin == False:
-                        space.node_tree = node_tree
+                        if space.node_tree is None or space.node_tree.graph_type == 'Mesh':
+                            space.node_tree = node_tree
     
 classes = [
     MaltTree,
