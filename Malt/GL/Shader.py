@@ -161,7 +161,9 @@ def shader_preprocessor(shader_source, include_directories=[], definitions=[]):
     
     try:
         result = subprocess.run(command, shell=True, stdout = subprocess.PIPE, stderr=subprocess.PIPE)
-    except PermissionError:
+        if result.returncode != 0:
+            raise Exception(result.stderr.decode('utf-8'))
+    except:
         import stat
         os.chmod(mcpp, os.stat(mcpp).st_mode | stat.S_IEXEC)
         result = subprocess.run(command, shell=True, stdout = subprocess.PIPE, stderr=subprocess.PIPE)
@@ -443,7 +445,7 @@ def glsl_reflection(code, root_paths=[]):
     
     try:
         json_string = subprocess.check_output(command, shell=True)
-    except PermissionError:
+    except:
         import stat
         os.chmod(GLSLParser, os.stat(GLSLParser).st_mode | stat.S_IEXEC)
         json_string = subprocess.check_output(command, shell=True)
