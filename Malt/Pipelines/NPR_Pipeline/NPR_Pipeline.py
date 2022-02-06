@@ -185,7 +185,6 @@ class NPR_Pipeline(Pipeline):
             ]
         )
         render_layer.add_library(os.path.join(os.path.dirname(__file__),'..','..','Nodes'))
-        render_layer.add_library(os.path.join(os.path.dirname(__file__), 'Nodes', 'Common'))
         render_layer.add_library(os.path.join(os.path.dirname(__file__), 'Nodes', 'RenderLayer'))
         self.add_graph(render_layer)
 
@@ -209,7 +208,6 @@ class NPR_Pipeline(Pipeline):
             ]
         )
         render.add_library(os.path.join(os.path.dirname(__file__),'..','..','Nodes'))
-        render.add_library(os.path.join(os.path.dirname(__file__), 'Nodes', 'Common'))
         render.add_library(os.path.join(os.path.dirname(__file__), 'Nodes', 'Render'))
         self.add_graph(render)
         
