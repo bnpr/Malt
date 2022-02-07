@@ -582,10 +582,20 @@ class MALT_PT_Base(bpy.types.Panel):
     @classmethod
     def get_malt_property_owner(cls, context):
         return None
+    
+    @classmethod
+    def get_parameter_type(cls):
+        return None
 
     @classmethod
     def poll(cls, context):
-        return context.scene.render.engine == 'MALT' and cls.get_malt_property_owner(context)
+        if context.scene.render.engine == 'MALT' and cls.get_malt_property_owner(context):
+            from BlenderMalt.MaltPipeline import get_bridge
+            bridge = get_bridge()
+            parameter_type = cls.get_parameter_type()
+            if bridge is None or parameter_type is None or len(getattr(bridge.parameters, parameter_type)) > 0:
+                return True
+        return False
     
     def draw(self, context):
         owner = self.__class__.get_malt_property_owner(context)
@@ -597,17 +607,26 @@ class MALT_PT_Base(bpy.types.Panel):
 class MALT_PT_Scene(MALT_PT_Base):
     bl_context = "scene"
     @classmethod
+    def get_parameter_type(cls):
+        return 'scene'
+    @classmethod
     def get_malt_property_owner(cls, context):
         return context.scene
 
 class MALT_PT_World(MALT_PT_Base):
     bl_context = "world"
     @classmethod
+    def get_parameter_type(cls):
+        return 'world'
+    @classmethod
     def get_malt_property_owner(cls, context):
         return context.scene.world
 
 class MALT_PT_Camera(MALT_PT_Base):
     bl_context = "data"
+    @classmethod
+    def get_parameter_type(cls):
+        return 'camera'
     @classmethod
     def get_malt_property_owner(cls, context):
         if context.object.type == 'CAMERA':
@@ -617,6 +636,9 @@ class MALT_PT_Camera(MALT_PT_Base):
 
 class MALT_PT_Object(MALT_PT_Base):
     bl_context = "object"
+    @classmethod
+    def get_parameter_type(cls):
+        return 'object'
     @classmethod
     def get_malt_property_owner(cls, context):
         return context.object
@@ -633,6 +655,9 @@ class MALT_PT_Material(MALT_PT_Base):
 
 class MALT_PT_Mesh(MALT_PT_Base):
     bl_context = "data"
+    @classmethod
+    def get_parameter_type(cls):
+        return 'mesh'
     @classmethod
     def get_malt_property_owner(cls, context):
         if context.object and context.object.data and context.object.type in ('MESH', 'CURVE', 'SURFACE', 'META', 'FONT'):
