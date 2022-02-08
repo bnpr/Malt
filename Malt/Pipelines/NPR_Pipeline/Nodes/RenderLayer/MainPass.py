@@ -10,6 +10,7 @@ class MainPass(PipelineNode):
     def __init__(self, pipeline):
         PipelineNode.__init__(self, pipeline)
         self.resolution = None
+        self.t_depth = None
     
     @staticmethod
     def get_pass_type():
@@ -33,7 +34,8 @@ class MainPass(PipelineNode):
         for io in custom_io:
             if io['io'] == 'out' and io['type'] == 'Texture':#TODO
                 self.custom_targets[io['name']] = Texture(resolution, GL.GL_RGBA16F)
-        self.fbo = RenderTarget([*self.custom_targets.values()], t_depth)
+        self.t_depth = t_depth
+        self.fbo = RenderTarget([*self.custom_targets.values()], self.t_depth)
 
     def execute(self, parameters):
         inputs = parameters['IN']
@@ -52,8 +54,8 @@ class MainPass(PipelineNode):
         if t_id:
             shader_resources['IN_ID'] = TextureShaderResource('IN_ID', t_id)
         
-        if self.pipeline.resolution != self.resolution or self.custom_io != custom_io:
-            t_depth = shader_resources['T_DEPTH'].texture
+        t_depth = shader_resources['T_DEPTH'].texture
+        if self.pipeline.resolution != self.resolution or self.custom_io != custom_io or t_depth != self.t_depth:
             self.setup_render_targets(self.pipeline.resolution, t_depth, custom_io)
             self.resolution = self.pipeline.resolution
             self.custom_io = custom_io
