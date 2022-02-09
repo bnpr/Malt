@@ -248,6 +248,8 @@ def load_scene(dummy1=None,dummy2=None):
 
 @bpy.app.handlers.persistent
 def load_scene_post(dummy1=None,dummy2=None):
+    from BlenderMalt.MaltNodes.MaltNodeTree import reset_subscriptions
+    reset_subscriptions()
     if bpy.context.scene.render.engine == 'MALT':
         bpy.context.scene.world.malt.update_pipeline(bpy.context)
 

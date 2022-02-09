@@ -33,6 +33,8 @@ class MaltTree(bpy.types.NodeTree):
     disable_updates : bpy.props.BoolProperty(name="Disable Updates", default=False)
 
     malt_parameters : bpy.props.PointerProperty(type=MaltPropertyGroup)
+    
+    subscribed : bpy.props.BoolProperty(name="Subscribed", default=False)
 
     def get_source_language(self):
         return self.get_pipeline_graph().language
@@ -190,6 +192,11 @@ class MaltTree(bpy.types.NodeTree):
 
         if self.get_pipeline_graph() is None:
             return
+        
+        if self.subscribed == False:
+            bpy.msgbus.subscribe_rna(key=self.path_resolve('name', False),
+                owner=self, args=(None,), notify=lambda _ : self.update())
+            self.subscribed = True
 
         self.disable_updates = True
         try:
@@ -221,6 +228,15 @@ class MaltTree(bpy.types.NodeTree):
         # Force a depsgraph update. 
         # Otherwise these will be outddated in scene_eval
         self.update_tag()
+
+
+def reset_subscriptions():
+    for tree in bpy.data.node_groups:
+        if tree.bl_idname == 'MaltTree':
+            tree.subscribed = False
+            for node in tree.nodes:
+                if isinstance(node, MaltNode):
+                    node.subscribed = False
 
 def setup_node_trees():
     graphs = MaltPipeline.get_bridge().graphs

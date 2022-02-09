@@ -12,6 +12,8 @@ class MaltNode():
     
     first_setup : bpy.props.BoolProperty(default=True)
 
+    subscribed : bpy.props.BoolProperty(name="Subscribed", default=False)
+
     # Blender will trigger update callbacks even before init and update has finished
     # So we use some wrappers to get a more sane behaviour
 
@@ -36,6 +38,11 @@ class MaltNode():
     def setup(self, context=None):
         self._disable_updates_wrapper(self.malt_setup)
         self.first_setup = False
+        if self.subscribed == False:
+            tree = self.id_data
+            bpy.msgbus.subscribe_rna(key=self.path_resolve('name', False),
+                owner=self, args=(None,), notify=lambda _ : tree.update())
+            self.subscribed = True
 
     def update(self):
         if self.disable_updates:
