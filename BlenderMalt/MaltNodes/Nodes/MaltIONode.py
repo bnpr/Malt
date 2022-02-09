@@ -171,7 +171,7 @@ class MaltIONode(bpy.types.Node, MaltNode):
                     if tree.bl_idname == 'MaltTree':
                         tree.reload_nodes()
                         tree.update()
-            layout.operator("wm.malt_callback", text='Reload', icon='FILE_REFRESH').callback.set(refresh)
+            layout.operator("wm.malt_callback", text='Reload', icon='FILE_REFRESH').callback.set(refresh, 'Reload')
             def draw_parameters_list(owner, parameters_key):
                 row = layout.row()
                 index_key = f'{parameters_key}_index'
@@ -190,10 +190,10 @@ class MaltIONode(bpy.types.Node, MaltNode):
                     while f'{name} {i}' in parameters.keys():
                         i += 1
                     new_param.name = f'{name} {i}'
-                col.operator("wm.malt_callback", text='', icon='ADD').callback.set(add_custom_socket)
+                col.operator("wm.malt_callback", text='', icon='ADD').callback.set(add_custom_socket, 'Add')
                 def remove_custom_socket():
                     parameters.remove(index)
-                col.operator("wm.malt_callback", text='', icon='REMOVE').callback.set(remove_custom_socket)
+                col.operator("wm.malt_callback", text='', icon='REMOVE').callback.set(remove_custom_socket, 'Remove')
             if self.allow_custom_pass:
                 draw_parameters_list(self.get_custom_pass_io(), 'outputs' if self.is_output else 'inputs')
             else:

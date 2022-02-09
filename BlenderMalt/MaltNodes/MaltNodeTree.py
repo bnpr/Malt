@@ -523,10 +523,10 @@ def node_header_ui(self, context):
         return
     def duplicate():
         context.space_data.node_tree = context.space_data.node_tree.copy()
-    self.layout.operator('wm.malt_callback', text='', icon='DUPLICATE').callback.set(duplicate)
+    self.layout.operator('wm.malt_callback', text='', icon='DUPLICATE').callback.set(duplicate, 'Duplicate')
     def recompile():
         context.space_data.node_tree.update()
-    self.layout.operator("wm.malt_callback", text='', icon='FILE_REFRESH').callback.set(recompile)
+    self.layout.operator("wm.malt_callback", text='', icon='FILE_REFRESH').callback.set(recompile, 'Recompile')
     self.layout.prop(context.space_data.node_tree, 'library_source',text='')
     self.layout.prop_search(context.space_data.node_tree, 'graph_type', context.scene.world.malt, 'graph_types',text='')
 

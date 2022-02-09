@@ -45,12 +45,13 @@ _LAST_HANDLE = 0
 
 class MaltCallback(bpy.types.PropertyGroup):
 
-    def set(self, callback):
+    def set(self, callback, message=''):
         global _CALLBACKS, _LAST_HANDLE, _MAX_CALLBACKS
         _LAST_HANDLE += 1
         _LAST_HANDLE = _LAST_HANDLE % _MAX_CALLBACKS
         _CALLBACKS[_LAST_HANDLE] = callback
         self['_MALT_CALLBACK_'] = _LAST_HANDLE
+        self['_MESSAGE_'] = message
     
     def call(self, *args, **kwargs):
         global _CALLBACKS
@@ -63,14 +64,13 @@ class OT_MaltCallback(bpy.types.Operator):
 
     callback : bpy.props.PointerProperty(type=MaltCallback)
 
+    @classmethod
+    def description(self, context, properties):
+        return properties.callback['_MESSAGE_']
+
     def execute(self, context):
         self.callback.call()
         return {'FINISHED'}
-    '''
-    def __del__(self):
-        global _CALLBACKS, _MAX_CALLBACKS
-        _CALLBACKS = [None] * _MAX_CALLBACKS
-    '''
 
 class COMMON_UL_UI_List(bpy.types.UIList):
     
@@ -84,9 +84,9 @@ def malt_template_list(layout, owner, list_property, index_property, add_callbac
     list = getattr(owner, list_property)
     index = getattr(owner, index_property)
     col.operator('wm.malt_callback', text='', icon='ADD').callback.set(
-        add_callback if add_callback else list.add)
+        add_callback if add_callback else list.add, 'Add')
     col.operator('wm.malt_callback', text='', icon='REMOVE').callback.set(
-        remove_callback if remove_callback else lambda: list.remove(index))
+        remove_callback if remove_callback else lambda: list.remove(index), 'Remove')
 
 
 import json

@@ -193,7 +193,7 @@ class MaltFunctionNode(bpy.types.Node, MaltNode):
     
     def draw_buttons(self, context, layout):
         if self.pass_graph_type != '':
-            layout.operator('wm.malt_callback', text='Reload Sockets', icon='FILE_REFRESH').callback.set(self.setup)
+            layout.operator('wm.malt_callback', text='Reload Sockets', icon='FILE_REFRESH').callback.set(self.setup, 'Reload Sockets')
             graph = self.id_data.get_pipeline_graph(self.pass_graph_type)
             if graph.graph_type == graph.GLOBAL_GRAPH:
                 if graph.language == 'Python':

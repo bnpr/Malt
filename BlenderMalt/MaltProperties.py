@@ -477,7 +477,7 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
             
             if is_override:
                 row.operator('wm.malt_callback', text='', icon='X').callback.set(
-                    lambda : self.remove_override(key))
+                    lambda : self.remove_override(key), 'Remove Override')
             else:
                 row.operator('wm.malt_new_override', text='', icon='DECORATE_OVERRIDE').callback.set(
                     lambda override_name: self.add_override(key, override_name))
@@ -508,11 +508,11 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
             row.template_ID(self.gradients[key], "texture")
             if self.gradients[key].texture:
                 row.operator('wm.malt_callback', text='', icon='DUPLICATE').callback.set(
-                    self.gradients[key].add_or_duplicate)
+                    self.gradients[key].add_or_duplicate, 'Duplicate')
                 column.template_color_ramp(self.gradients[key].texture, 'color_ramp')
             else:
                 row.operator('wm.malt_callback', text='New', icon='ADD').callback.set(
-                    self.gradients[key].add_or_duplicate)
+                    self.gradients[key].add_or_duplicate, 'New')
         elif rna[key]['type'] == Type.MATERIAL:
             make_row(True)
             row = layout.row(align=True)
@@ -520,22 +520,22 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
             if self.materials[key].material:
                 extension = self.materials[key].extension
                 row.operator('wm.malt_callback', text='', icon='DUPLICATE').callback.set(
-                    self.materials[key].add_or_duplicate)
+                    self.materials[key].add_or_duplicate, 'Duplicate')
                 material = self.materials[key].material
                 material.malt.draw_ui(layout.box(), extension, material.malt_parameters)
             else:
                 row.operator('wm.malt_callback', text='New', icon='ADD').callback.set(
-                    self.materials[key].add_or_duplicate)
+                    self.materials[key].add_or_duplicate, 'New')
         elif rna[key]['type'] == Type.GRAPH:
             make_row(True)
             row = layout.row(align=True)
             row.template_ID(self.graphs[key], "graph")
             if self.graphs[key].graph:
                 row.operator('wm.malt_callback', text='', icon='DUPLICATE').callback.set(
-                    self.graphs[key].add_or_duplicate)
+                    self.graphs[key].add_or_duplicate, 'Duplicate')
             else:
                 row.operator('wm.malt_callback', text='New', icon='ADD').callback.set(
-                    self.graphs[key].add_or_duplicate)
+                    self.graphs[key].add_or_duplicate, 'New')
         else:
             make_row(True)
             

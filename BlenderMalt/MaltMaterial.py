@@ -54,9 +54,9 @@ class MaltMaterial(bpy.types.PropertyGroup):
         row = layout.row(align=True)
         row.template_ID(self, "shader_nodes")
         if self.shader_nodes:
-            row.operator('wm.malt_callback', text='', icon='DUPLICATE').callback.set(nodes_add_or_duplicate)
+            row.operator('wm.malt_callback', text='', icon='DUPLICATE').callback.set(nodes_add_or_duplicate, 'Duplicate')
         else:
-            row.operator('wm.malt_callback', text='New', icon='ADD').callback.set(nodes_add_or_duplicate)
+            row.operator('wm.malt_callback', text='New', icon='ADD').callback.set(nodes_add_or_duplicate, 'New')
 
         source_path = self.get_source_path()
 
