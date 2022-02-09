@@ -20,10 +20,9 @@ float ao(int samples, float radius, float distribution_exponent, float bias)
 {
     #ifdef NPR_FILTERS_ACTIVE
     {
-        float ao = ao(IN_NORMAL_DEPTH, 3, POSITION, true_normal(), samples, radius, distribution_exponent, bias);
-        //ao = pow(ao, 1.0); //Pow for more contrast
-        //TODO: For some reason, using pow causes some values to go below 0 ?!?!?!?
-        //ao = max(0, ao);
+        vec3 true_normal = true_normal();
+        true_normal = NORMAL; //TODO: true_normal() doesn't work on screen shaders or alpha clipped meshes
+        float ao = ao(IN_NORMAL_DEPTH, 3, POSITION, true_normal, samples, radius, distribution_exponent, bias);
         return ao;
     }
     #else
