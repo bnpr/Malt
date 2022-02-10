@@ -115,6 +115,10 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                     self[name] = parameter.default_value   
                 elif size_changed:
                     resize()
+            
+            if parameter.type == Type.STRING:
+                if type_changed or equals(rna[name]['default'], self[name]):
+                    self[name] = parameter.default_value   
 
             if parameter.type == Type.BOOL:
                 if name not in self.bools:
@@ -325,6 +329,8 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                 return tuple(self[key])
             except:
                 return self[key]
+        elif rna[key]['type'] == Type.STRING:
+            return self[key]
         elif rna[key]['type'] == Type.BOOL:
             return bool(self.bools[key].boolean)
         elif rna[key]['type'] == Type.TEXTURE:
@@ -488,7 +494,7 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
             return result
 
         rna = self.get_rna()
-        if rna[key]['type'] in (Type.INT, Type.FLOAT):
+        if rna[key]['type'] in (Type.INT, Type.FLOAT, Type.STRING):
             #TODO: add subtype toggle
             make_row().prop(self, '["{}"]'.format(key), text='')
         elif rna[key]['type'] == Type.BOOL:
