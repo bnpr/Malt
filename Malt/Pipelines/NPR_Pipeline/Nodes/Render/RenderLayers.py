@@ -73,6 +73,7 @@ class RenderLayers(PipelineNode):
             
             self.layer_index = 0
             self.layer_count = inputs['Transparent Layers'] + 1
+            graph['parameters']['__RENDER_LAYERS__'] = self
             for i in range(self.layer_count):
                 graph['parameters']['__LAYER_INDEX__'] = self.layer_index
                 graph['parameters']['__LAYER_COUNT__'] = self.layer_count

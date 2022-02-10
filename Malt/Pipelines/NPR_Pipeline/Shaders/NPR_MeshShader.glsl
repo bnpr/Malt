@@ -139,8 +139,6 @@ void main()
 
 #ifdef PIXEL_SHADER
 
-uniform sampler2D IN_OPAQUE_COLOR;
-
 #ifdef SHADOW_PASS
 layout (location = 0) out uint OUT_ID;
 layout (location = 1) out vec3 OUT_SHADOW_MULTIPLY_COLOR;
