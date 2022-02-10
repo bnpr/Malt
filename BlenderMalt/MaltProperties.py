@@ -373,7 +373,8 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                 result['source'] = graph.get_generated_source()
                 result['parameters'] = {}
                 for node in graph.nodes:
-                    result['parameters'][node.get_source_name()] = node.get_parameters(overrides, proxys)
+                    if isinstance(node, MaltNode):
+                        result['parameters'][node.get_source_name()] = node.get_parameters(overrides, proxys)
                 return result
             else:
                 return None
