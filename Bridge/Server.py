@@ -392,7 +392,7 @@ def main(pipeline_path, viewport_bit_depth, connection_addresses,
 
                     if viewport_id not in viewports:
                         bit_depth = viewport_bit_depth if viewport_id != 0 else 32
-                        viewports[viewport_id] = Viewport(pipeline_class(), viewport_id == 0, bit_depth)
+                        viewports[viewport_id] = Viewport(pipeline_class(plugins), viewport_id == 0, bit_depth)
 
                     viewports[viewport_id].setup(new_buffers, resolution, scene, scene_update, renderdoc_capture)
                     shared_dic[(viewport_id, 'FINISHED')] = False
