@@ -96,6 +96,13 @@ class GLSLPipelineGraph(PipelineGraph):
         self.default_global_scope = default_global_scope
         self.default_shader_src = default_shader_src
         self.shaders = shaders
+        from multiprocessing.dummy import Pool
+        self.pool = Pool(16)
+    
+    def get_serializable_copy(self):
+        result = super().get_serializable_copy()
+        result.pool = None
+        return result
     
     def name_as_macro(self, name):
         return ''.join(c for c in name.replace(' ','_').upper() if c.isalnum() or c == '_')
@@ -149,12 +156,19 @@ class GLSLPipelineGraph(PipelineGraph):
         return code
     
     def compile_material(self, source, include_paths=[]):
+        def preprocess(params):
+            return self.preprocess_shader_from_source(*params)
+        
+        params = []
+        for shader in self.shaders:
+            params.append((source, include_paths, [shader, 'VERTEX_SHADER']))
+            params.append((source, include_paths, [shader, 'PIXEL_SHADER']))
+        preprocessed = self.pool.map(preprocess, params)
+
         from Malt.GL.Shader import Shader
         shaders = {}
         for shader in self.shaders:
-            vertex_src = self.preprocess_shader_from_source(source, include_paths, [shader, 'VERTEX_SHADER'])
-            pixel_src = self.preprocess_shader_from_source(source, include_paths, [shader, 'PIXEL_SHADER'])
-            shaders[shader] = Shader(vertex_src, pixel_src)
+            shaders[shader] = Shader(preprocessed.pop(0), preprocessed.pop(0))
         return shaders
 
 class PythonGraphIO(PipelineGraphIO):
