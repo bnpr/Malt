@@ -242,7 +242,33 @@ def compile_gl_program(vertex, fragment):
     status = gl_buffer(GL_INT,1)
     info_log = gl_buffer(GL_BYTE, 1024)
 
+    hash_src = vertex + fragment
+    ''.splitlines()
+    hash_src = ''.join([line for line in hash_src.splitlines(True) if line.startswith('#line') == False])
+    import hashlib, tempfile
+    shader_hash = hashlib.sha1(hash_src.encode()).hexdigest()
+    cache_folder = os.path.join(tempfile.gettempdir(), 'MALT_SHADERS_CACHE')
+    os.makedirs(cache_folder, exist_ok=True)
+    cache_path = os.path.join(cache_folder, shader_hash+'.bin')
+    format_path = os.path.join(cache_folder, shader_hash+'.fmt')
+    cache, format = None, None
+    if os.path.exists(cache_path):
+        with open(cache_path, 'rb') as f:
+            bin = f.read()
+            cache = (GLubyte*len(bin)).from_buffer_copy(bin)
+        with open(format_path, 'rb') as f:
+            format = GLuint.from_buffer_copy(f.read())
+    
+    program = glCreateProgram()
     error = ""
+
+    if cache:
+        glProgramBinary(program, format, cache, len(cache))
+        glGetProgramiv(program, GL_LINK_STATUS, status)
+        if status[0] == GL_FALSE:
+            info_log = glGetProgramInfoLog(program)
+            error += 'SHADER LINKER ERROR :\n' + buffer_to_string(info_log)
+        return (program, error)
 
     def compile_shader (source, shader_type):
         bindless_setup = ''
@@ -275,7 +301,6 @@ def compile_gl_program(vertex, fragment):
     vertex_shader = compile_shader(vertex, GL_VERTEX_SHADER)
     fragment_shader = compile_shader(fragment, GL_FRAGMENT_SHADER)
 
-    program = glCreateProgram()
     glAttachShader(program, vertex_shader)
     glAttachShader(program, fragment_shader)
     glLinkProgram(program)
@@ -287,6 +312,16 @@ def compile_gl_program(vertex, fragment):
     if status[0] == GL_FALSE:
         info_log = glGetProgramInfoLog(program)
         error += 'SHADER LINKER ERROR :\n' + buffer_to_string(info_log)
+    else:
+        length = gl_buffer(GL_INT, 1)
+        glGetProgramiv(program, GL_PROGRAM_BINARY_LENGTH, length)
+        format = gl_buffer(GL_UNSIGNED_INT, 1)
+        buffer = gl_buffer(GL_UNSIGNED_BYTE, length[0])
+        glGetProgramBinary(program, length[0], NULL, format, buffer)
+        with open(cache_path, 'wb') as f:
+            f.write(buffer)
+        with open(format_path, 'wb') as f:
+            f.write(format)
 
     return (program, error)
 
