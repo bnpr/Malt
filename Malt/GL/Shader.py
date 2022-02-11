@@ -252,10 +252,13 @@ def compile_gl_program(vertex, fragment):
     cache_path = os.path.join(cache_folder, shader_hash+'.bin')
     format_path = os.path.join(cache_folder, shader_hash+'.fmt')
     cache, format = None, None
-    if os.path.exists(cache_path):
+    if os.path.exists(cache_path) and os.path.exists(format_path):
+        from pathlib import Path
+        Path(cache_path).touch()
         with open(cache_path, 'rb') as f:
             bin = f.read()
             cache = (GLubyte*len(bin)).from_buffer_copy(bin)
+        Path(format_path).touch()
         with open(format_path, 'rb') as f:
             format = GLuint.from_buffer_copy(f.read())
     
