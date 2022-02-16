@@ -3,7 +3,7 @@
 Malt is a fully customizable real-time rendering framework for animation and illustration.  
 It's aimed at advanced users and technical artists who want more control over their workflow and/or their art style, with special care put into the needs of stylized non photorealistic rendering.
 
-[Docs](https://malt3d.com) | [Forums & Support](https://github.com/bnpr/Malt/discussions) | [Bug Reports](#bug-reports) | [Twitter](https://twitter.com/pragma37) | [Patreon](https://patreon.com/pragma37)
+[Docs](https://malt3d.com) | [Forums & Support](https://github.com/bnpr/Malt/discussions) | [Bug Reports](https://github.com/bnpr/Malt/issues) | [Twitter](https://twitter.com/pragma37) | [Patreon](https://patreon.com/pragma37)
 
 ## Features
 
@@ -20,8 +20,7 @@ It's aimed at advanced users and technical artists who want more control over th
 
 ## Current State
 
-Malt development began on June 2020 and it's still in beta state.   
-We're getting near the 1.0 Release, take a look at [Malt 1.0 UX Improvements](https://github.com/bnpr/Malt/discussions/148) and leave your feedback.
+The 1.0 Release is almost ready, take a look at the [1.0 Preview](https://github.com/bnpr/Malt/discussions/231) and leave your feedback.
 
 Malt is software agnostic, but Blender is the only integration planned right now.
 
@@ -32,7 +31,7 @@ Malt is software agnostic, but Blender is the only integration planned right now
 
 > A dedicated Nvidia or AMD graphics card is highly recomended.  
 
-> While Malt itself works on Mac, the default render pipeline does not due to limits in the Mac OpenGL drivers.
+> Mac support is deprecated and will be dropped soon.
 
 ## Install
  
@@ -42,7 +41,6 @@ Malt is software agnostic, but Blender is the only integration planned right now
 - Tick the box in the *BlenderMalt* panel to enable it.
 
 > Altenatively, you can download the [Development version](https://github.com/bnpr/Malt/releases/tag/Development-latest) to test the latest features.       
-> Keep in mind this version is only intended for testing and your scenes may break often.
 
 ## Uninstall
 
@@ -52,18 +50,10 @@ Malt is software agnostic, but Blender is the only integration planned right now
 
 ## First steps
 
-To learn how to make your own materials in *Malt*, take a look at this [Malt Nodes introduction](https://www.youtube.com/watch?v=tE99jgCCcNE) and check the [Sample Files](https://github.com/bnpr/Malt/discussions/94).
+To learn how to use *Malt*, check [this playlist](https://www.youtube.com/playlist?list=PLiN2BGdwwlLqbks8h5MohvH0Xd0Zql_Sg) and the [Sample Files](https://github.com/bnpr/Malt/discussions/94).
 
 > Malt allows to use different settings for *Viewport Preview*, *Viewport Render* and *F12 Render*.  
 > By default, the *Viewport Preview* should be faster than the *Viewport Render* mode.
-
-## Bug Reports
-
-If you find a bug you can [open a new issue](https://github.com/bnpr/Malt/issues).
-
-**For bug reports include**:
-- The **Log file** from the Blender session where the bug happened. You can find it in *Preferences > Addons > BlenderMalt > Open Session Log* or search for it in your system temporary folder.
-- A **.blend file** and a **list of steps** to reproduce the error.
 
 ## Developer Documentation
 
