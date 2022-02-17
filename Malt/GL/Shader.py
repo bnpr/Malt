@@ -268,10 +268,8 @@ def compile_gl_program(vertex, fragment):
     if cache:
         glProgramBinary(program, format, cache, len(cache))
         glGetProgramiv(program, GL_LINK_STATUS, status)
-        if status[0] == GL_FALSE:
-            info_log = glGetProgramInfoLog(program)
-            error += 'SHADER LINKER ERROR :\n' + buffer_to_string(info_log)
-        return (program, error)
+        if status[0] != GL_FALSE:
+            return (program, error)
 
     def compile_shader (source, shader_type):
         bindless_setup = ''
