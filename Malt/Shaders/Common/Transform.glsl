@@ -51,18 +51,6 @@ vec3 model_position()
     return transform_point(MODEL, vec3(0,0,0));
 }
 
-vec3 view_direction()
-{
-    if (is_ortho(PROJECTION))
-    {
-        return transform_normal(inverse(CAMERA), vec3(0,0,-1));
-    }
-    else
-    {
-        return normalize(POSITION - camera_position());
-    }
-}
-
 vec2 screen_uv()
 {
     #ifdef PIXEL_SHADER
@@ -96,6 +84,11 @@ vec3 screen_to_camera(vec2 uv, float depth)
     camera_position /= camera_position.w;
 
     return camera_position.xyz;
+}
+
+vec3 view_direction()
+{
+    return transform_normal(inverse(CAMERA), screen_to_camera(screen_uv(), 1));
 }
 
 float pixel_depth()
