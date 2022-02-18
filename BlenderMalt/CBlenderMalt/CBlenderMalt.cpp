@@ -4,65 +4,83 @@
 #define EXPORT extern "C" __attribute__ ((visibility ("default")))
 #endif
 
-//Blender Data Structures
+#include "blender_dna/DNA_mesh_types.h"
+#include "blender_dna/DNA_meshdata_types.h"
 
-struct BVert
+//blenkernel/intern/customdata.cc
+
+int CustomData_get_active_layer_index(const CustomData *data, int type)
 {
-    float co[3];
-    short no[3];
-    char flag, bweight;
-};
+	const int layer_index = data->typemap[type];
+	//BLI_assert(customdata_typemap_is_valid(data));
+	return (layer_index != -1) ? layer_index + data->layers[layer_index].active : -1;
+}
 
-struct BLoop
+void *CustomData_get_layer(const CustomData *data, int type)
 {
-    unsigned int v;
-    unsigned int e;
-};
+	/* get the layer index of the active layer of type */
+	int layer_index = CustomData_get_active_layer_index(data, type);
+	if (layer_index == -1) {
+	return nullptr;
+	}
 
-struct BLoopTri
+	return data->layers[layer_index].data;
+}
+
+int CustomData_get_layer_index(const CustomData *data, int type)
 {
-    unsigned int tri[3];
-    unsigned int poly;
-};
+	//BLI_assert(customdata_typemap_is_valid(data));
+	return data->typemap[type];
+}
 
-struct BLoopUV
+int CustomData_get_layer_index_n(const struct CustomData *data, int type, int n)
 {
-    float uv[2];
-    int flag;
-};
+	//BLI_assert(n >= 0);
+	int i = CustomData_get_layer_index(data, type);
 
-struct BPoly {
-  int loopstart;
-  int totloop;
-  short mat_nr;
-  char flag, _pad;
-};
+	if (i != -1) {
+		//BLI_assert(i + n < data->totlayer);
+		i = (data->layers[i + n].type == type) ? (i + n) : (-1);
+	}
 
-// BPoly flag
-enum {
-  ME_SMOOTH = (1 << 0),
-  ME_FACE_SEL = (1 << 1),
-};
+	return i;
+}
 
-EXPORT void retrieve_mesh_data(void* in_verts, void* in_loops, int loop_count, void* in_loop_tris, int loop_tri_count, void* in_polys,
-                        float* out_positions, short* out_normals, unsigned int** out_indices, unsigned int* out_index_lengths)
+void *CustomData_get_layer_n(const CustomData *data, int type, int n)
 {
-    BVert* verts = (BVert*)in_verts;
-    BLoop* loops = (BLoop*)in_loops;
-    BLoopTri* loop_tris = (BLoopTri*)in_loop_tris;
-    BPoly* polys = (BPoly*)in_polys;
+	/* get the layer index of the active layer of type */
+	int layer_index = CustomData_get_layer_index_n(data, type, n);
+	if (layer_index == -1) {
+		return nullptr;
+	}
+
+	return data->layers[layer_index].data;
+}
+
+#include "stdio.h"
+#include "string.h"
+
+EXPORT void retrieve_mesh_data(void* in_mesh, void* in_loop_tris, int loop_tri_count,
+                        float* out_positions, float* out_normals, unsigned int** out_indices, unsigned int* out_index_lengths)
+{
+	Mesh* mesh = (Mesh*)in_mesh;
+    MVert* verts = mesh->mvert;
+    MLoop* loops = mesh->mloop;
+    MLoopTri* loop_tris = (MLoopTri*)in_loop_tris;
+    MPoly* polys = mesh->mpoly;
+	float* normals = (float*)CustomData_get_layer(&mesh->ldata, CD_NORMAL);
+    if(normals)
+    {
+        memcpy(out_normals, normals, mesh->totloop * sizeof(float) * 3);
+    }
 
     int p = 0, n = 0;
 
-    for(int i = 0; i < loop_count; i++)
+    for(int i = 0; i < mesh->totloop; i++)
     {
         out_positions[p++] = verts[loops[i].v].co[0];
         out_positions[p++] = verts[loops[i].v].co[1];
         out_positions[p++] = verts[loops[i].v].co[2];
-
-        out_normals[n++] = verts[loops[i].v].no[0];
-        out_normals[n++] = verts[loops[i].v].no[1];
-        out_normals[n++] = verts[loops[i].v].no[2];
     }
 
     unsigned int* mat_i = out_index_lengths;
@@ -78,7 +96,7 @@ EXPORT void retrieve_mesh_data(void* in_verts, void* in_loops, int loop_count, v
 
 EXPORT void retrieve_mesh_uv(void* in_uvs, int loop_count, float* out_uvs)
 {
-    BLoopUV* uvs = (BLoopUV*)in_uvs;
+    MLoopUV* uvs = (MLoopUV*)in_uvs;
 
     int uv = 0;
 
@@ -87,6 +105,14 @@ EXPORT void retrieve_mesh_uv(void* in_uvs, int loop_count, float* out_uvs)
         out_uvs[uv++] = uvs[i].uv[0];
         out_uvs[uv++] = uvs[i].uv[1];
     }
+}
+
+EXPORT float* mesh_tangents_ptr(void* in_mesh)
+{
+	Mesh* mesh = (Mesh*)in_mesh;
+	float* ptr = (float*)CustomData_get_layer(&mesh->ldata, CD_MLOOPTANGENT);
+    
+    return ptr;
 }
 
 EXPORT void pack_tangents(float* in_tangents, float* in_bitangent_signs, int loop_count, float* out_tangents)
@@ -102,7 +128,7 @@ EXPORT void pack_tangents(float* in_tangents, float* in_bitangent_signs, int loo
 
 EXPORT bool has_flat_polys(void* in_polys, int polys_count)
 {
-    BPoly* polys = (BPoly*)in_polys;
+    MPoly* polys = (MPoly*)in_polys;
 
     bool has_flat_poly = false;
 

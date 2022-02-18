@@ -17,7 +17,6 @@ def get_mesh(object):
 
 def load_mesh(object, name):
     from . import CBlenderMalt
-    use_split_faces = False #Use split_faces instead of calc_normals_split (Slightly faster)
 
     m = object.data
     if object.type != 'MESH' or bpy.context.mode == 'EDIT_MESH':
@@ -27,18 +26,9 @@ def load_mesh(object, name):
         return None
     
     m.calc_loop_triangles()
-    polys_ptr = ctypes.c_void_p(m.polygons[0].as_pointer())
-    has_flat_polys = CBlenderMalt.has_flat_polys(polys_ptr, len(m.polygons))
-
-    needs_split_normals = m.use_auto_smooth or m.has_custom_normals or has_flat_polys
-    if needs_split_normals:
-        if use_split_faces:
-            m.split_faces()
-        else:
-            m.calc_normals_split()
-
-    verts_ptr = ctypes.c_void_p(m.vertices[0].as_pointer())
-    loops_ptr = ctypes.c_void_p(m.loops[0].as_pointer())
+    m.calc_normals_split()
+    
+    mesh_ptr = ctypes.c_void_p(m.as_pointer())
     loop_tris_ptr = ctypes.c_void_p(m.loop_triangles[0].as_pointer())
 
     loop_count = len(m.loops)
@@ -46,7 +36,7 @@ def load_mesh(object, name):
     material_count = max(1, len(m.materials))
 
     positions = get_load_buffer('positions', ctypes.c_float, (loop_count * 3))
-    normals = get_load_buffer('normals', ctypes.c_int16, (loop_count * 3))
+    normals = get_load_buffer('normals', ctypes.c_float, (loop_count * 3))
     indices = []
     indices_ptrs = (ctypes.c_void_p * material_count)()
     for i in range(material_count):
@@ -55,16 +45,11 @@ def load_mesh(object, name):
     
     indices_lengths = (ctypes.c_uint32 * material_count)()
 
-    CBlenderMalt.retrieve_mesh_data(verts_ptr, loops_ptr, loop_count, loop_tris_ptr, loop_tri_count, polys_ptr,
+    CBlenderMalt.retrieve_mesh_data(mesh_ptr, loop_tris_ptr, loop_tri_count,
         positions.buffer(), normals.buffer(), indices_ptrs, indices_lengths)
-
-    if needs_split_normals and use_split_faces == False:
-        #TODO: Find a way to get a direct pointer to custom normals
-        normals = get_load_buffer('custom_normals', ctypes.c_float, (loop_count * 3))
-        m.loops.foreach_get('normal', normals.as_np_array())
-
+    
     uvs_list = []
-    tangents = None
+    tangents_buffer = None
     for i, uv_layer in enumerate(m.uv_layers):
         uv_ptr = ctypes.c_void_p(uv_layer.data[0].as_pointer())
         uv = get_load_buffer('uv'+str(i), ctypes.c_float, loop_count * 2)
@@ -72,14 +57,10 @@ def load_mesh(object, name):
         uvs_list.append(uv)
         if i == 0 and object.original.data.malt_parameters.bools['precomputed_tangents'].boolean:
             m.calc_tangents(uvmap=uv_layer.name)
-            #TODO: Find a way to get a direct pointer
-            tangents = get_load_buffer('tangents'+str(i), ctypes.c_float, (loop_count * 3))
-            bitangent_signs = get_load_buffer('bitangent_signs'+str(i), ctypes.c_float, loop_count)
-            m.loops.foreach_get('tangent', tangents.as_np_array())
-            m.loops.foreach_get('bitangent_sign', bitangent_signs.as_np_array())
-            packed_tangents = get_load_buffer('packed_tangents'+str(i), ctypes.c_float, (loop_count * 4))
-            CBlenderMalt.pack_tangents(tangents.buffer(), bitangent_signs.buffer(), loop_count, packed_tangents.buffer())
-            tangents = packed_tangents
+            tangents_ptr = CBlenderMalt.mesh_tangents_ptr(ctypes.c_void_p(m.as_pointer()))
+            tangents = (ctypes.c_float * (loop_count * 4)).from_address(ctypes.addressof(tangents_ptr.contents))
+            tangents_buffer = get_load_buffer('tangents'+str(i), ctypes.c_float, (loop_count * 4))
+            ctypes.memmove(tangents_buffer.buffer(), tangents, tangents_buffer.size_in_bytes())
     
     colors_list = []
     for i, vertex_color in enumerate(m.vertex_colors):
@@ -95,7 +76,7 @@ def load_mesh(object, name):
         'indices_lengths': [l for l in indices_lengths],
         'normals': normals,
         'uvs': uvs_list,
-        'tangents': tangents,
+        'tangents': tangents_buffer,
         'colors': colors_list,
     }
 
