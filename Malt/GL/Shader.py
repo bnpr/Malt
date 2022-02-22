@@ -44,14 +44,15 @@ class Shader():
             if name not in self.uniforms:
                 LOG.debug("Texture Uniform {} not found".format(name))
                 continue
-            glActiveTexture(GL_TEXTURE0 + self.uniforms[name].value[0])
+            uniform = self.uniforms[name]
+            glActiveTexture(GL_TEXTURE0 + uniform.value[0])
             if texture:
                 if hasattr(texture, 'bind'):
                     texture.bind()
                 else: #Then it's just a externally generated bind code
-                    glBindTexture(GL_TEXTURE_2D, texture)
+                    glBindTexture(uniform.texture_type(), texture)
             else:
-                glBindTexture(GL_TEXTURE_2D, 0)
+                glBindTexture(uniform.texture_type(), 0)
     
     def copy(self):
         new = Shader(None, None)
@@ -85,6 +86,23 @@ class GLUniform():
     
     def is_sampler(self):
         return 'SAMPLER' in GL_ENUMS[self.type]
+    
+    def texture_type(self):
+        if self.is_sampler() == False:
+            return None
+        table = {
+            '1D_ARRAY': GL_TEXTURE_1D_ARRAY,
+            '_1D': GL_TEXTURE_1D,
+            '2D_ARRAY': GL_TEXTURE_2D_ARRAY,
+            '_2D': GL_TEXTURE_2D,
+            '_3D': GL_TEXTURE_3D,
+            'CUBE_MAP_ARRAY': GL_TEXTURE_CUBE_MAP_ARRAY,
+            '_CUBE_MAP': GL_TEXTURE_CUBE_MAP,
+        }
+        name = GL_ENUMS[self.type]
+        for key, value in table.items():
+            if key in name:
+                return value
     
     def set_value(self, value):
         if self.base_type == GL_UNSIGNED_INT:
