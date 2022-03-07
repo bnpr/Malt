@@ -58,6 +58,14 @@ jobs:
       with:
         python-version: '3.9'
     
+    - name: install 3.9 dependencies
+      run: python install_dependencies.py
+      working-directory: ${{ github.workspace }}/scripts
+    
+    - uses: actions/setup-python@v2
+      with:
+        python-version: '3.10'
+    
     - name: setup_blender_addon.py
       run: python setup_blender_addon.py --copy-modules
       working-directory: ${{ github.workspace }}/scripts
