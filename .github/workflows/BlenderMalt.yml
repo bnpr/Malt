@@ -10,30 +10,31 @@ jobs:
     - uses: actions/checkout@v2
     
     - uses: nelonoel/branch-name@v1.0.1
-    
-    - name: Rollback Release
-      uses: author/action-rollback@stable
-      continue-on-error: true
-      with:
-        tag: ${{ env.BRANCH_NAME }}-latest
-        delete_orphan_tag: true
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Create Release
+    - uses: ncipollo/release-action@v1
       id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        tag_name: ${{ env.BRANCH_NAME }}-latest
-        release_name: ${{ env.BRANCH_NAME }}
-        draft: false
+        token: ${{ secrets.GITHUB_TOKEN }}
+        allowUpdates: true
+        tag: ${{ env.BRANCH_NAME }}-latest
         prerelease: ${{ env.BRANCH_NAME != 'Release' }}
-        body_path: SPONSORS.md
+        bodyFile: "SPONSORS.md"
+      if: ${{ github.ref_type == 'branch' }}
     
+    - uses: ncipollo/release-action@v1
+      id: create_tagged_release
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        allowUpdates: true
+        prerelease: ${{ env.BRANCH_NAME != 'Release' }}
+        bodyFile: "SPONSORS.md"
+      if: ${{ github.ref_type == 'tag' }}
+            
     outputs:
-      upload_url: ${{ steps.create_release.outputs.upload_url}}  
+      upload_url: ${{ steps.create_release.outputs.upload_url }}  
+      release_id: ${{ steps.create_release.outputs.id }}
+      tagged_upload_url: ${{ steps.create_tagged_release.outputs.upload_url }}  
+      tagged_release_id: ${{ steps.create_tagged_release.outputs.id }}
   
   package-blender:
     needs: [release]
@@ -82,6 +83,16 @@ jobs:
         name: BlenderMalt-${{ runner.os }}
         path: ${{ github.workspace }}/BlenderMalt.zip
     
+    - name: Remove Old Files
+      uses: flcdrg/remove-release-asset-action@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        release_id: ${{ needs.release.outputs.release_id }}
+        asset_name: BlenderMalt-${{ runner.os }}.zip
+      continue-on-error: true
+      if: ${{ github.ref_type == 'branch' }}
+    
     - name: Release Addon
       uses: actions/upload-release-asset@v1
       env:
@@ -91,4 +102,26 @@ jobs:
         asset_path: ${{ github.workspace }}/BlenderMalt.zip
         asset_name: BlenderMalt-${{ runner.os }}.zip
         asset_content_type: application/zip
+      if: ${{ github.ref_type == 'branch' }}
+    
+    - name: Remove Old Tagged Files
+      uses: flcdrg/remove-release-asset-action@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        release_id: ${{ needs.release.outputs.tagged_release_id }}
+        asset_name: BlenderMalt-${{ runner.os }}.zip
+      continue-on-error: true
+      if: ${{ github.ref_type == 'tag' }}
+
+    - name: Release Tagged Addon
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ needs.release.outputs.tagged_upload_url }}
+        asset_path: ${{ github.workspace }}/BlenderMalt.zip
+        asset_name: BlenderMalt-${{ runner.os }}.zip
+        asset_content_type: application/zip
+      if: ${{ github.ref_type == 'tag' }}
 
