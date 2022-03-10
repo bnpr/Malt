@@ -3,7 +3,7 @@ bl_info = {
     "description" : "Extensible Python Render Engine",
     "author" : "Miguel Pozo",
     "version": (1,0,0,'beta'),
-    "blender" : (2, 80, 0),
+    "blender" : (3, 1, 0),
     "doc_url": "https://malt3d.com",
     "tracker_url": "https://github.com/bnpr/Malt/issues",
     "category": "Render"
@@ -12,6 +12,13 @@ bl_info = {
 import sys, os
 from os import path
 import bpy
+
+def version_missmatch():
+    return bpy.app.version[:2] != bl_info['blender'][:2]
+def version_missmatch_message():
+    if version_missmatch():
+        v = bl_info['blender']
+        return f"Malt loading aborted. The installed Malt version only works with Blender {v[0]}.{v[1]}"
 
 #Add Malt and dependencies to the import path
 __CURRENT_DIR = path.dirname(path.realpath(__file__))
@@ -45,6 +52,10 @@ class Preferences(bpy.types.AddonPreferences):
 
     def draw(self, context):
         layout = self.layout
+
+        if version_missmatch():
+            layout.label(text=version_missmatch_message(), icon='ERROR')
+            return
         
         if context.scene.render.engine == 'MALT':
             layout.operator('wm.path_open', text="Open Session Log").filepath=sys.stdout.log_path
@@ -121,6 +132,12 @@ classes=[
 ]
 
 def register():
+    for _class in classes: bpy.utils.register_class(_class)
+    
+    if version_missmatch():
+        print(version_missmatch_message())
+        return
+
     import importlib
     for module in get_modules():
         importlib.reload(module)
@@ -130,8 +147,6 @@ def register():
 
     do_windows_fixes()
 
-    for _class in classes: bpy.utils.register_class(_class)
-
     for module in get_modules():
         module.register()
 
@@ -139,6 +154,9 @@ def register():
 
 def unregister():
     for _class in reversed(classes): bpy.utils.unregister_class(_class)
+    
+    if version_missmatch():
+        return
 
     for module in reversed(get_modules()):
         module.unregister()

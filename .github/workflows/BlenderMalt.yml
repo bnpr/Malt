@@ -46,23 +46,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-
-    - uses: actions/setup-python@v2
-      with:
-        python-version: '3.7'
-    
-    - name: install 3.7 dependencies
-      run: python install_dependencies.py
-      working-directory: ${{ github.workspace }}/scripts
-    
-    - uses: actions/setup-python@v2
-      with:
-        python-version: '3.9'
-    
-    - name: install 3.9 dependencies
-      run: python install_dependencies.py
-      working-directory: ${{ github.workspace }}/scripts
-    
+        
     - uses: actions/setup-python@v2
       with:
         python-version: '3.10'
