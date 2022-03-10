@@ -163,7 +163,7 @@ def track_shader_changes(force_update=False, async_compilation=True):
 
         for material in bpy.data.materials:
             path = material.malt.get_source_path()
-            if path not in needs_update:
+            if path and path not in needs_update:
                 if os.path.exists(path):
                     stats = os.stat(path)
                     if path not in _MATERIALS.keys() or stats.st_mtime > __TIMESTAMP:
