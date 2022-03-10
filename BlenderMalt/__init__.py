@@ -5,7 +5,7 @@ bl_info = {
     "version": (1,0,0,'beta'),
     "blender" : (3, 1, 0),
     "doc_url": "https://malt3d.com",
-    "tracker_url": "https://github.com/bnpr/Malt/issues",
+    "tracker_url": "https://github.com/bnpr/Malt/issues/new/choose",
     "category": "Render"
 }
 
