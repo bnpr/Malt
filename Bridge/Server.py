@@ -330,14 +330,23 @@ def main(pipeline_path, viewport_bit_depth, connection_addresses,
                     results = {}
                     from Malt.GL.Shader import glsl_reflection, shader_preprocessor
                     for path in paths:
-                        root_path = os.path.dirname(path)
-                        src = '#include "{}"\n'.format(path)
-                        src = shader_preprocessor(src, [root_path])
-                        reflection = glsl_reflection(src, root_path)
-                        reflection['paths'] = set([path])
-                        for struct in reflection['structs'].values(): reflection['paths'].add(struct['file'])
-                        for function in reflection['functions'].values(): reflection['paths'].add(function['file'])
-                        results[path] = reflection
+                        try:
+                            root_path = os.path.dirname(path)
+                            src = '#include "{}"\n'.format(path)
+                            src = shader_preprocessor(src, [root_path])
+                            reflection = glsl_reflection(src, root_path)
+                            reflection['paths'] = set([path])
+                            for struct in reflection['structs'].values(): reflection['paths'].add(struct['file'])
+                            for function in reflection['functions'].values(): reflection['paths'].add(function['file'])
+                            results[path] = reflection
+                        except:
+                            results[path] = {
+                                'structs':{},
+                                'functions':{},
+                                'paths':[],
+                            }
+                            import traceback
+                            LOG.error(traceback.format_exc())
                     connections['REFLECTION'].send(results)
                 if msg['msg_type'] == 'GRAPH RELOAD':
                     graph_types = msg['graph_types']

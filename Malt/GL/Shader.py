@@ -182,9 +182,10 @@ def shader_preprocessor(shader_source, include_directories=[], definitions=[]):
         if result.returncode != 0:
             raise Exception(result.stderr.decode('utf-8'))
     except:
-        import stat
-        os.chmod(mcpp, os.stat(mcpp).st_mode | stat.S_IEXEC)
-        result = subprocess.run(command, shell=True, stdout = subprocess.PIPE, stderr=subprocess.PIPE)
+        if platform.system() == 'Linux': #Linux seemingly removes exec permissions when unzipping (?)
+            import stat
+            os.chmod(mcpp, os.stat(mcpp).st_mode | stat.S_IEXEC)
+            result = subprocess.run(command, shell=True, stdout = subprocess.PIPE, stderr=subprocess.PIPE)
     finally:
         os.remove(tmp.name)
         if result.returncode != 0:
