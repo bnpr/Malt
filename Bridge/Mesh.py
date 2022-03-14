@@ -21,7 +21,7 @@ def load_mesh(msg):
     normals = load_VBO(data['normals'])
     tangents = load_VBO(data['tangents']) if data['tangents'] else None
     uvs = [load_VBO(e) for e in data['uvs']]
-    colors = [load_VBO(e) for e in data['colors']]
+    colors = [load_VBO(e) if e else None for e in data['colors']]
 
     for i, indices in enumerate(data['indices']):
         result = Mesh.MeshCustomLoad()
@@ -70,7 +70,11 @@ def load_mesh(msg):
             if i >= max_vertex_colors:
                 LOG.warning('{} : Vertex Color Layer count exceeds max supported layers ({})'.format(name, max_uv))
                 break
-            bind_VBO(color, color0_index + i, 4, GL_UNSIGNED_BYTE, GL_TRUE)
+            if color:
+                if data['colors'][i]._ctype == ctypes.c_uint8:
+                    bind_VBO(color, color0_index + i, 4, GL_UNSIGNED_BYTE, GL_TRUE)
+                if data['colors'][i]._ctype == ctypes.c_float:
+                    bind_VBO(color, color0_index + i, 4, GL_FLOAT)
 
         glBindVertexArray(0)
         
