@@ -79,23 +79,6 @@ class MaltRenderEngine(bpy.types.RenderEngine):
                 self.view_matrix = view_3d.perspective_matrix.copy()
                 self.request_new_frame = True
             scene.camera = Scene.Camera(camera_matrix, projection_matrix)
-
-            #TODO
-            if view_3d.view_perspective == 'CAMERA':
-                camera = depsgraph.scene_eval.camera
-                frame = camera.data.view_frame(scene=depsgraph.scene_eval)
-
-                screen_space_frame = []
-                for v in frame:
-                    v = view_3d.window_matrix @ view_3d.view_matrix @ camera.matrix_world @ Vector((v.x,v.y,v.z,1.0))
-                    v /= v.w
-                    v = v * 0.5 + Vector((0.5,0.5,0.5,0.0))
-                    v.w = 0
-                    screen_space_frame.append(v)
-                
-                tr,br,bl,tl = screen_space_frame
-                w = (tr.x - tl.x) * context.region.width
-                h = (tr.y - br.y) * context.region.height
         else:
             camera = depsgraph.scene_eval.camera
             camera_matrix = flatten_matrix(camera.matrix_world.inverted())
