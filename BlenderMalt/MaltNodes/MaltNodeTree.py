@@ -124,7 +124,10 @@ class MaltTree(bpy.types.NodeTree):
             return os.path.join(self.get_generated_source_dir(),'{}-{}{}'.format(file_prefix, self.name, pipeline_graph.file_extension))
         return None
     
-    def get_generated_source(self):
+    def get_generated_source(self, force_update=False):
+        if force_update == False and self.get('source'):
+            return self['source']
+
         output_nodes = []
         linked_nodes = []
         
@@ -167,7 +170,8 @@ class MaltTree(bpy.types.NodeTree):
         for node in linked_nodes:
             if isinstance(node, MaltNode):
                 shader['GLOBAL'] += node.get_source_global_parameters(transpiler)
-        return pipeline_graph.generate_source(shader)
+        self['source'] = pipeline_graph.generate_source(shader)
+        return self['source']
     
     def reload_nodes(self):
         self.disable_updates = True
@@ -210,7 +214,7 @@ class MaltTree(bpy.types.NodeTree):
                 except:
                     pass
             
-            source = self.get_generated_source()
+            source = self.get_generated_source(force_update=True)
             source_dir = self.get_generated_source_dir()
             source_path = self.get_generated_source_path()
             import pathlib
