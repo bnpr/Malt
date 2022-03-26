@@ -4,6 +4,12 @@ current_dir = os.path.dirname(os.path.realpath(__file__))
 
 malt_folder = os.path.join(current_dir, '..', 'Malt')
 
+try:
+    subprocess.check_call([sys.executable, '-m', 'pip', '--version'])
+except:
+    subprocess.check_call([sys.executable, '-m', 'ensurepip'])
+    os.environ.pop("PIP_REQ_TRACKER", None)
+
 py_version = str(sys.version_info[0])+str(sys.version_info[1])
 malt_dependencies_path = os.path.join(malt_folder, '.Dependencies-{}'.format(py_version))
 dependencies = ['glfw', 'PyOpenGL==3.1.5', 'PyOpenGL_accelerate==3.1.5', 'Pyrr', 'psutil']
