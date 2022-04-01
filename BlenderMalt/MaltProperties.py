@@ -305,14 +305,15 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                 pass
         if key not in self.get_rna().keys():
             if isinstance(self.id_data, MaltTree) and self.id_data.malt_parameters.as_pointer() == self.as_pointer():
-                for node in self.id_data.nodes:
-                    if isinstance(node, MaltNode):
-                        for input in node.inputs:
-                            if key == input.get_source_global_reference():
-                                try:
-                                    return node.malt_parameters.get_parameter(input.name, overrides, proxys)
-                                except:
-                                    pass
+                if self.id_data.is_active():
+                    for node in self.id_data.nodes:
+                        if isinstance(node, MaltNode):
+                            for input in node.inputs:
+                                if key == input.get_source_global_reference():
+                                    try:
+                                        return node.malt_parameters.get_parameter(input.name, overrides, proxys)
+                                    except:
+                                        pass
             raise Exception()
 
         rna = self.get_rna()
@@ -368,7 +369,7 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
         elif rna[key]['type'] == Type.GRAPH:
             graph = self.graphs[key].graph
             type = self.graphs[key].type
-            if graph:
+            if graph and graph.is_active():
                 result = {}
                 result['source'] = graph.get_generated_source()
                 result['parameters'] = {}
@@ -447,13 +448,14 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                 return True
         if key not in self.get_rna().keys():
             if isinstance(self.id_data, MaltTree) and self.id_data.malt_parameters.as_pointer() == self.as_pointer():
-                for node in self.id_data.nodes:
-                    if isinstance(node, MaltNode):
-                        for input in node.inputs:
-                            if key == input.get_source_global_reference():
-                                if input.show_in_material_panel:
-                                    node.malt_parameters.draw_parameter(layout, input.name, label, draw_callback, is_node_socket=True)
-                                return True
+                if self.id_data.is_active():
+                    for node in self.id_data.nodes:
+                        if isinstance(node, MaltNode):
+                            for input in node.inputs:
+                                if key == input.get_source_global_reference():
+                                    if input.show_in_material_panel:
+                                        node.malt_parameters.draw_parameter(layout, input.name, label, draw_callback, is_node_socket=True)
+                                    return True
             return False
         if self.get_rna()[key]['active'] == False:
             return False

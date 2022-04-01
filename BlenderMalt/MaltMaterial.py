@@ -34,7 +34,10 @@ class MaltMaterial(bpy.types.PropertyGroup):
 
     def get_source_path(self):
         if self.shader_nodes:
-            return self.shader_nodes.get_generated_source_path()
+            if self.shader_nodes.is_active():
+                return self.shader_nodes.get_generated_source_path()
+            else:
+                return ''
         else:
             return bpy.path.abspath(self.shader_source, library=self.id_data.library)
     

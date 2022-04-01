@@ -36,6 +36,9 @@ class MaltTree(bpy.types.NodeTree):
     
     subscribed : bpy.props.BoolProperty(name="Subscribed", default=False)
 
+    def is_active(self):
+        return self.get_pipeline_graph() is not None
+
     def get_source_language(self):
         return self.get_pipeline_graph().language
 
@@ -188,7 +191,8 @@ class MaltTree(bpy.types.NodeTree):
         self.disable_updates = False
 
     def update(self):
-        self.update_ext()
+        if self.is_active():
+            self.update_ext()
     
     def update_ext(self, force_track_shader_changes=True):
         if self.disable_updates:
@@ -251,7 +255,7 @@ def setup_node_trees():
     track_library_changes(force_update=True, is_initial_setup=True)
     
     for tree in bpy.data.node_groups:
-        if tree.bl_idname == 'MaltTree':
+        if tree.bl_idname == 'MaltTree' and tree.is_active():
             tree.reload_nodes()
             tree.update_ext(force_track_shader_changes=False)
     from BlenderMalt import MaltMaterial
@@ -292,7 +296,7 @@ def track_library_changes(force_update=False, is_initial_setup=False):
     #purge unused libraries
     new_dic = {}
     for tree in bpy.data.node_groups:
-        if isinstance(tree, MaltTree):
+        if isinstance(tree, MaltTree) and tree.is_active():
             src_path = tree.get_library_path()
             if src_path:
                 if src_path in __LIBRARIES:
@@ -324,7 +328,7 @@ def track_library_changes(force_update=False, is_initial_setup=False):
         
     if is_initial_setup == False and max(len(needs_update), len(updated_graphs)) > 0:
         for tree in bpy.data.node_groups:
-            if isinstance(tree, MaltTree):
+            if isinstance(tree, MaltTree) and tree.is_active():
                 src_path = tree.get_library_path()
                 if tree.graph_type in updated_graphs or (src_path and src_path in needs_update):
                     tree.reload_nodes()
