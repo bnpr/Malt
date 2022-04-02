@@ -42,6 +42,9 @@ class Preferences(bpy.types.AddonPreferences):
     plugins_dir : bpy.props.StringProperty(name="Global Plugins", subtype='DIR_PATH',
         set=malt_path_setter('plugins_dir'), get=malt_path_getter('plugins_dir'))
     
+    docs_path : bpy.props.StringProperty(name="Docs Path", subtype='DIR_PATH',
+        set=malt_path_setter('docs_path'), get=malt_path_getter('docs_path'))
+    
     render_fps_cap : bpy.props.IntProperty(name="Max Viewport Render Framerate", default=30)
     
     def update_debug_mode(self, context):
@@ -68,7 +71,9 @@ class Preferences(bpy.types.AddonPreferences):
         layout.prop(self, "setup_vs_code")
         layout.prop(self, "renderdoc_path")
         layout.prop(self, "render_fps_cap")
+        layout.label(text='Developer Settings :')
         layout.prop(self, "debug_mode")
+        layout.prop(self, "docs_path")
 
 
 _VS_CODE_SETTINGS = '''

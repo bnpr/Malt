@@ -8,6 +8,11 @@ from Malt.Scene import TextureShaderResource
 from Malt.Pipelines.NPR_Pipeline.NPR_LightShaders import NPR_LightShaders
 
 class PrePass(PipelineNode):
+    """
+    Renders the scene geometry using the *Mesh Pre Pass*.  
+    The node sockets are dynamic, based on the *Pre Pass Custom IO*.  
+    If *Normal Depth/ID* is empty, the *PrePass* *Normal Depth/ID* will be used.
+    """
 
     def __init__(self, pipeline):
         PipelineNode.__init__(self, pipeline)

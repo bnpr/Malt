@@ -2,7 +2,10 @@
 #define COMMON_COLOR_GLSL
 
 /*  META
-    @blend:default=vec4(0);
+    @meta:doc=
+    Blends the blend color as a layer over the base color.;
+    @blend:default=vec4(0); doc=
+    The blend color.;
 */
 vec4 alpha_blend(vec4 base, vec4 blend)
 {

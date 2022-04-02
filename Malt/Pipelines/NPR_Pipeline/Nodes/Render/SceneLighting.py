@@ -7,6 +7,9 @@ from Malt.Render import Lighting
 from Malt.Pipelines.NPR_Pipeline import NPR_Lighting
 
 class SceneLighting(PipelineNode):
+    """
+    Renders the shadow maps and attaches them along the scene lights data to the *Scene* shader resources.
+    """
 
     def __init__(self, pipeline):
         PipelineNode.__init__(self, pipeline)
@@ -15,27 +18,41 @@ class SceneLighting(PipelineNode):
         self.shadowmaps_opaque = NPR_Lighting.NPR_ShadowMaps()
         self.shadowmaps_transparent = NPR_Lighting.NPR_TransparentShadowMaps()
         self.common_buffer = Common.CommonBuffer()
-    
+
     @classmethod
     def reflect_inputs(cls):
         inputs = {}
         inputs['Scene'] = Parameter('Scene', Type.OTHER)
-        inputs['Point Resolution'] = Parameter(2048, Type.INT)
+        inputs['Point Resolution'] = Parameter(2048, Type.INT, doc=
+            "Shadowmap resolution for point lights *(for each cubemap side)*.")
         inputs['Point Resolution @ Preview'] = Parameter(512, Type.INT)
-        inputs['Spot Resolution'] = Parameter(2048, Type.INT)
+        
+        inputs['Spot Resolution'] = Parameter(2048, Type.INT, doc=
+            "Shadowmap resolution for spot lights.")
         inputs['Spot Resolution @ Preview'] = Parameter(512, Type.INT)
-        inputs['Sun Resolution'] = Parameter(2048, Type.INT)
-        inputs['Sun Max Distance'] = Parameter(100, Type.FLOAT)
+        
+        inputs['Sun Resolution'] = Parameter(2048, Type.INT, doc=
+            "Shadowmap resolution for sun light lights *(for each cascade side)*.")
+        
+        inputs['Sun Max Distance'] = Parameter(100, Type.FLOAT,doc="""
+            The maximum distance from the view origin at which objects will still cast shadows.
+            The lower the value, the higher the perceived resolution.""")
         inputs['Sun Max Distance @ Preview'] = Parameter(25, Type.FLOAT)
-        inputs['Sun CSM Count'] = Parameter(4, Type.INT)
+        
+        inputs['Sun CSM Count'] = Parameter(4, Type.INT, doc=
+            "The number of [Shadow Cascades](https://docs.microsoft.com/en-us/windows/win32/dxtecharts/cascaded-shadow-maps#cascaded-shadow-maps-and-perspective-aliasing) for sun lights.")
         inputs['Sun CSM Count @ Preview'] = Parameter(2, Type.INT)
-        inputs['Sun CSM Distribution'] = Parameter(0.9, Type.FLOAT)
+        
+        inputs['Sun CSM Distribution'] = Parameter(0.9, Type.FLOAT, doc="""
+            Interpolates the cascades distribution along the view distance between linear distribution *(at 0)* and logarithmic distribution *(at 1)*.  
+            The appropriate value depends on camera FOV and scene characteristics.""")
         return inputs
     
     @classmethod
     def reflect_outputs(cls):
         outputs = {}
-        outputs['Scene'] = Parameter('Scene', Type.OTHER)
+        outputs['Scene'] = Parameter('Scene', Type.OTHER, doc=
+            "The scene with the light data already loaded in the shader resources.")
         return outputs
 
     def execute(self, parameters):

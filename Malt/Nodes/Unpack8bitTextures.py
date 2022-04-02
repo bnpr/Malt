@@ -7,6 +7,11 @@ _UNPACK_SRC = """
 _UNPACK_SHADER = None
 
 class Unpack8bitTextures(PipelineNode):
+
+    """
+    Unpacks up to 4 textures packed into a single one using the *pack_8bit* shader function.  
+    *(Useful when a shader needs to output more than 8 textures)*
+    """
     
     def __init__(self, pipeline):
         self.pipeline = pipeline

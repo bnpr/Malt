@@ -1,0 +1,84 @@
+site_name: Malt
+
+site_url: https://malt3d.com
+site_author: Miguel Pozo
+site_description: Malt Render Engine
+repo_name: cd bnpr/Malt
+repo_url: https://github.com/bnpr/Malt
+docs_dir: ../docs/
+#edit_uri: ""
+
+nav:
+  - 'index.md'
+  - 'Documentation':
+    - 'Documentation/Getting Started.md'
+    - 'Documentation/Settings.md'
+    - 'Documentation/Graphs.md'
+    - 'Reference':
+      - 'reference/settings.md'
+      - 'reference/Mesh-graph.md'
+      - 'reference/Screen-graph.md'
+      - 'reference/Light-graph.md'
+      - 'reference/Render-graph.md'
+      - 'reference/Render Layer-graph.md'
+    - 'Documentation/Plugins.md'
+    - 'Documentation/Tooling.md'
+  #- 'Developer Documentation' : 'https://github.com/bnpr/Malt/tree/Development/Malt#malt'
+  - 'Discussions - Q&A' : 'https://github.com/bnpr/Malt/discussions'
+  - 'Patreon' : 'https://patreon.com/pragma37'
+  - 'Download' : 'https://github.com/bnpr/Malt/releases/tag/Release-latest'
+
+theme:
+  name: material
+  custom_dir: ../docs/overrides
+  logo: images/cube-solid.svg
+  favicon: images/cube-solid.svg
+  features:
+    - navigation.instant
+    #- navigation.tracking
+    - navigation.tabs
+    #- toc.integrate
+  palette:
+    - scheme: slate
+      primary: teal
+      toggle:
+        icon: material/toggle-switch-off-outline
+        name: Switch to light mode
+    - scheme: default
+      primary: teal
+      toggle:
+        icon: material/toggle-switch
+        name: Switch to dark mode
+
+extra_css:
+  - extra/extra.css
+
+extra_javascript:
+  - extra/extra.js
+
+markdown_extensions:
+  - attr_list
+  - pymdownx.highlight:
+      use_pygments: true
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+
+extra:
+  generator: false
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/bnpr/Malt
+    - icon: fontawesome/brands/youtube
+      link: https://www.youtube.com/channel/UCNjoz44PbgbQPqFrqy7Y4mg
+    - icon: fontawesome/brands/twitter
+      link: https://twitter.com/pragma37
+    - icon: fontawesome/brands/patreon
+      link: https://www.patreon.com/pragma37
+

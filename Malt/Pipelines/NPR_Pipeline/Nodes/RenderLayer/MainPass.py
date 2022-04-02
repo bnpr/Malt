@@ -6,6 +6,11 @@ from Malt.PipelineParameters import Parameter, Type
 from Malt.Scene import TextureShaderResource
 
 class MainPass(PipelineNode):
+    """
+    Renders the scene geometry using the *Mesh Main Pass*.  
+    The node sockets are dynamic, based on the *Main Pass Custom IO*.  
+    If *Normal Depth/ID* is empty, the *Pre Pass* *Normal Depth/ID* will be used.
+    """
 
     def __init__(self, pipeline):
         PipelineNode.__init__(self, pipeline)

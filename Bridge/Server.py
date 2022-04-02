@@ -251,7 +251,7 @@ class Viewport():
 PROFILE = False
 
 def main(pipeline_path, viewport_bit_depth, connection_addresses,
-    shared_dic, lock, log_path, debug_mode, plugins_paths):
+    shared_dic, lock, log_path, debug_mode, plugins_paths, docs_path):
     log_level = LOG.DEBUG if debug_mode else LOG.INFO
     setup_logging(log_path, log_level)
     LOG.info('DEBUG MODE: {}'.format(debug_mode))
@@ -290,6 +290,15 @@ def main(pipeline_path, viewport_bit_depth, connection_addresses,
 
     pipeline_class = module.PIPELINE
     pipeline_class.SHADER_INCLUDE_PATHS.append(pipeline_dir)
+    
+    if docs_path: #build docs before loading plugins
+        from . import Docs
+        try:
+            Docs.build_docs(pipeline_class(), docs_path)
+        except:
+            import traceback
+            traceback.print_exc()
+    
     plugins = []
     for dir in plugins_paths:
         plugins += load_plugins_from_dir(dir)

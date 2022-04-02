@@ -7,6 +7,10 @@ from Malt.PipelineParameters import Parameter, Type
 _SHADER = None
 
 class LineRender(PipelineNode):
+    """
+    Expands the line up to the width especified in the *Line Width* texture
+    and composites it on top of the *Color* texture.
+    """
 
     def __init__(self, pipeline):
         PipelineNode.__init__(self, pipeline)
@@ -18,8 +22,12 @@ class LineRender(PipelineNode):
         inputs['Color'] = Parameter('', Type.TEXTURE)
         inputs['Line Color'] = Parameter('', Type.TEXTURE)
         inputs['Line Width'] = Parameter('', Type.TEXTURE)
-        inputs['Max Width'] = Parameter(10, Type.INT)
-        inputs['Line Scale'] = Parameter(1.0, Type.FLOAT)
+        inputs['Max Width'] = Parameter(10, Type.INT, doc="""
+            The maximum width the shader can render.
+            Increasing the value lowers the render performance.""")
+        inputs['Line Scale'] = Parameter(1.0, Type.FLOAT, doc="""
+            Scale all Line Width values with this one.  
+            *(Useful for rendering at different resolutions)*""")
         inputs['Normal Depth'] = Parameter('', Type.TEXTURE)
         inputs['ID'] = Parameter('', Type.TEXTURE)
         return inputs

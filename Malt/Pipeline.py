@@ -46,10 +46,28 @@ class Pipeline():
     
     def setup_parameters(self):
         self.parameters = PipelineParameters()
-        self.parameters.mesh['double_sided'] = Parameter(False, Type.BOOL)
-        self.parameters.mesh['precomputed_tangents'] = Parameter(False, Type.BOOL)
-        self.parameters.world['Material.Default'] = MaterialParameter('', '.mesh.glsl')
-        self.parameters.world['Material.Override'] = MaterialParameter('', '.mesh.glsl')
+        
+        self.parameters.mesh['double_sided'] = Parameter(False, Type.BOOL, doc=
+            "Disables backface culling, so geometry is rendered from both sides.")
+        
+        self.parameters.mesh['precomputed_tangents'] = Parameter(False, Type.BOOL, doc="""
+            Load precomputed mesh tangents *(needed for improvinng normal mapping quality on low poly meshes)*. 
+            It's disabled by default since it slows down mesh loading in Blender.  
+            When disabled, the *tangents* are calculated on the fly from the *pixel shader*.""")
+        
+        self.parameters.world['Material.Default'] = MaterialParameter('', '.mesh.glsl', doc=
+            "The default material, used for objects with no material assigned.")
+        
+        self.parameters.world['Material.Override'] = MaterialParameter('', '.mesh.glsl', doc=
+            "When set, overrides all scene materials with this one.")
+        
+        self.parameters.world['Viewport.Resolution Scale'] = Parameter(1.0 , Type.FLOAT, doc="""
+            A multiplier for the viewport resolution.
+            It can be lowered to improve viewport performance or for specific styles, like *pixel art*."""
+        )
+        self.parameters.world['Viewport.Smooth Interpolation'] = Parameter(True , Type.BOOL, doc="""
+            The interpolation mode used when *Resolution Scale* is not 1.
+            Toggles between *Nearest/Bilinear* interpolation.""")
     
     def get_parameters(self):
         return self.parameters

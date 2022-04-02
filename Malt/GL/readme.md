@@ -21,11 +21,8 @@ The MeshCustomLoad class doesn't do any loading by itself. It's reserved for cas
 ## [Shader.py](Shader.py)
 
 Builds OpenGL programs from GLSL vertex and fragment shader source code and provides an interface for reflection and configuration of shader parameters.  
-It stores compilation errors (if any) and [glslangValidator](https://github.com/KhronosGroup/glslang) results if it's present on the OS PATH.  
 
-> 💡 Installing [glslangValidator](https://github.com/KhronosGroup/glslang) is encouraged to make sure your shaders work across different driver implementations.  
-
-The *shader_preprocessor* function parses source code with a C preprocessor ([pcpp](https://pypi.org/project/pcpp/)) to provide support for *#include directives* in glsl shaders.  
+The *shader_preprocessor* function parses source code with a C preprocessor to provide support for *#include directives* in glsl shaders.  
 
 * [OpenGL Wiki - GLSL Objects](https://www.khronos.org/opengl/wiki/GLSL_Object)
 * [Learn OpenGL - Shaders](https://learnopengl.com/Getting-started/Shaders)
@@ -65,7 +62,6 @@ indices=[
 mesh = Mesh(positions, indices)
 
 vertex_source='''
-#version 410 core
 layout (location = 0) in vec3 POSITION;
 void main()
 {
@@ -74,7 +70,6 @@ void main()
 '''
 
 pixel_source='''
-#version 410 core
 layout (location = 0) out vec4 RESULT;
 uniform vec4 color = vec4(1,0,0,1);
 void main()

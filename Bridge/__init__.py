@@ -5,7 +5,7 @@ def reload():
         importlib.reload(module)
 
 def start_server(pipeline_path, viewport_bit_depth, connection_addresses, 
-    shared_dic, lock, log_path, debug_mode, renderdoc_path, plugins_paths):
+    shared_dic, lock, log_path, debug_mode, renderdoc_path, plugins_paths, docs_path):
     import os, sys
     # Trying to change process prioriy in Linux seems to hang Malt for some users
     if sys.platform == 'win32':
@@ -18,7 +18,7 @@ def start_server(pipeline_path, viewport_bit_depth, connection_addresses,
     from . import Server
     try:
         Server.main(pipeline_path, viewport_bit_depth, connection_addresses,
-            shared_dic, lock, log_path, debug_mode, plugins_paths)
+            shared_dic, lock, log_path, debug_mode, plugins_paths, docs_path)
     except:
         import traceback, logging as LOG
         LOG.error(traceback.format_exc())

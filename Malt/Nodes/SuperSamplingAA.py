@@ -6,6 +6,10 @@ from Malt.PipelineParameters import Parameter, Type
 
 class SuperSamplingAA(PipelineNode):
 
+    """
+    Performs anti-aliasing by accumulating multiple render samples into a single texture.
+    """
+
     def __init__(self, pipeline):
         PipelineNode.__init__(self, pipeline)
         self.resolution = None

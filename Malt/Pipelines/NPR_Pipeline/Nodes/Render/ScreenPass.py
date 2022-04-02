@@ -7,6 +7,10 @@ from Malt.Scene import TextureShaderResource
 
 
 class ScreenPass(PipelineNode):
+    """
+    Renders a full screen shader pass.  
+    The node sockets are dynamic, based on the shader selected.
+    """
 
     def __init__(self, pipeline):
         PipelineNode.__init__(self, pipeline)

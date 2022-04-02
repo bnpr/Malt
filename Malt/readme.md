@@ -24,7 +24,7 @@ The *render* function takes a *Scene* and must return the rendered result as a *
 ### Scene
 
 The [*Scene*](Scene.py) class makes as little assumptions as posible about the data needed by the *Pipeline*.  
-Instead, the *Pipeline* can declare custom [*Parameters*](Parameter.py) for each *Scene* object type.  
+Instead, the *Pipeline* can declare custom [*Parameters*](PipelineParameters.py) for each *Scene* object type.  
 The host is responsible for exposing those parameters so users can edit them.
 
 ### Materials
@@ -38,7 +38,7 @@ By default *Pipelines* declares the *VERTEX_SHADER* define when generating the *
 
 ### Implementing a Pipeline
 
-The way to implement a custom *Pipeline* is by creating a new *class* that inherits the *Pipeline* *class*. The *Host* is resposible for detecting all *Pipeline* *subclasses* and expose them to the user.
+Custom *Pipelines* can be implemented by creating a new *class* that inherits the *Pipeline* *class*. The pipeline can then be loaded from the *Host* settings.
 
 The main functions to override are:
 

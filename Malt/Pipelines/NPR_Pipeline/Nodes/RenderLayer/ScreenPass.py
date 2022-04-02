@@ -7,6 +7,11 @@ from Malt.Scene import TextureShaderResource
 
 
 class ScreenPass(PipelineNode):
+    """
+    Renders a full screen shader pass.  
+    The node sockets are dynamic, based on the shader selected.  
+    If *Normal Depth/ID* is empty, the *PrePass* *Normal Depth/ID* will be used.
+    """
 
     def __init__(self, pipeline):
         PipelineNode.__init__(self, pipeline)
@@ -22,7 +27,10 @@ class ScreenPass(PipelineNode):
     @classmethod
     def reflect_inputs(cls):
         inputs = {}
-        inputs['Layer Only'] = Parameter(True, Type.BOOL)
+        inputs['Layer Only'] = Parameter(True, Type.BOOL, doc="""
+            Draw only on top of the current layer geometry,
+            to avoid accidentally covering previous layers.
+        """)
         inputs['Scene'] = Parameter('Scene', Type.OTHER)
         inputs['Normal Depth'] = Parameter('', Type.TEXTURE)
         inputs['ID'] = Parameter('', Type.TEXTURE)

@@ -28,7 +28,7 @@ class IOCapture(io.StringIO):
 
 class Bridge():
 
-    def __init__(self, pipeline_path, viewport_bit_depth=8, debug_mode=False, renderdoc_path=None, plugins_paths=[]):
+    def __init__(self, pipeline_path, viewport_bit_depth=8, debug_mode=False, renderdoc_path=None, plugins_paths=[], docs_path=None):
         super().__init__()
 
         import sys
@@ -87,6 +87,7 @@ class Bridge():
             'debug_mode': debug_mode,
             'renderdoc_path': renderdoc_path,
             'plugins_paths': plugins_paths,
+            'docs_path': docs_path,
         })
         self.process.daemon = True
         self.process.start()

@@ -1,0 +1,28 @@
+/* https://github.com/squidfunk/mkdocs-material/issues/1635#issuecomment-811058692 */
+
+[data-md-color-scheme="slate"] {
+    --md-default-bg-color: #24272e;
+}
+
+/*Disable the edit button*/
+.md-content__button {
+    display: none;
+}
+
+.zoom {
+    /*transition: transform ease-in-out 0.5s;*/
+    cursor: zoom-in;
+}
+
+.image-zoom-large {
+    width: auto;
+    max-width: 100vw;
+    max-height: 100vh;
+    /*transform: scale(1.5);*/
+    cursor: zoom-out;
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+    z-index: 100;
+    position: absolute;
+    left: 50%;
+    transform: translate(-50%, 0);
+}

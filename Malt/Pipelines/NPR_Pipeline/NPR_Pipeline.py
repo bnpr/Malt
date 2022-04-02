@@ -72,16 +72,38 @@ class NPR_Pipeline(Pipeline):
     
     def setup_parameters(self):
         super().setup_parameters()
-        self.parameters.world['Samples.Grid Size'] = Parameter(8, Type.INT)
+        self.parameters.world['Samples.Grid Size'] = Parameter(8, Type.INT, doc="""
+            The number of render samples per side in the sampling grid. 
+            The total number of samples is the square of this value minus the samples that fall outside the sampling radius.  
+            Higher values will provide cleaner renders at the cost of increased render times.""")
+        
         self.parameters.world['Samples.Grid Size @ Preview'] = Parameter(4, Type.INT)
-        self.parameters.world['Samples.Width'] = Parameter(1.0, Type.FLOAT)
+        
+        self.parameters.world['Samples.Width'] = Parameter(1.0, Type.FLOAT, doc="""
+            The width (and height) of the sampling grid. 
+            Larger values will result in smoother/blurrier images while lower values will result in sharper/more aliased ones. 
+            Keep it withing the 1-2 range for best results.""")
+        
         defaults_path = os.path.join(os.path.dirname(__file__), 'Defaults', 'defaults')
-        self.parameters.world['Material.Default'] = MaterialParameter((defaults_path, 'Malt - Default Mesh Material'), '.mesh.glsl')
-        self.parameters.world['Render'] = GraphParameter((defaults_path, 'Default Render'), 'Render')
-        self.parameters.light['Light Group'] = Parameter(1, Type.INT)
-        self.parameters.light['Shader'] = MaterialParameter('', '.light.glsl')
-        self.parameters.material['Light Groups.Light'] = Parameter([1,0,0,0], Type.INT, 4, '.mesh.glsl')
-        self.parameters.material['Light Groups.Shadow'] = Parameter([1,0,0,0], Type.INT, 4, '.mesh.glsl')
+        
+        self.parameters.world['Material.Default'] = MaterialParameter((defaults_path, 'Malt - Default Mesh Material'), '.mesh.glsl',
+            doc = self.parameters.world['Material.Default'].doc)
+        
+        self.parameters.world['Render'] = GraphParameter((defaults_path, 'Default Render'), 'Render', doc="""
+            The *Render Node Tree* used to render the scene. 
+            See [Render & Render Layers](#Render & Render Layers) for more info.""")
+        
+        self.parameters.light['Light Group'] = Parameter(1, Type.INT, doc=
+            "Lights only affect materials with a matching *Light Group* value.")
+        
+        self.parameters.light['Shader'] = MaterialParameter('', '.light.glsl', doc=
+            "When set, the *Material* with a custom *Light Shader* or *Light Node Tree* that will be used to render this light.")
+        
+        self.parameters.material['Light Groups.Light'] = Parameter([1,0,0,0], Type.INT, 4, '.mesh.glsl', doc=
+            "The *Light Groups* (up to 4) that lit this material.")
+        
+        self.parameters.material['Light Groups.Shadow'] = Parameter([1,0,0,0], Type.INT, 4, '.mesh.glsl', doc=
+            "The *Light Groups* (up to 4) that this material casts shadows on.")
     
     def setup_graphs(self):
         super().setup_graphs()

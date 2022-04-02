@@ -49,17 +49,15 @@ class MaltPipeline(bpy.types.PropertyGroup):
         if os.path.exists(plugin_dir):
             plugin_dirs.append(plugin_dir)
         
+        docs_path = preferences.docs_path
+        docs_path = docs_path if os.path.exists(docs_path) else None
+        
         path = bpy.path.abspath(pipeline, library=self.id_data.library)
         import Bridge
-        bridge = Bridge.Client_API.Bridge(path, int(self.viewport_bit_depth), debug_mode, renderdoc_path, plugin_dirs)
+        bridge = Bridge.Client_API.Bridge(path, int(self.viewport_bit_depth), debug_mode, renderdoc_path, plugin_dirs, docs_path)
         from Malt.Utils import LOG
         LOG.info('Blender {} {} {}'.format(bpy.app.version_string, bpy.app.build_branch, bpy.app.build_hash))
         params = bridge.get_parameters()
-        
-        #BlenderMalt parameters
-        from Malt.PipelineParameters import Parameter, Type
-        params.world['Viewport.Resolution Scale'] = Parameter(1.0 , Type.FLOAT)
-        params.world['Viewport.Smooth Interpolation'] = Parameter(True , Type.BOOL)
 
         global _BRIDGE, _PIPELINE_PARAMETERS, _WORLD
         _BRIDGE = bridge

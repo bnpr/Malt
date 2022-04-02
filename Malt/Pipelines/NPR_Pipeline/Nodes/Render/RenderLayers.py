@@ -7,6 +7,10 @@ from Malt.PipelineParameters import Parameter, Type
 _BLEND_TRANSPARENCY_SHADER = None
 
 class RenderLayers(PipelineNode):
+    """
+    Renders the scene geometry, using multiple *depth peeling* layers for transparent objects.  
+    The node sockets are dynamic, based on the graph selected.  
+    """
 
     def __init__(self, pipeline):
         PipelineNode.__init__(self, pipeline)
@@ -23,7 +27,10 @@ class RenderLayers(PipelineNode):
     def reflect_inputs(cls):
         inputs = {}
         inputs['Scene'] = Parameter('Scene', Type.OTHER)
-        inputs['Transparent Layers'] = Parameter(4, Type.INT)
+        inputs['Transparent Layers'] = Parameter(4, Type.INT, doc="""
+            The maximum number of overlapping transparency layers.  
+            Incresing this values lowers performance.
+        """)
         inputs['Transparent Layers @ Preview'] = Parameter(2, Type.INT)
         return inputs
     
