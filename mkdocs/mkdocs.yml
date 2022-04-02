@@ -3,7 +3,7 @@ site_name: Malt
 site_url: https://malt3d.com
 site_author: Miguel Pozo
 site_description: Malt Render Engine
-repo_name: cd bnpr/Malt
+repo_name: bnpr/Malt
 repo_url: https://github.com/bnpr/Malt
 docs_dir: ../docs/
 #edit_uri: ""
