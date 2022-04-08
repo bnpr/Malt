@@ -13,6 +13,9 @@ class MaltLight(bpy.types.PropertyGroup):
 
     strength : bpy.props.FloatProperty(name='Strength', default=1)
     
+    override_global_settings : bpy.props.BoolProperty(name='Override Global Settings', default=False)
+    max_distance : bpy.props.FloatProperty(name='Max Distance', default=100)
+
     radius : bpy.props.FloatProperty(
         name='Radius',
         default=5,
@@ -38,6 +41,10 @@ class MaltLight(bpy.types.PropertyGroup):
     def draw_ui(self, layout):
         layout.prop(self.id_data, 'color')
         layout.prop(self, 'strength')
+        if self.id_data.type == 'SUN':
+            layout.prop(self, 'override_global_settings')
+            if self.override_global_settings:
+                layout.prop(self, 'max_distance')
         if self.id_data.type != 'SUN':
             layout.prop(self, 'radius')
         if self.id_data.type == 'SPOT':

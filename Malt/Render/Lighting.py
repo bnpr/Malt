@@ -197,7 +197,11 @@ class LightsBuffer():
                 projection_matrix = pyrr.Matrix44(scene.camera.projection_matrix)
                 view_matrix = projection_matrix * pyrr.Matrix44(scene.camera.camera_matrix)
 
-                cascades_matrices = get_sun_cascades(sun_matrix, projection_matrix, view_matrix, cascades_count, cascades_distribution_scalar, cascades_max_distance)
+                max_distance = cascades_max_distance
+                if light.sun_max_distance != 0:
+                    max_distance = light.sun_max_distance
+                
+                cascades_matrices = get_sun_cascades(sun_matrix, projection_matrix, view_matrix, cascades_count, cascades_distribution_scalar, max_distance)
                 
                 self.suns[light] = []
                 for i, cascade in enumerate(cascades_matrices):

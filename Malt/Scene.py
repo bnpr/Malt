@@ -34,6 +34,7 @@ class Light():
         self.parameters = {}
         self.position = (0,0,0)
         self.direction = (0,0,0)
+        self.sun_max_distance = 0
         self.spot_angle = 0
         self.spot_blend = 0
         self.radius = 0

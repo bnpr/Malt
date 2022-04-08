@@ -161,6 +161,8 @@ class MaltRenderEngine(bpy.types.RenderEngine):
                 light.color = tuple(obj.data.color * malt_light.strength)
                 light.position = tuple(obj.matrix_world.translation)
                 light.direction = tuple(obj.matrix_world.to_quaternion() @ Vector((0.0,0.0,-1.0)))
+                if malt_light.override_global_settings:
+                    light.sun_max_distance = malt_light.max_distance
                 light.radius = malt_light.radius
                 light.spot_angle = malt_light.spot_angle
                 light.spot_blend = malt_light.spot_blend_angle
