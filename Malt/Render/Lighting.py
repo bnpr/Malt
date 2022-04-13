@@ -346,7 +346,7 @@ def sun_shadowmap_matrix(sun_from_world_matrix, view_from_world_matrix, near, fa
     center = (aabb['min'] + aabb['max']) / 2.0
     center = pyrr.Vector3(center.tolist()[:3])
 
-    scale = pyrr.Matrix44.from_scale(size)
+    scale = pyrr.Matrix44.from_scale(size / 2.0)
     translate = pyrr.Matrix44.from_translation(center)
     
     matrix = translate * world_from_light_space * scale
