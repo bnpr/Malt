@@ -67,9 +67,13 @@ class SceneLighting(PipelineNode):
         opaque_batches, transparent_batches = self.pipeline.get_scene_batches(scene)
 
         self.lights_buffer.load(scene, 
+            inputs['Spot Resolution'],
+            inputs['Sun Resolution'],
+            inputs['Point Resolution'],
             inputs['Sun CSM Count'], 
             inputs['Sun CSM Distribution'],
-            inputs['Sun Max Distance'], sample_offset)
+            inputs['Sun Max Distance'],
+            sample_offset)
         self.light_groups_buffer.load(scene)
         self.shadowmaps_opaque.load(scene,
             inputs['Spot Resolution'],
@@ -86,13 +90,13 @@ class SceneLighting(PipelineNode):
         shader_resources['COMMON_UNIFORMS'] = self.common_buffer
         shader_resources['SCENE_LIGHTS'] = self.lights_buffer
 
-        def render_shadowmaps(lights, fbos_opaque, fbos_transparent, sample_offset = sample_offset):
+        def render_shadowmaps(lights, fbos_opaque, fbos_transparent):
             for light_index, light_matrices_pair in enumerate(lights.items()):
                 light, matrices = light_matrices_pair
                 for matrix_index, camera_projection_pair in enumerate(matrices): 
                     camera, projection = camera_projection_pair
                     i = light_index * len(matrices) + matrix_index
-                    self.common_buffer.load(scene, fbos_opaque[i].resolution, sample_offset, self.pipeline.sample_count, camera, projection)
+                    self.common_buffer.load(scene, fbos_opaque[i].resolution, (0,0), self.pipeline.sample_count, camera, projection)
                     def get_light_group_batches(batches):
                         result = {}
                         for material, meshes in batches.items():
@@ -114,7 +118,7 @@ class SceneLighting(PipelineNode):
         glDisable(GL_DEPTH_CLAMP)
 
         render_shadowmaps(self.lights_buffer.points,
-            self.shadowmaps_opaque.point_fbos, self.shadowmaps_transparent.point_fbos, (0,0))
+            self.shadowmaps_opaque.point_fbos, self.shadowmaps_transparent.point_fbos)
         
         import copy
         scene = copy.copy(scene)

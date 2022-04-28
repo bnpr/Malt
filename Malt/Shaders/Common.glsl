@@ -22,7 +22,7 @@ layout(std140) uniform COMMON_UNIFORMS
     uniform mat4 CAMERA;
     uniform mat4 PROJECTION;
     uniform ivec2 RESOLUTION;
-    uniform vec2 SAMPLE_OFFSET;
+    uniform vec2 SAMPLE_OFFSET; //Sample offset is already baked into PROJECTION.
     uniform int SAMPLE_COUNT;
     uniform int FRAME;
     uniform float TIME;
@@ -81,8 +81,6 @@ layout (location = 10) in vec4 in_color3;
 void VERTEX_SETUP_OUTPUT()
 {
     gl_Position = PROJECTION * CAMERA * vec4(POSITION, 1);
-    //Screen-Space offset for Temporal Super-Sampling 
-    gl_Position.xy += (SAMPLE_OFFSET / vec2(RESOLUTION)) * gl_Position.w;
 
     IO_POSITION = POSITION;
     IO_NORMAL = NORMAL;

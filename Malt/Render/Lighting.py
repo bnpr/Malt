@@ -10,6 +10,8 @@ from Malt.GL.RenderTarget import ArrayLayerTarget, RenderTarget
 
 from Malt import Pipeline
 
+from Malt.Render.Common import bake_sample_offset
+
 _LIGHTS_BUFFER = None
 
 def get_lights_buffer():
@@ -156,7 +158,10 @@ class LightsBuffer():
         self.suns = None
         self.points = None
     
-    def load(self, scene, cascades_count, cascades_distribution_scalar, cascades_max_distance=1.0, sample_offset=(0,0)):
+    def load(
+        self, scene, spot_resolution, sun_resolution, point_resolution,
+        cascades_count, cascades_distribution_scalar, cascades_max_distance=1.0, sample_offset=(0,0)
+    ):
         #TODO: Automatic distribution exponent basedd on FOV
 
         spot_count=0
@@ -181,7 +186,8 @@ class LightsBuffer():
             if light.type == LIGHT_SPOT:
                 self.data.lights[i].type_index = spot_count
 
-                projection_matrix = make_projection_matrix(light.spot_angle,1,0.01,light.radius)
+                projection_matrix = make_projection_matrix(light.spot_angle,1,0.01,light.radius,
+                    sample_offset,(spot_resolution, spot_resolution))
                 spot_matrix = projection_matrix * pyrr.Matrix44(light.matrix)
                 
                 self.data.spot_matrices[spot_count] = flatten_matrix(spot_matrix)
@@ -194,21 +200,21 @@ class LightsBuffer():
                 self.data.lights[i].type_index = sun_count
 
                 sun_matrix = pyrr.Matrix44(light.matrix)
-                projection_matrix = pyrr.Matrix44(scene.camera.projection_matrix)
+                projection_matrix = [*scene.camera.projection_matrix]
+                projection_matrix = pyrr.Matrix44(projection_matrix)
                 view_matrix = projection_matrix * pyrr.Matrix44(scene.camera.camera_matrix)
 
                 max_distance = cascades_max_distance
                 if light.sun_max_distance != 0:
                     max_distance = light.sun_max_distance
                 
-                cascades_matrices = get_sun_cascades(sun_matrix, projection_matrix, view_matrix, cascades_count, cascades_distribution_scalar, max_distance)
-                
+                cascades_matrices = get_sun_cascades(sun_matrix, projection_matrix, view_matrix, cascades_count, cascades_distribution_scalar, max_distance, sample_offset, sun_resolution)
+
                 self.suns[light] = []
                 for i, cascade in enumerate(cascades_matrices):
-                    cascade = flatten_matrix(cascade)
-                    self.data.sun_matrices[sun_count * cascades_count + i] = cascade
-                    
-                    self.suns[light].append((cascade, flatten_matrix(pyrr.Matrix44.identity())))
+                    matrix = pyrr.Matrix44(cascade[1])*pyrr.Matrix44(cascade[0])
+                    self.data.sun_matrices[sun_count * cascades_count + i] = flatten_matrix(matrix)
+                    self.suns[light].append(cascade)
 
                 sun_count+=1
             
@@ -233,7 +239,8 @@ class LightsBuffer():
                     matrices.append(pyrr.Matrix44.look_at(position, position + front, up))
                 self.data.point_matrices[point_count] = flatten_matrix((offset_matrix * rotation_matrix).inverse)
 
-                projection_matrix = make_projection_matrix(math.pi / 2.0, 1.0, 0.01, light.radius)
+                projection_matrix = make_projection_matrix(math.pi / 2.0, 1.0, 0.01, light.radius, 
+                    (0,0), (point_resolution, point_resolution))
 
                 self.points[light] = []
                 for i in range(6):
@@ -259,18 +266,20 @@ def flatten_matrix(matrix):
 
 
 #TODO: Hard-coded for Blender conventions for now
-def make_projection_matrix(fov, aspect_ratio, near, far):
+def make_projection_matrix(fov, aspect_ratio, near, far, sample_offset, resolution):
     x_scale = 1.0 / math.tan(fov / 2.0)
     y_scale = x_scale * aspect_ratio
-    return pyrr.Matrix44([
+    matrix = [
         x_scale, 0, 0, 0,
         0, y_scale, 0, 0,
         0, 0, (-(far + near)) / (far - near), -1,
         0, 0, (-2.0 * far * near) / (far - near), 0
-    ])
+    ]
+    bake_sample_offset(matrix, sample_offset, resolution)
+    return pyrr.Matrix44(matrix)
 
 
-def get_sun_cascades(sun_from_world_matrix, projection_matrix, view_from_world_matrix, cascades_count, cascades_distribution_scalar, cascades_max_distance):
+def get_sun_cascades(sun_from_world_matrix, projection_matrix, view_from_world_matrix, cascades_count, cascades_distribution_scalar, cascades_max_distance, sample_offset, resolution):
     cascades = []
     splits = []
 
@@ -302,7 +311,7 @@ def get_sun_cascades(sun_from_world_matrix, projection_matrix, view_from_world_m
     for i in range(1, len(splits)):
         near = splits[i-1]
         far = splits[i]
-        cascades.append(sun_shadowmap_matrix(sun_from_world_matrix, view_from_world_matrix, near, far))
+        cascades.append(sun_shadowmap_matrix(sun_from_world_matrix, view_from_world_matrix, near, far, sample_offset, resolution))
     
     return cascades
 
@@ -322,7 +331,7 @@ def frustum_corners(view_from_world_matrix, near, far):
     return corners
 
 
-def sun_shadowmap_matrix(sun_from_world_matrix, view_from_world_matrix, near, far):
+def sun_shadowmap_matrix(sun_from_world_matrix, view_from_world_matrix, near, far, sample_offset, resolution):
     INFINITY = float('inf')
     aabb = {
         'min': pyrr.Vector3([ INFINITY,  INFINITY,  INFINITY]),
@@ -346,17 +355,19 @@ def sun_shadowmap_matrix(sun_from_world_matrix, view_from_world_matrix, near, fa
     center = (aabb['min'] + aabb['max']) / 2.0
     center = pyrr.Vector3(center.tolist()[:3])
 
-    scale = pyrr.Matrix44.from_scale(size / 2.0)
     translate = pyrr.Matrix44.from_translation(center)
-    
-    matrix = translate * world_from_light_space * scale
+    matrix = translate * world_from_light_space
 
-    screen = pyrr.Matrix44([
-        1, 0, 0, 0,
-        0, 1, 0, 0,
-        0, 0,-1, 0,
-        0, 0, 0, 1
-    ])
+    o_x = sample_offset[0]/resolution
+    o_y = sample_offset[1]/resolution
 
-    return screen * matrix.inverse
+    scale = 1.0 / (size / 2.0)
+    screen = [
+        scale[0], 0, 0, 0,
+        0, scale[1], 0, 0,
+        0, 0,-scale[2], 0,
+        o_x, o_y, 0, 1
+    ]
+
+    return flatten_matrix(matrix.inverse), screen
 

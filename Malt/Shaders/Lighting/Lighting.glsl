@@ -165,7 +165,6 @@ ShadowData spot_shadow(vec3 position, Light light, sampler2DArray shadowmap, flo
     
     ShadowData S;
     S.light_space = project_point(LIGHTS.spot_matrices[light.type_index], position);
-    S.light_space.xy += (SAMPLE_OFFSET / shadowmap_size);    
     
     S.light_uv = S.light_space * 0.5 + 0.5;
     S.depth = texture(shadowmap, vec3(S.light_uv.xy, light.type_index)).x;
@@ -189,7 +188,6 @@ ShadowData sun_shadow(vec3 position, Light light, sampler2DArray shadowmap, floa
         int index = light.type_index * LIGHTS.cascades_count + c;
         
         S.light_space = project_point(LIGHTS.sun_matrices[index], position);
-        S.light_space.xy += (SAMPLE_OFFSET / shadowmap_size);
         
         S.light_uv = S.light_space * 0.5 + 0.5;
 

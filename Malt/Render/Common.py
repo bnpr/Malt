@@ -14,6 +14,18 @@ class C_CommonBuffer(ctypes.Structure):
         ('__padding', ctypes.c_int),
     ]
 
+def bake_sample_offset(projection_matrix, sample_offset, resolution):
+    offset_x = sample_offset[0] / resolution[0]
+    offset_y = sample_offset[1] / resolution[1]
+    if projection_matrix[-1] == 1.0:
+        #Orthographic camera
+        projection_matrix[12] += offset_x
+        projection_matrix[13] += offset_y
+    else:
+        #Perspective camera
+        projection_matrix[8] += offset_x
+        projection_matrix[9] += offset_y
+
 class CommonBuffer():
     
     def __init__(self):
@@ -28,6 +40,8 @@ class CommonBuffer():
         self.data.SAMPLE_COUNT = sample_count
         self.data.FRAME = scene.frame
         self.data.TIME = scene.time
+        
+        bake_sample_offset(self.data.PROJECTION, sample_offset, resolution)
 
         self.UBO.load_data(self.data)
     
