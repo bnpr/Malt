@@ -129,8 +129,8 @@ LineDetectionOutput line_detection(
         if
         (
             LINE_DEPTH_MODE == LINE_DEPTH_MODE_ANY ||
-            LINE_DEPTH_MODE == LINE_DEPTH_MODE_NEAR && depth < sampled_depth ||
-            LINE_DEPTH_MODE == LINE_DEPTH_MODE_FAR && depth > sampled_depth
+            LINE_DEPTH_MODE == LINE_DEPTH_MODE_NEAR && depth <= sampled_depth ||
+            LINE_DEPTH_MODE == LINE_DEPTH_MODE_FAR && depth >= sampled_depth
         )
         {
             result.delta_distance = max(result.delta_distance, delta_distance);

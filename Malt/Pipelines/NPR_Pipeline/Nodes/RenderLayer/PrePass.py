@@ -81,7 +81,7 @@ class PrePass(PipelineNode):
             'IN_TRANSPARENT_DEPTH': TextureShaderResource('IN_TRANSPARENT_DEPTH', self.t_transparent_depth),
             'IN_LAST_ID': TextureShaderResource('IN_LAST_ID', self.t_last_layer_id),
         })
-        self.fbo.clear([(0,0,1,1), (0,0,0,0)] + [(0,0,0,0)]*len(self.custom_targets), 1)
+        self.fbo.clear([(0,0,0,1), (0,0,0,0)] + [(0,0,0,0)]*len(self.custom_targets), 1)
 
         self.pipeline.draw_scene_pass(self.fbo, scene.batches, 'PRE_PASS', self.pipeline.default_shader['PRE_PASS'], shader_resources)
 
