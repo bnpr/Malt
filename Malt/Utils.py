@@ -49,3 +49,46 @@ def profile_function(function):
     
     return profiled_function
 
+# https://numpy.org/doc/stable/reference/arrays.interface.html
+class Array_Interface():
+    def __init__(self, pointer, typestr, shape, read_only=False):
+        self.__array_interface__ = {
+            'data': (pointer, read_only),
+            'typestr': typestr,
+            'shape': shape
+        }
+
+class IBuffer():
+
+    def ctype(self):
+        raise Exception('ctype() method not implemented')
+    
+    def __len__(self):
+        raise Exception('__len__() method not implemented')
+    
+    def buffer(self):
+        raise Exception('buffer() method not implemented')
+    
+    def size_in_bytes(self):
+        import ctypes
+        return ctypes.sizeof(self.ctype()) * len(self)
+    
+    def as_array_interface(self):
+        import ctypes
+        type_map = {
+            ctypes.c_float : 'f',
+            ctypes.c_int : 'i',
+            ctypes.c_uint : 'u',
+            ctypes.c_bool : 'b',
+        }
+        
+        return Array_Interface(
+            ctypes.addressof(self.buffer()),
+            type_map[self.ctype()],
+            (len(self),)
+        )
+    
+    def as_np_array(self):
+        import numpy as np
+        return np.array(self.as_array_interface(), copy=False)
+

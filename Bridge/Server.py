@@ -384,7 +384,7 @@ def main(pipeline_path, viewport_bit_depth, connection_addresses,
                     msg_log = copy.copy(msg)
                     msg_log['data'] = None
                     LOG.debug('LOAD MESH : {}'.format(msg_log))
-                    Bridge.Mesh.load_mesh(msg)
+                    Bridge.Mesh.load_mesh(pipeline, msg)
                 
                 if msg['msg_type'] == 'TEXTURE':
                     LOG.debug('LOAD TEXTURE : {}'.format(msg))

@@ -2,8 +2,10 @@ import os
 from os import path
 import ctypes
 
+from Malt.Utils import LOG
+
 from Malt.GL.GL import *
-from Malt.GL.Mesh import Mesh
+from Malt.GL.Mesh import Mesh, MeshCustomLoad
 from Malt.GL.Shader import Shader, UBO, shader_preprocessor
 
 from Malt.Render import Common
@@ -156,6 +158,85 @@ class Pipeline():
             import traceback
             traceback.print_exc()
             return str(e)
+    
+    def load_mesh(self, position, indices, normal, tangent=None, uvs=[], colors=[]):  
+        # Each parameter implements the Malt.Utils.IBuffer interface
+        # Indices is an array of index buffers corresponding to each of the materials a mesh has
+        # VBOs are shared for all the materials
+          
+        def load_VBO(data):
+            VBO = gl_buffer(GL_INT, 1)
+            glGenBuffers(1, VBO)
+            glBindBuffer(GL_ARRAY_BUFFER, VBO[0])
+            glBufferData(GL_ARRAY_BUFFER, data.size_in_bytes(), data.buffer(), GL_STATIC_DRAW)
+            glBindBuffer(GL_ARRAY_BUFFER, 0)
+            return VBO
+
+        position_vbo = load_VBO(position)
+        normal_vbo = load_VBO(normal)
+        tangent_vbo = load_VBO(tangent) if tangent else None
+        uv_vbos = [load_VBO(e) for e in uvs]
+        color_vbos = [load_VBO(e) if e else None for e in colors]
+
+        results = []
+
+        for i, index in enumerate(indices):
+            result = MeshCustomLoad()
+            
+            result.VAO = gl_buffer(GL_INT, 1)
+            glGenVertexArrays(1, result.VAO)
+            glBindVertexArray(result.VAO[0])
+            
+            result.EBO = gl_buffer(GL_INT, 1)
+            glGenBuffers(1, result.EBO)
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, result.EBO[0])
+            glBufferData(GL_ELEMENT_ARRAY_BUFFER, index.size_in_bytes(), index.buffer(), GL_STATIC_DRAW)
+            
+            result.index_count = len(index)
+
+            result.position = position_vbo
+            result.normal = normal_vbo
+            result.tangent = tangent_vbo
+            result.uvs = uv_vbos
+            result.colors = color_vbos
+
+            def bind_VBO(VBO, index, element_size, gl_type=GL_FLOAT, gl_normalize=GL_FALSE):
+                glBindBuffer(GL_ARRAY_BUFFER, VBO[0])
+                glEnableVertexAttribArray(index)
+                glVertexAttribPointer(index, element_size, gl_type, gl_normalize, 0, None)
+            
+            bind_VBO(result.position, 0, 3)
+            if position.size_in_bytes() == normal.size_in_bytes():
+                bind_VBO(result.normal, 1, 3)
+            else:
+                bind_VBO(result.normal, 1, 3, GL_SHORT, GL_TRUE)
+            
+            if tangent:
+                bind_VBO(tangent, 2, 4)
+            
+            max_uv = 4
+            max_vertex_colors = 4
+            uv0_index = 3
+            color0_index = uv0_index + max_uv
+            for i, uv in enumerate(result.uvs):
+                if i >= max_uv:
+                    LOG.warning('{} : UV count exceeds max supported UVs ({})'.format(name, max_uv))
+                    break
+                bind_VBO(uv, uv0_index + i, 2)
+            for i, color in enumerate(result.colors):
+                if i >= max_vertex_colors:
+                    LOG.warning('{} : Vertex Color Layer count exceeds max supported layers ({})'.format(name, max_uv))
+                    break
+                if color:
+                    if colors[i]._ctype == ctypes.c_uint8:
+                        bind_VBO(color, color0_index + i, 4, GL_UNSIGNED_BYTE, GL_TRUE)
+                    if colors[i]._ctype == ctypes.c_float:
+                        bind_VBO(color, color0_index + i, 4, GL_FLOAT)
+
+            glBindVertexArray(0)
+            results.append(result)
+
+        return results
     
     def draw_screen_pass(self, shader, target, blend = False):
         #Allow screen passes draw to gl_FragDepth

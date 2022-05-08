@@ -37,16 +37,9 @@ close_shared_memory = Ipc['close_shared_memory']
 close_shared_memory.argtypes = [C_SharedMemory, ctypes.c_bool]
 close_shared_memory.restype = None
 
-# https://numpy.org/doc/stable/reference/arrays.interface.html
-class Array_Interface():
-    def __init__(self, pointer, typestr, shape, read_only=False):
-        self.__array_interface__ = {
-            'data': (pointer, read_only),
-            'typestr': typestr,
-            'shape': shape
-        }
+from Malt.Utils import IBuffer
 
-class SharedBuffer():
+class SharedBuffer(IBuffer):
 
     _GARBAGE = []
     
@@ -71,6 +64,15 @@ class SharedBuffer():
         ctypes.c_bool.from_address(self._release_flag.data).value = True
         self._is_owner = True
     
+    def ctype(self):
+        return self._ctype
+    
+    def __len__(self):
+        return self._size
+    
+    def buffer(self):
+        return (self._ctype*self._size).from_address(self._buffer.data)
+    
     def __getstate__(self):
         assert(self._is_owner)
         ctypes.c_bool.from_address(self._release_flag.data).value = False
@@ -86,25 +88,6 @@ class SharedBuffer():
         open_shared_memory(('MALT_SHARED_'+self.id).encode('ascii'), self.size_in_bytes(), ctypes.byref(self._buffer))
         self._release_flag = C_SharedMemory()
         open_shared_memory(('MALT_FLAG_'+self.id).encode('ascii'), ctypes.sizeof(ctypes.c_bool), ctypes.byref(self._release_flag))
-    
-    def size_in_bytes(self):
-        return ctypes.sizeof(self._ctype) * self._size
-    
-    def buffer(self):
-        return (self._ctype*self._size).from_address(self._buffer.data)
-    
-    def as_array_interface(self):
-        type_map = {
-            ctypes.c_float : 'f',
-            ctypes.c_int : 'i',
-            ctypes.c_uint : 'u',
-            ctypes.c_bool : 'b',
-        }
-        return Array_Interface(self._buffer.data, type_map[self._ctype], (self._size,))
-    
-    def as_np_array(self):
-        import numpy as np
-        return np.array(self.as_array_interface(), copy=False)
 
     def __del__(self):
         if self._is_owner == False or ctypes.c_bool.from_address(self._release_flag.data).value == True:
