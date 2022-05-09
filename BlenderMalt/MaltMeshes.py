@@ -51,7 +51,7 @@ def load_mesh(object, name):
     uvs_list = []
     tangents_buffer = None
     for i, uv_layer in enumerate(m.uv_layers):
-        if i > 4: break
+        if i >= 4: break
         uv_ptr = ctypes.c_void_p(uv_layer.data[0].as_pointer())
         uv = get_load_buffer('uv'+str(i), ctypes.c_float, loop_count * 2)
         CBlenderMalt.retrieve_mesh_uv(uv_ptr, loop_count, uv.buffer())
@@ -65,7 +65,7 @@ def load_mesh(object, name):
     
     colors_list = [None]*4
     for i, vertex_color in enumerate(m.vertex_colors):
-        if i > 4: break
+        if i >= 4: break
         color = (ctypes.c_uint8 * (loop_count * 4)).from_address(vertex_color.data[0].as_pointer())
         color_buffer = get_load_buffer('colors'+str(i), ctypes.c_uint8, loop_count*4)
         ctypes.memmove(color_buffer.buffer(), color, color_buffer.size_in_bytes())
