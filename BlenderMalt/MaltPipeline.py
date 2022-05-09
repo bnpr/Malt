@@ -1,4 +1,4 @@
-import os, platform, time
+import os, platform, sys, time
 import bpy
 from BlenderMalt.MaltUtils import malt_path_getter, malt_path_setter
 from . import MaltMaterial, MaltMeshes, MaltTextures
@@ -6,6 +6,7 @@ from . import MaltMaterial, MaltMeshes, MaltTextures
 _BRIDGE = None
 _PIPELINE_PARAMETERS = None
 _TIMESTAMP = time.time()
+_MODULES = []
 
 def is_malt_active():
     if bpy.context.scene.render.engine == 'MALT':
@@ -64,12 +65,7 @@ class MaltPipeline(bpy.types.PropertyGroup):
 
         debug_mode = bool(preferences.debug_mode)
         renderdoc_path = preferences.renderdoc_path
-        plugin_dirs = []
-        if os.path.exists(preferences.plugins_dir):
-            plugin_dirs.append(preferences.plugins_dir)
-        plugin_dir = bpy.path.abspath(self.plugins_dir, library=self.id_data.library)
-        if os.path.exists(plugin_dir):
-            plugin_dirs.append(plugin_dir)
+        plugin_dirs = self.get_plugin_dirs( )
         
         docs_path = preferences.docs_path
         docs_path = docs_path if os.path.exists(docs_path) else None
@@ -276,6 +272,11 @@ def load_scene(dummy1=None,dummy2=None):
     _BRIDGE = None
 
 @bpy.app.handlers.persistent
+def unregister_blendermalt_plugins( *_ ): #BUG For some reason doesnt work properly when using App templates other than the default one
+    pipeline : MaltPipeline = bpy.context.scene.world.malt
+    pipeline.update_blender_plugins( unregister_only = True )
+
+@bpy.app.handlers.persistent
 def load_scene_post(dummy1=None,dummy2=None):
     from BlenderMalt.MaltNodes.MaltNodeTree import reset_subscriptions
     reset_subscriptions()
@@ -315,6 +316,7 @@ def register():
     bpy.types.World.malt = bpy.props.PointerProperty(type=MaltPipeline)
     bpy.app.handlers.depsgraph_update_post.append(depsgraph_update)
     bpy.app.handlers.load_pre.append(load_scene)
+    bpy.app.handlers.load_pre.append( unregister_blendermalt_plugins )
     bpy.app.handlers.load_post.append(load_scene_post)
     bpy.app.handlers.save_pre.append(save_pre)
     bpy.app.handlers.save_post.append(save_post)
@@ -325,6 +327,7 @@ def unregister():
     del bpy.types.World.malt
     bpy.app.handlers.depsgraph_update_post.remove(depsgraph_update)
     bpy.app.handlers.load_pre.remove(load_scene)
+    bpy.app.handlers.load_pre.remove( unregister_blendermalt_plugins )
     bpy.app.handlers.load_post.remove(load_scene_post)
     bpy.app.handlers.save_pre.remove(save_pre)
     bpy.app.handlers.save_post.remove(save_post)
