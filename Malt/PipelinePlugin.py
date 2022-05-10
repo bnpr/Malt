@@ -19,11 +19,11 @@ class PipelinePlugin():
         pass
 
     @classmethod
-    def blendermalt_register( cls ):
+    def blendermalt_register(self):
         pass
 
     @classmethod
-    def blendermalt_unregister( cls ):
+    def blendermalt_unregister(self):
         pass
 
 def load_plugins_from_dir(dir):
