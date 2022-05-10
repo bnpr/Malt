@@ -183,19 +183,16 @@ class MaltRenderEngine(bpy.types.RenderEngine):
                 
                 scene.lights.append(light)
 
-        is_f12 = depsgraph.mode == 'RENDER'
-
-        for obj in depsgraph.objects:
-            if is_f12 or obj.visible_in_viewport_get(context.space_data):
-                id = abs(hash(obj.name_full)) % (2**16)
-                add_object(obj, obj.matrix_world, id)
-
         for instance in depsgraph.object_instances:
-            if instance.instance_object:
-                if is_f12 or instance.parent.visible_in_viewport_get(context.space_data):
+            obj = instance.object
+            if obj.data:
+                id = None
+                if instance.is_instance:
                     id = abs(instance.random_id) % (2**16)
-                    add_object(instance.instance_object, instance.matrix_world, id)
-        
+                else:
+                    id = abs(hash(obj.name_full)) % (2**16)
+                add_object(obj, obj.matrix_world, id)
+            
         return scene
     
     def get_AOVs(self, scene):
