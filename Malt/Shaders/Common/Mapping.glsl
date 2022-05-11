@@ -36,7 +36,7 @@ vec2 matcap_uv(vec3 normal)
 */
 vec4 sample_matcap(sampler2D matcap, vec3 normal)
 {
-	return texture(matcap, matcap_uv(normal));
+	return textureLod(matcap, matcap_uv(normal), 0);
 }
 
 /*  META
@@ -54,7 +54,7 @@ vec2 hdri_uv(vec3 normal)
 */
 vec4 sample_hdri(sampler2D hdri, vec3 normal)
 {
-	return texture(hdri, hdri_uv(normal));
+	return textureLod(hdri, hdri_uv(normal), 0);
 }
 
 #endif //COMMON_MAPPING_GLSL
