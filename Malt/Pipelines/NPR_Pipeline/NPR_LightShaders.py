@@ -50,7 +50,7 @@ class NPR_LightShaders():
             material = light.parameters['Shader']
             if material.shader and 'SHADER' in material.shader.keys():
                 shader = material.shader['SHADER']
-                for resource in scene.shader_resources:
+                for resource in scene.shader_resources.values():
                     resource.shader_callback(shader)
                 shader.textures['IN_DEPTH'] = depth_texture
                 if 'LIGHT_INDEX' in shader.uniforms:
