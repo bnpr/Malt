@@ -212,7 +212,7 @@ class Pipeline():
                 bind_VBO(result.normal, 1, 3, GL_SHORT, GL_TRUE)
             
             if tangent:
-                bind_VBO(tangent, 2, 4)
+                bind_VBO(result.tangent, 2, 4)
             
             max_uv = 4
             max_vertex_colors = 4
