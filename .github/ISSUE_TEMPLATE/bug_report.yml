@@ -6,14 +6,14 @@ body:
   attributes:
     value: |
       Before opening a new issue:
-      - Read the [readme](https://github.com/pragma37/Malt#malt), check that you meet the minimum requirements and have installed Malt properly.
+      - Read the [readme](https://github.com/bnpr/Malt#malt), check that you meet the minimum requirements and have installed Malt properly.
       - Make sure you are running the latest Malt version.
       - Search [existing issues](https://github.com/bnpr/Malt/issues) to ensure it has not already been reported.
 
 - type: input
   attributes:
     label: Malt version
-    placeholder: Release
+    placeholder: Release | Development
   validations:
     required: true
 
