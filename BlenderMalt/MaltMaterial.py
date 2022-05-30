@@ -33,13 +33,16 @@ class MaltMaterial(bpy.types.PropertyGroup):
     parameters : bpy.props.PointerProperty(type=MaltPropertyGroup, name="Shader Parameters")
 
     def get_source_path(self):
+        path = None
         if self.shader_nodes:
             if self.shader_nodes.is_active():
-                return self.shader_nodes.get_generated_source_path()
-            else:
-                return ''
+                path = self.shader_nodes.get_generated_source_path()
         else:
-            return bpy.path.abspath(self.shader_source, library=self.id_data.library)
+            path = bpy.path.abspath(self.shader_source, library=self.id_data.library)
+        if path:
+            return path
+        else:
+            return ''
     
     def draw_ui(self, layout, extension, material_parameters):
         layout.active = self.id_data.library is None #only local data can be edited
@@ -166,7 +169,7 @@ def track_shader_changes(force_update=False, async_compilation=True):
 
         for material in bpy.data.materials:
             path = material.malt.get_source_path()
-            if path and path not in needs_update:
+            if path not in needs_update:
                 if os.path.exists(path):
                     stats = os.stat(path)
                     if path not in _MATERIALS.keys() or stats.st_mtime > __TIMESTAMP:
