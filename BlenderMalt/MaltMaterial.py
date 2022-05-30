@@ -33,10 +33,15 @@ class MaltMaterial(bpy.types.PropertyGroup):
     parameters : bpy.props.PointerProperty(type=MaltPropertyGroup, name="Shader Parameters")
 
     def get_source_path(self):
+        path = None
         if self.shader_nodes:
-            return self.shader_nodes.get_generated_source_path()
+            path = self.shader_nodes.get_generated_source_path()
         else:
-            return bpy.path.abspath(self.shader_source, library=self.id_data.library)
+            path = bpy.path.abspath(self.shader_source, library=self.id_data.library)
+        if path:
+            return path
+        else:
+            return ''
     
     def draw_ui(self, layout, extension, material_parameters):
         layout.active = self.id_data.library is None #only local data can be edited
