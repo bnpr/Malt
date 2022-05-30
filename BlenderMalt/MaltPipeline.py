@@ -51,8 +51,6 @@ class MaltPipeline(bpy.types.PropertyGroup):
     def update_pipeline(self, context):
         global _TIMESTAMP
         _TIMESTAMP = time.time()
-
-        unregister_plugins()
         
         #TODO: Sync all scenes. Only one active pipeline per Blender instance is supported atm.
         pipeline = self.pipeline
@@ -315,6 +313,38 @@ def track_pipeline_changes():
 
     return 1
 
+def register_blendermalt_plugins(register = True):
+    
+    global _PLUGINS, _PLUGIN_DIRS
+
+
+    if register:
+
+        preferences = bpy.context.preferences.addons['BlenderMalt'].preferences
+        plugins_dir = preferences.plugins_dir
+        if not os.path.exists(plugins_dir):
+            return
+    
+        import importlib
+        
+        if not plugins_dir in sys.path:
+            sys.path.append(plugins_dir)
+            _PLUGIN_DIRS.append(plugins_dir)
+        for e in os.scandir(plugins_dir):
+            if (e.path.startswith('.') or e.path.startswith('_') or 
+                e.is_file() and e.path.endswith('.py') == False):
+                continue
+            try:
+                module = importlib.import_module(e.name)
+                importlib.reload(module)
+                module.PLUGIN.blendermalt_register()
+                _PLUGINS.append(module.PLUGIN)
+            except:
+                import traceback
+                traceback.print_exc()
+    else:
+        unregister_plugins()
+
 def register():
     for _class in classes: bpy.utils.register_class(_class)
     bpy.types.World.malt = bpy.props.PointerProperty(type=MaltPipeline)
@@ -324,9 +354,10 @@ def register():
     bpy.app.handlers.save_pre.append(save_pre)
     bpy.app.handlers.save_post.append(save_post)
     bpy.app.timers.register(track_pipeline_changes, persistent=True)
+    bpy.app.timers.register(register_blendermalt_plugins, first_interval = 1) #Putting that on a timer allows the plugins to properly import data from the BlenderMalt module
+    
     
 def unregister():
-    unregister_plugins()
     for _class in reversed(classes): bpy.utils.unregister_class(_class)
     del bpy.types.World.malt
     bpy.app.handlers.depsgraph_update_post.remove(depsgraph_update)
@@ -335,4 +366,6 @@ def unregister():
     bpy.app.handlers.save_pre.remove(save_pre)
     bpy.app.handlers.save_post.remove(save_post)
     bpy.app.timers.unregister(track_pipeline_changes)
+    bpy.app.timers.unregister(register_blendermalt_plugins)
+    register_blendermalt_plugins(register = False)
 
