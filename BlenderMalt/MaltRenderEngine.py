@@ -212,7 +212,7 @@ class MaltRenderEngine(bpy.types.RenderEngine):
         return result        
     
     def update_render_passes(self, scene=None, renderlayer=None):
-        bridge = MaltPipeline.get_bridge(scene.world, True)
+        bridge = MaltPipeline.get_bridge(scene.world)
         render_outputs = bridge.render_outputs
         if 'COLOR' in render_outputs.keys():
             self.register_pass(scene, renderlayer, "Combined", 4, "RGBA", 'COLOR')
@@ -234,7 +234,7 @@ class MaltRenderEngine(bpy.types.RenderEngine):
 
         overrides = ['Final Render']
 
-        bridge = MaltPipeline.get_bridge(depsgraph.scene.world, True)
+        bridge = MaltPipeline.get_bridge(depsgraph.scene.world)
         if self.bridge is not bridge:
             self.bridge = bridge
             self.bridge_id = self.bridge.get_viewport_id()
