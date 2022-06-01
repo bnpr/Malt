@@ -8,19 +8,18 @@ _PIPELINE_PARAMETERS = None
 _WORLD = None
 _TIMESTAMP = time.time()
 
-def ensure_world(scene):
-    if scene.world is None:
-        scene.world = bpy.data.worlds.new('World')
-
-def get_bridge(world=None):
+def get_bridge(world=None, force_creation=False):
     global _BRIDGE
     bridge = _BRIDGE
-    if bridge is None or bridge.lost_connection:
+    if (bridge and bridge.lost_connection) or (bridge is None and force_creation):
         _BRIDGE = None
-        if world is None:
-            ensure_world(bpy.context.scene)
-            world = bpy.context.scene.world
-        world.malt.update_pipeline(bpy.context)
+        try:
+            if world is None:
+                bpy.context.scene.world.malt.update_pipeline(bpy.context)
+            else:
+                world.malt.update_pipeline(bpy.context)
+        except:
+            pass
     return _BRIDGE
 
 class MaltPipeline(bpy.types.PropertyGroup):
@@ -191,7 +190,7 @@ def depsgraph_update(scene, depsgraph):
             _BRIDGE = None 
 
         if _BRIDGE is None:
-            get_bridge()
+            scene.world.malt.update_pipeline(bpy.context)
             return
 
         ids = []
@@ -267,7 +266,8 @@ def track_pipeline_changes():
     if bpy.context.scene.render.engine != 'MALT':
         return 1
     try:
-        malt = bpy.context.scene.world.malt
+        scene = bpy.context.scene
+        malt = scene.world.malt
         path = bpy.path.abspath(malt.pipeline, library=malt.id_data.library)
         if os.path.exists(path):
             stats = os.stat(path)

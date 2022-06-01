@@ -282,51 +282,37 @@ def main(pipeline_path, viewport_bit_depth, connection_addresses,
     
     LOG.info('INIT PIPELINE: ' + pipeline_path)
 
-    try:
-        pipeline_dir, pipeline_name = os.path.split(pipeline_path)
-        if pipeline_dir not in sys.path:
-            sys.path.append(pipeline_dir)
-        module_name = pipeline_name.split('.')[0]
-        module = __import__(module_name)
+    pipeline_dir, pipeline_name = os.path.split(pipeline_path)
+    if pipeline_dir not in sys.path:
+        sys.path.append(pipeline_dir)
+    module_name = pipeline_name.split('.')[0]
+    module = __import__(module_name)
 
-        pipeline_class = module.PIPELINE
-        pipeline_class.SHADER_INCLUDE_PATHS.append(pipeline_dir)
-        
-        if docs_path: #build docs before loading plugins
-            from . import Docs
-            try:
-                Docs.build_docs(pipeline_class(), docs_path)
-            except:
-                import traceback
-                traceback.print_exc()
-        
-        plugins = []
-        for dir in plugins_paths:
-            plugins += load_plugins_from_dir(dir)
-        pipeline = pipeline_class(plugins)
+    pipeline_class = module.PIPELINE
+    pipeline_class.SHADER_INCLUDE_PATHS.append(pipeline_dir)
+    
+    if docs_path: #build docs before loading plugins
+        from . import Docs
+        try:
+            Docs.build_docs(pipeline_class(), docs_path)
+        except:
+            import traceback
+            traceback.print_exc()
+    
+    plugins = []
+    for dir in plugins_paths:
+        plugins += load_plugins_from_dir(dir)
+    pipeline = pipeline_class(plugins)
 
-        params = pipeline.get_parameters()
-        graphs = pipeline.get_graphs()
-        outputs = pipeline.get_render_outputs()
-        connections['MAIN'].send({
-            'msg_type': 'PARAMS',
-            'params': params,
-            'graphs': graphs,
-            'outputs': outputs
-        })
-    except:
-        import traceback
-        exception = traceback.format_exc()
-        LOG.error(exception)
-
-        from Malt import PipelineParameters
-        
-        connections['MAIN'].send({
-            'msg_type': 'PARAMS',
-            'params': PipelineParameters.PipelineParameters(),
-            'graphs': {},
-            'outputs': {}
-        })
+    params = pipeline.get_parameters()
+    graphs = pipeline.get_graphs()
+    outputs = pipeline.get_render_outputs()
+    connections['MAIN'].send({
+        'msg_type': 'PARAMS',
+        'params': params,
+        'graphs': graphs,
+        'outputs': outputs
+    })
 
     viewports = {}
     last_exception = ''
