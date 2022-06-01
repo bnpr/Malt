@@ -142,6 +142,18 @@ class OT_MaltReloadPipeline(bpy.types.Operator):
         context.scene.world.malt.update_pipeline(context)
         return {'FINISHED'}
 
+class OT_MaltReloadPlugins(bpy.types.Operator):
+    bl_idname = "wm.malt_reload_plugins"
+    bl_label = "Malt Reload Plugins"
+
+    @classmethod
+    def poll(cls, context):
+        return OT_MaltReloadPipeline.poll(context)
+    
+    def execute(self, context):
+        register_blendermalt_plugins(register = False)
+        register_blendermalt_plugins(register = True)
+        return{"FINISHED"}
 
 class MALT_PT_Pipeline(bpy.types.Panel):
     bl_space_type = 'PROPERTIES'
@@ -158,10 +170,31 @@ class MALT_PT_Pipeline(bpy.types.Panel):
     def draw(self, context):
         context.scene.world.malt.draw_ui(self.layout)
 
+class MALT_PT_Plugins(bpy.types.Panel):
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_options = {'DEFAULT_CLOSED'}
+
+    bl_context = 'world'
+    bl_label = 'Plugin Settings'
+    COMPAT_ENGINES = {'MALT'}
+
+    @classmethod
+    def poll(cls, context):
+        return MALT_PT_Pipeline.poll(context)
+    
+    def draw(self, context ):
+        pass #Display plugin-specific settings using subpanels
+    
+    def draw_header_preset(self, context):
+        self.layout.operator(OT_MaltReloadPlugins.bl_idname, text = '', icon = 'FILE_REFRESH')
+
 classes = (
     MaltPipeline,
     OT_MaltReloadPipeline,
+    OT_MaltReloadPlugins,
     MALT_PT_Pipeline,
+    MALT_PT_Plugins,
 )
 
 def setup_all_ids():
