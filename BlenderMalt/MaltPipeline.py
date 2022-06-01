@@ -5,22 +5,44 @@ from . import MaltMaterial, MaltMeshes, MaltTextures
 
 _BRIDGE = None
 _PIPELINE_PARAMETERS = None
-_WORLD = None
 _TIMESTAMP = time.time()
+
+def is_malt_active():
+    if bpy.context.scene.render.engine == 'MALT':
+        return True
+    for scene in bpy.data.scenes:
+        if scene.render.engine == 'MALT':
+            return True
+    return False
 
 def get_bridge(world=None, force_creation=False):
     global _BRIDGE
     bridge = _BRIDGE
     if (bridge and bridge.lost_connection) or (bridge is None and force_creation):
         _BRIDGE = None
-        try:
-            if world is None:
-                bpy.context.scene.world.malt.update_pipeline(bpy.context)
-            else:
-                world.malt.update_pipeline(bpy.context)
-        except:
-            pass
+        if is_malt_active() == False:
+            return None
+        if world is None:
+            world = bpy.context.scene.world
+        world.malt.update_pipeline(bpy.context)
     return _BRIDGE
+
+def sync_pipeline_settings(default_world=None):
+    for scene in bpy.data.scenes:
+        if scene.render.engine == 'MALT' and scene.world is None:
+            scene.world = bpy.data.worlds.new(f'{scene.name} World')
+            setup_parameters([scene.world])
+    if default_world is None:
+        default_world = bpy.data.worlds[0]
+    for world in bpy.data.worlds:
+        if world.malt.pipeline != default_world.malt.pipeline:
+            world.malt.pipeline = default_world.malt.pipeline
+        if world.malt.plugins_dir != default_world.malt.plugins_dir:
+            world.malt.plugins_dir = default_world.malt.plugins_dir
+        if world.malt.viewport_bit_depth != default_world.malt.viewport_bit_depth:
+            world.malt.viewport_bit_depth = default_world.malt.viewport_bit_depth
+
+_ON_PIPELINE_SETTINGS_UPDATE = False
 
 class MaltPipeline(bpy.types.PropertyGroup):
 
@@ -59,30 +81,37 @@ class MaltPipeline(bpy.types.PropertyGroup):
         LOG.info('Blender {} {} {}'.format(bpy.app.version_string, bpy.app.build_branch, bpy.app.build_hash))
         params = bridge.get_parameters()
 
-        global _BRIDGE, _PIPELINE_PARAMETERS, _WORLD
+        global _BRIDGE, _PIPELINE_PARAMETERS
         _BRIDGE = bridge
         _PIPELINE_PARAMETERS = params
-        _WORLD = context.scene.world.name_full
         
         MaltMaterial.reset_materials()
         MaltMeshes.reset_meshes()
         MaltTextures.reset_textures()
         
         #TODO: This can fail depending on the current context, ID classes might not be writeable
-        self.graph_types.clear()
-        for graph in bridge.graphs.keys():
-            self.graph_types.add().name = graph
-
         setup_all_ids()
 
-    pipeline : bpy.props.StringProperty(name="Malt Pipeline", subtype='FILE_PATH', update=update_pipeline,
+    def update_pipeline_settings(self, context):
+        global _ON_PIPELINE_SETTINGS_UPDATE
+        if _ON_PIPELINE_SETTINGS_UPDATE:
+            return
+        _ON_PIPELINE_SETTINGS_UPDATE = True
+
+        sync_pipeline_settings(self.id_data)
+        
+        _ON_PIPELINE_SETTINGS_UPDATE = False
+        
+        self.update_pipeline(context)
+
+    pipeline : bpy.props.StringProperty(name="Malt Pipeline", subtype='FILE_PATH', update=update_pipeline_settings,
         set=malt_path_setter('pipeline'), get=malt_path_getter('pipeline'))
     
-    plugins_dir : bpy.props.StringProperty(name="Local Plugins", subtype='DIR_PATH',
+    plugins_dir : bpy.props.StringProperty(name="Local Plugins", subtype='DIR_PATH', update=update_pipeline_settings,
         set=malt_path_setter('plugins_dir'), get=malt_path_getter('plugins_dir'))
 
     viewport_bit_depth : bpy.props.EnumProperty(items=[('8', '8', ''),('32', '32', '')], 
-        name="Bit Depth (Viewport)", update=update_pipeline)
+        name="Bit Depth (Viewport)", update=update_pipeline_settings)
     graph_types : bpy.props.CollectionProperty(type=bpy.types.PropertyGroup)
     overrides : bpy.props.StringProperty(name='Pipeline Overrides', default='Preview,Final Render')
 
@@ -164,6 +193,9 @@ def setup_parameters(ids):
 
     for bid in ids:
         if isinstance(bid, bpy.types.World):
+            bid.malt.graph_types.clear()
+            for graph in get_bridge().graphs.keys():
+                bid.malt.graph_types.add().name = graph
             from BlenderMalt.MaltNodes import MaltCustomPasses
             MaltCustomPasses.setup_default_passes(get_bridge().graphs, bid)
         for cls, parameters in class_parameters_map.items():
@@ -174,20 +206,19 @@ _ON_DEPSGRAPH_UPDATE = False
 
 @bpy.app.handlers.persistent
 def depsgraph_update(scene, depsgraph):
-    global _BRIDGE, _WORLD, _ON_DEPSGRAPH_UPDATE
-    
+    global _BRIDGE, _ON_DEPSGRAPH_UPDATE
+
     if _ON_DEPSGRAPH_UPDATE:
         return
     _ON_DEPSGRAPH_UPDATE = True
     try:
-        if scene.render.engine != 'MALT':
+        if is_malt_active() == False:
             # Don't do anything if Malt is not the active renderer,
             # but make sure we setup all IDs the next time Malt is enabled
             _BRIDGE = None
             return
         
-        if scene.world is None or scene.world.name_full != _WORLD:
-            _BRIDGE = None 
+        sync_pipeline_settings()
 
         if _BRIDGE is None:
             scene.world.malt.update_pipeline(bpy.context)
@@ -248,7 +279,7 @@ def load_scene(dummy1=None,dummy2=None):
 def load_scene_post(dummy1=None,dummy2=None):
     from BlenderMalt.MaltNodes.MaltNodeTree import reset_subscriptions
     reset_subscriptions()
-    if bpy.context.scene.render.engine == 'MALT':
+    if is_malt_active():
         bpy.context.scene.world.malt.update_pipeline(bpy.context)
 
 __SAVE_PATH = None
@@ -263,7 +294,7 @@ def save_post(dummy1=None,dummy2=None):
         load_scene_post()
 
 def track_pipeline_changes():
-    if bpy.context.scene.render.engine != 'MALT':
+    if is_malt_active() == False:
         return 1
     try:
         scene = bpy.context.scene

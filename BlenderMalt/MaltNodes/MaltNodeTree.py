@@ -273,7 +273,8 @@ def get_empty_library():
 __TIMESTAMP = time.time()
 
 def track_library_changes(force_update=False, is_initial_setup=False):
-    if bpy.context.scene.render.engine != 'MALT' and force_update == False:
+    from BlenderMalt import MaltPipeline
+    if MaltPipeline.is_malt_active() == False and force_update == False:
         return 1
     
     bridge = MaltPipeline.get_bridge()
@@ -556,7 +557,8 @@ def node_header_ui(self, context):
 
 @bpy.app.handlers.persistent
 def depsgraph_update(scene, depsgraph):
-    if scene.render.engine != 'MALT':
+    from BlenderMalt import MaltPipeline
+    if MaltPipeline.is_malt_active() == False:
         return
     # Show the active material node tree in the Node Editor
     for deps_update in depsgraph.updates:

@@ -156,7 +156,8 @@ __TIMESTAMP = time.time()
 
 INITIALIZED = False
 def track_shader_changes(force_update=False, async_compilation=True):
-    if bpy.context.scene.render.engine != 'MALT' and force_update == False:
+    from BlenderMalt import MaltPipeline
+    if MaltPipeline.is_malt_active() == False and force_update == False:
         return 1
         
     global INITIALIZED
