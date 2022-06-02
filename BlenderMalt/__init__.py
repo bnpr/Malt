@@ -155,6 +155,9 @@ def register():
     for module in get_modules():
         module.register()
 
+    from . import MaltPipeline
+    MaltPipeline.register_blendermalt_plugins(register = True)
+
     bpy.app.handlers.save_post.append(setup_vs_code)
 
 def unregister():
@@ -162,6 +165,9 @@ def unregister():
     
     if version_missmatch():
         return
+
+    from . import MaltPipeline
+    MaltPipeline.register_blendermalt_plugins(register = False)
 
     for module in reversed(get_modules()):
         module.unregister()

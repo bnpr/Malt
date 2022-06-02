@@ -170,31 +170,11 @@ class MALT_PT_Pipeline(bpy.types.Panel):
     def draw(self, context):
         context.scene.world.malt.draw_ui(self.layout)
 
-class MALT_PT_Plugins(bpy.types.Panel):
-    bl_space_type = 'PROPERTIES'
-    bl_region_type = 'WINDOW'
-    bl_options = {'DEFAULT_CLOSED'}
-
-    bl_context = 'world'
-    bl_label = 'Plugin Settings'
-    COMPAT_ENGINES = {'MALT'}
-
-    @classmethod
-    def poll(cls, context):
-        return MALT_PT_Pipeline.poll(context)
-    
-    def draw(self, context ):
-        pass #Display plugin-specific settings using subpanels
-    
-    def draw_header_preset(self, context):
-        self.layout.operator(OT_MaltReloadPlugins.bl_idname, text = '', icon = 'FILE_REFRESH')
-
 classes = (
     MaltPipeline,
     OT_MaltReloadPipeline,
     OT_MaltReloadPlugins,
     MALT_PT_Pipeline,
-    MALT_PT_Plugins,
 )
 
 def setup_all_ids():
@@ -350,7 +330,6 @@ def register_blendermalt_plugins(register = True):
     
     global _PLUGINS, _PLUGIN_DIRS
 
-
     if register:
 
         preferences = bpy.context.preferences.addons['BlenderMalt'].preferences
@@ -387,7 +366,6 @@ def register():
     bpy.app.handlers.save_pre.append(save_pre)
     bpy.app.handlers.save_post.append(save_post)
     bpy.app.timers.register(track_pipeline_changes, persistent=True)
-    bpy.app.timers.register(register_blendermalt_plugins, first_interval = 1) #Putting that on a timer allows the plugins to properly import data from the BlenderMalt module
     
     
 def unregister():
@@ -399,6 +377,4 @@ def unregister():
     bpy.app.handlers.save_pre.remove(save_pre)
     bpy.app.handlers.save_post.remove(save_post)
     bpy.app.timers.unregister(track_pipeline_changes)
-    bpy.app.timers.unregister(register_blendermalt_plugins)
-    register_blendermalt_plugins(register = False)
 
