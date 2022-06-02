@@ -74,18 +74,19 @@ def load_mesh(object, name):
         ctypes.memmove(color_buffer.buffer(), color, color_buffer.size_in_bytes())
         colors_list[i] = color_buffer
     
-    for i in range(4):
-        try:
-            override = getattr(object.original.data, f'malt_vertex_color_override_{i}')
-            attribute = m.attributes.get(override)
-            if attribute and attribute.domain == 'CORNER' and attribute.data_type == 'FLOAT_COLOR':
-                color = (ctypes.c_float * (loop_count * 4)).from_address(attribute.data[0].as_pointer())
-                color_buffer = get_load_buffer('colors_override'+str(i), ctypes.c_float, loop_count*4)
-                ctypes.memmove(color_buffer.buffer(), color, color_buffer.size_in_bytes())
-                colors_list[i] = color_buffer
-        except:
-            import traceback
-            traceback.print_exc()
+    if object.type == 'MESH':
+        for i in range(4):
+            try:
+                override = getattr(object.original.data, f'malt_vertex_color_override_{i}')
+                attribute = m.attributes.get(override)
+                if attribute and attribute.domain == 'CORNER' and attribute.data_type == 'FLOAT_COLOR':
+                    color = (ctypes.c_float * (loop_count * 4)).from_address(attribute.data[0].as_pointer())
+                    color_buffer = get_load_buffer('colors_override'+str(i), ctypes.c_float, loop_count*4)
+                    ctypes.memmove(color_buffer.buffer(), color, color_buffer.size_in_bytes())
+                    colors_list[i] = color_buffer
+            except:
+                import traceback
+                traceback.print_exc()
 
     #TODO: Optimize. Create load buffers from bytearrays and retrieve them later
     mesh_data = {
@@ -124,7 +125,7 @@ class MALT_PT_Attributes(bpy.types.Panel):
 
     @classmethod
     def get_malt_property_owner(cls, context):
-        if context.object and context.object.data and context.object.type in ('MESH', 'CURVE', 'SURFACE', 'META', 'FONT'):
+        if context.object and context.object.data and context.object.type == 'MESH':
             return context.object.data
     
     @classmethod
