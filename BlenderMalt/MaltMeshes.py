@@ -48,6 +48,9 @@ def load_mesh(object, name):
     CBlenderMalt.retrieve_mesh_data(mesh_ptr, loop_tris_ptr, loop_tri_count,
         positions.buffer(), normals.buffer(), indices_ptrs, indices_lengths)
     
+    for i in range(material_count):
+        indices[i]._size = indices_lengths[i]
+
     uvs_list = []
     tangents_buffer = None
     for i, uv_layer in enumerate(m.uv_layers):
@@ -88,7 +91,6 @@ def load_mesh(object, name):
     mesh_data = {
         'positions': positions,
         'indices': indices,
-        'indices_lengths': [l for l in indices_lengths],
         'normals': normals,
         'uvs': uvs_list,
         'tangents': tangents_buffer,
