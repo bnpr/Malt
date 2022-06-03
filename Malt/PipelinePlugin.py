@@ -18,6 +18,13 @@ class PipelinePlugin():
     def register_graph_libraries(self, graphs):
         pass
 
+    @classmethod
+    def blendermalt_register(self):
+        pass
+
+    @classmethod
+    def blendermalt_unregister(self):
+        pass
 
 def load_plugins_from_dir(dir):
     import sys, os, importlib
