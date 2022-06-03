@@ -213,9 +213,8 @@ void main()
         vec3 position = POSITION + view_direction() * depth_offset;
 
         depth = project_point(PROJECTION * CAMERA, position).z;
-        float far = gl_DepthRange.far;
-        float near = gl_DepthRange.near;
-        gl_FragDepth = (((far-near) * depth) + near + far) / 2.0;
+        depth = map_range(depth, -1.0, 1.0, gl_DepthRange.near, gl_DepthRange.far);
+        gl_FragDepth = depth;
 
         if(offset_position) POSITION = position;
     }
