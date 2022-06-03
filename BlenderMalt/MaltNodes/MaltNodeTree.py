@@ -18,6 +18,8 @@ class MaltTree(bpy.types.NodeTree):
     bl_label = "Malt Node Tree"
     bl_icon = 'NODETREE'
 
+    type : bpy.props.EnumProperty(name = 'Type', items = [("MALT", "Malt", "Malt")])
+
     @classmethod
     def poll(cls, context):
         return context.scene.render.engine == 'MALT'
