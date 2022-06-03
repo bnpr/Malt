@@ -33,8 +33,9 @@ class Shader():
                     uniform.set_value(texture_index)
                     texture_index += 1 
                     self.textures[name] = None
-
             self.uniform_blocks = reflect_program_uniform_blocks(self.program)
+        elif self.error != 'NO SOURCE':
+            LOG.error(self.error)
         
     def bind(self):
         glUseProgram(self.program)
