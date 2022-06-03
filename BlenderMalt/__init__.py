@@ -127,6 +127,54 @@ def do_windows_fixes():
                 result = ctypes.windll.shell32.ShellExecuteW(None, 'runas', 'cmd.exe', command, None, 0)
         mp.set_executable(python_executable)
 
+_PLUGINS = []
+_PLUGIN_DIRS = []
+
+def register_plugins():
+    global _PLUGINS, _PLUGIN_DIRS
+    preferences = bpy.context.preferences.addons['BlenderMalt'].preferences
+    plugins_dir = preferences.plugins_dir
+    if not os.path.exists(plugins_dir):
+        return
+    import importlib
+    if plugins_dir not in sys.path:
+        sys.path.append(plugins_dir)
+        _PLUGIN_DIRS.append(plugins_dir)
+    for e in os.scandir(plugins_dir):
+        if (e.path.startswith('.') or e.path.startswith('_') or 
+            e.is_file() and e.path.endswith('.py') == False):
+            continue
+        try:
+            module = importlib.import_module(e.name)
+            importlib.reload(module)
+            module.PLUGIN.blendermalt_register()
+            _PLUGINS.append(module.PLUGIN)
+        except:
+            import traceback
+            traceback.print_exc()
+
+def unregister_plugins():
+    global _PLUGINS, _PLUGIN_DIRS
+    for plugin in _PLUGINS:
+        try:
+            plugin.blendermalt_unregister()
+        except:
+            import traceback
+            traceback.print_exc()
+    _PLUGINS = []
+    for dir in _PLUGIN_DIRS:
+        sys.path.remove(dir)
+    _PLUGIN_DIRS = []
+
+class OT_MaltReloadPlugins(bpy.types.Operator):
+    bl_idname = "wm.malt_reload_plugins"
+    bl_label = "Malt Reload Plugins"
+
+    def execute(self, context):
+        unregister_plugins()
+        register_plugins()
+        return{"FINISHED"}
+
 def get_modules():
     from . import MaltUtils, MaltTextures, MaltMeshes, MaltLights, MaltProperties, MaltPipeline, MaltMaterial, MaltRenderEngine
     from . MaltNodes import _init_ as MaltNodes
@@ -134,6 +182,7 @@ def get_modules():
 
 classes=[
     Preferences,
+    OT_MaltReloadPlugins,
 ]
 
 def register():
@@ -155,8 +204,7 @@ def register():
     for module in get_modules():
         module.register()
 
-    from . import MaltPipeline
-    MaltPipeline.register_blendermalt_plugins(register = True)
+    register_plugins()
 
     bpy.app.handlers.save_post.append(setup_vs_code)
 
@@ -166,8 +214,7 @@ def unregister():
     if version_missmatch():
         return
 
-    from . import MaltPipeline
-    MaltPipeline.register_blendermalt_plugins(register = False)
+    unregister_plugins()
 
     for module in reversed(get_modules()):
         module.unregister()

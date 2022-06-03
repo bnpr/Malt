@@ -1,4 +1,4 @@
-import os, platform, sys, time
+import os, platform, time
 import bpy
 from BlenderMalt.MaltUtils import malt_path_getter, malt_path_setter
 from . import MaltMaterial, MaltMeshes, MaltTextures
@@ -6,8 +6,6 @@ from . import MaltMaterial, MaltMeshes, MaltTextures
 _BRIDGE = None
 _PIPELINE_PARAMETERS = None
 _TIMESTAMP = time.time()
-_PLUGINS = []
-_PLUGIN_DIRS = []
 
 def is_malt_active():
     if bpy.context.scene.render.engine == 'MALT':
@@ -66,7 +64,6 @@ class MaltPipeline(bpy.types.PropertyGroup):
 
         debug_mode = bool(preferences.debug_mode)
         renderdoc_path = preferences.renderdoc_path
-
         plugin_dirs = []
         if os.path.exists(preferences.plugins_dir):
             plugin_dirs.append(preferences.plugins_dir)
@@ -142,18 +139,6 @@ class OT_MaltReloadPipeline(bpy.types.Operator):
         context.scene.world.malt.update_pipeline(context)
         return {'FINISHED'}
 
-class OT_MaltReloadPlugins(bpy.types.Operator):
-    bl_idname = "wm.malt_reload_plugins"
-    bl_label = "Malt Reload Plugins"
-
-    @classmethod
-    def poll(cls, context):
-        return OT_MaltReloadPipeline.poll(context)
-    
-    def execute(self, context):
-        register_blendermalt_plugins(register = False)
-        register_blendermalt_plugins(register = True)
-        return{"FINISHED"}
 
 class MALT_PT_Pipeline(bpy.types.Panel):
     bl_space_type = 'PROPERTIES'
@@ -173,7 +158,6 @@ class MALT_PT_Pipeline(bpy.types.Panel):
 classes = (
     MaltPipeline,
     OT_MaltReloadPipeline,
-    OT_MaltReloadPlugins,
     MALT_PT_Pipeline,
 )
 
@@ -326,37 +310,6 @@ def track_pipeline_changes():
 
     return 1
 
-def register_blendermalt_plugins(register = True):
-    
-    global _PLUGINS, _PLUGIN_DIRS
-
-    if register:
-
-        preferences = bpy.context.preferences.addons['BlenderMalt'].preferences
-        plugins_dir = preferences.plugins_dir
-        if not os.path.exists(plugins_dir):
-            return
-    
-        import importlib
-        
-        if not plugins_dir in sys.path:
-            sys.path.append(plugins_dir)
-            _PLUGIN_DIRS.append(plugins_dir)
-        for e in os.scandir(plugins_dir):
-            if (e.path.startswith('.') or e.path.startswith('_') or 
-                e.is_file() and e.path.endswith('.py') == False):
-                continue
-            try:
-                module = importlib.import_module(e.name)
-                importlib.reload(module)
-                module.PLUGIN.blendermalt_register()
-                _PLUGINS.append(module.PLUGIN)
-            except:
-                import traceback
-                traceback.print_exc()
-    else:
-        unregister_plugins()
-
 def register():
     for _class in classes: bpy.utils.register_class(_class)
     bpy.types.World.malt = bpy.props.PointerProperty(type=MaltPipeline)
@@ -366,7 +319,6 @@ def register():
     bpy.app.handlers.save_pre.append(save_pre)
     bpy.app.handlers.save_post.append(save_post)
     bpy.app.timers.register(track_pipeline_changes, persistent=True)
-    
     
 def unregister():
     for _class in reversed(classes): bpy.utils.unregister_class(_class)
