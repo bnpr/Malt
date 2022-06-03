@@ -203,11 +203,10 @@ class Bridge():
             reuse_buffer = ipc.SharedBuffer(ctypes.c_byte, new_size)
             self.shared_buffers.append(reuse_buffer)
         
-        if reuse_buffer:
-            ctypes.c_bool.from_address(reuse_buffer._release_flag.data).value = True
-            reuse_buffer._ctype = ctype
-            reuse_buffer._size = size
-            return reuse_buffer
+        ctypes.c_bool.from_address(reuse_buffer._release_flag.data).value = True
+        reuse_buffer._ctype = ctype
+        reuse_buffer._size = size
+        return reuse_buffer
 
     @bridge_method
     def load_mesh(self, name, mesh_data):
