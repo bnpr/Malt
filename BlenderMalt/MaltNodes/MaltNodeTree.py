@@ -579,7 +579,52 @@ def depsgraph_update(scene, depsgraph):
                     if space.type ==  'NODE_EDITOR' and space.tree_type == 'MaltTree' and space.pin == False:
                         if space.node_tree is None or space.node_tree.graph_type == 'Mesh':
                             space.node_tree = node_tree
-    
+
+class OT_MaltEditNodeTree( bpy.types.Operator ):
+    bl_idname = 'wm.malt_edit_node_tree'
+    bl_label = 'Edit Node Tree'
+
+    @classmethod
+    def poll( cls, context ):
+        try:
+            return context.area.ui_type == 'MaltTree' and context.space_data.type == 'NODE_EDITOR'
+        except:
+            return False
+
+    def execute( self, context ):
+        space_path:bpy.types.SpaceNodeEditorPath = context.space_data.path
+        node = context.active_node
+
+        def try_to_find_graph( func, old_node_tree ): #Function is used to comb through long attribute chains that may not exist
+            try:
+                return func( )
+            except:
+                return old_node_tree
+
+        node_tree = None
+        node_tree = try_to_find_graph( lambda: node.malt_parameters.materials[0].material.malt.shader_nodes, node_tree )
+        node_tree = try_to_find_graph( lambda: node.malt_parameters.graphs[0].graph, node_tree ) #node tree of graph will override node tree of material if present
+
+        if node_tree and node in context.selected_nodes:
+            space_path.append( node_tree, node = node )
+        else:
+            space_path.pop( )
+        return{ 'FINISHED' }
+
+keymaps = []
+def register_node_tree_edit_shortcut( register ):
+    wm = bpy.context.window_manager
+    kc = wm.keyconfigs.addon
+    if kc:
+        if register:
+            km = kc.keymaps.new( name = 'Node Editor', space_type = 'NODE_EDITOR' )
+            kmi = km.keymap_items.new( OT_MaltEditNodeTree.bl_idname, type = 'TAB', value = 'PRESS' )
+            keymaps.append(( km, kmi ))
+        else:
+            for km, kmi in keymaps:
+                km.keymap_items.remove( kmi )
+            keymaps.clear( )
+
 classes = [
     MaltTree,
     NODE_PT_MaltNodeTree,
@@ -588,6 +633,7 @@ classes = [
     MALT_MT_NodeInputs,
     MALT_MT_NodeOutputs,
     MALT_MT_NodeOther,
+    OT_MaltEditNodeTree,
 ]
 
 
@@ -600,9 +646,12 @@ def register():
     bpy.app.timers.register(track_library_changes, persistent=True)
     bpy.app.handlers.depsgraph_update_post.append(depsgraph_update)
 
-    
+    register_node_tree_edit_shortcut( True )
 
 def unregister():
+
+    register_node_tree_edit_shortcut( False )
+
     bpy.app.handlers.depsgraph_update_post.remove(depsgraph_update)
     bpy.app.timers.unregister(track_library_changes)
     
