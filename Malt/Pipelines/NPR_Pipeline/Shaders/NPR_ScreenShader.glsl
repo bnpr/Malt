@@ -1,4 +1,10 @@
 #include "NPR_Intellisense.glsl"
+
+#ifdef PIXEL_SHADER
+vec3 DEFERRED_TRUE_NORMAL;
+#define CUSTOM_TRUE_NORMAL DEFERRED_TRUE_NORMAL
+#endif
+
 #include "Common.glsl"
 
 #ifdef VERTEX_SHADER
@@ -20,6 +26,8 @@ void SCREEN_SHADER();
 void main()
 {
     PIXEL_SETUP_INPUT();
+    
+    DEFERRED_TRUE_NORMAL = reconstruct_normal(IN_NORMAL_DEPTH, 3, screen_pixel());
 
     if(RENDER_LAYER_MODE)
     {

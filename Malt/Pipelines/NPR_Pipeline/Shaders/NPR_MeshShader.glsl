@@ -182,6 +182,9 @@ void main()
 
     float depth = gl_FragCoord.z;
     vec3 offset_position = POSITION;
+
+    // Discard pixel at the end of the shader, to avoid derivative glitches.
+    bool discard_pixel = false;
     
     #ifdef CUSTOM_PRE_PASS
     {
@@ -189,7 +192,7 @@ void main()
 
         if(PPO.opacity <= 0)
         {
-            discard;
+            discard_pixel = true;
         }
         else if(!Settings.Transparency)
         {
@@ -229,7 +232,7 @@ void main()
             float pass_through = hash(vec2(ID.x, SAMPLE_COUNT)).x;
             if(pass_through > PPO.opacity)
             {
-                discard;
+                discard_pixel = true;
             }
             OUT_SHADOW_MULTIPLY_COLOR = PPO.transparent_shadowmap_color;
         }
@@ -245,14 +248,14 @@ void main()
             
             if(depth >= opaque_depth || depth <= transparent_depth)
             {
-                discard;
+                discard_pixel = true;
             }
 
             if(Settings.Transparency_Single_Layer)
             {
                 if(PPO.id.r == texelFetch(IN_LAST_ID, ivec2(gl_FragCoord.xy), 0).x)
                 {
-                    discard;
+                    discard_pixel = true;
                 }
             }
         }
@@ -270,6 +273,11 @@ void main()
         MAIN_PASS_PIXEL_SHADER();
     }
     #endif
+
+    if(discard_pixel)
+    {
+        discard;
+    }
 }
 
 #endif //NDEF CUSTOM_MAIN

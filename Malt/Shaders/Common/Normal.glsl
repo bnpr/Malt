@@ -5,15 +5,22 @@
 
 vec3 true_normal()
 {
-    #ifdef PIXEL_SHADER
+    #ifndef CUSTOM_TRUE_NORMAL
     {
-        return normalize(cross(dFdx(POSITION), dFdy(POSITION)));
+        #ifdef PIXEL_SHADER
+        {
+            return normalize(cross(dFdx(POSITION), dFdy(POSITION)));
+        }
+        #endif //PIXEL_SHADER
+        
+        return NORMAL;
     }
-    #endif //PIXEL_SHADER
-    
-    return NORMAL;
+    #else
+    {
+        return CUSTOM_TRUE_NORMAL;
+    }
+    #endif //CUSTOM_TRUE_NORMAL
 }
-
 
 float facing()
 {

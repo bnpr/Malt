@@ -127,6 +127,32 @@ float pixel_world_size()
     #endif
 }
 
+vec3 _reconstruct_cs_position(sampler2D depth_texture, int depth_channel, ivec2 texel)
+{
+    float depth = texelFetch(depth_texture, texel, 0)[depth_channel];
+    ivec2 size = textureSize(depth_texture, 0);
+    vec2 uv = (vec2(texel) + vec2(0.5)) / vec2(size);
+
+    return screen_to_camera(uv, depth);
+}
+
+vec3 reconstruct_normal(sampler2D depth_texture, int depth_channel, ivec2 texel)
+{
+    vec3 t0 = _reconstruct_cs_position(depth_texture, depth_channel, texel);
+    vec3 x1 = _reconstruct_cs_position(depth_texture, depth_channel, texel + ivec2(-1, 0));
+    vec3 x2 = _reconstruct_cs_position(depth_texture, depth_channel, texel + ivec2( 1, 0));
+    vec3 y1 = _reconstruct_cs_position(depth_texture, depth_channel, texel + ivec2( 0,-1));
+    vec3 y2 = _reconstruct_cs_position(depth_texture, depth_channel, texel + ivec2( 0, 1));
+
+    vec3 x = distance(x1.z, t0.z) < distance(x2.z, t0.z) ? x1 : x2;
+    vec3 y = distance(y1.z, t0.z) < distance(y2.z, t0.z) ? y1 : y2;
+
+    vec3 n = normalize(cross(x - t0, y - t0));
+    n = dot(n, t0) < 0 ? n : -n;
+
+    return transform_normal(inverse(CAMERA), n);
+}
+
 /*  META
     @ray_origin: subtype=Vector;
     @ray_direction: subtype=Vector;
