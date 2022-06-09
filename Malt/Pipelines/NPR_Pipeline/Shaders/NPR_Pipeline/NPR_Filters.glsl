@@ -21,7 +21,6 @@ float ao(int samples, float radius, float distribution_exponent, float bias)
     #ifdef NPR_FILTERS_ACTIVE
     {
         vec3 true_normal = true_normal();
-        true_normal = NORMAL; //TODO: true_normal() doesn't work on screen shaders or alpha clipped meshes
         float ao = ao(IN_NORMAL_DEPTH, 3, POSITION, true_normal, samples, radius, distribution_exponent, bias);
         return ao;
     }
@@ -113,7 +112,7 @@ LineDetectionOutput line_detection()
     {
         result = line_detection(
             POSITION,
-            NORMAL, NORMAL, //TODO: true_normal() doesn't work on screen shaders or alpha clipped meshes
+            NORMAL, true_normal(),
             1,
             LINE_DEPTH_MODE_NEAR,
             screen_uv(),
