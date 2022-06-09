@@ -61,6 +61,7 @@ class MaltMaterial(bpy.types.PropertyGroup):
         row.template_ID(self, "shader_nodes")
         if self.shader_nodes:
             row.operator('wm.malt_callback', text='', icon='DUPLICATE').callback.set(nodes_add_or_duplicate, 'Duplicate')
+            row.operator('wm.malt_edit_node_tree', text = '', icon = 'GREASEPENCIL')
         else:
             row.operator('wm.malt_callback', text='New', icon='ADD').callback.set(nodes_add_or_duplicate, 'New')
 

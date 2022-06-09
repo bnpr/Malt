@@ -585,6 +585,13 @@ class OT_MaltEditNodeTree( bpy.types.Operator ):
     bl_label = 'Edit Node Tree'
 
     @classmethod
+    def description(cls, context, properties) -> str:
+        if cls.poll(context):
+            return 'Edit the graph in the current node editor'
+        else:
+            return 'Graph or area unavailable for editing'
+
+    @classmethod
     def poll( cls, context ):
         try:
             return context.area.ui_type == 'MaltTree' and context.space_data.type == 'NODE_EDITOR'
@@ -610,6 +617,10 @@ class OT_MaltEditNodeTree( bpy.types.Operator ):
         else:
             space_path.pop( )
         return{ 'FINISHED' }
+    
+    @classmethod
+    def draw_button(cls, layout, text = '', icon = 'GREASEPENCIL'): #unused but maybe useful to avoid code duplication?
+        layout.operator(cls.bl_idname, text = text, icon = icon)
 
 keymaps = []
 def register_node_tree_edit_shortcut( register ):

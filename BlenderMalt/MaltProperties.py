@@ -542,6 +542,7 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
             if self.graphs[key].graph:
                 row.operator('wm.malt_callback', text='', icon='DUPLICATE').callback.set(
                     self.graphs[key].add_or_duplicate, 'Duplicate')
+                row.operator('wm.malt_edit_node_tree', text = '', icon = 'GREASEPENCIL')
             else:
                 row.operator('wm.malt_callback', text='New', icon='ADD').callback.set(
                     self.graphs[key].add_or_duplicate, 'New')
