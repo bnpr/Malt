@@ -111,6 +111,17 @@ class MaltFunctionNode(bpy.types.Node, MaltNode):
                 return pass_type
         return ''
     
+    def get_pass_node_tree(self):
+        if self.pass_graph_type != '':
+            graph = self.id_data.get_pipeline_graph(self.pass_graph_type)
+            if graph.graph_type == graph.GLOBAL_GRAPH:
+                if graph.language == 'Python':
+                    return self.malt_parameters.graphs['PASS_GRAPH'].graph
+                else:
+                    material = self.malt_parameters.materials['PASS_MATERIAL'].material
+                    if material:
+                        return material.malt.shader_nodes
+    
     def get_custom_io(self):
         if self.pass_graph_type != '':
             graph = self.id_data.get_pipeline_graph(self.pass_graph_type)

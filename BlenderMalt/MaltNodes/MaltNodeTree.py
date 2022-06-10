@@ -559,13 +559,16 @@ def node_header_ui(self, context):
 
 @bpy.app.handlers.persistent
 def depsgraph_update(scene, depsgraph):
+    # Show the active material node tree in the Node Editor
     from BlenderMalt import MaltPipeline
     if MaltPipeline.is_malt_active() == False:
         return
-    # Show the active material node tree in the Node Editor
+    scene_updated = False
     for deps_update in depsgraph.updates:
-        if isinstance(deps_update.id, bpy.types.NodeTree):
-            return
+        if isinstance(deps_update.id, bpy.types.Scene):
+            scene_updated = True
+    if scene_updated == False:
+        return
     node_tree = None
     try:
         material = bpy.context.object.active_material
@@ -573,55 +576,55 @@ def depsgraph_update(scene, depsgraph):
     except:
         pass
     if node_tree:
-        for screen in bpy.data.screens:
-            for area in screen.areas:
-                for space in area.spaces:
-                    if space.type ==  'NODE_EDITOR' and space.tree_type == 'MaltTree' and space.pin == False:
-                        if space.node_tree is None or space.node_tree.graph_type == 'Mesh':
-                            space.node_tree = node_tree
+        spaces, locked_spaces = get_node_spaces(bpy.context)
+        for space in spaces:
+            if space.node_tree.graph_type == 'Mesh':
+                space.node_tree = node_tree
+                return
+
+def get_node_spaces(context):
+    spaces = []
+    locked_spaces = []
+    for area in context.screen.areas:
+        if area.type == 'NODE_EDITOR':
+            for space in area.spaces:
+                if space.type == 'NODE_EDITOR' and space.tree_type == 'MaltTree':
+                    if space.pin == False or space.node_tree is None:
+                        spaces.append(space)
+                    else:
+                        locked_spaces.append(space)
+    return spaces, locked_spaces
+
+def set_node_tree(context, node_tree, node = None):
+    if context.space_data.type == 'NODE_EDITOR' and context.area.ui_type == 'MaltTree':
+        context.space_data.path.append(node_tree, node = node)
+    else:
+        spaces, locked_spaces = get_node_spaces(context)
+        if len(spaces) > 0:
+            spaces[0].node_tree = node_tree
+        elif len(locked_spaces) > 0:
+            locked_spaces[0].node_tree = node_tree
 
 class OT_MaltEditNodeTree( bpy.types.Operator ):
     bl_idname = 'wm.malt_edit_node_tree'
     bl_label = 'Edit Node Tree'
 
     @classmethod
-    def description(cls, context, properties) -> str:
-        if cls.poll(context):
-            return 'Edit the graph in the current node editor'
-        else:
-            return 'Graph or area unavailable for editing'
-
-    @classmethod
     def poll( cls, context ):
-        try:
-            return context.area.ui_type == 'MaltTree' and context.space_data.type == 'NODE_EDITOR'
-        except:
-            return False
-
+        return context.area.ui_type == 'MaltTree' and context.space_data.type == 'NODE_EDITOR'
+            
     def execute( self, context ):
-        space_path:bpy.types.SpaceNodeEditorPath = context.space_data.path
         node = context.active_node
-
-        def try_to_find_graph( func, old_node_tree ): #Function is used to comb through long attribute chains that may not exist
-            try:
-                return func( )
-            except:
-                return old_node_tree
-
+        space_path = context.space_data.path
         node_tree = None
-        node_tree = try_to_find_graph( lambda: node.malt_parameters.materials[0].material.malt.shader_nodes, node_tree )
-        node_tree = try_to_find_graph( lambda: node.malt_parameters.graphs[0].graph, node_tree ) #node tree of graph will override node tree of material if present
-
-        if node_tree and node in context.selected_nodes:
-            space_path.append( node_tree, node = node )
+        if node and hasattr(node, 'get_pass_node_tree'):
+            node_tree = node.get_pass_node_tree()
+        if node_tree:
+            space_path.append(node_tree, node = node)
         else:
-            space_path.pop( )
+            space_path.pop()
         return{ 'FINISHED' }
     
-    @classmethod
-    def draw_button(cls, layout, text = '', icon = 'GREASEPENCIL'): #unused but maybe useful to avoid code duplication?
-        layout.operator(cls.bl_idname, text = text, icon = icon)
-
 keymaps = []
 def register_node_tree_edit_shortcut( register ):
     wm = bpy.context.window_manager
