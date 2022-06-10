@@ -479,6 +479,16 @@ Blends the blend color as a layer over the base color.
 - **Outputs**  
 	- **result** *: ( float )*  
 ---
+### **reconstruct_normal**
+>vec3 reconstruct_normal(sampler2D depth_texture, int depth_channel, ivec2 texel)
+
+- **Inputs**  
+	- **depth_texture** *: ( sampler2D )*  
+	- **depth_channel** *: ( int )*  
+	- **texel** *: ( ivec2 )*  
+- **Outputs**  
+	- **result** *: ( vec3 )*  
+---
 ### **ray_plane_intersection**
 >float ray_plane_intersection(vec3 ray_origin, vec3 ray_direction, vec3 plane_position, vec3 plane_normal)
 
@@ -545,8 +555,26 @@ Blends the blend color as a layer over the base color.
 - **Outputs**  
 	- **result** *: ( vec4 )*  
 ---
+### **surface_original_position**
+>vec3 surface_original_position()
+
+- **Outputs**  
+	- **result** *: ( vec3 )*  
+---
+### **surface_original_normal**
+>vec3 surface_original_normal()
+
+- **Outputs**  
+	- **result** *: ( vec3 )*  
+---
 ### **object_id**
 >uvec4 object_id()
+
+- **Outputs**  
+	- **result** *: ( uvec4 )*  
+---
+### **object_original_id**
+>uvec4 object_original_id()
 
 - **Outputs**  
 	- **result** *: ( uvec4 )*  
