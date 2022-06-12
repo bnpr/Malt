@@ -651,12 +651,13 @@ classes = [
 ]
 
 import blf
-def context_path_ui_callback(dpi):
+def context_path_ui_callback():
     
     font_id = 0
     context = bpy.context
     space = context.space_data
     area = context.area
+    sys_settings = context.preferences.system
     if not area.ui_type == 'MaltTree':
         return
     if not space.overlay.show_context_path:
@@ -666,7 +667,10 @@ def context_path_ui_callback(dpi):
     text = ' > '.join(x.node_tree.name for x in path)
 
     draw_x = area.regions[2].width + 10
-    blf.size(font_id, 12, dpi)
+    ui_scale = sys_settings.ui_scale
+    dpi = sys_settings.dpi
+
+    blf.size(font_id, 12 * ui_scale, dpi)
     blf.position(font_id, draw_x, 10, 0)
     blf.color(font_id, 1, 1, 1, 0.5)
     blf.draw(font_id, text)
@@ -675,7 +679,7 @@ def register_context_path_ui(register):
     global CONTEXT_PATH_DRAW_HANDLER
     space = bpy.types.SpaceNodeEditor
     if register:
-        CONTEXT_PATH_DRAW_HANDLER = space.draw_handler_add(context_path_ui_callback, (bpy.context.preferences.system.dpi, ), 'WINDOW', 'POST_PIXEL')
+        CONTEXT_PATH_DRAW_HANDLER = space.draw_handler_add(context_path_ui_callback, (), 'WINDOW', 'POST_PIXEL')
     else:
         space.draw_handler_remove(CONTEXT_PATH_DRAW_HANDLER, 'WINDOW')
 
