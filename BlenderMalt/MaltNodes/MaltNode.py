@@ -6,13 +6,17 @@ COLUMN_TYPES = ['Texture','sampler','Material']
 
 class MaltNode():
 
-    malt_parameters : bpy.props.PointerProperty(type=MaltPropertyGroup)
+    malt_parameters : bpy.props.PointerProperty(type=MaltPropertyGroup,
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
 
-    disable_updates : bpy.props.BoolProperty(name="Disable Updates", default=False)
+    disable_updates : bpy.props.BoolProperty(name="Disable Updates", default=False,
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
     
-    first_setup : bpy.props.BoolProperty(default=True)
+    first_setup : bpy.props.BoolProperty(default=True,
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
 
-    subscribed : bpy.props.BoolProperty(name="Subscribed", default=False)
+    subscribed : bpy.props.BoolProperty(name="Subscribed", default=False,
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
 
     # Blender will trigger update callbacks even before init and update has finished
     # So we use some wrappers to get a more sane behaviour

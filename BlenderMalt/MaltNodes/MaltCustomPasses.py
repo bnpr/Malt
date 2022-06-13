@@ -24,10 +24,14 @@ class MaltIOParameter(bpy.types.PropertyGroup):
     def set_parameter(self, value):
         self['PARAMETER'] = self.get_parameter_enums()[value]
 
-    graph_type : bpy.props.StringProperty()
-    io_type : bpy.props.StringProperty()
-    is_output : bpy.props.BoolProperty()
-    parameter : bpy.props.EnumProperty(items=get_parameter_enums, get=get_parameter, set=set_parameter)
+    graph_type : bpy.props.StringProperty(
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
+    io_type : bpy.props.StringProperty(
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
+    is_output : bpy.props.BoolProperty(
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
+    parameter : bpy.props.EnumProperty(items=get_parameter_enums, get=get_parameter, set=set_parameter,
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
 
     def draw(self, context, layout, owner):
         layout.label(text='', icon='DOT')
@@ -36,18 +40,27 @@ class MaltIOParameter(bpy.types.PropertyGroup):
 
 class MaltCustomIO(bpy.types.PropertyGroup):
 
-    inputs : bpy.props.CollectionProperty(type=MaltIOParameter)
+    inputs : bpy.props.CollectionProperty(type=MaltIOParameter,
+        options={'LIBRARY_EDITABLE'},
+        override={'LIBRARY_OVERRIDABLE', 'USE_INSERTION'})
     inputs_index : bpy.props.IntProperty()
-    outputs : bpy.props.CollectionProperty(type=MaltIOParameter)
-    outputs_index : bpy.props.IntProperty()
+    outputs : bpy.props.CollectionProperty(type=MaltIOParameter,
+        options={'LIBRARY_EDITABLE'},
+        override={'LIBRARY_OVERRIDABLE', 'USE_INSERTION'})
+    outputs_index : bpy.props.IntProperty(
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
 
 class MaltCustomPasses(bpy.types.PropertyGroup):
 
-    io : bpy.props.CollectionProperty(type=MaltCustomIO)
+    io : bpy.props.CollectionProperty(type=MaltCustomIO,
+        options={'LIBRARY_EDITABLE'},
+        override={'LIBRARY_OVERRIDABLE', 'USE_INSERTION'})
 
 class MaltGraphType(bpy.types.PropertyGroup):
 
-    custom_passes : bpy.props.CollectionProperty(type=MaltCustomPasses)
+    custom_passes : bpy.props.CollectionProperty(type=MaltCustomPasses,
+        options={'LIBRARY_EDITABLE'},
+        override={'LIBRARY_OVERRIDABLE', 'USE_INSERTION'})
 
 def setup_default_passes(graphs, world=None):
     if world is None:
@@ -112,7 +125,9 @@ classes = [
 
 def register():
     for _class in classes: bpy.utils.register_class(_class)
-    bpy.types.World.malt_graph_types = bpy.props.CollectionProperty(type=MaltGraphType)
+    bpy.types.World.malt_graph_types = bpy.props.CollectionProperty(type=MaltGraphType,
+        options={'LIBRARY_EDITABLE'},
+        override={'LIBRARY_OVERRIDABLE', 'USE_INSERTION'})
     
 def unregister():
     del bpy.types.World.malt_graph_types

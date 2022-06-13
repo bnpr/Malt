@@ -10,7 +10,8 @@ class MaltInlineNode(bpy.types.Node, MaltNode):
         #update the node tree
         self.id_data.update()
 
-    code : bpy.props.StringProperty(update=code_update)
+    code : bpy.props.StringProperty(update=code_update,
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
 
     def on_socket_update(self, socket):
         self.update()

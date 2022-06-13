@@ -105,15 +105,21 @@ class MaltPipeline(bpy.types.PropertyGroup):
         self.update_pipeline(context)
 
     pipeline : bpy.props.StringProperty(name="Malt Pipeline", subtype='FILE_PATH', update=update_pipeline_settings,
-        set=malt_path_setter('pipeline'), get=malt_path_getter('pipeline'))
+        set=malt_path_setter('pipeline'), get=malt_path_getter('pipeline'),
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
     
     plugins_dir : bpy.props.StringProperty(name="Local Plugins", subtype='DIR_PATH', update=update_pipeline_settings,
-        set=malt_path_setter('plugins_dir'), get=malt_path_getter('plugins_dir'))
+        set=malt_path_setter('plugins_dir'), get=malt_path_getter('plugins_dir'),
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
 
     viewport_bit_depth : bpy.props.EnumProperty(items=[('8', '8', ''),('32', '32', '')], 
-        name="Bit Depth (Viewport)", update=update_pipeline_settings)
-    graph_types : bpy.props.CollectionProperty(type=bpy.types.PropertyGroup)
-    overrides : bpy.props.StringProperty(name='Pipeline Overrides', default='Preview,Final Render')
+        name="Bit Depth (Viewport)", update=update_pipeline_settings,
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
+    graph_types : bpy.props.CollectionProperty(type=bpy.types.PropertyGroup,
+        options={'LIBRARY_EDITABLE'},
+        override={'LIBRARY_OVERRIDABLE', 'USE_INSERTION'})
+    overrides : bpy.props.StringProperty(name='Pipeline Overrides', default='Preview,Final Render',
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
 
     def draw_ui(self, layout):
         layout.use_property_split = True
@@ -312,7 +318,8 @@ def track_pipeline_changes():
 
 def register():
     for _class in classes: bpy.utils.register_class(_class)
-    bpy.types.World.malt = bpy.props.PointerProperty(type=MaltPipeline)
+    bpy.types.World.malt = bpy.props.PointerProperty(type=MaltPipeline,
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
     bpy.app.handlers.depsgraph_update_post.append(depsgraph_update)
     bpy.app.handlers.load_pre.append(load_scene)
     bpy.app.handlers.load_post.append(load_scene_post)

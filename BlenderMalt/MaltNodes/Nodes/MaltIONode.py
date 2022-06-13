@@ -8,8 +8,10 @@ class MaltIONode(bpy.types.Node, MaltNode):
     
     bl_label = "IO Node"
 
-    properties: bpy.props.PointerProperty(type=MaltPropertyGroup)
-    is_output: bpy.props.BoolProperty()
+    properties: bpy.props.PointerProperty(type=MaltPropertyGroup,
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
+    is_output: bpy.props.BoolProperty(
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
 
     def get_custom_pass_enums(self, context):
         custom_passes = ['Default']
@@ -17,9 +19,12 @@ class MaltIONode(bpy.types.Node, MaltNode):
             custom_passes = context.scene.world.malt_graph_types[self.id_data.graph_type].custom_passes.keys()
         return [(p,p,p) for p in custom_passes]
         
-    custom_pass: bpy.props.EnumProperty(items=get_custom_pass_enums)
-    allow_custom_pass : bpy.props.BoolProperty(default=False)
-    allow_custom_parameters : bpy.props.BoolProperty(default=False)
+    custom_pass: bpy.props.EnumProperty(items=get_custom_pass_enums,
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
+    allow_custom_pass : bpy.props.BoolProperty(default=False,
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
+    allow_custom_parameters : bpy.props.BoolProperty(default=False,
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
 
     def malt_setup(self):
         function = self.get_function()
@@ -56,10 +61,14 @@ class MaltIONode(bpy.types.Node, MaltNode):
         
         self.setup_sockets(inputs, outputs)
 
-    io_type : bpy.props.StringProperty(update=MaltNode.setup)
+    io_type : bpy.props.StringProperty(update=MaltNode.setup,
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
 
-    custom_parameters : bpy.props.CollectionProperty(type=MaltIOParameter)
-    custom_parameters_index : bpy.props.IntProperty()
+    custom_parameters : bpy.props.CollectionProperty(type=MaltIOParameter,
+        options={'LIBRARY_EDITABLE'},
+        override={'LIBRARY_OVERRIDABLE', 'USE_INSERTION'})
+    custom_parameters_index : bpy.props.IntProperty(
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
 
     def get_function(self):
         graph = self.id_data.get_pipeline_graph()

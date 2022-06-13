@@ -11,15 +11,20 @@ class MaltLight(bpy.types.PropertyGroup):
             light.spot_size = self.spot_angle
             light.spot_blend = self.spot_blend_angle / self.spot_angle
 
-    strength : bpy.props.FloatProperty(name='Strength', default=1)
+    strength : bpy.props.FloatProperty(name='Strength', default=1,
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
     
-    override_global_settings : bpy.props.BoolProperty(name='Override Global Settings', default=False)
-    max_distance : bpy.props.FloatProperty(name='Max Distance', default=100)
+    override_global_settings : bpy.props.BoolProperty(name='Override Global Settings', default=False,
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
+    max_distance : bpy.props.FloatProperty(name='Max Distance', default=100,
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
 
     radius : bpy.props.FloatProperty(
         name='Radius',
         default=5,
         update=sync_data,
+        options={'LIBRARY_EDITABLE'},
+        override={'LIBRARY_OVERRIDABLE'}
     )
     spot_angle : bpy.props.FloatProperty(
         name='Angle',
@@ -28,6 +33,8 @@ class MaltLight(bpy.types.PropertyGroup):
         min=0,
         max=math.pi,
         update=sync_data,
+        options={'LIBRARY_EDITABLE'},
+        override={'LIBRARY_OVERRIDABLE'}
     )
     spot_blend_angle : bpy.props.FloatProperty(
         name='Blend',
@@ -36,6 +43,8 @@ class MaltLight(bpy.types.PropertyGroup):
         min=0,
         max=math.pi,
         update=sync_data,
+        options={'LIBRARY_EDITABLE'},
+        override={'LIBRARY_OVERRIDABLE'}
     )
 
     def draw_ui(self, layout):
@@ -57,7 +66,8 @@ classes = [
 
 def register():
     for _class in classes: bpy.utils.register_class(_class)
-    bpy.types.Light.malt = bpy.props.PointerProperty(type=MaltLight)
+    bpy.types.Light.malt = bpy.props.PointerProperty(type=MaltLight,
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
 
 def unregister():
     for _class in reversed(classes): bpy.utils.unregister_class(_class)

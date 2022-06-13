@@ -5,14 +5,16 @@ from Malt import Scene
 from . import MaltTextures
 
 class MaltBoolPropertyWrapper(bpy.types.PropertyGroup):
-    boolean : bpy.props.BoolProperty()
+    boolean : bpy.props.BoolProperty(
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
 
 # WORKAROUND: We can't declare color ramps from python,
 # so we use the ones stored inside textures
 class MaltGradientPropertyWrapper(bpy.types.PropertyGroup):
     def poll(self, texture):
         return texture.type == 'BLEND' and texture.use_color_ramp
-    texture : bpy.props.PointerProperty(type=bpy.types.Texture, poll=poll)
+    texture : bpy.props.PointerProperty(type=bpy.types.Texture, poll=poll,
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
 
     def add_or_duplicate(self):
         if self.texture:
@@ -28,12 +30,15 @@ class MaltGradientPropertyWrapper(bpy.types.PropertyGroup):
         add_gradient_workaround(self.texture)
 
 class MaltTexturePropertyWrapper(bpy.types.PropertyGroup):
-    texture : bpy.props.PointerProperty(type=bpy.types.Image)
+    texture : bpy.props.PointerProperty(type=bpy.types.Image,
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
 
 class MaltMaterialPropertyWrapper(bpy.types.PropertyGroup):
     #TODO:poll
-    material : bpy.props.PointerProperty(type=bpy.types.Material)
-    extension : bpy.props.StringProperty()
+    material : bpy.props.PointerProperty(type=bpy.types.Material,
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
+    extension : bpy.props.StringProperty(
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
 
     def add_or_duplicate(self):
         if self.material:
@@ -46,8 +51,10 @@ class MaltMaterialPropertyWrapper(bpy.types.PropertyGroup):
 class MaltGraphPropertyWrapper(bpy.types.PropertyGroup):
     def poll(self, tree):
         return tree.bl_idname == 'MaltTree' and tree.graph_type == self.type
-    graph : bpy.props.PointerProperty(type=bpy.types.NodeTree, poll=poll)
-    type : bpy.props.StringProperty()
+    graph : bpy.props.PointerProperty(type=bpy.types.NodeTree, poll=poll,
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
+    type : bpy.props.StringProperty(
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
 
     def add_or_duplicate(self):
         if self.graph:
@@ -60,14 +67,27 @@ class MaltGraphPropertyWrapper(bpy.types.PropertyGroup):
 
 class MaltPropertyGroup(bpy.types.PropertyGroup):
 
-    bools : bpy.props.CollectionProperty(type=MaltBoolPropertyWrapper)
-    gradients : bpy.props.CollectionProperty(type=MaltGradientPropertyWrapper)    
-    textures : bpy.props.CollectionProperty(type=MaltTexturePropertyWrapper)    
-    materials : bpy.props.CollectionProperty(type=MaltMaterialPropertyWrapper)
-    graphs : bpy.props.CollectionProperty(type=MaltGraphPropertyWrapper)
+    bools : bpy.props.CollectionProperty(type=MaltBoolPropertyWrapper,
+        options={'LIBRARY_EDITABLE'},
+        override={'LIBRARY_OVERRIDABLE', 'USE_INSERTION'})
+    gradients : bpy.props.CollectionProperty(type=MaltGradientPropertyWrapper,
+        options={'LIBRARY_EDITABLE'},
+        override={'LIBRARY_OVERRIDABLE', 'USE_INSERTION'})    
+    textures : bpy.props.CollectionProperty(type=MaltTexturePropertyWrapper,
+        options={'LIBRARY_EDITABLE'},
+        override={'LIBRARY_OVERRIDABLE', 'USE_INSERTION'})    
+    materials : bpy.props.CollectionProperty(type=MaltMaterialPropertyWrapper,
+        options={'LIBRARY_EDITABLE'},
+        override={'LIBRARY_OVERRIDABLE', 'USE_INSERTION'})
+    graphs : bpy.props.CollectionProperty(type=MaltGraphPropertyWrapper,
+        options={'LIBRARY_EDITABLE'},
+        override={'LIBRARY_OVERRIDABLE', 'USE_INSERTION'})
 
-    parent : bpy.props.PointerProperty(type=bpy.types.ID, name="Override From")
-    override_from_parents : bpy.props.CollectionProperty(type=MaltBoolPropertyWrapper)
+    parent : bpy.props.PointerProperty(type=bpy.types.ID, name="Override From",
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
+    override_from_parents : bpy.props.CollectionProperty(type=MaltBoolPropertyWrapper,
+        options={'LIBRARY_EDITABLE'},
+        override={'LIBRARY_OVERRIDABLE', 'USE_INSERTION'})
 
     def get_rna(self):
         try:
@@ -569,9 +589,11 @@ class OT_MaltNewOverride(bpy.types.Operator):
         for i, override in enumerate(overrides):
             result.append((override, override, '', i))
         return result
-    override : bpy.props.EnumProperty(items=get_override_enums)
+    override : bpy.props.EnumProperty(items=get_override_enums,
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
     
-    callback : bpy.props.PointerProperty(type=MaltUtils.MaltCallback)
+    callback : bpy.props.PointerProperty(type=MaltUtils.MaltCallback,
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
     
     def invoke(self, context, event):
         return context.window_manager.invoke_props_dialog(self)
@@ -721,15 +743,24 @@ classes = (
 def register():
     for _class in classes: bpy.utils.register_class(_class)
 
-    bpy.types.Scene.malt_parameters = bpy.props.PointerProperty(type=MaltPropertyGroup)
-    bpy.types.World.malt_parameters = bpy.props.PointerProperty(type=MaltPropertyGroup)
-    bpy.types.Camera.malt_parameters = bpy.props.PointerProperty(type=MaltPropertyGroup)
-    bpy.types.Object.malt_parameters = bpy.props.PointerProperty(type=MaltPropertyGroup)
-    bpy.types.Material.malt_parameters = bpy.props.PointerProperty(type=MaltPropertyGroup)
-    bpy.types.Mesh.malt_parameters = bpy.props.PointerProperty(type=MaltPropertyGroup)
-    bpy.types.Curve.malt_parameters = bpy.props.PointerProperty(type=MaltPropertyGroup)
-    bpy.types.MetaBall.malt_parameters = bpy.props.PointerProperty(type=MaltPropertyGroup)
-    bpy.types.Light.malt_parameters = bpy.props.PointerProperty(type=MaltPropertyGroup)
+    bpy.types.Scene.malt_parameters = bpy.props.PointerProperty(type=MaltPropertyGroup,
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
+    bpy.types.World.malt_parameters = bpy.props.PointerProperty(type=MaltPropertyGroup,
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
+    bpy.types.Camera.malt_parameters = bpy.props.PointerProperty(type=MaltPropertyGroup,
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
+    bpy.types.Object.malt_parameters = bpy.props.PointerProperty(type=MaltPropertyGroup,
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
+    bpy.types.Material.malt_parameters = bpy.props.PointerProperty(type=MaltPropertyGroup,
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
+    bpy.types.Mesh.malt_parameters = bpy.props.PointerProperty(type=MaltPropertyGroup,
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
+    bpy.types.Curve.malt_parameters = bpy.props.PointerProperty(type=MaltPropertyGroup,
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
+    bpy.types.MetaBall.malt_parameters = bpy.props.PointerProperty(type=MaltPropertyGroup,
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
+    bpy.types.Light.malt_parameters = bpy.props.PointerProperty(type=MaltPropertyGroup,
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
 
 
 def unregister():
