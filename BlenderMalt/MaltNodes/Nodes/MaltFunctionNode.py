@@ -45,9 +45,12 @@ class MaltFunctionNode(bpy.types.Node, MaltNode):
                         skip_private=False
                     )
 
-    function_type : bpy.props.StringProperty(update=MaltNode.setup)
-    pass_graph_type: bpy.props.StringProperty()
-    pass_graph_io_type: bpy.props.StringProperty()
+    function_type : bpy.props.StringProperty(update=MaltNode.setup,
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
+    pass_graph_type: bpy.props.StringProperty(
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
+    pass_graph_io_type: bpy.props.StringProperty(
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
 
     def get_parameters(self, overrides, resources):
         parameters = MaltNode.get_parameters(self, overrides, resources)

@@ -18,7 +18,8 @@ class MaltTree(bpy.types.NodeTree):
     bl_label = "Malt Node Tree"
     bl_icon = 'NODETREE'
 
-    type : bpy.props.EnumProperty(name = 'Type', items = [("MALT", "Malt", "Malt")])
+    type : bpy.props.EnumProperty(name = 'Type', items = [("MALT", "Malt", "Malt")],
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
 
     @classmethod
     def poll(cls, context):
@@ -27,16 +28,22 @@ class MaltTree(bpy.types.NodeTree):
     def poll_material(self, material):
         return material.malt.shader_nodes is self
     
-    graph_type: bpy.props.StringProperty(name='Type')
+    graph_type: bpy.props.StringProperty(name='Type',
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
 
     library_source : bpy.props.StringProperty(name="Local Library", subtype='FILE_PATH',
+        options={'LIBRARY_EDITABLE'},
+        override={'LIBRARY_OVERRIDABLE'},
         set=malt_path_setter('library_source'), get=malt_path_getter('library_source'))
 
-    disable_updates : bpy.props.BoolProperty(name="Disable Updates", default=False)
+    disable_updates : bpy.props.BoolProperty(name="Disable Updates", default=False,
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
 
-    malt_parameters : bpy.props.PointerProperty(type=MaltPropertyGroup)
+    malt_parameters : bpy.props.PointerProperty(type=MaltPropertyGroup,
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
     
-    subscribed : bpy.props.BoolProperty(name="Subscribed", default=False)
+    subscribed : bpy.props.BoolProperty(name="Subscribed", default=False,
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
 
     def is_active(self):
         return self.get_pipeline_graph() is not None

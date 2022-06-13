@@ -17,7 +17,8 @@ class MaltStructNode(bpy.types.Node, MaltNode):
 
         self.setup_sockets(inputs, outputs)
 
-    struct_type : bpy.props.StringProperty(update=MaltNode.setup)
+    struct_type : bpy.props.StringProperty(update=MaltNode.setup,
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
 
     def get_struct(self):
         graph = self.id_data.get_pipeline_graph()

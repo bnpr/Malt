@@ -17,15 +17,20 @@ class MaltSocket(bpy.types.NodeSocket):
     def on_type_update(self, context):
         self.node.on_socket_update(self)
 
-    data_type: bpy.props.StringProperty(update=on_type_update)
+    data_type: bpy.props.StringProperty(update=on_type_update,
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
 
-    array_size: bpy.props.IntProperty(default=0, update=on_type_update)
+    array_size: bpy.props.IntProperty(default=0, update=on_type_update,
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
     
-    default_initialization: bpy.props.StringProperty(default='')
+    default_initialization: bpy.props.StringProperty(default='',
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
     
-    show_in_material_panel: bpy.props.BoolProperty(default=True)
+    show_in_material_panel: bpy.props.BoolProperty(default=True,
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
     
-    active: bpy.props.BoolProperty(default=True)
+    active: bpy.props.BoolProperty(default=True,
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
 
     def is_instantiable_type(self):
         return self.data_type.startswith('sampler') == False

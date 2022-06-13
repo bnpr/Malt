@@ -25,12 +25,16 @@ class MaltMaterial(bpy.types.PropertyGroup):
         return object.bl_idname == 'MaltTree'
 
     shader_source : bpy.props.StringProperty(name="Shader Source", subtype='FILE_PATH', update=update_source,
-        set=malt_path_setter('shader_source'), get=malt_path_getter('shader_source'))
+        set=malt_path_setter('shader_source'), get=malt_path_getter('shader_source'),
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
         
-    shader_nodes : bpy.props.PointerProperty(name="Node Tree", type=bpy.types.NodeTree, update=update_nodes, poll=poll_tree)
-    compiler_error : bpy.props.StringProperty(name="Compiler Error")
+    shader_nodes : bpy.props.PointerProperty(name="Node Tree", type=bpy.types.NodeTree, update=update_nodes, poll=poll_tree,
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
+    compiler_error : bpy.props.StringProperty(name="Compiler Error",
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
 
-    parameters : bpy.props.PointerProperty(type=MaltPropertyGroup, name="Shader Parameters")
+    parameters : bpy.props.PointerProperty(type=MaltPropertyGroup, name="Shader Parameters",
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
 
     def get_source_path(self):
         path = None
@@ -209,7 +213,8 @@ def track_shader_changes(force_update=False, async_compilation=True):
 
 def register():
     for _class in classes: bpy.utils.register_class(_class)
-    bpy.types.Material.malt = bpy.props.PointerProperty(type=MaltMaterial)
+    bpy.types.Material.malt = bpy.props.PointerProperty(type=MaltMaterial,
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
     
     bpy.app.timers.register(track_shader_changes, persistent=True)
 
