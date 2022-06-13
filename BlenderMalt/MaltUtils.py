@@ -137,4 +137,6 @@ def register():
     for _class in classes: bpy.utils.register_class(_class)
 
 def unregister():
+    global _CALLBACKS
+    _CALLBACKS = [None] * _MAX_CALLBACKS
     for _class in reversed(classes): bpy.utils.unregister_class(_class)

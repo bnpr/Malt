@@ -562,6 +562,11 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
             if self.graphs[key].graph:
                 row.operator('wm.malt_callback', text='', icon='DUPLICATE').callback.set(
                     self.graphs[key].add_or_duplicate, 'Duplicate')
+                from BlenderMalt.MaltNodes.MaltNodeTree import set_node_tree
+                node = self.id_data if isinstance(self.id_data, bpy.types.Node) else None
+                row.operator('wm.malt_callback', text = '', icon = 'GREASEPENCIL').callback.set(
+                    lambda: set_node_tree(bpy.context, self.graphs[key].graph, node)
+                )
             else:
                 row.operator('wm.malt_callback', text='New', icon='ADD').callback.set(
                     self.graphs[key].add_or_duplicate, 'New')

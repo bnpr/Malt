@@ -566,13 +566,16 @@ def node_header_ui(self, context):
 
 @bpy.app.handlers.persistent
 def depsgraph_update(scene, depsgraph):
+    # Show the active material node tree in the Node Editor
     from BlenderMalt import MaltPipeline
     if MaltPipeline.is_malt_active() == False:
         return
-    # Show the active material node tree in the Node Editor
+    scene_updated = False
     for deps_update in depsgraph.updates:
-        if isinstance(deps_update.id, bpy.types.NodeTree):
-            return
+        if isinstance(deps_update.id, bpy.types.Scene):
+            scene_updated = True
+    if scene_updated == False:
+        return
     node_tree = None
     try:
         material = bpy.context.object.active_material
@@ -580,13 +583,69 @@ def depsgraph_update(scene, depsgraph):
     except:
         pass
     if node_tree:
-        for screen in bpy.data.screens:
-            for area in screen.areas:
-                for space in area.spaces:
-                    if space.type ==  'NODE_EDITOR' and space.tree_type == 'MaltTree' and space.pin == False:
-                        if space.node_tree is None or space.node_tree.graph_type == 'Mesh':
-                            space.node_tree = node_tree
+        spaces, locked_spaces = get_node_spaces(bpy.context)
+        for space in spaces:
+            if space.node_tree.graph_type == 'Mesh':
+                space.node_tree = node_tree
+                return
+
+def get_node_spaces(context):
+    spaces = []
+    locked_spaces = []
+    for area in context.screen.areas:
+        if area.type == 'NODE_EDITOR':
+            for space in area.spaces:
+                if space.type == 'NODE_EDITOR' and space.tree_type == 'MaltTree':
+                    if space.pin == False or space.node_tree is None:
+                        spaces.append(space)
+                    else:
+                        locked_spaces.append(space)
+    return spaces, locked_spaces
+
+def set_node_tree(context, node_tree, node = None):
+    if context.space_data.type == 'NODE_EDITOR' and context.area.ui_type == 'MaltTree':
+        context.space_data.path.append(node_tree, node = node)
+    else:
+        spaces, locked_spaces = get_node_spaces(context)
+        if len(spaces) > 0:
+            spaces[0].node_tree = node_tree
+        elif len(locked_spaces) > 0:
+            locked_spaces[0].node_tree = node_tree
+
+class OT_MaltEditNodeTree( bpy.types.Operator ):
+    bl_idname = 'wm.malt_edit_node_tree'
+    bl_label = 'Edit Node Tree'
+
+    @classmethod
+    def poll( cls, context ):
+        return context.area.ui_type == 'MaltTree' and context.space_data.type == 'NODE_EDITOR'
+            
+    def execute( self, context ):
+        node = context.active_node
+        space_path = context.space_data.path
+        node_tree = None
+        if node and hasattr(node, 'get_pass_node_tree'):
+            node_tree = node.get_pass_node_tree()
+        if node_tree:
+            space_path.append(node_tree, node = node)
+        else:
+            space_path.pop()
+        return{ 'FINISHED' }
     
+keymaps = []
+def register_node_tree_edit_shortcut( register ):
+    wm = bpy.context.window_manager
+    kc = wm.keyconfigs.addon
+    if kc:
+        if register:
+            km = kc.keymaps.new( name = 'Node Editor', space_type = 'NODE_EDITOR' )
+            kmi = km.keymap_items.new( OT_MaltEditNodeTree.bl_idname, type = 'TAB', value = 'PRESS' )
+            keymaps.append(( km, kmi ))
+        else:
+            for km, kmi in keymaps:
+                km.keymap_items.remove( kmi )
+            keymaps.clear( )
+
 classes = [
     MaltTree,
     NODE_PT_MaltNodeTree,
@@ -595,8 +654,8 @@ classes = [
     MALT_MT_NodeInputs,
     MALT_MT_NodeOutputs,
     MALT_MT_NodeOther,
+    OT_MaltEditNodeTree,
 ]
-
 
 def register():
     for _class in classes: bpy.utils.register_class(_class)
@@ -607,9 +666,39 @@ def register():
     bpy.app.timers.register(track_library_changes, persistent=True)
     bpy.app.handlers.depsgraph_update_post.append(depsgraph_update)
 
-    
+    def context_path_ui_callback():
+        import blf
+        font_id = 0
+        context = bpy.context
+        space = context.space_data
+        area = context.area
+        if not area.ui_type == 'MaltTree':
+            return
+        if not space.overlay.show_context_path:
+            return
+        path = space.path
+        text = ' > '.join(x.node_tree.name for x in path)
+        preferences = context.preferences
+        ui_scale = preferences.view.ui_scale
+        dpi = preferences.system.dpi
+        size = preferences.ui_styles[0].widget.points * ui_scale
+        color = preferences.themes[0].node_editor.space.text
+        blf.size(font_id, size, dpi)
+        blf.position(font_id, 10, 10, 0)
+        blf.color(font_id, *color, 1)
+        blf.draw(font_id, text)
+
+    global CONTEXT_PATH_DRAW_HANDLER
+    CONTEXT_PATH_DRAW_HANDLER = bpy.types.SpaceNodeEditor.draw_handler_add(context_path_ui_callback, (), 'WINDOW', 'POST_PIXEL')
+
+    register_node_tree_edit_shortcut(True)
 
 def unregister():
+    register_node_tree_edit_shortcut(False)
+    
+    global CONTEXT_PATH_DRAW_HANDLER
+    bpy.types.SpaceNodeEditor.draw_handler_remove(CONTEXT_PATH_DRAW_HANDLER, 'WINDOW')
+
     bpy.app.handlers.depsgraph_update_post.remove(depsgraph_update)
     bpy.app.timers.unregister(track_library_changes)
     

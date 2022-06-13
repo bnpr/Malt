@@ -65,6 +65,10 @@ class MaltMaterial(bpy.types.PropertyGroup):
         row.template_ID(self, "shader_nodes")
         if self.shader_nodes:
             row.operator('wm.malt_callback', text='', icon='DUPLICATE').callback.set(nodes_add_or_duplicate, 'Duplicate')
+            from BlenderMalt.MaltNodes.MaltNodeTree import set_node_tree
+            row.operator('wm.malt_callback', text = '', icon = 'GREASEPENCIL').callback.set(
+                lambda: set_node_tree(bpy.context, self.shader_nodes)
+            )
         else:
             row.operator('wm.malt_callback', text='New', icon='ADD').callback.set(nodes_add_or_duplicate, 'New')
 
