@@ -144,10 +144,14 @@ class MALT_PT_Attributes(bpy.types.Panel):
             self.layout.prop(owner, 'malt_vertex_color_override_3')    
 
 def register():
-    bpy.types.Mesh.malt_vertex_color_override_0 = bpy.props.StringProperty(name='0')
-    bpy.types.Mesh.malt_vertex_color_override_1 = bpy.props.StringProperty(name='1')
-    bpy.types.Mesh.malt_vertex_color_override_2 = bpy.props.StringProperty(name='2')
-    bpy.types.Mesh.malt_vertex_color_override_3 = bpy.props.StringProperty(name='3')
+    bpy.types.Mesh.malt_vertex_color_override_0 = bpy.props.StringProperty(name='0',
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
+    bpy.types.Mesh.malt_vertex_color_override_1 = bpy.props.StringProperty(name='1',
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
+    bpy.types.Mesh.malt_vertex_color_override_2 = bpy.props.StringProperty(name='2',
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
+    bpy.types.Mesh.malt_vertex_color_override_3 = bpy.props.StringProperty(name='3',
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
     bpy.utils.register_class(MALT_PT_Attributes)
 
 
