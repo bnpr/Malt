@@ -672,19 +672,20 @@ def register():
         context = bpy.context
         space = context.space_data
         area = context.area
-        sys_settings = context.preferences.system
         if not area.ui_type == 'MaltTree':
             return
         if not space.overlay.show_context_path:
             return
         path = space.path
         text = ' > '.join(x.node_tree.name for x in path)
-        draw_x = area.regions[2].width + 10
-        ui_scale = sys_settings.ui_scale
-        dpi = sys_settings.dpi
-        blf.size(font_id, 12 * ui_scale, dpi)
-        blf.position(font_id, draw_x, 10, 0)
-        blf.color(font_id, 1, 1, 1, 0.5)
+        preferences = context.preferences
+        ui_scale = preferences.view.ui_scale
+        dpi = preferences.system.dpi
+        size = preferences.ui_styles[0].widget.points * ui_scale
+        color = preferences.themes[0].node_editor.space.text
+        blf.size(font_id, size, dpi)
+        blf.position(font_id, 10, 10, 0)
+        blf.color(font_id, *color, 1)
         blf.draw(font_id, text)
 
     global CONTEXT_PATH_DRAW_HANDLER
