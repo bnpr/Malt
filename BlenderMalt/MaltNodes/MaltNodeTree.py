@@ -650,39 +650,6 @@ classes = [
     OT_MaltEditNodeTree,
 ]
 
-import blf
-def context_path_ui_callback():
-    
-    font_id = 0
-    context = bpy.context
-    space = context.space_data
-    area = context.area
-    sys_settings = context.preferences.system
-    if not area.ui_type == 'MaltTree':
-        return
-    if not space.overlay.show_context_path:
-        return
-    
-    path = space.path
-    text = ' > '.join(x.node_tree.name for x in path)
-
-    draw_x = area.regions[2].width + 10
-    ui_scale = sys_settings.ui_scale
-    dpi = sys_settings.dpi
-
-    blf.size(font_id, 12 * ui_scale, dpi)
-    blf.position(font_id, draw_x, 10, 0)
-    blf.color(font_id, 1, 1, 1, 0.5)
-    blf.draw(font_id, text)
-
-def register_context_path_ui(register):
-    global CONTEXT_PATH_DRAW_HANDLER
-    space = bpy.types.SpaceNodeEditor
-    if register:
-        CONTEXT_PATH_DRAW_HANDLER = space.draw_handler_add(context_path_ui_callback, (), 'WINDOW', 'POST_PIXEL')
-    else:
-        space.draw_handler_remove(CONTEXT_PATH_DRAW_HANDLER, 'WINDOW')
-
 def register():
     for _class in classes: bpy.utils.register_class(_class)
 
@@ -692,13 +659,37 @@ def register():
     bpy.app.timers.register(track_library_changes, persistent=True)
     bpy.app.handlers.depsgraph_update_post.append(depsgraph_update)
 
+    def context_path_ui_callback():
+        import blf
+        font_id = 0
+        context = bpy.context
+        space = context.space_data
+        area = context.area
+        sys_settings = context.preferences.system
+        if not area.ui_type == 'MaltTree':
+            return
+        if not space.overlay.show_context_path:
+            return
+        path = space.path
+        text = ' > '.join(x.node_tree.name for x in path)
+        draw_x = area.regions[2].width + 10
+        ui_scale = sys_settings.ui_scale
+        dpi = sys_settings.dpi
+        blf.size(font_id, 12 * ui_scale, dpi)
+        blf.position(font_id, draw_x, 10, 0)
+        blf.color(font_id, 1, 1, 1, 0.5)
+        blf.draw(font_id, text)
+
+    global CONTEXT_PATH_DRAW_HANDLER
+    CONTEXT_PATH_DRAW_HANDLER = bpy.types.SpaceNodeEditor.draw_handler_add(context_path_ui_callback, (), 'WINDOW', 'POST_PIXEL')
+
     register_node_tree_edit_shortcut(True)
-    register_context_path_ui(True)
 
 def unregister():
-
-    register_context_path_ui(False)
     register_node_tree_edit_shortcut(False)
+    
+    global CONTEXT_PATH_DRAW_HANDLER
+    bpy.types.SpaceNodeEditor.draw_handler_remove(CONTEXT_PATH_DRAW_HANDLER, 'WINDOW')
 
     bpy.app.handlers.depsgraph_update_post.remove(depsgraph_update)
     bpy.app.timers.unregister(track_library_changes)
