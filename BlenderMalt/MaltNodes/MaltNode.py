@@ -149,13 +149,18 @@ class MaltNode():
             self.setup_width()
     
     def setup_width(self):
-        max_len = len(self.name)
+        size = bpy.context.preferences.ui_styles[0].widget.points
+        import blf
+        blf.size(0, size, 90) 
+        max_width = blf.dimensions(0, self.name)[0]
         for input in self.inputs.values():
-            max_len = max(max_len, len(input.get_ui_label()))
+            scale = 2 
+            if input.default_initialization or '.' in input.name:
+                scale = 1
+            max_width = max(max_width, blf.dimensions(0, input.get_ui_label())[0] * scale)
         for output in self.outputs.values():
-            max_len = max(max_len, len(output.get_ui_label()))
-        #TODO: Measure actual string width
-        self.width = max(self.width, max_len * 10)
+            max_width = max(max_width, blf.dimensions(0, output.get_ui_label())[0])
+        self.width = max(max_width, 200)
 
     def get_source_name(self):
         return self.id_data.get_transpiler().get_source_name(self.name)
