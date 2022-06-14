@@ -53,7 +53,7 @@ class Pipeline():
             "Disables backface culling, so geometry is rendered from both sides.")
         
         self.parameters.mesh['precomputed_tangents'] = Parameter(False, Type.BOOL, doc="""
-            Load precomputed mesh tangents *(needed for improvinng normal mapping quality on low poly meshes)*. 
+            Load precomputed mesh tangents *(needed for improving normal mapping quality on low poly meshes)*. 
             It's disabled by default since it slows down mesh loading in Blender.  
             When disabled, the *tangents* are calculated on the fly from the *pixel shader*.""")
         
