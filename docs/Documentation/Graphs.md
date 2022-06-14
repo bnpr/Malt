@@ -245,7 +245,7 @@ Most render engines only allow users to edit the render pipeline after the scene
 The scene geometry is drawn inside *Render Layer*, using *Depth Peeling*.
 
 #### Depth Peeling
-Real-time rendering often relies heavily on screen-space techniques, however this usually doesn't work with tranparent objects.  
+Real-time rendering often relies heavily on screen-space techniques, however this usually doesn't work with transparent objects.  
 Malt renders opaque objects first, and then transparent objects in multiple overlapping layers (a.k.a. *Depth Peeling*), so every type of object can follow the same render path.  
 However, it's important for screen-space shaders to avoid accidentaly covering back layers from the front ones.  
 For this purpuse, the *Screen Node* has the *Layer Only* setting.
