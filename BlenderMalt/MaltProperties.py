@@ -107,6 +107,19 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
             type_changed = 'type' not in rna[name].keys() or rna[name]['type'] != parameter.type
             size_changed = 'size' in rna[name].keys() and rna[name]['size'] != parameter.size
 
+            if self.parent:
+                try:
+                    rna_copy = {}
+                    parameter.default_value = self.parent.malt_parameters.get_parameter(name, [], {},
+                        retrieve_blender_type=True, rna_copy=rna_copy)
+                    parameter.default_value = rna_copy["default"]
+                    parameter.type = rna_copy['type']
+                    parameter.subtype = rna_copy['malt_subtype']
+                    parameter.size = rna_copy['size']
+                    parameter.filter = rna_copy['filter']
+                except:
+                    pass
+
             if reset_to_defaults:
                 #TODO: Rename
                 type_changed = True
@@ -315,12 +328,12 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
             parameters[key] = self.get_parameter(key, overrides, proxys)
         return parameters
     
-    def get_parameter(self, key, overrides, proxys):
+    def get_parameter(self, key, overrides, proxys, retrieve_blender_type=False, rna_copy={}):
         from . MaltNodes.MaltNodeTree import MaltTree
         from . MaltNodes.MaltNode import MaltNode
         if self.parent and self.override_from_parents[key].boolean == False:
             try:
-                return self.parent.malt_parameters.get_parameter(key, overrides, proxys)
+                return self.parent.malt_parameters.get_parameter(key, overrides, proxys, retrieve_blender_type, rna_copy)
             except:
                 pass
         if key not in self.get_rna().keys():
@@ -331,12 +344,14 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                             for input in node.inputs:
                                 if key == input.get_source_global_reference():
                                     try:
-                                        return node.malt_parameters.get_parameter(input.name, overrides, proxys)
+                                        return node.malt_parameters.get_parameter(input.name, overrides, proxys, 
+                                            retrieve_blender_type, rna_copy)
                                     except:
                                         pass
             raise Exception()
 
         rna = self.get_rna()
+        rna_copy.update(rna[key])
         for override in reversed(overrides):
             override_key = key + ' @ ' +  override
             if override_key in rna.keys():
@@ -356,6 +371,8 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
             return bool(self.bools[key].boolean)
         elif rna[key]['type'] == Type.TEXTURE:
             texture = self.textures[key].texture
+            if retrieve_blender_type:
+                return texture
             if texture:
                 texture_key = ('texture', texture.name_full)
                 if texture_key not in proxys.keys():
@@ -365,6 +382,8 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                 return None
         elif rna[key]['type'] == Type.GRADIENT:
             texture = self.gradients[key].texture
+            if retrieve_blender_type:
+                return texture
             if texture:
                 gradient_key = ('gradient', texture.name_full)
                 if gradient_key not in proxys.keys():
@@ -375,6 +394,8 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
         elif rna[key]['type'] == Type.MATERIAL:
             material = self.materials[key].material
             extension = self.materials[key].extension
+            if retrieve_blender_type:
+                return material
             if material:
                 material_key = ('material', material.name_full)
                 if material_key not in proxys.keys():
@@ -389,6 +410,8 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
         elif rna[key]['type'] == Type.GRAPH:
             graph = self.graphs[key].graph
             type = self.graphs[key].type
+            if retrieve_blender_type:
+                return graph
             if graph and graph.is_active():
                 result = {}
                 result['source'] = graph.get_generated_source()
