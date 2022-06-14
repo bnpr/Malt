@@ -161,7 +161,7 @@ void COMMON_PIXEL_SHADER(Surface S, inout PixelOutput PO)
 *See how we can multiply colors just by using the multiply sign ```color * get_diffuse()``` ?*  
 *The same goes for addition (+), subtraction (-) and division (/).*  
 *Isn't that cool?*  
-*You can even combine them in the same line and use parethesis, like ```vec3 result = vec3(1) - (A+B+C) / 3.0;```.`*   
+*You can even combine them in the same line and use parenthesis, like ```vec3 result = vec3(1) - (A+B+C) / 3.0;```.`*   
 *Now compare it with the same formula in node form!*
 
 
