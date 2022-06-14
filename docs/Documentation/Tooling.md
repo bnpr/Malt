@@ -16,7 +16,7 @@ src="https://www.youtube-nocookie.com/embed/UjsW7Ce0BKo" frameborder="0" allow="
 
 *Malt* has built-in integration with [RenderDoc](https://renderdoc.org).  
 It can be enabled by setting path to the **renderdoccmd** executable in the addon settings.  
-Onnce Malt has been initialized, RendeDoc can be attached to Malt through the [attach to running instance](https://renderdoc.org/docs/window/capture_connection.html) option.  
+Onnce Malt has been initialized, RenderDoc can be attached to Malt through the [attach to running instance](https://renderdoc.org/docs/window/capture_connection.html) option.  
 
 ![](2022-04-02-18-02-24.png)
 
