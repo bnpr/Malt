@@ -259,8 +259,11 @@ class Bridge():
             from itertools import chain
             for key, texture_format in chain(self.render_outputs.items(), AOVs.items()):
                 buffer_type = ctypes.c_float
-                if viewport_id != 0 and self.viewport_bit_depth == 8:
-                    buffer_type = ctypes.c_byte
+                if viewport_id != 0:
+                    if self.viewport_bit_depth == 8:
+                        buffer_type = ctypes.c_byte
+                    elif self.viewport_bit_depth == 16:
+                        buffer_type = ctypes.c_ushort
                 w,h = resolution
                 self.render_buffers[viewport_id][key] = self.get_shared_buffer(buffer_type, w*h*4)
                 if viewport_id != 0: #viewport render

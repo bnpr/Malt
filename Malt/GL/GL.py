@@ -11,8 +11,17 @@ if True:
     #For some reason PyOpenGL doesnt support the most common depth/stencil buffer by default ???
     #https://sourceforge.net/p/pyopengl/bugs/223/
     from OpenGL import images
-    images.TYPE_TO_ARRAYTYPE[ GL_UNSIGNED_INT_24_8 ] = GL_UNSIGNED_INT
-    images.TIGHT_PACK_FORMATS[ GL_UNSIGNED_INT_24_8 ] = 4
+    images.TYPE_TO_ARRAYTYPE[GL_UNSIGNED_INT_24_8] = GL_UNSIGNED_INT
+    images.TIGHT_PACK_FORMATS[GL_UNSIGNED_INT_24_8] = 4
+    images.TYPE_TO_ARRAYTYPE[GL_HALF_FLOAT] = GL_HALF_FLOAT
+    from OpenGL import arrays
+    if arrays.ADT:
+        arrays.GL_CONSTANT_TO_ARRAY_TYPE[GL_HALF_FLOAT] = arrays.ADT(GL_HALF_FLOAT, GLhalfARB)
+    else:
+        class GLhalfFloatArray(ArrayDatatype, ctypes.POINTER(GLhalfARB)):
+            baseType = GLhalfARB
+            typeConstant = GL_HALF_FLOAT
+        arrays.GL_CONSTANT_TO_ARRAY_TYPE[GL_HALF_FLOAT] = GLhalfFloatArray
 
 NULL = None
 GL_ENUMS = {}
@@ -56,6 +65,8 @@ def gl_buffer(type, size, data=None):
         GL_UNSIGNED_SHORT : GLushort,
         GL_INT : GLint,
         GL_UNSIGNED_INT : GLuint,
+        #GL_HALF_FLOAT : GLhalfARB,
+        GL_HALF_FLOAT : GLfloat,
         GL_FLOAT : GLfloat,
         GL_DOUBLE : GLdouble,
         GL_BOOL : GLboolean,
