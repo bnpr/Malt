@@ -27,7 +27,7 @@ jobs:
         allowUpdates: true
         tag: ${{ env.BRANCH_NAME }}-latest
         prerelease: ${{ env.BRANCH_NAME != 'Release' }}
-        bodyFile: "SPONSORS.md"
+        bodyFile: ".github/download.md"
       if: ${{ github.ref_type == 'branch' }}
     
     - name: Rollback Tagged Release
@@ -45,7 +45,7 @@ jobs:
         token: ${{ secrets.GITHUB_TOKEN }}
         allowUpdates: true
         prerelease: ${{ env.BRANCH_NAME != 'Release' }}
-        bodyFile: "SPONSORS.md"
+        bodyFile: ".github/download.md"
       if: ${{ github.ref_type == 'tag' }}
             
     outputs:
