@@ -553,16 +553,17 @@ def add_node_ui(self, context):
         self.layout.menu("MALT_MT_NodeOther", text='Other')
 
 def node_header_ui(self, context):
-    if context.space_data.tree_type != 'MaltTree' or context.space_data.node_tree is None:
+    node_tree = context.space_data.edit_tree
+    if context.space_data.tree_type != 'MaltTree' or node_tree is None:
         return
     def duplicate():
-        context.space_data.node_tree = context.space_data.node_tree.copy()
+        node_tree = node_tree.copy()
     self.layout.operator('wm.malt_callback', text='', icon='DUPLICATE').callback.set(duplicate, 'Duplicate')
     def recompile():
-        context.space_data.node_tree.update()
+        node_tree.update()
     self.layout.operator("wm.malt_callback", text='', icon='FILE_REFRESH').callback.set(recompile, 'Recompile')
-    self.layout.prop(context.space_data.node_tree, 'library_source',text='')
-    self.layout.prop_search(context.space_data.node_tree, 'graph_type', context.scene.world.malt, 'graph_types',text='')
+    self.layout.prop(node_tree, 'library_source',text='')
+    self.layout.prop_search(node_tree, 'graph_type', context.scene.world.malt, 'graph_types',text='')
 
 @bpy.app.handlers.persistent
 def depsgraph_update(scene, depsgraph):
