@@ -526,9 +526,12 @@ def glsl_reflection(code, root_paths=[]):
             except:
                 pass
 
-    def fix_paths(dic):
+    def handle_paths(dic):
         for e in dic.values():
             path = e['file']
+            if '.internal.' in path or '__internal__' in path:
+                if 'internal' not in e['meta'].keys():
+                    e['meta']['internal'] = True
             path = os.path.normpath(path)
             for root_path in root_paths:
                 try:
@@ -538,8 +541,8 @@ def glsl_reflection(code, root_paths=[]):
                 except: pass
             e['file'] = path.replace('\\','/')
     
-    fix_paths(reflection['structs'])
-    fix_paths(reflection['functions'])
+    handle_paths(reflection['structs'])
+    handle_paths(reflection['functions'])
 
     functions = {}
     for key, function in reflection['functions'].items():
