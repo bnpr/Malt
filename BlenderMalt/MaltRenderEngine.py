@@ -1,4 +1,5 @@
 import ctypes, time, platform
+import xxhash
 import bpy
 from mathutils import Vector, Matrix, Quaternion
 from Malt import Scene
@@ -187,7 +188,7 @@ class MaltRenderEngine(bpy.types.RenderEngine):
 
         for obj in depsgraph.objects:
             if is_f12 or obj.visible_in_viewport_get(context.space_data):
-                id = abs(hash(obj.name_full)) % (2**16)
+                id = xxhash.xxh3_64_intdigest(obj.name_full.encode()) % (2**16)
                 add_object(obj, obj.matrix_world, id)
 
         for instance in depsgraph.object_instances:
