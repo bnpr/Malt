@@ -26,7 +26,7 @@ class MaltSocket(bpy.types.NodeSocket):
     default_initialization: bpy.props.StringProperty(default='',
         options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
     
-    show_in_material_panel: bpy.props.BoolProperty(default=True,
+    show_in_material_panel: bpy.props.BoolProperty(default=False,
         options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
     
     active: bpy.props.BoolProperty(default=True,
