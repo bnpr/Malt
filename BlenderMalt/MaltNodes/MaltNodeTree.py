@@ -557,7 +557,7 @@ def node_header_ui(self, context):
     if context.space_data.tree_type != 'MaltTree' or node_tree is None:
         return
     def duplicate():
-        node_tree = node_tree.copy()
+        context.space_data.node_tree = node_tree.copy()
     self.layout.operator('wm.malt_callback', text='', icon='DUPLICATE').callback.set(duplicate, 'Duplicate')
     def recompile():
         node_tree.update()
