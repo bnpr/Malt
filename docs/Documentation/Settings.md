@@ -8,12 +8,14 @@
 >Opens the current session log in a text editor.
 - **Global Plugins**  
 >The path to the *plugins* folder. See [Plugins](../Plugins) for more info.
+- **Show sockets in Material Panel**
+>Show node socket properties in the Material Panel by default.
+- **Max Viewport Render Framerate**  
+>Framerate cap for the viewport. Limiting *Blender* framerate can improve *Malt* performance and animation playback stability. Set it to 0 to disable it.
 - **Auto setup VSCode**  
 >On file save, setups a VSCode project on your *.blend* file folder.
 - **RenderDoc Path**  
 >Path to the **renderdoccmd** executable, for [RenderDoc](https://renderdoc.org/) debugging.
-- **Max Viewport Render Framerate**  
->Framerate cap for the viewport. Limiting *Blender* framerate can improve *Malt* performance and animation playback stability. Set it to 0 to disable it.
 - **Debug Mode**  
 >Include debug info in the *Session Logs*. Enabling it increases the log sizes and can negatively affect performance, don't enable it unless a developer asks you for it in a bug report.
 
