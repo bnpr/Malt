@@ -4,19 +4,6 @@
 
 uniform int LIGHT_INDEX;
 
-struct LightShaderInput
-{
-    Light L;
-    LitSurface LS;
-    vec3 light_space_position;
-    vec3 light_uv;
-};
-
-struct LightShaderOutput
-{
-    vec3 color;
-};
-
 #ifdef VERTEX_SHADER
 void main()
 {
@@ -30,7 +17,7 @@ uniform sampler2D IN_DEPTH;
 
 layout (location = 0) out vec3 RESULT;
 
-void LIGHT_SHADER(LightShaderInput I, inout LightShaderOutput O);
+void LIGHT_SHADER(vec3 relative_coordinates, inout vec3 color, inout float attenuation);
 
 void main()
 {
@@ -44,38 +31,43 @@ void main()
     LitSurface LS = lit_surface(POSITION, vec3(0), L, false);
     
     vec3 light_space;
-    vec3 light_uv;
 
     if(L.type == LIGHT_SPOT)
     {
-        light_space = project_point(LIGHTS.spot_matrices[L.type_index], POSITION);        
-        light_uv = light_space * 0.5 + 0.5;
+        light_space = project_point(LIGHTS.spot_matrices[L.type_index], POSITION);  
     }
     if(L.type == LIGHT_SUN)
     {
-        mat4 matrix = LIGHTS.sun_matrices[L.type_index*LIGHTS.cascades_count];
-        matrix[3] = vec4(L.position, 1);
-        light_space = project_point(matrix, POSITION);
-        light_uv = light_space;
+        vec3 z = L.direction;
+        vec3 c = vec3(0,0,1);
+        if(abs(dot(z, c)) < 1.0)
+        {
+            vec3 x = normalize(cross(c, z));
+            vec3 y = normalize(cross(x, z));
+            mat3 rotation = mat3(x,y,z);
+            mat4 m = mat4_translation(L.position) * mat4(rotation);
+            m = inverse(m);
+
+            light_space = transform_point(m, POSITION);
+        }
+        else
+        {
+            light_space = POSITION;
+            light_space -= L.position;
+        }
     }
     if(L.type == LIGHT_POINT)
     {
-        light_space = POSITION - L.position;        
-        light_uv = normalize(POSITION - L.position);
+        light_space = POSITION - L.position;
+        light_space /= L.radius;    
     }
 
-    LightShaderInput I;
-    I.L = L;
-    I.LS = LS;
-    I.light_space_position = light_space;
-    I.light_uv = light_uv;
+    vec3 color = L.color;
+    float attenuation = LS.P;
 
-    LightShaderOutput O;
-    O.color = LS.light_color;
-
-    LIGHT_SHADER(I,O);
+    LIGHT_SHADER(light_space, color, attenuation);
     
-    RESULT = O.color;
+    RESULT = color * attenuation;
 }
 
 #endif //PIXEL_SHADER

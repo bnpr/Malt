@@ -177,7 +177,7 @@ class NPR_Pipeline(Pipeline):
             name='Light',
             graph_type=GLSLPipelineGraph.INTERNAL_GRAPH,
             default_global_scope=_LIGHT_SHADER_HEADER,
-            default_shader_src="void LIGHT_SHADER(LightShaderInput I, inout LightShaderOutput O) { }",
+            default_shader_src="void LIGHT_SHADER(vec3 relative_coordinates, inout vec3 color, inout float attenuation) { }",
             graph_io=[ 
                 GLSLGraphIO(
                     name='LIGHT_SHADER',
