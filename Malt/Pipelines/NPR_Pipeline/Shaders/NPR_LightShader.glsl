@@ -17,7 +17,7 @@ uniform sampler2D IN_DEPTH;
 
 layout (location = 0) out vec3 RESULT;
 
-void LIGHT_SHADER(vec3 relative_coordinates, inout vec3 color, inout float attenuation);
+void LIGHT_SHADER(vec3 relative_coordinates, vec3 uvw, inout vec3 color, inout float attenuation);
 
 void main()
 {
@@ -30,11 +30,13 @@ void main()
     Light L = LIGHTS.lights[LIGHT_INDEX];
     LitSurface LS = lit_surface(POSITION, vec3(0), L, false);
     
-    vec3 light_space;
+    vec3 light_space = vec3(0);
+    vec3 uvw = vec3(0);
 
     if(L.type == LIGHT_SPOT)
     {
-        light_space = project_point(LIGHTS.spot_matrices[L.type_index], POSITION);  
+        light_space = project_point(LIGHTS.spot_matrices[L.type_index], POSITION);
+        uvw.xy = light_space.xy * 0.5 + 0.5;
     }
     if(L.type == LIGHT_SUN)
     {
@@ -55,17 +57,21 @@ void main()
             light_space = POSITION;
             light_space -= L.position;
         }
+        
+        uvw.xy = light_space.xy;
     }
     if(L.type == LIGHT_POINT)
     {
         light_space = POSITION - L.position;
         light_space /= L.radius;    
+        
+        uvw = normalize(light_space);
     }
 
     vec3 color = L.color;
     float attenuation = LS.P;
 
-    LIGHT_SHADER(light_space, color, attenuation);
+    LIGHT_SHADER(light_space, uvw, color, attenuation);
     
     RESULT = color * attenuation;
 }
