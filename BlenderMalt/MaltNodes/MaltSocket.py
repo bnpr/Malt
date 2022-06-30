@@ -81,6 +81,8 @@ class MaltSocket(bpy.types.NodeSocket):
                 return None
             else:
                 link = socket.links[0]
+                if link.is_muted == True:
+                    return None
                 linked = link.to_socket if socket.is_output else link.from_socket
                 if isinstance(linked.node, bpy.types.NodeReroute):
                     sockets = linked.node.inputs if linked.is_output else linked.node.outputs
