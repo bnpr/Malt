@@ -510,6 +510,17 @@ def glsl_reflection(code, root_paths=[]):
     
     reflection = json.loads(json_string)
 
+    def patch_meta(dic):
+        for e in dic.values():
+            path = e['file']
+            if path in reflection['meta globals']:
+                for k, v in reflection['meta globals'][path].items():
+                    if k not in e['meta']:
+                        e['meta'][k] = v
+    
+    patch_meta(reflection['functions'])
+    patch_meta(reflection['structs'])
+    
     from Malt.GL.GLSLEval import glsl_eval
 
     for function in reflection['functions'].values():
