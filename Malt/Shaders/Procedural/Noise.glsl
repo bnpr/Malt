@@ -3,6 +3,10 @@
 
 #include "Common/Hash.glsl"
 
+/*  META GLOBAL
+    @meta: category=Procedural;
+*/
+
 /*  META
     @coord: subtype=Vector; default=vec4(POSITION,0);
     @tile_size: subtype=Vector; default=vec4(1);

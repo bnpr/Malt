@@ -10,6 +10,10 @@
 #define NPR_FILTERS_ACTIVE
 #endif
 
+/*  META GLOBAL
+    @meta: category=Filter;
+*/
+
 /*  META
     @samples: default=32;
     @radius: default=1.0;

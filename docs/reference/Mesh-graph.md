@@ -595,21 +595,6 @@ Blends the blend color as a layer over the base color.
 - **Outputs**  
 	- **result** *: ( float )*  
 ---
-## Shading - ShadingModels
----
-### **rim_light**
->float rim_light(vec3 normal, float angle, float rim_length, float length_falloff, float thickness, float thickness_falloff)
-
-- **Inputs**  
-	- **normal** *: ( vec3 | Normal ) - default = NORMAL*  
-	- **angle** *: ( float )*  
-	- **rim_length** *: ( float ) - default = 2.0*  
-	- **length_falloff** *: ( float )*  
-	- **thickness** *: ( float ) - default = 0.1*  
-	- **thickness_falloff** *: ( float )*  
-- **Outputs**  
-	- **result** *: ( float )*  
----
 ## NPR_Pipeline - NPR_Shading
 ---
 ### **diffuse_shading**

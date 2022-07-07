@@ -3,6 +3,10 @@
 
 #include "Common/Math.glsl"
 
+/*  META GLOBAL
+    @meta: category=Filter;
+*/
+
 /*  META
     @uv: default=screen_uv();
     @width: default=1.0;

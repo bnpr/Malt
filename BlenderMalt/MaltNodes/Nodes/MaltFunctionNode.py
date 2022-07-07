@@ -3,10 +3,8 @@ import bpy
 from BlenderMalt.MaltNodes.MaltNode import MaltNode
 
 
-class MaltFunctionNode(bpy.types.Node, MaltNode):
-    
-    bl_label = "Function Node"
-    
+class MaltFunctionNodeBase(MaltNode):
+        
     def malt_setup(self):
         pass_type = self.get_pass_type()
         if pass_type != '':
@@ -214,7 +212,11 @@ class MaltFunctionNode(bpy.types.Node, MaltNode):
                     self.malt_parameters.draw_parameter(layout, 'PASS_GRAPH', None, is_node_socket=True)
                 else:
                     self.malt_parameters.draw_parameter(layout, 'PASS_MATERIAL', None, is_node_socket=True)
-    
+
+
+class MaltFunctionNode(bpy.types.Node, MaltFunctionNodeBase):
+    bl_label = "Function Node"
+
 classes = [
     MaltFunctionNode,
 ]

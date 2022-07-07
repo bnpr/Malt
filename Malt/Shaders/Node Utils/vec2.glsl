@@ -1,6 +1,10 @@
 #ifndef VEC2_GLSL
 #define VEC2_GLSL
 
+/*  META GLOBAL
+    @meta: category=Node Utils; subcategory=Vector 2D;
+*/
+
 vec2 vec2_add(vec2 a, vec2 b){ return a+b; }
 vec2 vec2_subtract(vec2 a, vec2 b){ return a-b; }
 vec2 vec2_multiply(vec2 a, vec2 b){ return a*b; }

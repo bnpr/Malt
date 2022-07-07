@@ -4,6 +4,10 @@
 #include "NPR_Pipeline/NPR_Filters.glsl"
 #include "NPR_Pipeline/NPR_Shading.glsl"
 
+/*  META GLOBAL
+    @meta: category=Shading;
+*/
+
 vec3 diffuse_shading()
 {
     vec3 result = vec3(0);

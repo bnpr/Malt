@@ -1,6 +1,10 @@
 #ifndef INT_GLSL
 #define INT_GLSL
 
+/*  META GLOBAL
+    @meta: category=Node Utils; subcategory=Int;
+*/
+
 int int_add(int a, int b){ return a+b; }
 int int_subtract(int a, int b){ return a-b; }
 int int_multiply(int a, int b){ return a*b; }

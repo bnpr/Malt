@@ -4,6 +4,10 @@
 #include "NPR_Lighting.glsl"
 #include "Shading/ShadingModels.glsl"
 
+/*  META GLOBAL
+    @meta: category=Shading;
+*/
+
 #define _LIT_SCENE_MACRO(callback, light_group, shadows, self_shadows)\
     vec3 result = vec3(0,0,0);\
     for (int i = 0; i < LIGHTS.lights_count; i++)\

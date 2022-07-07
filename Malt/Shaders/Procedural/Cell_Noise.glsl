@@ -3,6 +3,10 @@
 
 #include "Common/Hash.glsl"
 
+/*  META GLOBAL
+    @meta: category=Procedural;
+*/
+
 struct CellNoiseResult
 {
     vec4 cell_color;

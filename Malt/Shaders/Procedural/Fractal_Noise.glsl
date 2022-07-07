@@ -3,6 +3,10 @@
 
 #include "Noise.glsl"
 
+/*  META GLOBAL
+    @meta: category=Procedural;
+*/
+
 /*  META
     @coord: subtype=Vector; default=vec4(POSITION,0);
     @octaves: default=3;

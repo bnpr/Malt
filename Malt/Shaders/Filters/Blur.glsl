@@ -1,6 +1,10 @@
 #ifndef BLUR_GLSL
 #define BLUR_GLSL
 
+/*  META GLOBAL
+    @meta: category=Filter;
+*/
+
 /*  META
     @uv: default=screen_uv();
     @radius: default=5.0;
