@@ -515,7 +515,7 @@ def glsl_reflection(code, root_paths=[]):
             path = e['file']
             if path in reflection['meta globals']:
                 for k, v in reflection['meta globals'][path].items():
-                    if k not in e['meta']:
+                    if k not in e['meta'].keys():
                         e['meta'][k] = v
     
     patch_meta(reflection['functions'])
@@ -523,19 +523,23 @@ def glsl_reflection(code, root_paths=[]):
     
     from Malt.GL.GLSLEval import glsl_eval
 
+    def eval_meta(dict):
+        meta_dict = dict['meta']
+        for k, v in meta_dict.items():
+            try:
+                meta_dict[k] = glsl_eval(v)
+            except:
+                pass
+
     for function in reflection['functions'].values():
+        eval_meta(function)
         for parameter in function['parameters']:
-            try:
-                parameter['meta']['default'] = glsl_eval(parameter['meta']['default'])
-            except:
-                pass
-    
+            eval_meta(parameter)
+            
     for struct in reflection['structs'].values():
+        eval_meta(struct)
         for member in struct['members']:
-            try:
-                member['meta']['default'] = glsl_eval(member['meta']['default'])
-            except:
-                pass
+            eval_meta(member)
 
     def handle_paths(dic):
         for e in dic.values():
