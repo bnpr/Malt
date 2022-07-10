@@ -11,8 +11,6 @@ class MaltArrayIndexNode(bpy.types.Node, MaltNode):
         self.setup()
         
     def malt_setup(self):
-        if self.first_setup:
-            self.name = 'Array Index'
         self.setup_sockets({ 'array' : {'type': '', 'size': 1}, 'index' : {'type': Parameter(0, Type.INT) }},
             {'element' : {'type': ''} })
         

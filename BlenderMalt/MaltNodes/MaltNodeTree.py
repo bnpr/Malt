@@ -415,8 +415,8 @@ def preload_menus(structs, functions, graph=None):
                 categories[category] = []
 
             _node_type = node_type
+            label = v['meta'].get('label', v['name'])
             
-            label = v['name'].replace('_',' ')
             settings = {}
             if node_type == 'MaltFunctionNode':
                 settings['function_type'] = repr(k)
@@ -433,7 +433,7 @@ def preload_menus(structs, functions, graph=None):
                     'subcategory': repr(subcategory),
                     'function_enum': repr(k),
                 }
-
+            settings['name'] = repr(label)
             node_item = NodeItem(_node_type, label=label, settings=settings)
             categories[category].append(node_item)
 

@@ -28,8 +28,6 @@ class MaltIONode(bpy.types.Node, MaltNode):
 
     def malt_setup(self):
         function = self.get_function()
-        if self.first_setup:
-            self.name = self.io_type + (' Output' if self.is_output else ' Input')
         
         self.graph_type = self.id_data.graph_type
         self.pass_type = self.io_type

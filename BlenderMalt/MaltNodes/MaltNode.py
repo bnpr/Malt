@@ -105,6 +105,10 @@ class MaltNode():
                 current[name].active = True
                 current[name].default_initialization = ''
                 try:
+                    current[name].ui_label = dic['meta']['label']
+                except:
+                    current[name].ui_label = name
+                try:
                     default = dic['meta']['default']
                     if isinstance(default, str):
                         current[name].default_initialization = default

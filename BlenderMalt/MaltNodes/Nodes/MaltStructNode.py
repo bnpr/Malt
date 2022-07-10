@@ -7,9 +7,6 @@ class MaltStructNode(bpy.types.Node, MaltNode):
     bl_label = "Struct Node"
 
     def malt_setup(self, context=None):
-        if self.first_setup:
-            self.name = self.struct_type
-
         inputs = {}
         inputs[self.struct_type] = {'type' : self.struct_type}
         outputs = {}

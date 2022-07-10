@@ -32,6 +32,8 @@ class MaltSocket(bpy.types.NodeSocket):
     
     active: bpy.props.BoolProperty(default=True,
         options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
+    
+    ui_label: bpy.props.StringProperty()
 
     def is_instantiable_type(self):
         return self.data_type.startswith('sampler') == False
@@ -95,7 +97,7 @@ class MaltSocket(bpy.types.NodeSocket):
     
     def get_ui_label(self):
         type = self.data_type
-        name = self.name.replace('_',' ')
+        name = self.ui_label
         if self.array_size > 0:
             type += f'[{self.array_size}]'
         if self.is_output:

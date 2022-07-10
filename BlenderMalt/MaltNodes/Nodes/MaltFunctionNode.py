@@ -11,8 +11,6 @@ class MaltFunctionNodeBase(MaltNode):
             self.pass_graph_type, self.pass_graph_io_type = pass_type.split('.')
 
         function = self.get_function(skip_overrides=False, find_replacement=True)
-        if self.first_setup:
-            self.name = function['name']
 
         inputs = {}
         outputs = {}

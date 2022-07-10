@@ -19,11 +19,6 @@ class MaltInlineNode(bpy.types.Node, MaltNode):
 
     def malt_init(self):
         self.setup()
-
-    def malt_setup(self):
-        if self.first_setup:
-            self.name = 'Inline Code'
-        self.malt_update()
     
     def malt_update(self):
         last = 0

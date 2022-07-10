@@ -530,16 +530,26 @@ def glsl_reflection(code, root_paths=[]):
                 meta_dict[k] = glsl_eval(v)
             except:
                 pass
+    
+    def meta_label(dict):
+        label = dict['meta'].get('label')
+        if label is None:
+            label = dict['name'].replace('_',' ').title()
+        dict['meta']['label'] = label
 
     for function in reflection['functions'].values():
         eval_meta(function)
+        meta_label(function)
         for parameter in function['parameters']:
             eval_meta(parameter)
+            meta_label(parameter)
             
     for struct in reflection['structs'].values():
         eval_meta(struct)
+        meta_label(struct)
         for member in struct['members']:
             eval_meta(member)
+            meta_label(member)
 
     def handle_paths(dic):
         for e in dic.values():
