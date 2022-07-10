@@ -18,6 +18,8 @@ class MaltFunctionSubCategoryNode(bpy.types.Node, MaltFunctionNodeBase):
     
     def update_function_enum(self, context=None):
         self.function_type = self.function_enum
+        if self.disable_updates == False:
+            self.id_data.update()
 
     function_enum : bpy.props.EnumProperty(name='', items=get_function_enums, update=update_function_enum,
         options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
