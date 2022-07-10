@@ -393,14 +393,20 @@ def preload_menus(structs, functions, graph=None):
         categories['IO'].append(NodeItem('MaltIONode', label=f'{label} Input', settings={
             'is_output' : repr(False),
             'io_type' : repr(name),
+            'name' : repr(f'{label} Input'),
         }))
         categories['IO'].append(NodeItem('MaltIONode', label=f'{label} Output', settings={
             'is_output' : repr(True),
             'io_type' : repr(name),
+            'name' : repr(f'{label} Output'),
         }))
     
-    categories['Other'].append(NodeItem('MaltInlineNode', label='Inline Code'))
-    categories['Other'].append(NodeItem('MaltArrayIndexNode', label='Array Index'))
+    categories['Other'].append(NodeItem('MaltInlineNode', label='Inline Code', settings={
+        'name' : repr('Inline Code')
+    }))
+    categories['Other'].append(NodeItem('MaltArrayIndexNode', label='Array Element', settings={
+        'name' : repr('Array Element')
+    }))
 
     subcategories = set()
     
