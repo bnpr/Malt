@@ -413,6 +413,8 @@ def preload_menus(structs, functions, graph=None):
                 category = v['file'].replace('\\', '/').replace('/', ' - ').replace('.glsl', '').replace('_',' ')
             if category not in categories:
                 categories[category] = []
+
+            _node_type = node_type
             
             label = v['name'].replace('_',' ')
             settings = {}
@@ -425,14 +427,14 @@ def preload_menus(structs, functions, graph=None):
                 if subcategory in subcategories:
                     continue
                 subcategories.add(subcategory)
-                node_type = 'MaltFunctionSubCategoryNode'
+                _node_type = 'MaltFunctionSubCategoryNode'
                 label = subcategory
                 settings = {
                     'subcategory': repr(subcategory),
                     'function_enum': repr(k),
                 }
 
-            node_item = NodeItem(node_type, label=label, settings=settings)
+            node_item = NodeItem(_node_type, label=label, settings=settings)
             categories[category].append(node_item)
 
     add_to_category(functions, 'MaltFunctionNode')
