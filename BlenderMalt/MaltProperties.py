@@ -117,6 +117,7 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                     parameter.subtype = rna_copy['malt_subtype']
                     parameter.size = rna_copy['size']
                     parameter.filter = rna_copy['filter']
+                    parameter.label = rna_copy['label']
                 except:
                     pass
 
@@ -243,6 +244,11 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
             rna[name]['malt_subtype'] = parameter.subtype
             rna[name]['size'] = parameter.size
             rna[name]['filter'] = parameter.filter
+
+            if hasattr(parameter, 'label'):
+                rna[name]['label'] = parameter.label
+            else:
+                rna[name]['label'] = name.replace('_',' ').replace('_0_','.').title()
         
         #TODO: We should purge non active properties (specially textures)
         # at some point, likely on file save or load 
@@ -448,28 +454,28 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
 
             if filter and rna[key]['filter'] and rna[key]['filter'] != filter:
                 continue
-
-            names = key.replace('_0_','.').replace('_',' ').split('.')
-            names = [name for name in names if name.isupper() == False]
-            name = names[-1]
-
+            
+            labels = rna[key].get('label', key.replace('_0_','.').replace('_',' '))
+            labels = labels.split('.')
+            label = labels[-1]
+            
             #defer layout (box) creation until a property is actually drawn
             def get_layout():
                 nonlocal namespace_stack
                 layout = None
-                if len(names) == 1:
+                if len(labels) == 1:
                     namespace_stack = namespace_stack[:1]
                     layout = namespace_stack[0][1]
                 else:
-                    for i in range(0, len(names) - 1):
-                        name = names[i]
+                    for i in range(0, len(labels) - 1):
+                        label = labels[i]
                         stack_i = i+1
-                        if len(namespace_stack) > stack_i and namespace_stack[stack_i][0] != name:
+                        if len(namespace_stack) > stack_i and namespace_stack[stack_i][0] != label:
                             namespace_stack = namespace_stack[:stack_i]
                         if len(namespace_stack) < stack_i+1:
                             box = namespace_stack[stack_i - 1][1].box()
-                            box.label(text=name + " :")
-                            namespace_stack.append((name, box))
+                            box.label(text=label + " :")
+                            namespace_stack.append((label, box))
                         layout = namespace_stack[stack_i][1]
                 return layout.column()
 
@@ -480,7 +486,7 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                 if is_self == False:
                     layout.active = False
             
-            self.draw_parameter(get_layout, key, name, draw_callback=draw_callback)
+            self.draw_parameter(get_layout, key, label, draw_callback=draw_callback)
 
 
     def draw_parameter(self, layout, key, label, draw_callback=None, is_node_socket=False):
@@ -503,11 +509,8 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
         if self.get_rna()[key]['active'] == False:
             return False
         
-        try:
+        if callable(layout):
             layout = layout()
-        except:
-            #not a callback
-            pass
 
         def make_row(label_only = False):
             result = layout

@@ -440,6 +440,10 @@ def preload_menus(structs, functions, graph=None):
                     'function_enum': repr(k),
                 }
             settings['name'] = repr(label)
+            from collections import OrderedDict
+            settings = OrderedDict(settings)
+            # name must be set first for labels to work correctly
+            settings.move_to_end('name', last=False)
             node_item = NodeItem(_node_type, label=label, settings=settings)
             categories[category].append(node_item)
 

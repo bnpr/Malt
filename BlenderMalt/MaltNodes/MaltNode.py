@@ -146,6 +146,9 @@ class MaltNode():
                 except:
                     pass
             if parameter:
+                label = input.get('meta', {}).get('label', name)
+                node_label = self.name.replace('.', ' ')
+                parameter.label = f'{node_label}.{label}'
                 parameters[name] = parameter
         self.malt_parameters.setup(parameters, skip_private=False)
         self.setup_socket_shapes()
