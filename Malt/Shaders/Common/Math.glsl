@@ -1,6 +1,10 @@
 #ifndef COMMON_MATH_GLSL
 #define COMMON_MATH_GLSL
 
+/*  META GLOBAL
+    @meta: category=Math;
+*/
+
 //C Standard constants
 
 #define M_E         2.71828182845904523536028747135266250   /* e */

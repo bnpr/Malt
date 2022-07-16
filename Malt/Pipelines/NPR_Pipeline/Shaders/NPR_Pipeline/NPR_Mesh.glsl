@@ -8,6 +8,7 @@
     @meta: category=Shading;
 */
 
+/* META @meta: subcategory=Simple Diffuse;*/
 vec3 diffuse_shading()
 {
     vec3 result = vec3(0);
@@ -18,6 +19,7 @@ vec3 diffuse_shading()
     return result;
 }
 
+/* META @meta: subcategory=Simple Diffuse;*/
 vec3 diffuse_half_shading()
 {
     vec3 result = vec3(0);
@@ -28,6 +30,7 @@ vec3 diffuse_half_shading()
     return result;
 }
 
+/* META @meta: subcategory=Simple Diffuse;*/
 vec3 diffuse_gradient_shading(sampler1D gradient_texture)
 {
     vec3 result = vec3(0);
@@ -39,6 +42,7 @@ vec3 diffuse_gradient_shading(sampler1D gradient_texture)
 }
 
 /*  META
+    @meta: subcategory=Simple Specular;
     @tangent: subtype=Normal; default=radial_tangent(NORMAL, vec3(0,0,1));
     @anisotropy: default=0.5;
     @roughness: default=0.5;
@@ -54,6 +58,7 @@ vec3 specular_shading(float roughness)
 }
 
 /*  META
+    @meta: subcategory=Simple Specular;
     @roughness: default=0.5;
 */
 vec3 specular_gradient_shading(sampler1D gradient_texture, float roughness)
@@ -67,6 +72,7 @@ vec3 specular_gradient_shading(sampler1D gradient_texture, float roughness)
 }
 
 /*  META
+    @meta: subcategory=Simple Specular;
     @roughness: default=0.5;
     @anisotropy: default=0.5;
     @tangent: subtype=Normal; default=radial_tangent(NORMAL, vec3(0,0,1));
@@ -82,6 +88,7 @@ vec3 specular_anisotropic_shading(float roughness, float anisotropy, vec3 tangen
 }
 
 /*  META
+    @meta: subcategory=Simple Specular;
     @roughness: default=0.5;
     @anisotropy: default=0.5;
     @tangent: subtype=Normal; default=radial_tangent(NORMAL, vec3(0,0,1));
@@ -106,6 +113,7 @@ vec3 toon_shading(float size, float gradient_size, float specularity, float offs
     return result;
 }
 
+/*META @meta: category=Input; subcategory=Pass Info;*/
 bool is_shadow_pass()
 {
     #ifdef SHADOW_PASS
@@ -118,7 +126,7 @@ bool is_shadow_pass()
     }
     #endif
 }
-
+/*META @meta: category=Input; subcategory=Pass Info;*/
 bool is_pre_pass()
 {
     #ifdef PRE_PASS
@@ -131,7 +139,7 @@ bool is_pre_pass()
     }
     #endif
 }
-
+/*META @meta: category=Input; subcategory=Pass Info;*/
 bool is_main_pass()
 {
     #ifdef MAIN_PASS

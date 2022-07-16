@@ -2,7 +2,7 @@
 #define VEC3_GLSL
 
 /*  META GLOBAL
-    @meta: category=Node Utils; subcategory=Vector 3D;
+    @meta: category=Math; subcategory=Vector 3D;
 */
 
 /*META @a: subtype=Vector; @b: subtype=Vector;*/

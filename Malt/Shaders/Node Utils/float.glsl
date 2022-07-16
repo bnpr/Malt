@@ -2,7 +2,7 @@
 #define FLOAT_GLSL
 
 /*  META GLOBAL
-    @meta: category=Node Utils; subcategory=Float;
+    @meta: category=Math; subcategory=Float;
 */
 
 float float_add(float a, float b){ return a+b; }

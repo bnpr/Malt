@@ -3,6 +3,10 @@
 
 #include "Common.glsl"
 
+/* META GLOBAL
+    @meta: category=Input;
+*/
+
 vec3 view_direction();
 vec3 transform_normal(mat4 matrix, vec3 normal);
 
@@ -32,6 +36,7 @@ vec2 matcap_uv(vec3 normal)
 }
 
 /*  META
+	@meta: category=Texturing;
     @normal: subtype=Normal; default=NORMAL;
 */
 vec4 sample_matcap(sampler2D matcap, vec3 normal)
@@ -50,6 +55,7 @@ vec2 hdri_uv(vec3 normal)
 }
 
 /*  META
+	@meta: category=Texturing;
     @normal: subtype=Normal; default=NORMAL;
 */
 vec4 sample_hdri(sampler2D hdri, vec3 normal)

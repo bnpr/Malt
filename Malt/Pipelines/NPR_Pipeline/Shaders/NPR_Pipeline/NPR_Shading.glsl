@@ -20,6 +20,7 @@
     return result;\
 
 /*  META
+    @meta: subcategory=Diffuse;
     @position: subtype=Vector; default=POSITION;
     @normal: subtype=Normal; default=NORMAL;
     @light_group: default=1;
@@ -31,6 +32,7 @@ vec3 diffuse_shading(vec3 position, vec3 normal, int light_group, bool shadows, 
     _LIT_SCENE_MACRO(diffuse_lit_surface(LS), light_group, shadows, self_shadows);
 }
 /*  META
+    @meta: subcategory=Diffuse;
     @position: subtype=Vector; default=POSITION;
     @normal: subtype=Normal; default=NORMAL;
     @light_group: default=1;
@@ -42,6 +44,7 @@ vec3 diffuse_half_shading(vec3 position, vec3 normal, int light_group, bool shad
     _LIT_SCENE_MACRO(diffuse_half_lit_surface(LS), light_group, shadows, self_shadows);
 }
 /*  META
+    @meta: subcategory=Diffuse;
     @position: subtype=Vector; default=POSITION;
     @normal: subtype=Normal; default=NORMAL;
     @light_group: default=1;
@@ -53,6 +56,7 @@ vec3 diffuse_gradient_shading(vec3 position, vec3 normal, sampler1D gradient, in
     _LIT_SCENE_MACRO(diffuse_gradient_lit_surface(LS, gradient), light_group, shadows, self_shadows);
 }
 /*  META
+    @meta: subcategory=Specular;
     @position: subtype=Vector; default=POSITION;
     @normal: subtype=Normal; default=NORMAL;
     @roughness: default=0.5;
@@ -65,6 +69,7 @@ vec3 specular_shading(vec3 position, vec3 normal, float roughness, int light_gro
     _LIT_SCENE_MACRO(specular_lit_surface(LS, roughness), light_group, shadows, self_shadows);
 }
 /*  META
+    @meta: subcategory=Specular;
     @position: subtype=Vector; default=POSITION;
     @normal: subtype=Normal; default=NORMAL;
     @roughness: default=0.5;
@@ -77,6 +82,7 @@ vec3 specular_gradient_shading(vec3 position, vec3 normal, float roughness, samp
     _LIT_SCENE_MACRO(specular_gradient_lit_surface(LS, roughness, gradient), light_group, shadows, self_shadows);
 }
 /*  META
+    @meta: subcategory=Specular;
     @position: subtype=Vector; default=POSITION;
     @normal: subtype=Normal; default=NORMAL;
     @tangent: subtype=Normal; default=radial_tangent(NORMAL, vec3(0,0,1));
@@ -91,6 +97,7 @@ vec3 specular_anisotropic_shading(vec3 position, vec3 normal, vec3 tangent, floa
     _LIT_SCENE_MACRO(specular_anisotropic_lit_surface(LS, tangent, anisotropy, roughness), light_group, shadows, self_shadows);
 }
 /*  META
+    @meta: subcategory=Specular;
     @position: subtype=Vector; default=POSITION;
     @normal: subtype=Normal; default=NORMAL;
     @tangent: subtype=Normal; default=radial_tangent(NORMAL, vec3(0,0,1));

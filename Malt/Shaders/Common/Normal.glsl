@@ -1,8 +1,15 @@
 #ifndef COMMON_NORMAL_GLSL
 #define COMMON_NORMAL_GLSL
 
+/*  META GLOBAL
+    @meta: category=Vector;
+*/
+
 #include "Common.glsl"
 
+/* META
+    @meta: category=Input;
+*/
 vec3 true_normal()
 {
     #ifndef CUSTOM_TRUE_NORMAL
@@ -22,11 +29,17 @@ vec3 true_normal()
     #endif //CUSTOM_TRUE_NORMAL
 }
 
+/* META
+    @meta: category=Input;
+*/
 float facing()
 {
     return dot(NORMAL, -view_direction());
 }
 
+/* META
+    @meta: category=Input;
+*/
 bool is_front_facing()
 {
     #ifdef PIXEL_SHADER
@@ -76,12 +89,18 @@ vec4 compute_tangent(vec2 uv)
     return vec4(0);
 }
 
+/* META
+    @meta: category=Input;
+*/
 vec3 get_tangent(int uv_index)
 {
     if(PRECOMPUTED_TANGENTS && uv_index == 0) return TANGENT;
     return compute_tangent(UV[uv_index]).xyz;
 }
 
+/* META
+    @meta: category=Input;
+*/
 vec3 get_bitangent(int uv_index)
 {
     if(PRECOMPUTED_TANGENTS && uv_index == 0) return BITANGENT;
@@ -89,6 +108,9 @@ vec3 get_bitangent(int uv_index)
     return normalize(cross(NORMAL, T.xyz) * T.w);
 }
 
+/* META
+    @meta: category=Input;
+*/
 mat3 get_TBN(int uv_index)
 {
     mat3 TBN = mat3(get_tangent(uv_index), get_bitangent(uv_index), NORMAL);

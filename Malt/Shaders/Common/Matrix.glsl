@@ -1,6 +1,10 @@
 #ifndef COMMON_MATRIX_GLSL
 #define COMMON_MATRIX_GLSL
 
+/* META GLOBAL
+    @meta: category=Vector;
+*/
+
 #include "Common/Quaternion.glsl"
 
 /*  META

@@ -4,7 +4,7 @@
 #include "Noise.glsl"
 
 /*  META GLOBAL
-    @meta: category=Procedural;
+    @meta: category=Texturing; subcategory=Fractal Noise;
 */
 
 /*  META

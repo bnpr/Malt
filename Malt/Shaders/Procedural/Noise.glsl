@@ -4,7 +4,7 @@
 #include "Common/Hash.glsl"
 
 /*  META GLOBAL
-    @meta: category=Procedural;
+    @meta: internal=true;
 */
 
 /*  META

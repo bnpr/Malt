@@ -5,6 +5,10 @@
 #define LINE_DEPTH_MODE_FAR  1
 #define LINE_DEPTH_MODE_ANY  2
 
+/* META GLOBAL
+    @meta: internal=true;
+*/
+
 void _sampling_pattern(out vec2 samples[4])
 {
     samples = vec2[4](
@@ -60,7 +64,6 @@ struct LineDetectionOutput
 };
 
 /*  META
-    @meta: internal=true;
     @position: subtype=Vector; default=POSITION;
     @normal: subtype=Normal; default=NORMAL;
     @true_normal: subtype=Normal; default=true_normal();
@@ -147,8 +150,6 @@ LineDetectionOutput line_detection(
     return result;
 }
 
-
-/* META @meta: internal=true; */
 struct LineExpandOutput
 {
     vec4 color;
@@ -156,7 +157,6 @@ struct LineExpandOutput
 };
 
 /*  META
-    @meta: internal=true;
     @uv: default=screen_uv();
     @max_width: default=10;
 */

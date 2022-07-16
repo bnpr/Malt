@@ -1,6 +1,10 @@
 #ifndef COMMON_COLOR_GLSL
 #define COMMON_COLOR_GLSL
 
+/*  META GLOBAL
+    @meta: category=Color;
+*/
+
 /*  META
     @meta:doc=
     Blends the blend color as a layer over the base color.;

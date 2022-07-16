@@ -2,7 +2,7 @@
 #define BOOL_GLSL
 
 /*  META GLOBAL
-    @meta: category=Node Utils; subcategory=Bool;
+    @meta: category=Math; subcategory=Bool;
 */
 
 bool bool_and(bool a, bool b) { return a && b; }

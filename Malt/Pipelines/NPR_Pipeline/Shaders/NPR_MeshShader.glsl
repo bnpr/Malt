@@ -1,7 +1,9 @@
 #include "NPR_Intellisense.glsl"
 #include "Common.glsl"
 
-/* META @meta: internal=true; */
+/* META GLOBAL
+    @meta: internal=true; 
+*/
 struct NPR_Settings
 {
     // Global material settings. Can be modified in the material panel UI

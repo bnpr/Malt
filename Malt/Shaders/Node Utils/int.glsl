@@ -2,7 +2,7 @@
 #define INT_GLSL
 
 /*  META GLOBAL
-    @meta: category=Node Utils; subcategory=Int;
+    @meta: category=Math; subcategory=Int;
 */
 
 int int_add(int a, int b){ return a+b; }
