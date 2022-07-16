@@ -146,6 +146,7 @@ class MaltNode():
                 except:
                     pass
             if parameter:
+                parameter.__dict__.update(input.get('meta', {}))
                 label = input.get('meta', {}).get('label', name)
                 node_label = self.name.replace('.', ' ')
                 parameter.label = f'{node_label}.{label}'

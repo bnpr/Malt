@@ -245,11 +245,15 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
             rna[name]['size'] = parameter.size
             rna[name]['filter'] = parameter.filter
 
+            rna[name]['min'] = getattr(parameter, 'min', None)
+            rna[name]['max'] = getattr(parameter, 'max', None)
+            
             if hasattr(parameter, 'label'):
                 rna[name]['label'] = parameter.label
             else:
                 rna[name]['label'] = name.replace('_',' ').replace('_0_','.').title()
-        
+            
+
         #TODO: We should purge non active properties (specially textures)
         # at some point, likely on file save or load 
         # so we don't lose them immediately when changing shaders/pipelines
@@ -294,9 +298,11 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                     ui = self.id_properties_ui(key)
                     if rna_prop['subtype'] == 'COLOR':
                         ui.update(default=rna_prop['default'], subtype='COLOR', soft_min = 0.0, soft_max = 1.0)
+                    elif rna_prop['min'] is not None and rna_prop['max'] is not None:
+                        ui.update(default=rna_prop['default'], subtype='NONE', 
+                            soft_min = rna_prop['min'], soft_max = rna_prop['max'])
                     else:
-                        dic = ui.as_dict()
-                        ui.update(default=rna_prop['default'], subtype='NONE', soft_min = dic['min'], soft_max = dic['max'])
+                        ui.update(default=rna_prop['default'], subtype='NONE')
 
         # Force a depsgraph update. 
         # Otherwise these won't be available inside scene_eval
