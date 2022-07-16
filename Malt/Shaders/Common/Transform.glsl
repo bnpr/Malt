@@ -1,6 +1,10 @@
 #ifndef COMMON_TRANSFORM_GLSL
 #define COMMON_TRANSFORM_GLSL
 
+/*  META GLOBAL
+    @meta: category=Vector;
+*/
+
 #include "Common.glsl"
 
 /*  META

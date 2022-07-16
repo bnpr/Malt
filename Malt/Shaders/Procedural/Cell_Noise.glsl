@@ -4,7 +4,7 @@
 #include "Common/Hash.glsl"
 
 /*  META GLOBAL
-    @meta: category=Procedural;
+    @meta: category=Texturing; subcategory=Cell Noise;
 */
 
 struct CellNoiseResult

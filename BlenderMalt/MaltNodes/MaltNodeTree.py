@@ -379,23 +379,23 @@ def preload_menus(structs, functions, graph=None):
     category_id = f'BLENDERMALT_{graph.name.upper()}'
 
     try:
-        unregister_node_categories(category_id)
+        unregister_node_categories(category_id) # you could also check the hidden <nodeitems_utils._node_categories>
     except:
         pass #First run
 
     categories = {
-        'IO' : [],
+        'Node Tree' : [],
         'Other' : [],
     }
 
     for name in graph.graph_io:
         label = name.replace('_',' ')
-        categories['IO'].append(NodeItem('MaltIONode', label=f'{label} Input', settings={
+        categories['Node Tree'].append(NodeItem('MaltIONode', label=f'{label} Input', settings={
             'is_output' : repr(False),
             'io_type' : repr(name),
             'name' : repr(f'{label} Input'),
         }))
-        categories['IO'].append(NodeItem('MaltIONode', label=f'{label} Output', settings={
+        categories['Node Tree'].append(NodeItem('MaltIONode', label=f'{label} Output', settings={
             'is_output' : repr(True),
             'io_type' : repr(name),
             'name' : repr(f'{label} Output'),
@@ -461,12 +461,14 @@ def preload_menus(structs, functions, graph=None):
     })
             
     category_list = []
-    for k, v in categories.items():
-        bl_id = f'{category_id}_{k}'
+    for category_name, node_items in categories.items():
+        bl_id = f'{category_id}_{category_name}'
         bl_id = ''.join(c for c in bl_id if c.isalnum())
         if len(bl_id) > 64:
             bl_id = bl_id[:64]
-        category_list.append(category_type(bl_id, k, items=v))
+        node_items.sort(key=lambda item:item.label)
+        category_list.append(category_type(bl_id, category_name, items=node_items))
+        category_list.sort(key=lambda category:category.name)
 
     register_node_categories(category_id, category_list)
 

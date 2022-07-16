@@ -1,6 +1,11 @@
 #ifndef COMMON_QUATERNION_GLSL
 #define COMMON_QUATERNION_GLSL
 
+/*  META GLOBAL
+    @meta: category=Math;
+*/
+
+
 /*  META
     @axis: subtype=Normal;
     @angle: subtype=Angle; default=0;

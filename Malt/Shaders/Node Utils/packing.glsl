@@ -1,6 +1,10 @@
 #ifndef PACKING_GLSL
 #define PACKING_GLSL
 
+/*META GLOBAL
+    @meta: category=Other;
+    */
+
 uvec4 pack_8bit(vec4 a, vec4 b, vec4 c, vec4 d)
 {
     return uvec4(packUnorm4x8(a), packUnorm4x8(b), packUnorm4x8(c), packUnorm4x8(d));

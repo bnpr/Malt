@@ -4,7 +4,7 @@
 #include "Common/Math.glsl"
 
 /*  META GLOBAL
-    @meta: category=Filter;
+    @meta: category=Texturing;
 */
 
 /*  META

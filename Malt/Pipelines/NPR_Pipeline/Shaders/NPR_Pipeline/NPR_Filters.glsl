@@ -11,7 +11,7 @@
 #endif
 
 /*  META GLOBAL
-    @meta: category=Filter;
+    @meta: category=Texturing;
 */
 
 /*  META
@@ -69,6 +69,7 @@ float surface_curvature(float depth_range)
 }
 
 /*  META
+    @meta: category=Vector; subcategory=Bevel;
     @samples: default=32;
     @radius: default=0.02;
     @distribution_exponent: default=2.0;
@@ -89,6 +90,7 @@ vec3 soft_bevel(int samples, float radius, float distribution_exponent, bool onl
 }
 
 /*  META
+    @meta: category=Vector; subcategory=Bevel;
     @samples: default=32;
     @radius: default=0.01;
     @max_dot: default=0.75;
