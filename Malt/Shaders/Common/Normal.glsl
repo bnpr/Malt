@@ -50,6 +50,7 @@ bool is_front_facing()
     return facing() > 0;
 }
 
+/* META @meta: subcategory=Tangent; */
 vec4 compute_tangent(vec2 uv)
 {
     // Copyright (c) 2020 mmikk. MIT License
@@ -89,18 +90,14 @@ vec4 compute_tangent(vec2 uv)
     return vec4(0);
 }
 
-/* META
-    @meta: category=Input;
-*/
+/* META @meta: subcategory=Tangent; */
 vec3 get_tangent(int uv_index)
 {
     if(PRECOMPUTED_TANGENTS && uv_index == 0) return TANGENT;
     return compute_tangent(UV[uv_index]).xyz;
 }
 
-/* META
-    @meta: category=Input;
-*/
+/* META @meta: subcategory=Tangent; */
 vec3 get_bitangent(int uv_index)
 {
     if(PRECOMPUTED_TANGENTS && uv_index == 0) return BITANGENT;
@@ -125,6 +122,7 @@ mat3 get_TBN(int uv_index)
     return TBN;
 }
 
+/* META @meta: category=Texturing; subcategory=Normal Map; */
 vec3 sample_normal_map_ex(sampler2D normal_texture, mat3 TBN, vec2 uv)
 {
     vec3 tangent = texture(normal_texture, uv).xyz;
@@ -132,12 +130,14 @@ vec3 sample_normal_map_ex(sampler2D normal_texture, mat3 TBN, vec2 uv)
     return normalize(TBN * tangent);
 }
 
+/* META @meta: category=Texturing; subcategory=Normal Map; */
 vec3 sample_normal_map(sampler2D normal_texture, int uv_index, vec2 uv)
 {
     return sample_normal_map_ex(normal_texture, get_TBN(uv_index), uv);
 }
 
 /*  META
+    @meta: category=Vector; subcategory=Tangent;
     @normal: subtype=Normal; default=NORMAL;
     @axis: subtype=Normal; default=(0,0,1);
 */

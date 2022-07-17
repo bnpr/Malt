@@ -2,7 +2,7 @@
 #define COMMON_QUATERNION_GLSL
 
 /*  META GLOBAL
-    @meta: category=Math;
+    @meta: category=Math; subcategory=Quaternion;
 */
 
 

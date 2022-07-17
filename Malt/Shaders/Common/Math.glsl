@@ -34,6 +34,7 @@
 
 #include "Common.glsl"
 
+/* META @meta: subcategory=Random; */
 vec4 random_per_sample(float seed)
 {
     return hash(vec2(float(SAMPLE_COUNT), seed));
@@ -41,6 +42,7 @@ vec4 random_per_sample(float seed)
 
 vec2 screen_uv(); //FORWARD DECLARATION
 
+/* META @meta: subcategory=Random; */
 vec4 random_per_pixel(float seed) 
 {
     return hash(vec4(screen_uv(), float(SAMPLE_COUNT), seed));

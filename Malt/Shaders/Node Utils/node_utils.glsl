@@ -6,6 +6,7 @@
 #include "Node Utils/bool.glsl"
 #include "Node Utils/float.glsl"
 #include "Node Utils/int.glsl"
+#include "Node Utils/mat4.glsl"
 #include "Node Utils/packing.glsl"
 #include "Node Utils/properties.glsl"
 #include "Node Utils/sampler.glsl"

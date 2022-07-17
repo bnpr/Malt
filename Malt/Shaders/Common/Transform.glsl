@@ -8,6 +8,7 @@
 #include "Common.glsl"
 
 /*  META
+    @meta: subcategory=Transformation;
     @matrix: default=mat4(1);
     @point: subtype=Vector;
 */
@@ -17,6 +18,7 @@ vec3 transform_point(mat4 matrix, vec3 point)
 }
 
 /*  META
+    @meta: subcategory=Transformation;
     @matrix: default=mat4(1);
     @point: subtype=Vector;
 */
@@ -27,6 +29,7 @@ vec3 project_point(mat4 matrix, vec3 point)
 }
 
 /*  META
+    @meta: subcategory=Transformation;
     @matrix: default=mat4(1);
     @direction: subtype=Vector;
 */
@@ -36,6 +39,7 @@ vec3 transform_direction(mat4 matrix, vec3 direction)
 }
 
 /*  META
+    @meta: subcategory=Transformation;
     @matrix: default=mat4(1);
     @normal: subtype=Normal;
 */
@@ -45,16 +49,19 @@ vec3 transform_normal(mat4 matrix, vec3 normal)
     return normalize(m * normal);
 }
 
+/* META @meta: category=Input; subcategory=Camera Info; */
 vec3 camera_position()
 {
     return transform_point(inverse(CAMERA), vec3(0,0,0));
 }
 
+/* META @meta: category=Input; */
 vec3 model_position()
 {
     return transform_point(MODEL, vec3(0,0,0));
 }
 
+/* META @meta: category=Input; subcategory=Camera Info; */
 vec2 screen_uv()
 {
     #ifdef PIXEL_SHADER
@@ -80,7 +87,9 @@ ivec2 screen_pixel()
     }
     #endif
 }
-
+/* META
+    @uv: default=screen_uv();
+*/
 vec3 screen_to_camera(vec2 uv, float depth)
 {
     vec3 clip_position = vec3(uv, depth) * 2.0 - 1.0;
@@ -90,6 +99,7 @@ vec3 screen_to_camera(vec2 uv, float depth)
     return camera_position.xyz;
 }
 
+/* META @meta: category=Input; subcategory=Camera Info; */
 vec3 view_direction()
 {
     return transform_normal(inverse(CAMERA), screen_to_camera(screen_uv(), 1));

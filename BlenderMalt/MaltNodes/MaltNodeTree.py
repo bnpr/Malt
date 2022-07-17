@@ -376,6 +376,21 @@ def preload_menus(structs, functions, graph=None):
 
     from nodeitems_utils import NodeCategory, NodeItem, register_node_categories, unregister_node_categories
 
+    def custom_item_draw(self, layout, _context): # Copied and modified from the nodeitems_utils module
+        props = layout.operator("node.add_node", text=self.label, text_ctxt=self.translation_context, icon='OUTLINER')
+        props.type = self.nodetype
+        props.use_transform = True
+
+        for setting in self.settings.items():
+            ops = props.settings.add()
+            ops.name = setting[0]
+            ops.value = setting[1]
+
+    subcategory_node_item = type('SubcategoryNodeItem', (NodeItem,),{
+        'draw':staticmethod(custom_item_draw)
+    }
+    )
+
     category_id = f'BLENDERMALT_{graph.name.upper()}'
 
     try:
@@ -386,6 +401,13 @@ def preload_menus(structs, functions, graph=None):
     categories = {
         'Node Tree' : [],
         'Other' : [],
+        'Input' : [],
+        'Parameters' : [],
+        'Color' : [],
+        'Math' : [],
+        'Vector' : [],
+        'Shading' : [],
+        'Texturing' : [],
     }
 
     for name in graph.graph_io:
@@ -444,7 +466,8 @@ def preload_menus(structs, functions, graph=None):
             settings = OrderedDict(settings)
             # name must be set first for labels to work correctly
             settings.move_to_end('name', last=False)
-            node_item = NodeItem(_node_type, label=label, settings=settings)
+            node_item_class = subcategory_node_item if subcategory else NodeItem
+            node_item = node_item_class(_node_type, label=label, settings=settings)
             categories[category].append(node_item)
 
     add_to_category(functions, 'MaltFunctionNode')
@@ -466,9 +489,7 @@ def preload_menus(structs, functions, graph=None):
         bl_id = ''.join(c for c in bl_id if c.isalnum())
         if len(bl_id) > 64:
             bl_id = bl_id[:64]
-        node_items.sort(key=lambda item:item.label)
         category_list.append(category_type(bl_id, category_name, items=node_items))
-        category_list.sort(key=lambda category:category.name)
 
     register_node_categories(category_id, category_list)
 
