@@ -12,8 +12,8 @@ class MaltFunctionSubCategoryNode(bpy.types.Node, MaltFunctionNodeBase):
         for key, function in self.id_data.get_full_library()['functions'].items():
             subcategory = function['meta'].get('subcategory')
             if subcategory == self.subcategory:
-                name = function['name'].replace('_',' ')
-                items.append((key, name, name))
+                label = function['meta'].get('label', function['name'].replace('_',' ').title())
+                items.append((key, label, label))
         return items
     
     def update_function_enum(self, context=None):
@@ -27,6 +27,13 @@ class MaltFunctionSubCategoryNode(bpy.types.Node, MaltFunctionNodeBase):
     def draw_buttons(self, context, layout):
         layout.prop(self, 'function_enum')
         return super().draw_buttons(context, layout)
+    
+    def draw_label(self):
+        if self.hide:
+            label = self.get_function()['meta'].get('label', None)
+            if label:
+                return self.name + ' - ' + label
+        return self.name
 
 
 def register():
