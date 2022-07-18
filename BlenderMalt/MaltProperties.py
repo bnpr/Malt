@@ -8,6 +8,17 @@ class MaltBoolPropertyWrapper(bpy.types.PropertyGroup):
     boolean : bpy.props.BoolProperty(
         options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
 
+class MaltEnumPropertyWrapper(bpy.types.PropertyGroup):
+    enum_options : bpy.props.StringProperty(
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
+    
+    def get_items(self, context=None):
+        for option in self.enum_options.split(','):
+            yield (option, option, option)
+    
+    enum : bpy.props.EnumProperty(items=get_items, name='',
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
+
 # WORKAROUND: We can't declare color ramps from python,
 # so we use the ones stored inside textures
 class MaltGradientPropertyWrapper(bpy.types.PropertyGroup):
@@ -70,6 +81,9 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
     bools : bpy.props.CollectionProperty(type=MaltBoolPropertyWrapper,
         options={'LIBRARY_EDITABLE'},
         override={'LIBRARY_OVERRIDABLE', 'USE_INSERTION'})
+    enums : bpy.props.CollectionProperty(type=MaltEnumPropertyWrapper,
+        options={'LIBRARY_EDITABLE'},
+        override={'LIBRARY_OVERRIDABLE', 'USE_INSERTION'})
     gradients : bpy.props.CollectionProperty(type=MaltGradientPropertyWrapper,
         options={'LIBRARY_EDITABLE'},
         override={'LIBRARY_OVERRIDABLE', 'USE_INSERTION'})    
@@ -112,12 +126,13 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                     rna_copy = {}
                     parameter.default_value = self.parent.malt_parameters.get_parameter(name, [], {},
                         retrieve_blender_type=True, rna_copy=rna_copy)
-                    parameter.default_value = rna_copy["default"]
-                    parameter.type = rna_copy['type']
-                    parameter.subtype = rna_copy['malt_subtype']
-                    parameter.size = rna_copy['size']
-                    parameter.filter = rna_copy['filter']
-                    parameter.label = rna_copy['label']
+                    parameter.default_value = rna_copy.get("default", None)
+                    parameter.type = rna_copy.get('type', None)
+                    parameter.subtype = rna_copy.get('malt_subtype', None)
+                    parameter.size = rna_copy.get('size', None)
+                    parameter.filter = rna_copy.get('filter', None)
+                    parameter.label = rna_copy.get('label', None)
+                    parameter.enum_options = rna_copy.get('enum_options', None)
                 except:
                     pass
 
@@ -161,6 +176,14 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                     self.bools[name].boolean = parameter.default_value
                 elif size_changed:
                     resize()
+            
+            if parameter.type == Type.ENUM:
+                if name not in self.enums:
+                    self.enums.add().name = name
+                rna[name]['enum_options'] = parameter.enum_options
+                self.enums[name].enum_options = ','.join(parameter.enum_options)
+                if type_changed or equals(rna[name]['default'], self.enums[name].enum):
+                    self.enums[name].enum = parameter.default_value
             
             if parameter.type == Type.TEXTURE:
                 if name not in self.textures:
@@ -381,6 +404,8 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
             return self[key]
         elif rna[key]['type'] == Type.BOOL:
             return bool(self.bools[key].boolean)
+        elif rna[key]['type'] == Type.ENUM:
+            return self.enums[key].enum_options.split(',').index(self.enums[key].enum)
         elif rna[key]['type'] == Type.TEXTURE:
             texture = self.textures[key].texture
             if retrieve_blender_type:
@@ -554,6 +579,8 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
             make_row().prop(self, '["{}"]'.format(key), text='')
         elif rna[key]['type'] == Type.BOOL:
             make_row().prop(self.bools[key], 'boolean', text='')
+        elif rna[key]['type'] == Type.ENUM:
+            make_row().prop(self.enums[key], 'enum', text='')
         elif rna[key]['type'] == Type.TEXTURE:
             make_row(True)
             row = layout.row(align=True)
@@ -757,6 +784,7 @@ class MALT_PT_Light(MALT_PT_Base):
 
 classes = (
     MaltBoolPropertyWrapper,
+    MaltEnumPropertyWrapper,
     MaltGradientPropertyWrapper,
     MaltTexturePropertyWrapper,
     MaltMaterialPropertyWrapper,
