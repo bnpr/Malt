@@ -576,7 +576,8 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
         rna = self.get_rna()
         if rna[key]['type'] in (Type.INT, Type.FLOAT, Type.STRING):
             #TODO: add subtype toggle
-            make_row().prop(self, '["{}"]'.format(key), text='')
+            slider = rna[key]['malt_subtype'] == 'Slider'
+            make_row().prop(self, '["{}"]'.format(key), text='', slider=slider)
         elif rna[key]['type'] == Type.BOOL:
             make_row().prop(self.bools[key], 'boolean', text='')
         elif rna[key]['type'] == Type.ENUM:
