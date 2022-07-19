@@ -35,6 +35,7 @@ void Matcap(sampler2D Matcap, vec3 Normal, out vec4 Color, out vec2 UV)
 }
 
 /*  META
+    @meta: label=HDRI;
     @normal: subtype=Normal; default=NORMAL;
 */
 void Hdri(sampler2D Hdri, vec3 Normal, out vec4 Color, out vec2 UV)
