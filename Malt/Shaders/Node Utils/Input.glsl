@@ -3,104 +3,132 @@
 
 /* META GLOBAL
     @meta: category=Input;
-    @out_true_normal: label=True Normal;
 */
 
-void geometry(
-    out vec3 position,
-    out vec3 normal,
-    out vec3 incoming,
+void Geometry(
+    out vec3 Position,
+    out vec3 Normal,
     out vec3 True_Normal,
-    out bool front_facing
-    ) {
-        position = POSITION;
-        normal = NORMAL;
-        incoming = get_incoming(camera_position(), position);
-        True_Normal = true_normal();
-        front_facing = is_front_facing();
+    out vec3 Incoming,
+    out bool Is_Backfacing,
+    out uvec4 Id
+)
+{
+    Position = POSITION;
+    Normal = NORMAL;
+    True_Normal = true_normal();
+    Incoming = -view_direction();
+    Is_Backfacing = !is_front_facing();
+    Id = ID;
+}
+
+/*  META
+    @Index: min=0; max=3;
+    @uv: label=UV;
+*/
+void UV_Map(
+    int Index,
+    out vec2 uv
+)
+{
+    uv = UV[Index];
+}
+
+/*  META
+    @meta: subcategory=Tangent; label=UV Map;
+    @UV_Index: min=0; max=3;
+*/
+void Tangent_UV_Map(
+    int UV_Index,
+    out vec3 Tangent,
+    out vec3 Bitangent
+)
+{
+    Tangent = get_tangent(UV_Index);
+    Bitangent = get_bitangent(UV_Index);
+}
+/*  META
+    @meta: subcategory=Tangent; label=Radial;
+    @axis: subtype=ENUM(X,Y,Z); default=2;
+*/
+void Tangent_Radial(
+    int axis,
+    out vec3 Tangent,
+    out vec3 Bitangent
+)
+{
+    vec3 _axis = vec3[3](vec3(1,0,0), vec3(0,1,0), vec3(0,0,1))[axis];
+    Tangent = radial_tangent(NORMAL, _axis);
+    Bitangent = normalize(cross(NORMAL, Tangent)) * (is_front_facing() ? 1 : -1);
+}
+/*  META
+    @meta: subcategory=Tangent; label=Procedural UV;
+*/
+void Tangent_Procedural_UV(
+    vec2 UV,
+    out vec3 Tangent,
+    out vec3 Bitangent
+)
+{
+    vec4 t = compute_tangent(UV);
+    Tangent = t.xyz;
+    Bitangent = normalize(cross(NORMAL, Tangent)) * t.w;
 }
 
 /* META
-    @position: default=POSITION; subtype=Vector;
-    @normal: default=NORMAL; subtype=Vector;
+    @Normal: default=NORMAL; subtype=Vector;
 */
-void layer_weight(
-    vec3 position,
-    vec3 normal,
-    out float facing,
-    out float fresnel
-    ) {
-        facing = dot( normal, get_incoming(camera_position(), position));
-        fresnel = 0.5; // WIP
-    }
-
-/* META @index: min=0; max=3; */
-vec4 vertex_color( int index ){
-    return COLOR[index];
+void Fresnel(
+    vec3 Normal,
+    out float Facing,
+    out float Fresnel
+)
+{
+    Facing = dot(normal, get_incoming(camera_position(), position));
+    Fresnel = abs(1.0 - Facing);
 }
 
-/* META 
-    @meta: label=UV Map;
-    @index: min=0; max=3;
+/*  META
+    @Index: min=0; max=3;
+    @uv: label=UV;
 */
-vec2 uv_map( int index ){
-    return UV[index];
+void Vertex_Color(
+    int Index,
+    out vec4 Vertex_Color
+)
+{
+    Vertex_Color = COLOR[Index];
 }
 
-void object_info(
-    out vec3 location,
-    out mat4 object_matrix,
-    out float object_distance,
-    out vec4 random
-    ) {
-        location = (MODEL * vec4(0.0, 0.0, 0.0, 1.0)).xyz;
-        object_matrix = MODEL;
-        object_distance = distance((CAMERA * vec4( 0.0, 0.0, 0.0, 1.0)).xyz, location);
-        random = hash(unpackUnorm4x8(IO_ID.x).xy);
-    } 
-/* META @meta: label=ID; */
-void id(
-    out uvec4 id,
-    out uvec4 original_id
-    ) {
-        id = ID;
-        original_id = IO_ID;
-    }
+void Object_Info(
+    out vec3 Position,
+    out uint Id,
+    out vec4 Random
+)
+{
+    Position = model_position();
+    Id = ID.x;
+    Random = hash(Id);
+}
 
-void time(
-    out int frame,
-    out float time
-    ) {
-        frame = FRAME;
-        time = TIME;
-    }
+void Render_Info(
+    out vec2 Resolution,
+    out int Current_Sample,
+    out vec2 Sample_Offset
+)
+{
+    Resolution = RESOLUTION;
+    Current_Sample = SAMPLE_COUNT;
+    Sample_Offset = SAMPLE_OFFSET;
+}
 
-void render(
-    out vec2 render_resolution,
-    out vec2 sample_offset,
-    out int sample_count,
-    out float Pixel_Depth,
-    out float Pixel_World_Size
-    ) {
-        render_resolution = vec2(RESOLUTION);
-        sample_offset = SAMPLE_OFFSET;
-        sample_count = SAMPLE_COUNT;
-        Pixel_Depth = pixel_depth();
-        Pixel_World_Size = pixel_world_size();
-    }
+void Time_Info(
+    out float Time,
+    out int Frame
+)
+{
+    Time = TIME;
+    Frame = FRAME;
+}
 
-void camera(
-    out vec3 location,
-    out vec3 direction,
-    out vec2 window,
-    out mat4 camera_matrix,
-    out mat4 projection_matrix
-    ) {
-        location = camera_position();
-        direction = view_direction();
-        window = screen_uv();
-        camera_matrix = CAMERA;
-        projection_matrix = PROJECTION;
-    }
-
-#endif // NODE_UTILS_INPUT_GLSL
+#endif //NODE_UTILS_INPUT_GLSL
