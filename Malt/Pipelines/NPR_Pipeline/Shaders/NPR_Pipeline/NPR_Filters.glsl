@@ -15,10 +15,11 @@
 */
 
 /*  META
-    @samples: default=32;
-    @radius: default=1.0;
+    @meta: label=AO;
+    @samples: default=32; min=1;
+    @radius: default=1.0; min=0.0;
     @distribution_exponent: default=5.0;
-    @bias: default=0.01;
+    @bias: default=0.01; subtype=Slider; min=0.0; max=1.0;
 */
 float ao(int samples, float radius, float distribution_exponent, float bias)
 {
@@ -70,8 +71,8 @@ float surface_curvature(float depth_range)
 
 /*  META
     @meta: category=Vector; subcategory=Bevel;
-    @samples: default=32;
-    @radius: default=0.02;
+    @samples: default=32; min=1;
+    @radius: default=0.02; min=0.0;
     @distribution_exponent: default=2.0;
 */
 vec3 soft_bevel(int samples, float radius, float distribution_exponent, bool only_self)
@@ -91,8 +92,8 @@ vec3 soft_bevel(int samples, float radius, float distribution_exponent, bool onl
 
 /*  META
     @meta: category=Vector; subcategory=Bevel;
-    @samples: default=32;
-    @radius: default=0.01;
+    @samples: default=32; min=1;
+    @radius: default=0.01; min=0.0;
     @max_dot: default=0.75;
 */
 vec3 hard_bevel(int samples, float radius, float max_dot, bool only_self)

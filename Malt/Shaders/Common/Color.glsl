@@ -39,6 +39,7 @@ float luma(vec3 color)
     return dot(color, vec3(0.299,0.587,0.114));
 }
 
+/* META @meta: label=Linear To sRGB; */
 vec3 linear_to_srgb(vec3 linear)
 {
     vec3 low = linear * 12.92;
@@ -46,6 +47,7 @@ vec3 linear_to_srgb(vec3 linear)
     return mix(low, high, greaterThan(linear, vec3(0.0031308)));
 }
 
+/* META @meta: label=sRGB To Linear; */
 vec3 srgb_to_linear(vec3 srgb)
 {
     vec3 low = srgb / 12.92;
@@ -53,6 +55,7 @@ vec3 srgb_to_linear(vec3 srgb)
     return mix(low, high, greaterThan(srgb, vec3(0.04045)));
 }
 
+/* META @meta: label=RGB To HSV; */
 vec3 rgb_to_hsv(vec3 rgb)
 {
     rgb = linear_to_srgb(rgb);
@@ -67,6 +70,7 @@ vec3 rgb_to_hsv(vec3 rgb)
 }
 
 /*  META
+    @meta: label=HSV To RGB;
     @hsv:subtype=HSV;
 */
 vec3 hsv_to_rgb(vec3 hsv)
@@ -76,6 +80,7 @@ vec3 hsv_to_rgb(vec3 hsv)
     return srgb_to_linear(hsv.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), hsv.y));
 }
 
+/* META @meta: label=HSV Edit; */
 vec4 hsv_edit(vec4 color, float hue, float saturation, float value)
 {
     vec3 hsv = rgb_to_hsv(color.rgb);
@@ -83,6 +88,7 @@ vec4 hsv_edit(vec4 color, float hue, float saturation, float value)
     return vec4(hsv_to_rgb(hsv), color.a);
 }
 
+/* META @meta: label=RGB Gradient; */
 vec3 rgb_gradient(sampler1D gradient, vec3 uvw)
 {
     return vec3
@@ -93,6 +99,7 @@ vec3 rgb_gradient(sampler1D gradient, vec3 uvw)
     );
 }
 
+/* META @meta: label=RGBA Gradient; */
 vec4 rgba_gradient(sampler1D gradient, vec4 uvw)
 {
     return vec4

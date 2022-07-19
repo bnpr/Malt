@@ -3,33 +3,46 @@
 
 /* META GLOBAL
     @meta: category=Input;
+    @out_true_normal: label=True Normal;
 */
 
 void geometry(
-    int uv_index,
     out vec3 position,
     out vec3 normal,
-    out vec3 tangent,
-    out vec3 bitangent,
     out vec3 incoming,
-    out vec3 out_true_normal,
-    out float facing,
+    out vec3 True_Normal,
     out bool front_facing
     ) {
         position = POSITION;
         normal = NORMAL;
-        tangent = get_tangent(uv_index);
-        bitangent = get_bitangent(uv_index);
         incoming = get_incoming(camera_position(), position);
-        out_true_normal = true_normal();
-        facing = dot(normal, incoming);
+        True_Normal = true_normal();
         front_facing = is_front_facing();
 }
 
+/* META
+    @position: default=POSITION; subtype=Vector;
+    @normal: default=NORMAL; subtype=Vector;
+*/
+void layer_weight(
+    vec3 position,
+    vec3 normal,
+    out float facing,
+    out float fresnel
+    ) {
+        facing = dot( normal, get_incoming(camera_position(), position));
+        fresnel = 0.5; // WIP
+    }
+
+/* META @index: min=0; max=3; */
 vec4 vertex_color( int index ){
     return COLOR[index];
 }
 
+/* META 
+    @meta: label=UV Map;
+    @index: min=0; max=3;
+*/
 vec2 uv_map( int index ){
     return UV[index];
 }
@@ -45,7 +58,7 @@ void object_info(
         object_distance = distance((CAMERA * vec4( 0.0, 0.0, 0.0, 1.0)).xyz, location);
         random = hash(unpackUnorm4x8(IO_ID.x).xy);
     } 
-
+/* META @meta: label=ID; */
 void id(
     out uvec4 id,
     out uvec4 original_id
@@ -54,30 +67,26 @@ void id(
         original_id = IO_ID;
     }
 
-int _get_fps(){ return int(round(FRAME / TIME));}
-
 void time(
     out int frame,
-    out float time,
-    out int fps
+    out float time
     ) {
         frame = FRAME;
         time = TIME;
-        fps = _get_fps();
     }
 
 void render(
     out vec2 render_resolution,
     out vec2 sample_offset,
     out int sample_count,
-    out float out_pixel_depth,
-    out float out_pixel_world_size
+    out float Pixel_Depth,
+    out float Pixel_World_Size
     ) {
         render_resolution = vec2(RESOLUTION);
         sample_offset = SAMPLE_OFFSET;
         sample_count = SAMPLE_COUNT;
-        out_pixel_depth = pixel_depth();
-        out_pixel_world_size = pixel_world_size();
+        Pixel_Depth = pixel_depth();
+        Pixel_World_Size = pixel_world_size();
     }
 
 void camera(

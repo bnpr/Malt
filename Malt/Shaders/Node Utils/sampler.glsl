@@ -5,7 +5,10 @@
     @meta: category=Texturing;
 */
 
-/*META @meta: subcategory=Color Ramp;*/
+/*META 
+    @meta: subcategory=Color Ramp;
+    @u: subtype=Slider; min=0.0; max=1.0;
+*/
 vec4 sampler1D_sample(sampler1D t, float u) { return texture(t, u); }
 /*META @meta: subcategory=Color Ramp;*/
 int sampler1D_size(sampler1D t) { return textureSize(t, 0); }

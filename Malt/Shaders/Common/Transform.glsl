@@ -2,13 +2,13 @@
 #define COMMON_TRANSFORM_GLSL
 
 /*  META GLOBAL
-    @meta: category=Vector;
+    @meta: category=Vector; internal=true;
 */
 
 #include "Common.glsl"
 
 /*  META
-    @meta: subcategory=Transformation;
+    @meta: subcategory=Transformation; internal=false;
     @matrix: default=mat4(1);
     @point: subtype=Vector;
 */
@@ -18,7 +18,7 @@ vec3 transform_point(mat4 matrix, vec3 point)
 }
 
 /*  META
-    @meta: subcategory=Transformation;
+    @meta: subcategory=Transformation; internal=false;
     @matrix: default=mat4(1);
     @point: subtype=Vector;
 */
@@ -29,7 +29,7 @@ vec3 project_point(mat4 matrix, vec3 point)
 }
 
 /*  META
-    @meta: subcategory=Transformation;
+    @meta: subcategory=Transformation; internal=false;
     @matrix: default=mat4(1);
     @direction: subtype=Vector;
 */
@@ -39,7 +39,7 @@ vec3 transform_direction(mat4 matrix, vec3 direction)
 }
 
 /*  META
-    @meta: subcategory=Transformation;
+    @meta: subcategory=Transformation; internal=false;
     @matrix: default=mat4(1);
     @normal: subtype=Normal;
 */
@@ -49,19 +49,19 @@ vec3 transform_normal(mat4 matrix, vec3 normal)
     return normalize(m * normal);
 }
 
-/* META @meta: category=Input; subcategory=Camera Info; internal=true;*/
+/* META @meta: category=Input; */
 vec3 camera_position()
 {
     return transform_point(inverse(CAMERA), vec3(0,0,0));
 }
 
-/* META @meta: category=Input; internal=true;*/
+/* META @meta: category=Input; */
 vec3 model_position()
 {
     return transform_point(MODEL, vec3(0,0,0));
 }
 
-/* META @meta: category=Input; subcategory=Camera Info; internal=true; */
+/* META @meta: category=Input; */
 vec2 screen_uv()
 {
     #ifdef PIXEL_SHADER
@@ -75,7 +75,6 @@ vec2 screen_uv()
     #endif //PIXEL_SHADER
 }
 
-/* META @meta: internal=true; */
 ivec2 screen_pixel()
 {
     #ifdef PIXEL_SHADER
@@ -89,6 +88,7 @@ ivec2 screen_pixel()
     #endif
 }
 /* META
+    @meta: interal=false;
     @uv: default=screen_uv();
 */
 vec3 screen_to_camera(vec2 uv, float depth)
@@ -100,13 +100,12 @@ vec3 screen_to_camera(vec2 uv, float depth)
     return camera_position.xyz;
 }
 
-/* META @meta: category=Input; subcategory=Camera Info; internal=true;*/
+/* META @meta: category=Input; */
 vec3 view_direction()
 {
     return transform_normal(inverse(CAMERA), screen_to_camera(screen_uv(), 1));
 }
 
-/* META @meta: internal=true; */
 float pixel_depth()
 {
     #ifdef PIXEL_SHADER
@@ -118,12 +117,12 @@ float pixel_depth()
     return 0.0;
 }
 
-/* META @meta: category=Math; */
+/* META @meta: category=Math; interal=false; */
 float depth_to_z(float depth)
 {
     return screen_to_camera(vec2(0,0), depth).z;
 }
-/* META @meta: category=Math; */
+/* META @meta: category=Math; interal=false; */
 float pixel_world_size_at(float depth)
 {
     vec2 uv = screen_uv();
@@ -131,7 +130,6 @@ float pixel_world_size_at(float depth)
     return distance(screen_to_camera(uv, depth), screen_to_camera(uv + offset, depth));
 }
 
-/* META @meta: internal=true; */
 float pixel_world_size()
 {
     #ifdef PIXEL_SHADER
@@ -154,6 +152,7 @@ vec3 _reconstruct_cs_position(sampler2D depth_texture, int depth_channel, ivec2 
     return screen_to_camera(uv, depth);
 }
 
+ /* META @meta: internal=false; */
 vec3 reconstruct_normal(sampler2D depth_texture, int depth_channel, ivec2 texel)
 {
     vec3 t0 = _reconstruct_cs_position(depth_texture, depth_channel, texel);
@@ -186,6 +185,7 @@ float ray_plane_intersection(vec3 ray_origin, vec3 ray_direction, vec3 plane_pos
     return (p_position - r_origin) / r_direction;
 }
 
+/* META @meta: internal=false; */
 vec2 rotate_2d(vec2 p, float angle)
 {
     float c = cos(angle);

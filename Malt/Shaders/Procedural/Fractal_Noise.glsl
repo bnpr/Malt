@@ -4,11 +4,10 @@
 #include "Noise.glsl"
 
 /*  META GLOBAL
-    @meta: category=Texturing;
+    @meta: category=Texturing; @meta: internal=true;
 */
 
 /*  META
-    @meta: internal=true;
     @coord: subtype=Vector; default=vec4(POSITION,0);
     @detail: default=3.0; min=1.0;
     @roughness: subtype=Slider; min=0.0; max=1.0; default = 0.5;
@@ -35,15 +34,18 @@ vec4 fractal_noise_ex(vec4 coord, float detail, float roughness, bool tile, vec4
     return result / total_weight;
 }
 
+vec4 fractal_noise_ex(vec4 coord, int octaves, bool tile, vec4 tile_size){
+    return fractal_noise_ex(coord, float(octaves), 0.5, tile, tile_size);
+}
+
 
 /*  META
-    @meta: internal=true;
     @coord: subtype=Vector; default=vec4(POSITION,0);
     @detail: default=3;
 */
-vec4 fractal_noise(vec4 coord, float detail, float roughness)
+vec4 fractal_noise(vec4 coord, int octaves)
 {
-    return fractal_noise_ex(coord, detail, roughness, false, vec4(0));
+    return fractal_noise_ex(coord, float(octaves), 0.0, false, vec4(0));
 }
 
 #endif // PROCEDURAL_FRACTAL_NOISE_GLSL

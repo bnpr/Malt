@@ -125,7 +125,11 @@ mat3 get_TBN(int uv_index)
     return TBN;
 }
 
-/* META @meta: category=Texturing; subcategory=Normal Map; */
+/* META 
+    @meta: category=Texturing; internal=true;
+    @TBN: default=get_TBN(0);
+    @uv: default=UV[0]; label=UV;
+*/
 vec3 sample_normal_map_ex(sampler2D normal_texture, mat3 TBN, vec2 uv)
 {
     vec3 tangent = texture(normal_texture, uv).xyz;
@@ -133,7 +137,11 @@ vec3 sample_normal_map_ex(sampler2D normal_texture, mat3 TBN, vec2 uv)
     return normalize(TBN * tangent);
 }
 
-/* META @meta: category=Texturing; subcategory=Normal Map; */
+/* META 
+    @meta: category=Texturing; label=Normal Map; 
+    @uv_index: min=0; max=3;
+    @uv: default=UV[0];
+*/
 vec3 sample_normal_map(sampler2D normal_texture, int uv_index, vec2 uv)
 {
     return sample_normal_map_ex(normal_texture, get_TBN(uv_index), uv);

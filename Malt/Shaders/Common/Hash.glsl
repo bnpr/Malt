@@ -31,20 +31,20 @@ vec4 _pcg4d(vec4 v)
 }
 
 /*  META
-    @meta: subcategory=Hash;
+    @meta: subcategory=Hash; label=Hash 1D;
 */
 vec4 hash(float v){ return _pcg4d(vec4(v,0,0,0)); }
 /*  META
-    @meta: subcategory=Hash;
+    @meta: subcategory=Hash; label=Hash 2D;
 */
 vec4 hash(vec2  v){ return _pcg4d(vec4(v,0,0)); }
 /*  META
-    @meta: subcategory=Hash;
+    @meta: subcategory=Hash; label=Hash 3D;
     @v:subtype=Data;
 */
 vec4 hash(vec3  v){ return _pcg4d(vec4(v,0)); }
 /*  META
-    @meta: subcategory=Hash;
+    @meta: subcategory=Hash; label=Hash 4D;
     @v:subtype=Data;
 */
 vec4 hash(vec4  v){ return _pcg4d(v); }

@@ -8,7 +8,7 @@
     @meta: category=Shading;
 */
 
-/* META @meta: subcategory=Simple Diffuse;*/
+/* META @meta: subcategory=NPR Diffuse;*/
 vec3 diffuse_shading()
 {
     vec3 result = vec3(0);
@@ -19,7 +19,7 @@ vec3 diffuse_shading()
     return result;
 }
 
-/* META @meta: subcategory=Simple Diffuse;*/
+/* META @meta: subcategory=NPR Diffuse;*/
 vec3 diffuse_half_shading()
 {
     vec3 result = vec3(0);
@@ -30,7 +30,7 @@ vec3 diffuse_half_shading()
     return result;
 }
 
-/* META @meta: subcategory=Simple Diffuse;*/
+/* META @meta: subcategory=NPR Diffuse;*/
 vec3 diffuse_gradient_shading(sampler1D gradient_texture)
 {
     vec3 result = vec3(0);
@@ -42,7 +42,7 @@ vec3 diffuse_gradient_shading(sampler1D gradient_texture)
 }
 
 /*  META
-    @meta: subcategory=Simple Specular;
+    @meta: subcategory=NPR Specular;
     @tangent: subtype=Normal; default=radial_tangent(NORMAL, vec3(0,0,1));
     @anisotropy: default=0.5;
     @roughness: default=0.5;
@@ -58,7 +58,7 @@ vec3 specular_shading(float roughness)
 }
 
 /*  META
-    @meta: subcategory=Simple Specular;
+    @meta: subcategory=NPR Specular;
     @roughness: default=0.5;
 */
 vec3 specular_gradient_shading(sampler1D gradient_texture, float roughness)
@@ -72,7 +72,7 @@ vec3 specular_gradient_shading(sampler1D gradient_texture, float roughness)
 }
 
 /*  META
-    @meta: subcategory=Simple Specular;
+    @meta: subcategory=NPR Specular;
     @roughness: default=0.5;
     @anisotropy: default=0.5;
     @tangent: subtype=Normal; default=radial_tangent(NORMAL, vec3(0,0,1));
@@ -88,7 +88,7 @@ vec3 specular_anisotropic_shading(float roughness, float anisotropy, vec3 tangen
 }
 
 /*  META
-    @meta: subcategory=Simple Specular;
+    @meta: subcategory=NPR Specular;
     @roughness: default=0.5;
     @anisotropy: default=0.5;
     @tangent: subtype=Normal; default=radial_tangent(NORMAL, vec3(0,0,1));
@@ -103,6 +103,7 @@ vec3 specular_anisotropic_gradient_shading(sampler1D gradient_texture, float rou
     return result;
 }
 
+/* META @meta: label=NPR Toon Shading; */
 vec3 toon_shading(float size, float gradient_size, float specularity, float offset)
 {
     vec3 result = vec3(0);
@@ -154,13 +155,13 @@ bool is_main_pass()
 }
 /*META @meta: category=Input; */
 void pass_info(
-    out bool main_pass,
-    out bool pre_pass,
-    out bool shadow_pass
+    out bool Is_Main_Pass,
+    out bool Is_Pre_Pass,
+    out bool Is_Shadow_Pass
     ) {
-        main_pass = is_main_pass();
-        pre_pass = is_pre_pass();
-        shadow_pass = is_shadow_pass();
+        Is_Main_Pass = is_main_pass();
+        Is_Pre_Pass = is_pre_pass();
+        Is_Shadow_Pass = is_shadow_pass();
     }
 
 #endif //NPR_MESH_GLSL
