@@ -2,7 +2,7 @@
 #define SAMPLER_GLSL
 
 /*META GLOBAL
-    @meta: category=Texturing;
+    @meta: category=Texturing; internal=true;
 */
 
 /*META 
