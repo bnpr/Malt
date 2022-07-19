@@ -2,15 +2,16 @@
 #define COMMON_MATRIX_GLSL
 
 /* META GLOBAL
-    @meta: category=Math; subcategory=Mat4;
+    @meta: category=Math; subcategory=Matrix Math;
 */
 
 #include "Common/Quaternion.glsl"
 
 /*  META
+    @meta: label=From Translation;
     @t: subtype=Vector;
 */
-mat4 mat4_translation(vec3 t)
+mat4 mat4_translation(vec3 v)
 {
     mat4 m = mat4(1.0);
     m[3] = vec4(t, 1);
@@ -18,6 +19,7 @@ mat4 mat4_translation(vec3 t)
 }
 
 /*  META
+    @meta: label=From Quaternion;
     @q: subtype=Quaternion; default=vec4(0,0,0,1);
 */
 mat4 mat4_rotation_from_quaternion(vec4 q)
@@ -30,6 +32,7 @@ mat4 mat4_rotation_from_quaternion(vec4 q)
 }
 
 /*  META
+    @meta: label=From Euler;
     @e: subtype=Euler;
 */
 mat4 mat4_rotation_from_euler(vec3 e)
@@ -42,6 +45,7 @@ mat4 mat4_rotation_from_euler(vec3 e)
 }
 
 /*  META
+    @meta: label=From Scale;
     @s: subtype=Vector; default=vec3(1);
 */
 mat4 mat4_scale(vec3 s)
@@ -50,6 +54,7 @@ mat4 mat4_scale(vec3 s)
 }
 
 /*  META
+    @meta: label=Is Orthographic;
     @matrix: default=mat4(1);
 */
 bool is_ortho(mat4 matrix)
