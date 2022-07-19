@@ -4,7 +4,7 @@
 #include "Common.glsl"
 
 /* META GLOBAL
-    @meta: category=Input;
+    @meta: category=Vector;
 */
 
 vec3 view_direction();

@@ -113,7 +113,7 @@ vec3 toon_shading(float size, float gradient_size, float specularity, float offs
     return result;
 }
 
-/*META @meta: category=Input; subcategory=Pass Info;*/
+/*META @meta: category=Input; subcategory=Pass Info; internal=true;*/
 bool is_shadow_pass()
 {
     #ifdef SHADOW_PASS
@@ -126,7 +126,7 @@ bool is_shadow_pass()
     }
     #endif
 }
-/*META @meta: category=Input; subcategory=Pass Info;*/
+/*META @meta: category=Input; subcategory=Pass Info; internal=true;*/
 bool is_pre_pass()
 {
     #ifdef PRE_PASS
@@ -139,7 +139,7 @@ bool is_pre_pass()
     }
     #endif
 }
-/*META @meta: category=Input; subcategory=Pass Info;*/
+/*META @meta: category=Input; subcategory=Pass Info; internal=true;*/
 bool is_main_pass()
 {
     #ifdef MAIN_PASS
@@ -152,5 +152,15 @@ bool is_main_pass()
     }
     #endif
 }
+/*META @meta: category=Input; */
+void pass_info(
+    out bool main_pass,
+    out bool pre_pass,
+    out bool shadow_pass
+    ) {
+        main_pass = is_main_pass();
+        pre_pass = is_pre_pass();
+        shadow_pass = is_shadow_pass();
+    }
 
 #endif //NPR_MESH_GLSL

@@ -8,7 +8,7 @@
 #include "Common.glsl"
 
 /* META
-    @meta: category=Input;
+    @meta: category=Input; internal=true;
 */
 vec3 true_normal()
 {
@@ -30,7 +30,7 @@ vec3 true_normal()
 }
 
 /* META
-    @meta: category=Input;
+    @meta: category=Input; internal=true;
 */
 float facing()
 {
@@ -38,7 +38,7 @@ float facing()
 }
 
 /* META
-    @meta: category=Input;
+    @meta: category=Input; internal=true;
 */
 bool is_front_facing()
 {
@@ -105,9 +105,12 @@ vec3 get_bitangent(int uv_index)
     return normalize(cross(NORMAL, T.xyz) * T.w);
 }
 
-/* META
-    @meta: category=Input;
-*/
+/* META @meta: internal=true; */
+vec3 get_incoming(vec3 view_location, vec3 surface_position){
+    return normalize( view_location - surface_position );
+}
+
+/* META @meta: subcategory=Tangent; */
 mat3 get_TBN(int uv_index)
 {
     mat3 TBN = mat3(get_tangent(uv_index), get_bitangent(uv_index), NORMAL);
@@ -139,7 +142,7 @@ vec3 sample_normal_map(sampler2D normal_texture, int uv_index, vec2 uv)
 /*  META
     @meta: category=Vector; subcategory=Tangent;
     @normal: subtype=Normal; default=NORMAL;
-    @axis: subtype=Normal; default=(0,0,1);
+    @axis: subtype=Normal; default=(0.0,0.0,1.0);
 */
 vec3 radial_tangent(vec3 normal, vec3 axis)
 {

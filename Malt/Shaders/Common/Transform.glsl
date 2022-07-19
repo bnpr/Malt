@@ -49,19 +49,19 @@ vec3 transform_normal(mat4 matrix, vec3 normal)
     return normalize(m * normal);
 }
 
-/* META @meta: category=Input; subcategory=Camera Info; */
+/* META @meta: category=Input; subcategory=Camera Info; internal=true;*/
 vec3 camera_position()
 {
     return transform_point(inverse(CAMERA), vec3(0,0,0));
 }
 
-/* META @meta: category=Input; */
+/* META @meta: category=Input; internal=true;*/
 vec3 model_position()
 {
     return transform_point(MODEL, vec3(0,0,0));
 }
 
-/* META @meta: category=Input; subcategory=Camera Info; */
+/* META @meta: category=Input; subcategory=Camera Info; internal=true; */
 vec2 screen_uv()
 {
     #ifdef PIXEL_SHADER
@@ -75,6 +75,7 @@ vec2 screen_uv()
     #endif //PIXEL_SHADER
 }
 
+/* META @meta: internal=true; */
 ivec2 screen_pixel()
 {
     #ifdef PIXEL_SHADER
@@ -99,12 +100,13 @@ vec3 screen_to_camera(vec2 uv, float depth)
     return camera_position.xyz;
 }
 
-/* META @meta: category=Input; subcategory=Camera Info; */
+/* META @meta: category=Input; subcategory=Camera Info; internal=true;*/
 vec3 view_direction()
 {
     return transform_normal(inverse(CAMERA), screen_to_camera(screen_uv(), 1));
 }
 
+/* META @meta: internal=true; */
 float pixel_depth()
 {
     #ifdef PIXEL_SHADER
@@ -116,11 +118,12 @@ float pixel_depth()
     return 0.0;
 }
 
+/* META @meta: category=Math; */
 float depth_to_z(float depth)
 {
     return screen_to_camera(vec2(0,0), depth).z;
 }
-
+/* META @meta: category=Math; */
 float pixel_world_size_at(float depth)
 {
     vec2 uv = screen_uv();
@@ -128,6 +131,7 @@ float pixel_world_size_at(float depth)
     return distance(screen_to_camera(uv, depth), screen_to_camera(uv + offset, depth));
 }
 
+/* META @meta: internal=true; */
 float pixel_world_size()
 {
     #ifdef PIXEL_SHADER

@@ -7,7 +7,7 @@
 
 /*  META
     @uv: default=screen_uv();
-    @radius: default=5.0;
+    @radius: default=5.0; min=0.0;
 */
 vec4 box_blur(sampler2D input_texture, vec2 uv, float radius, bool circular)
 {
@@ -48,7 +48,7 @@ float _gaussian_weight_2d(vec2 v, float sigma)
 
 /*  META
     @uv: default=screen_uv();
-    @radius: default=5.0;
+    @radius: default=5.0; min=0.0;
     @sigma: default=1.0;
 */
 vec4 gaussian_blur(sampler2D input_texture, vec2 uv, float radius, float sigma)
@@ -78,7 +78,7 @@ vec4 gaussian_blur(sampler2D input_texture, vec2 uv, float radius, float sigma)
     @uv: default=screen_uv();
     @radius: default=5.0;
     @distribution_exponent: default=5.0;
-    @samples: default=8;
+    @samples: default=8; min=1;
 */
 vec4 jitter_blur(sampler2D input_texture, vec2 uv, float radius, float distribution_exponent, int samples)
 {
