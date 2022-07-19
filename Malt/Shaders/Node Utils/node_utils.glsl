@@ -1,6 +1,8 @@
 #ifndef NODE_UTILS_GLSL
 #define NODE_UTILS_GLSL
 
+#include "Node Utils/Input.glsl"
+
 #include "Node Utils/common.glsl"
 #include "Node Utils/conversion.glsl"
 #include "Node Utils/bool.glsl"
