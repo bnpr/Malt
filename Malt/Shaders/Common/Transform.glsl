@@ -8,7 +8,7 @@
 #include "Common.glsl"
 
 /*  META
-    @meta: subcategory=Transformation; internal=false;
+    @meta: subcategory=Matrix Math; internal=false;
     @matrix: default=mat4(1);
     @point: subtype=Vector;
 */
@@ -18,7 +18,7 @@ vec3 transform_point(mat4 matrix, vec3 point)
 }
 
 /*  META
-    @meta: subcategory=Transformation; internal=false;
+    @meta: subcategory=Matrix Math; internal=false;
     @matrix: default=mat4(1);
     @point: subtype=Vector;
 */
@@ -29,7 +29,7 @@ vec3 project_point(mat4 matrix, vec3 point)
 }
 
 /*  META
-    @meta: subcategory=Transformation; internal=false;
+    @meta: subcategory=Matrix Math; internal=false;
     @matrix: default=mat4(1);
     @direction: subtype=Vector;
 */
@@ -39,7 +39,7 @@ vec3 transform_direction(mat4 matrix, vec3 direction)
 }
 
 /*  META
-    @meta: subcategory=Transformation; internal=false;
+    @meta: subcategory=Matrix Math; internal=false;
     @matrix: default=mat4(1);
     @normal: subtype=Normal;
 */
