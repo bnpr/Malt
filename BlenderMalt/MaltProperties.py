@@ -319,13 +319,14 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
             if bpy.app.version[0] >= 3:
                 if rna_prop['type'] in (Type.FLOAT, Type.INT):
                     ui = self.id_properties_ui(key)
+                    updates = dict(default=rna_prop['default'], subtype='NONE')
                     if rna_prop['subtype'] == 'COLOR':
-                        ui.update(default=rna_prop['default'], subtype='COLOR', soft_min = 0.0, soft_max = 1.0)
-                    elif rna_prop['min'] is not None and rna_prop['max'] is not None:
-                        ui.update(default=rna_prop['default'], subtype='NONE', 
-                            soft_min = rna_prop['min'], soft_max = rna_prop['max'])
-                    else:
-                        ui.update(default=rna_prop['default'], subtype='NONE')
+                        updates.update(subtype='COLOR', soft_min=0.0, soft_max=1.0)
+                    if (soft_min := rna_prop['min']) != None:
+                        updates.update(soft_min=soft_min)
+                    if (soft_max := rna_prop['max']) != None:
+                        updates.update(soft_max=soft_max)
+                    ui.update(**updates)
 
         # Force a depsgraph update. 
         # Otherwise these won't be available inside scene_eval
