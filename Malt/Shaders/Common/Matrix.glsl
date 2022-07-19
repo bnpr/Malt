@@ -11,7 +11,7 @@
     @meta: label=From Translation;
     @t: subtype=Vector;
 */
-mat4 mat4_translation(vec3 v)
+mat4 mat4_translation(vec3 t)
 {
     mat4 m = mat4(1.0);
     m[3] = vec4(t, 1);
