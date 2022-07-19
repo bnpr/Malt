@@ -132,21 +132,18 @@ class MaltNode():
             if isinstance(type, Parameter):
                 parameter = type
             else:
+                default_value = input.get('meta', {}).get('default', None)
                 if size == 0:
                     try:
-                        parameter = Parameter.from_glsl_type(type, subtype)
+                        parameter = Parameter.from_glsl_type(type, subtype, default_value)
                     except:
                         parameter = Parameter(type, Type.OTHER)
                 else:
                     parameter = Parameter(type, Type.OTHER)
-                try:
-                    default = input['meta']['default']
-                    if isinstance(default, str) == False:
-                        parameter.default_value = default
-                except:
-                    pass
             if parameter:
-                parameter.__dict__.update(input.get('meta', {}))
+                for k,v in input.get('meta', {}).items():
+                    if k not in parameter.__dict__.keys():
+                        parameter.__dict__[k] = v
                 label = input.get('meta', {}).get('label', name)
                 node_label = self.name.replace('.', ' ')
                 parameter.label = f'{node_label}.{label}'

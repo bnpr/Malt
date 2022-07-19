@@ -399,15 +399,16 @@ def preload_menus(structs, functions, graph=None):
         pass #First run
 
     categories = {
-        'Node Tree' : [],
-        'Other' : [],
         'Input' : [],
         'Parameters' : [],
-        'Color' : [],
         'Math' : [],
         'Vector' : [],
-        'Shading' : [],
+        'Color' : [],
         'Texturing' : [],
+        'Shading' : [],
+        'Filter' : [],
+        'Other' : [],
+        'Node Tree' : [],
     }
 
     for name in graph.graph_io:
