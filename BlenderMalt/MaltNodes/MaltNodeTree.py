@@ -474,9 +474,9 @@ def preload_menus(structs, functions, graph=None):
         bl_id = ''.join(c for c in bl_id if c.isalnum())
         if len(bl_id) > 64:
             bl_id = bl_id[:64]
-        node_items.sort(key=lambda item:item.label)
+        #node_items.sort(key=lambda item:item.label)
         category_list.append(category_type(bl_id, category_name, items=node_items))
-        category_list.sort(key=lambda category:category.name)
+        #category_list.sort(key=lambda category:category.name)
 
     register_node_categories(category_id, category_list)
 
