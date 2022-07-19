@@ -84,7 +84,7 @@ void Fresnel(
     out float Fresnel
 )
 {
-    Facing = dot(normal, get_incoming(camera_position(), position));
+    Facing = dot(Normal, -view_direction());
     Fresnel = abs(1.0 - Facing);
 }
 
