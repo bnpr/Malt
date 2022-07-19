@@ -105,11 +105,6 @@ vec3 get_bitangent(int uv_index)
     return normalize(cross(NORMAL, T.xyz) * T.w);
 }
 
-/* META @meta: internal=true; */
-vec3 get_incoming(vec3 view_location, vec3 surface_position){
-    return normalize( view_location - surface_position );
-}
-
 /* META @meta: subcategory=Tangent; */
 mat3 get_TBN(int uv_index)
 {
