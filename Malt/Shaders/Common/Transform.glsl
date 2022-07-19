@@ -88,7 +88,7 @@ ivec2 screen_pixel()
     #endif
 }
 /* META
-    @meta: interal=false;
+    @meta: internal=false;
     @uv: default=screen_uv();
 */
 vec3 screen_to_camera(vec2 uv, float depth)
@@ -117,12 +117,12 @@ float pixel_depth()
     return 0.0;
 }
 
-/* META @meta: category=Math; interal=false; */
+/* META @meta: category=Math; internal=false; */
 float depth_to_z(float depth)
 {
     return screen_to_camera(vec2(0,0), depth).z;
 }
-/* META @meta: category=Math; interal=false; */
+/* META @meta: category=Math; internal=false; */
 float pixel_world_size_at(float depth)
 {
     vec2 uv = screen_uv();
