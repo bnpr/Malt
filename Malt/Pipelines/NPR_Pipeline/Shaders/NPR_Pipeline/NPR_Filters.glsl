@@ -19,7 +19,7 @@
     @samples: default=32; min=1;
     @radius: default=1.0; min=0.0;
     @distribution_exponent: default=5.0;
-    @bias: default=0.01; subtype=Slider; min=0.0; max=1.0;
+    @bias: default=0.01; min=0.0; max=1.0;
 */
 float ao(int samples, float radius, float distribution_exponent, float bias)
 {
