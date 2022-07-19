@@ -469,6 +469,8 @@ def preload_menus(structs, functions, graph=None):
             
     category_list = []
     for category_name, node_items in categories.items():
+        if not len(node_items):
+            continue
         bl_id = f'{category_id}_{category_name}'
         bl_id = ''.join(c for c in bl_id if c.isalnum())
         if len(bl_id) > 64:
