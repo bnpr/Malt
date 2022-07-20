@@ -5,71 +5,72 @@
     @meta: category=Math; subcategory=Vector 3D;
 */
 
-/*META @a: subtype=Vector; @b: subtype=Vector;*/
+/*META @meta: label=Add; @a: subtype=Vector; @b: subtype=Vector;*/
 vec3 vec3_add(vec3 a, vec3 b){ return a+b; }
-/*META @a: subtype=Vector; @b: subtype=Vector;*/
+/*META @meta: label=Subtract; @a: subtype=Vector; @b: subtype=Vector;*/
 vec3 vec3_subtract(vec3 a, vec3 b){ return a-b; }
-/*META @a: subtype=Vector; @b: subtype=Vector;*/
+/*META @meta: label=Multiply; @a: subtype=Vector; @b: subtype=Vector;*/
 vec3 vec3_multiply(vec3 a, vec3 b){ return a*b; }
-/*META @a: subtype=Vector; @b: subtype=Vector;*/
+/*META @meta: label=Divide; @a: subtype=Vector; @b: subtype=Vector;*/
 vec3 vec3_divide(vec3 a, vec3 b){ return a/b; }
-/*META @v: subtype=Vector;*/
+/*META @meta: label=Scale; @v: subtype=Vector;*/
 vec3 vec3_scale(vec3 v, float s){ return v*s; }
-/*META @a: subtype=Vector; @b: subtype=Vector;*/
+/*META @meta: label=Modulo; @a: subtype=Vector; @b: subtype=Vector;*/
 vec3 vec3_modulo(vec3 a, vec3 b){ return mod(a,b); }
-/*META @v: subtype=Vector; @e: subtype=Vector;*/
+/*META @meta: label=Power; @v: subtype=Vector; @e: subtype=Vector;*/
 vec3 vec3_pow(vec3 v, vec3 e){ return pow(v, e); }
-/*META @v: subtype=Vector;*/
+/*META @meta: label=Square Root; @v: subtype=Vector;*/
 vec3 vec3_sqrt(vec3 v){ return sqrt(v); }
 
-/*META @v: subtype=Vector;*/
+/*META @meta: label=Round; @v: subtype=Vector;*/
 vec3 vec3_round(vec3 v){ return round(v); }
-/*META @v: subtype=Vector;*/
+/*META @meta: label=Fraction; @v: subtype=Vector;*/
 vec3 vec3_fract(vec3 v){ return fract(v); }
-/*META @v: subtype=Vector;*/
+/*META @meta: label=Floor; @v: subtype=Vector;*/
 vec3 vec3_floor(vec3 v){ return floor(v); }
-/*META @v: subtype=Vector;*/
+/*META @meta: label=Ceil; @v: subtype=Vector;*/
 vec3 vec3_ceil(vec3 v){ return ceil(v); }
 
-/*META @v: subtype=Vector; @min: subtype=Vector; @max: subtype=Vector;*/
+/*META @meta: label=Clamp; @v: subtype=Vector; @min: subtype=Vector; @max: subtype=Vector;*/
 vec3 vec3_clamp(vec3 v, vec3 min, vec3 max){ return clamp(v, min, max); }
 
-/*META @v: subtype=Vector;*/
+/*META @meta: label=Sign; @v: subtype=Vector;*/
 vec3 vec3_sign(vec3 v){ return sign(v); }
-/*META @v: subtype=Vector;*/
+/*META @meta: label=Absolute; @v: subtype=Vector;*/
 vec3 vec3_abs(vec3 v){ return abs(v); }
-/*META @a: subtype=Vector; @b: subtype=Vector;*/
+/*META @meta: label=Min; @a: subtype=Vector; @b: subtype=Vector;*/
 vec3 vec3_min(vec3 a, vec3 b){ return min(a,b); }
-/*META @a: subtype=Vector; @b: subtype=Vector;*/
+/*META @meta: label=Max; @a: subtype=Vector; @b: subtype=Vector;*/
 vec3 vec3_max(vec3 a, vec3 b){ return max(a,b); }
 
-/*META @a: subtype=Vector; @b: subtype=Vector; @factor: subtype=Vector;*/
+/*META @meta: label=Mix 3D; @a: subtype=Vector; @b: subtype=Vector; @factor: subtype=Vector;*/
 vec3 vec3_mix(vec3 a, vec3 b, vec3 factor){ return mix(a,b,factor); }
-/*META @a: subtype=Vector; @b: subtype=Vector;*/
+/*META @meta: label=Mix; @a: subtype=Vector; @b: subtype=Vector;*/
 vec3 vec3_mix_float(vec3 a, vec3 b, float factor){ return mix(a,b,factor); }
 
-/*META @v: subtype=Vector;*/
+/*META @meta: label=Normalize; @v: subtype=Vector;*/
 vec3 vec3_normalize(vec3 v){ return normalize(v); }
 
-/*META @v: subtype=Vector;*/
+/*META @meta: label=Length; @v: subtype=Vector;*/
 float vec3_length(vec3 v){ return length(v); }
-/*META @a: subtype=Vector; @b: subtype=Vector;*/
+/*META @meta: label=Distance; @a: subtype=Vector; @b: subtype=Vector;*/
 float vec3_distance(vec3 a, vec3 b){ return distance(a,b); }
-/*META @a: subtype=Vector; @b: subtype=Vector;*/
+/*META @meta: label=Dot Product; @a: subtype=Vector; @b: subtype=Vector;*/
 float vec3_dot_product(vec3 a, vec3 b){ return dot(a,b); }
-/*META @a: subtype=Vector; @b: subtype=Vector;*/
+/*META @meta: label=Cross Product; @a: subtype=Vector; @b: subtype=Vector;*/
 vec3 vec3_cross_product(vec3 a, vec3 b){ return cross(a,b); }
 
-/*META @a: subtype=Vector; @b: subtype=Vector;*/
+/*META @meta: label=Equal; @a: subtype=Vector; @b: subtype=Vector;*/
 bool vec3_equal(vec3 a, vec3 b){ return a == b; }
-/*META @a: subtype=Vector; @b: subtype=Vector;*/
+/*META @meta: label=Not Equal; @a: subtype=Vector; @b: subtype=Vector;*/
 bool vec3_not_equal(vec3 a, vec3 b){ return a != b; }
 
-/*META @if_true: subtype=Vector; @if_false: subtype=Vector;*/
+/*META @meta: label=If Else; @if_true: subtype=Vector; @if_false: subtype=Vector;*/
 vec3 vec3_if_else(bool condition, vec3 if_true, vec3 if_false){ return condition ? if_true : if_false; }
 
+/* META @meta: label=Join; */ 
 vec3 vec3_join(float x, float y, float z) { return vec3(x,y,z);}
-/*META @v: subtype=Vector;*/
+/*META @meta: label=Split; @v: subtype=Vector;*/
 void vec3_split(vec3 v, out float x, out float y, out float z){ x=v.x; y=v.y; z=v.z; }
 
 #endif //VEC3_GLSL
