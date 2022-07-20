@@ -82,4 +82,23 @@ vec2 vec2_join(float x, float y) { return vec2(x,y);}
 /* META @meta: label=Split; */
 void vec2_split(vec2 v, out float x, out float y){ x=v.x; y=v.y; }
 
+/*META @meta: subcategory=Map Range; label=Vector 2D; 
+    @clamped: default=true;
+    @value: default = 'vec2(0.5)';
+    @from_min: default = vec2(0.0);
+    @from_max: default = vec2(1.0);
+    @to_min: default = vec2(0.0);
+    @to_max: default = vec2(1.0);
+*/
+vec2 vec2_map_range(bool clamped, vec2 value, vec2 from_min, vec2 from_max, vec2 to_min, vec2 to_max)
+{
+    if(clamped)
+    {
+        return map_range_clamped(value, from_min, from_max, to_min, to_max);
+    }else
+    {
+        return map_range(value, from_min, from_max, to_min, to_max);
+    }
+}
+
 #endif //VEC2_GLSL

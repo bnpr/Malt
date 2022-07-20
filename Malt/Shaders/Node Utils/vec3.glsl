@@ -90,4 +90,23 @@ vec3 vec3_join(float x, float y, float z) { return vec3(x,y,z);}
 /*META @meta: label=Split; @v: subtype=Vector;*/
 void vec3_split(vec3 v, out float x, out float y, out float z){ x=v.x; y=v.y; z=v.z; }
 
+/*META @meta: subcategory=Map Range; label=Vector 3D; 
+    @clamped: default=true;
+    @value: default = 'vec3(0.5)';
+    @from_min: subtype=Vector; default = vec3(0.0);
+    @from_max: subtype=Vector; default = vec3(1.0);
+    @to_min: subtype=Vector; default = vec3(0.0);
+    @to_max: subtype=Vector; default = vec3(1.0);
+*/
+vec3 vec3_map_range(bool clamped, vec3 value, vec3 from_min, vec3 from_max, vec3 to_min, vec3 to_max)
+{
+    if(clamped)
+    {
+        return map_range_clamped(value, from_min, from_max, to_min, to_max);
+    }else
+    {
+        return map_range(value, from_min, from_max, to_min, to_max);
+    }
+}
+
 #endif //VEC3_GLSL

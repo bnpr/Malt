@@ -78,4 +78,23 @@ bool float_less_or_equal(float a, float b){ return a <= b; }
 /*META @meta: label=If Else;*/
 float float_if_else(bool condition, float if_true, float if_false){ return condition ? if_true : if_false; }
 
+/*META @meta: subcategory=Map Range; label=Float; 
+    @clamped: default=true;
+    @value: default = 0.5;
+    @from_min: default = 0.0;
+    @from_max: default = 1.0;
+    @to_min: default = 0.0;
+    @to_max: default = 1.0;
+*/
+float float_map_range(bool clamped, float value, float from_min, float from_max, float to_min, float to_max)
+{
+    if(clamped)
+    {
+        return map_range_clamped(value, from_min, from_max, to_min, to_max);
+    }else
+    {
+        return map_range(value, from_min, from_max, to_min, to_max);
+    }
+}
+
 #endif //FLOAT_GLSL

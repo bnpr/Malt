@@ -80,4 +80,23 @@ vec4 vec4_join(float r, float g, float b, float a) { return vec4(r,g,b,a);}
 /*META @meta: label=Split; @v: subtype=Vector;*/
 void vec4_split(vec4 v, out float r, out float g, out float b, out float a){ r=v.r; g=v.g; b=v.b; a=v.a; }
 
+/*META @meta: subcategory=Map Range; label=Vector 4D; 
+    @clamped: default=true;
+    @value: default = 'vec4(0.5)';
+    @from_min: subtype=Vector; default = vec4(0.0);
+    @from_max: subtype=Vector; default = vec4(1.0);
+    @to_min: subtype=Vector; default = vec4(0.0);
+    @to_max: subtype=Vector; default = vec4(1.0);
+*/
+vec4 vec3_map_range(bool clamped, vec4 value, vec4 from_min, vec4 from_max, vec4 to_min, vec4 to_max)
+{
+    if(clamped)
+    {
+        return map_range_clamped(value, from_min, from_max, to_min, to_max);
+    }else
+    {
+        return map_range(value, from_min, from_max, to_min, to_max);
+    }
+}
+
 #endif //VEC4_GLSL
