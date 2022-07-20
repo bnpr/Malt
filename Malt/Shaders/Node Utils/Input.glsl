@@ -131,4 +131,21 @@ void Time_Info(
     Frame = FRAME;
 }
 
+void Texture_Coordinate(
+    out vec3 generated,
+    out vec3 object_normal,
+    out vec3 object,
+    out vec3 camera,
+    out vec2 window,
+    out vec3 reflection
+)
+{
+    object = transform_point(inverse(MODEL), POSITION);
+    object_normal = transform_direction(inverse(MODEL), NORMAL);
+    generated = object * 0.5 + 0.5;
+    camera = transform_point(CAMERA, POSITION) * vec3(1,1,-1);
+    window = screen_uv();
+    reflection = reflection_vector();
+}
+
 #endif //NODE_UTILS_INPUT_GLSL

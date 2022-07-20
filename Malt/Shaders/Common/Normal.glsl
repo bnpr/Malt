@@ -174,4 +174,10 @@ vec3 normal_from_surface_gradient(vec3 surface_gradient)
     return normalize(NORMAL - surface_gradient);
 }
 
+/* META @meta: internal=true; */
+vec3 reflection_vector()
+{
+    return reflect(view_direction(), NORMAL);
+}
+
 #endif //COMMON_NORMAL_GLSL
