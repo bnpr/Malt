@@ -31,6 +31,7 @@
 #define map_range_clamped(value, from_min, from_max, to_min, to_max) clamp(map_range(value, from_min, from_max, to_min, to_max), to_min, to_max)
 
 #define snap(value, range) (round((value) / (range)) * (range))
+#define distort(base, distortion, fac) (base + (distortion - 0.5) * 2 * fac)
 
 #include "Common.glsl"
 

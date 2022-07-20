@@ -21,6 +21,8 @@ vec4 vec4_modulo(vec4 a, vec4 b){ return mod(a,b); }
 vec4 vec4_pow(vec4 v, vec4 e){ return pow(v, e); }
 /*META @meta: label=Square Root; @v: subtype=Vector;*/
 vec4 vec4_sqrt(vec4 v){ return sqrt(v); }
+/*META @meta: label=Distort; @a: subtype=Vector; @b: subtype=Vector;*/
+vec4 vec4_distort(vec4 a, vec4 b, float fac) { return distort(a,b,fac); }
 
 /*META @meta: label=Round; @v: subtype=Vector;*/
 vec4 vec4_round(vec4 v){ return round(v); }
@@ -57,6 +59,13 @@ float vec4_length(vec4 v){ return length(v); }
 float vec4_distance(vec4 a, vec4 b){ return distance(a,b); }
 /*META @meta: label=Dot Product; @a: subtype=Vector; @b: subtype=Vector;*/
 float vec4_dot_product(vec4 a, vec4 b){ return dot(a,b); }
+
+/* META @meta: label=Sine; @v: subtype=Vector; */
+vec4 vec4_sin(vec4 v) { return sin(v); }
+/* META @meta: label=Cosine; @v: subtype=Vector; */
+vec4 vec4_cos(vec4 v) { return cos(v); }
+/* META @meta: label=Tangent; @v: subtype=Vector; */
+vec4 vec4_tan(vec4 v) { return tan(v); }
 
 /*META @meta: label=Equal; @a: subtype=Vector; @b: subtype=Vector;*/
 bool vec4_equal(vec4 a, vec4 b){ return a == b; }

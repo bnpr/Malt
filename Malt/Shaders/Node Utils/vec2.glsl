@@ -21,6 +21,8 @@ vec2 vec2_modulo(vec2 a, vec2 b){ return mod(a,b); }
 vec2 vec2_pow(vec2 v, vec2 e){ return pow(v, e); }
 /* META @meta: label=Square Root; */
 vec2 vec2_sqrt(vec2 v){ return sqrt(v); }
+/* META @meta: label=Distort; */
+vec2 vec2_distort(vec2 a, vec2 b, float fac) { return distort(a,b,fac); }
 
 /* META @meta: label=Round; */
 vec2 vec2_round(vec2 v){ return round(v); }
@@ -30,6 +32,8 @@ vec2 vec2_fract(vec2 v){ return fract(v); }
 vec2 vec2_floor(vec2 v){ return floor(v); }
 /* META @meta: label=Ceil; */
 vec2 vec2_ceil(vec2 v){ return ceil(v); }
+/* META @meta: label=Snap; */
+vec2 vec2_snap(vec2 a, vec2 b){ return snap(a,b);}
 
 /* META @meta: label=Clamp; */
 vec2 vec2_clamp(vec2 v, vec2 min, vec2 max){ return clamp(v, min, max); }
@@ -57,6 +61,13 @@ float vec2_length(vec2 v){ return length(v); }
 float vec2_distance(vec2 a, vec2 b){ return distance(a,b); }
 /* META @meta: label=Dot Product; */
 float vec2_dot_product(vec2 a, vec2 b){ return dot(a,b); }
+
+/* META @meta: label=Sine; */
+vec2 vec2_sin(vec2 v) { return sin(v); }
+/* META @meta: label=Cosine; */
+vec2 vec2_cos(vec2 v) { return cos(v); }
+/* META @meta: label=Tangent; */
+vec2 vec2_tan(vec2 v) { return tan(v); }
 
 /* META @meta: label=Equal; */
 bool vec2_equal(vec2 a, vec2 b){ return a == b; }

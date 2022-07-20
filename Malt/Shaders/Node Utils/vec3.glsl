@@ -21,6 +21,8 @@ vec3 vec3_modulo(vec3 a, vec3 b){ return mod(a,b); }
 vec3 vec3_pow(vec3 v, vec3 e){ return pow(v, e); }
 /*META @meta: label=Square Root; @v: subtype=Vector;*/
 vec3 vec3_sqrt(vec3 v){ return sqrt(v); }
+/*META @meta: label=Distort; @a: subtype=Vector; @b: subtype=Vector; */
+vec3 vec3_distort(vec3 a, vec3 b, float fac) { return distort(a,b,fac); }
 
 /*META @meta: label=Round; @v: subtype=Vector;*/
 vec3 vec3_round(vec3 v){ return round(v); }
@@ -30,6 +32,8 @@ vec3 vec3_fract(vec3 v){ return fract(v); }
 vec3 vec3_floor(vec3 v){ return floor(v); }
 /*META @meta: label=Ceil; @v: subtype=Vector;*/
 vec3 vec3_ceil(vec3 v){ return ceil(v); }
+/*META @meta: label=Snap; @a: subtype=Vector; @b: subtype=Vector; */
+vec3 vec3_snap(vec3 a, vec3 b){ return snap(a,b); }
 
 /*META @meta: label=Clamp; @v: subtype=Vector; @min: subtype=Vector; @max: subtype=Vector;*/
 vec3 vec3_clamp(vec3 v, vec3 min, vec3 max){ return clamp(v, min, max); }
@@ -59,6 +63,19 @@ float vec3_distance(vec3 a, vec3 b){ return distance(a,b); }
 float vec3_dot_product(vec3 a, vec3 b){ return dot(a,b); }
 /*META @meta: label=Cross Product; @a: subtype=Vector; @b: subtype=Vector;*/
 vec3 vec3_cross_product(vec3 a, vec3 b){ return cross(a,b); }
+/*META @meta: label=Reflect; @a: subtype=Vector; @b: subtype=Vector;*/
+vec3 vec3_reflect(vec3 a, vec3 b){ return reflect(a,b); }
+/*META @meta: label=Refract; @a: subtype=Vector; @b: subtype=Vector;*/
+vec3 vec3_refract(vec3 a, vec3 b, float ior){ return refract(a,normalize(b),ior); }
+/*META @meta: label=Faceforward; @a: subtype=Vector; @b: subtype=Vector; @c: subtype=Vector; */
+vec3 vec3_faceforward(vec3 a, vec3 b, vec3 c){ return faceforward(a,b,c); }
+
+/* META @meta: label=Sine; @v: subtype=Vector; */
+vec3 vec3_sin(vec3 v) { return sin(v); }
+/* META @meta: label=Cosine; @v: subtype=Vector; */
+vec3 vec3_cos(vec3 v) { return cos(v); }
+/* META @meta: label=Tangent; @v: subtype=Vector; */
+vec3 vec3_tan(vec3 v) { return tan(v); }
 
 /*META @meta: label=Equal; @a: subtype=Vector; @b: subtype=Vector;*/
 bool vec3_equal(vec3 a, vec3 b){ return a == b; }
