@@ -91,7 +91,8 @@ float float_map_range(bool clamped, float value, float from_min, float from_max,
     if(clamped)
     {
         return map_range_clamped(value, from_min, from_max, to_min, to_max);
-    }else
+    }
+    else
     {
         return map_range(value, from_min, from_max, to_min, to_max);
     }

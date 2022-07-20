@@ -103,7 +103,8 @@ vec3 vec3_map_range(bool clamped, vec3 value, vec3 from_min, vec3 from_max, vec3
     if(clamped)
     {
         return map_range_clamped(value, from_min, from_max, to_min, to_max);
-    }else
+    }
+    else
     {
         return map_range(value, from_min, from_max, to_min, to_max);
     }

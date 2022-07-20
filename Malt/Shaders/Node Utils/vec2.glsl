@@ -95,7 +95,8 @@ vec2 vec2_map_range(bool clamped, vec2 value, vec2 from_min, vec2 from_max, vec2
     if(clamped)
     {
         return map_range_clamped(value, from_min, from_max, to_min, to_max);
-    }else
+    }
+    else
     {
         return map_range(value, from_min, from_max, to_min, to_max);
     }
