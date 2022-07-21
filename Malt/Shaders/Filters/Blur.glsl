@@ -2,7 +2,7 @@
 #define BLUR_GLSL
 
 /*  META GLOBAL
-    @meta: category=Texturing; subcategory=Blur;
+    @meta: category=Filter; subcategory=Blur;
 */
 
 /*  META
