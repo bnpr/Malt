@@ -23,6 +23,7 @@ void Geometry(
 }
 
 /*  META
+    @meta: label=UV Map;
     @Index: min=0; max=3;
     @uv: label=UV;
 */
