@@ -210,6 +210,12 @@ class MaltFunctionNodeBase(MaltNode):
                     self.malt_parameters.draw_parameter(layout, 'PASS_GRAPH', None, is_node_socket=True)
                 else:
                     self.malt_parameters.draw_parameter(layout, 'PASS_MATERIAL', None, is_node_socket=True)
+    
+    def get_function_label(self):
+        return self.get_function().get('meta', {}).get('label', self.name)
+    
+    def draw_label(self):
+        return self.get_function_label()
 
 
 class MaltFunctionNode(bpy.types.Node, MaltFunctionNodeBase):

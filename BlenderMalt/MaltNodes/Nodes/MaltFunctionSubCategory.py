@@ -5,7 +5,7 @@ class MaltFunctionSubCategoryNode(bpy.types.Node, MaltFunctionNodeBase):
 
     bl_label = "Function SubCategory Node"
 
-    subcategory : bpy.props.StringProperty(options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
+    subcategory : bpy.props.StringProperty(options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'}) 
 
     def get_function_enums(self, context=None):
         items = []
@@ -32,8 +32,8 @@ class MaltFunctionSubCategoryNode(bpy.types.Node, MaltFunctionNodeBase):
         if self.hide:
             label = self.get_function()['meta'].get('label', None)
             if label:
-                return self.name + ' - ' + label
-        return self.name
+                return self.subcategory + ' - ' + label
+        return self.subcategory
 
 
 def register():
