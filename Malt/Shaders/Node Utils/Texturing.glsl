@@ -26,7 +26,7 @@ void Image(sampler2D Image, vec2 UV, bool Smooth_Interpolation, out vec4 Color, 
 }
 
 /*  META
-    @normal: subtype=Normal; default=NORMAL;
+    @Normal: subtype=Normal; default=NORMAL;
 */
 void Matcap(sampler2D Matcap, vec3 Normal, out vec4 Color, out vec2 UV)
 {
@@ -36,7 +36,7 @@ void Matcap(sampler2D Matcap, vec3 Normal, out vec4 Color, out vec2 UV)
 
 /*  META
     @meta: label=HDRI;
-    @normal: subtype=Normal; default=NORMAL;
+    @Normal: subtype=Normal; default=NORMAL;
 */
 void Hdri(sampler2D Hdri, vec3 Normal, out vec4 Color, out vec2 UV)
 {
