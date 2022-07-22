@@ -33,6 +33,8 @@
 #define snap(value, range) (round((value) / (range)) * (range))
 #define distort(base, distortion, fac) (base + (distortion - 0.5) * 2 * fac)
 
+#define vector_angle(a,b) (acos((dot(a,b))/(length(a) * length(b))))
+
 #include "Common.glsl"
 
 /* META @meta: subcategory=Random; */

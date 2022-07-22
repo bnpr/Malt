@@ -76,6 +76,8 @@ vec3 vec3_sin(vec3 v) { return sin(v); }
 vec3 vec3_cos(vec3 v) { return cos(v); }
 /* META @meta: label=Tangent; @v: subtype=Vector; */
 vec3 vec3_tan(vec3 v) { return tan(v); }
+/* META @meta: label=Angle; @a: subtype=Vector; @b: subtype=Vector; */
+float vec3_angle(vec3 a, vec3 b) { return vector_angle(a, b); }
 
 /*META @meta: label=Equal; @a: subtype=Vector; @b: subtype=Vector;*/
 bool vec3_equal(vec3 a, vec3 b){ return a == b; }

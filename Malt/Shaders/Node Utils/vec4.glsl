@@ -66,6 +66,8 @@ vec4 vec4_sin(vec4 v) { return sin(v); }
 vec4 vec4_cos(vec4 v) { return cos(v); }
 /* META @meta: label=Tangent; @v: subtype=Vector; */
 vec4 vec4_tan(vec4 v) { return tan(v); }
+/* META @meta: label=Angle; @a: subtype=Vector; @b: subtype=Vector; */
+float vec4_angle(vec4 a, vec4 b) { return vector_angle(a, b); }
 
 /*META @meta: label=Equal; @a: subtype=Vector; @b: subtype=Vector;*/
 bool vec4_equal(vec4 a, vec4 b){ return a == b; }
