@@ -78,15 +78,19 @@ void Tangent_Procedural_UV(
 
 /* META
     @Normal: default=NORMAL; subtype=Vector;
+    @Ior: min=1.0; label=IOR; default=1.45;
 */
 void Fresnel(
     vec3 Normal,
+    float Ior,
     out float Facing,
     out float Fresnel
 )
 {
-    Facing = dot(Normal, -view_direction());
-    Fresnel = abs(1.0 - Facing);
+    vec3 incoming = -view_direction();
+    Facing = 1 - dot(Normal, incoming);
+    float R0 = pow((1-Ior) / (1+Ior), 2);
+    Fresnel = F_schlick((dot(Normal, incoming)), R0, 1);
 }
 
 /*  META

@@ -161,6 +161,7 @@ float G_GGX(float NoL, float NoV, float a)
 /* META @meta: internal=true; */
 float F_schlick(float VoH, float F0, float F90)
 {
+    // https://en.wikipedia.org/wiki/Schlick%27s_approximation
     return F0 + (F90 - F0) * pow(1.0 - VoH, 5.0);
 }
 
