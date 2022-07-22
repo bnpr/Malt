@@ -317,9 +317,7 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                 rna_prop['use_soft_limits'] = False
             
             if bpy.app.version[0] >= 3:
-                if rna_prop['type'] in (Type.FLOAT, Type.INT):
-                    if isinstance(rna_prop['default'],str):
-                        break #dont set the properties UI for properties with string value
+                if rna_prop['type'] in (Type.FLOAT, Type.INT) and not isinstance(rna_prop['default'], str):
                     ui = self.id_properties_ui(key)
                     updates = dict(default=rna_prop['default'], subtype='NONE')         
                     if rna_prop['subtype'] == 'COLOR':
