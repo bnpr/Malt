@@ -49,6 +49,19 @@ vec3 transform_normal(mat4 matrix, vec3 normal)
     return normalize(m * normal);
 }
 
+/*  META
+    @meta: subcategory=Matrix Math; internal=false;
+    @matrix: default=mat4(1);
+    @position: subtype=Vector;
+    @normal: subtype=Normal;
+*/
+vec3 project_normal(mat4 matrix, vec3 position, vec3 normal)
+{
+    vec3 a = project_point(matrix, position);
+    vec3 b = project_point(matrix, position + normal);
+    return normalize(b-a);
+}
+
 /* META @meta: category=Input; */
 vec3 camera_position()
 {

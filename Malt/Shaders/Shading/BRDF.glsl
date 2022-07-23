@@ -159,17 +159,17 @@ float G_GGX(float NoL, float NoV, float a)
 // Specular Fresnel Functions
 
 /* META @meta: internal=true; */
-float F_schlick(float VoH, float F0, float F90)
+float F_schlick(float VoNH, float F0, float F90)
 {
     // https://en.wikipedia.org/wiki/Schlick%27s_approximation
-    return F0 + (F90 - F0) * pow(1.0 - VoH, 5.0);
+    return F0 + (F90 - F0) * pow(1.0 - VoNH, 5.0);
 }
 
 /* META @meta: internal=true; */
-float F_cook_torrance(float VoH, float F0)
+float F_cook_torrance(float VoNH, float F0)
 {
     float n = (1.0 + sqrt(F0)) / (1.0 - sqrt(F0));
-    float c = VoH;
+    float c = VoNH;
     float g = sqrt(n*n + c*c - 1.0);
 
     float A = (g - c) / (g + c);

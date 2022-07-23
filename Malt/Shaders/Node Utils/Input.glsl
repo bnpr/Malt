@@ -1,25 +1,69 @@
 #ifndef NODE_UTILS_INPUT_GLSL
 #define NODE_UTILS_INPUT_GLSL
 
-/* META GLOBAL
+/*  META GLOBAL
     @meta: category=Input;
 */
 
+/*  META
+    @Coordinate_Space: label=Space; subtype=ENUM(Object,World,Camera,Screen); default=1;
+    @Normal: default=NORMAL;
+    @IOR: label=IOR; min=1.0; max=3.0; default=1.45;
+*/
 void Geometry(
+    int Coordinate_Space,
     out vec3 Position,
-    out vec3 Normal,
-    out vec3 True_Normal,
     out vec3 Incoming,
+    inout vec3 Normal,
+    out vec3 True_Normal,
     out bool Is_Backfacing,
-    out uvec4 Id
+    out float Facing,
+    out float Fresnel,
+    out vec3 Reflection,
+    out vec3 Refraction,
+    float IOR
 )
 {
     Position = POSITION;
-    Normal = NORMAL;
     True_Normal = true_normal();
     Incoming = -view_direction();
+    Facing = dot(Normal, Incoming);
     Is_Backfacing = !is_front_facing();
-    Id = ID;
+    float F0 = pow((1-IOR) / (1+IOR), 2);
+    Fresnel = F_cook_torrance(Facing, F0);
+    Reflection = reflect(view_direction(), Normal);
+    Refraction = refract(Incoming, Normal, 1.0 / IOR);
+
+    if(Coordinate_Space == 0) //Object
+    {
+        mat4 m = inverse(MODEL);
+        Position = transform_point(m, Position);
+        Incoming = transform_normal(m, Incoming);
+        Normal = transform_normal(m, Normal);
+        True_Normal = transform_normal(m, True_Normal);
+        Reflection = transform_normal(m, Reflection);
+        Refraction = transform_normal(m, Refraction);
+    }
+    if(Coordinate_Space == 2) //Camera
+    {
+        mat4 m = CAMERA;
+        Position = transform_point(m, Position);
+        Incoming = transform_normal(m, Incoming);
+        Normal = transform_normal(m, Normal);
+        True_Normal = transform_normal(m, True_Normal);
+        Reflection = transform_normal(m, Reflection);
+        Refraction = transform_normal(m, Refraction);
+    }
+    if(Coordinate_Space == 3) //Screen
+    {
+        mat4 m = PROJECTION * CAMERA;
+        Position = project_point(m, Position);
+        Incoming = project_normal(m, POSITION, Incoming);
+        Normal = project_normal(m, POSITION, Normal);
+        True_Normal = project_normal(m, POSITION, True_Normal);
+        Reflection = project_normal(m, POSITION, Reflection);
+        Refraction = project_normal(m, POSITION, Refraction);
+    }
 }
 
 /*  META
@@ -76,23 +120,6 @@ void Tangent_Procedural_UV(
     Bitangent = normalize(cross(NORMAL, Tangent)) * t.w;
 }
 
-/* META
-    @Normal: default=NORMAL; subtype=Vector;
-    @Ior: min=1.0; label=IOR; default=1.45;
-*/
-void Fresnel(
-    vec3 Normal,
-    float Ior,
-    out float Facing,
-    out float Fresnel
-)
-{
-    vec3 incoming = -view_direction();
-    Facing = 1 - dot(Normal, incoming);
-    float R0 = pow((1-Ior) / (1+Ior), 2);
-    Fresnel = F_schlick((dot(Normal, incoming)), R0, 1);
-}
-
 /*  META
     @Index: min=0; max=3;
     @uv: label=UV;
@@ -105,15 +132,50 @@ void Vertex_Color(
     Vertex_Color = COLOR[Index];
 }
 
+/*  META
+    @meta: label=Id;
+*/
+void ID_Node(
+    out vec4 Object_Id,
+    out vec4 Custom_Id_A,
+    out vec4 Custom_Id_B,
+    out vec4 Custom_Id_C
+)
+{
+    Object_Id = unpackUnorm4x8(IO_ID.x);
+    Custom_Id_A = unpackUnorm4x8(IO_ID.y);
+    Custom_Id_B = unpackUnorm4x8(IO_ID.z);
+    Custom_Id_C = unpackUnorm4x8(IO_ID.w);
+}
+
 void Object_Info(
     out vec3 Position,
-    out uint Id,
-    out vec4 Random
+    out vec4 Id,
+    out mat4 Matrix
 )
 {
     Position = model_position();
-    Id = ID.x;
-    Random = hash(Id);
+    Id = unpackUnorm4x8(IO_ID.x);
+    Matrix = MODEL;
+}
+
+void Camera_Data(
+    out vec3 Camera_Position,
+    out vec3 View_Direction,
+    out float Z_Depth,
+    out float View_Distance,
+    out bool Is_Orthographic,
+    out mat4 Camera_Matrix,
+    out mat4 Projection_Matrix
+)
+{
+    Camera_Position = camera_position();
+    View_Direction = view_direction();
+    Z_Depth = -transform_point(CAMERA, POSITION).z;
+    View_Distance = distance(Camera_Position, POSITION);
+    Is_Orthographic = is_ortho(PROJECTION);
+    Camera_Matrix = CAMERA;
+    Projection_Matrix = PROJECTION;
 }
 
 void Render_Info(
@@ -136,21 +198,16 @@ void Time_Info(
     Frame = FRAME;
 }
 
-void Texture_Coordinate(
-    out vec3 generated,
-    out vec3 object_normal,
-    out vec3 object,
-    out vec3 camera,
-    out vec2 window,
-    out vec3 reflection
+void Random(
+    float seed,
+    out vec4 per_object,
+    out vec4 per_sample,
+    out vec4 per_pixel
 )
 {
-    object = transform_point(inverse(MODEL), POSITION);
-    object_normal = transform_direction(inverse(MODEL), NORMAL);
-    generated = object * 0.5 + 0.5;
-    camera = transform_point(CAMERA, POSITION) * vec3(1,1,-1);
-    window = screen_uv();
-    reflection = reflection_vector();
+    per_object = random_per_object(seed);
+    per_sample = random_per_sample(seed);
+    per_pixel = random_per_pixel(seed);
 }
 
 #endif //NODE_UTILS_INPUT_GLSL

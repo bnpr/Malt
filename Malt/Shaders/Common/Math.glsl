@@ -2,7 +2,7 @@
 #define COMMON_MATH_GLSL
 
 /*  META GLOBAL
-    @meta: category=Math;
+    @meta: category=Math; internal=true;
 */
 
 //C Standard constants
@@ -36,6 +36,12 @@
 #define vector_angle(a,b) (acos((dot(a,b))/(length(a) * length(b))))
 
 #include "Common.glsl"
+
+/* META @meta: subcategory=Random; */
+vec4 random_per_object(float seed)
+{
+    return hash(vec2(IO_ID.x, seed));
+}
 
 /* META @meta: subcategory=Random; */
 vec4 random_per_sample(float seed)

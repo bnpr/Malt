@@ -1,14 +1,14 @@
 #ifndef COMMON_NORMAL_GLSL
 #define COMMON_NORMAL_GLSL
 
-/*  META GLOBAL
-    @meta: category=Vector;
-*/
-
 #include "Common.glsl"
 
+/*  META GLOBAL
+    @meta: category=Vector; internal=true;
+*/
+
 /* META
-    @meta: category=Input; internal=true;
+    @meta: category=Input;
 */
 vec3 true_normal()
 {
@@ -30,7 +30,7 @@ vec3 true_normal()
 }
 
 /* META
-    @meta: category=Input; internal=true;
+    @meta: category=Input;
 */
 float facing()
 {
@@ -38,7 +38,7 @@ float facing()
 }
 
 /* META
-    @meta: category=Input; internal=true;
+    @meta: category=Input;
 */
 bool is_front_facing()
 {
@@ -121,7 +121,7 @@ mat3 get_TBN(int uv_index)
 }
 
 /* META 
-    @meta: category=Texturing; internal=true;
+    @meta: category=Texturing;
     @TBN: default=get_TBN(0);
     @uv: default=UV[0]; label=UV;
 */
@@ -153,6 +153,7 @@ vec3 radial_tangent(vec3 normal, vec3 axis)
 }
 
 /*  META
+    @meta: internal=false;
     @custom_normal: subtype=Normal; default=NORMAL;
 */
 vec3 surface_gradient_from_normal(vec3 custom_normal)
@@ -165,6 +166,7 @@ vec3 surface_gradient_from_normal(vec3 custom_normal)
 }
 
 /*  META
+    @meta: internal=false;
     @surface_gradient: subtype=Vector; default=vec3(0);
 */
 vec3 normal_from_surface_gradient(vec3 surface_gradient)
@@ -172,12 +174,6 @@ vec3 normal_from_surface_gradient(vec3 surface_gradient)
     // Copyright (c) 2020 mmikk. MIT License
     // http://jcgt.org/published/0009/03/04/
     return normalize(NORMAL - surface_gradient);
-}
-
-/* META @meta: internal=true; */
-vec3 reflection_vector()
-{
-    return reflect(view_direction(), NORMAL);
 }
 
 #endif //COMMON_NORMAL_GLSL
