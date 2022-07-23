@@ -29,11 +29,13 @@ vec4 alpha_blend(vec4 base, vec4 blend)
     return result;
 }
 
+/* META @meta: label=Grayscale; */
 float relative_luminance(vec3 color)
 {
     return dot(color, vec3(0.2126,0.7152,0.0722));
 }
 
+/* META @meta: internal=true; */
 float luma(vec3 color)
 {
     return dot(color, vec3(0.299,0.587,0.114));
