@@ -41,6 +41,19 @@ vec3 transform_direction(mat4 matrix, vec3 direction)
 /*  META
     @meta: subcategory=Matrix Math; internal=false;
     @matrix: default=mat4(1);
+    @position: subtype=Vector;
+    @direction: subtype=Vector;
+*/
+vec3 project_direction(mat4 matrix, vec3 position, vec3 direction)
+{
+    vec3 a = project_point(matrix, position);
+    vec3 b = project_point(matrix, position + direction);
+    return b-a;
+}
+
+/*  META
+    @meta: subcategory=Matrix Math; internal=false;
+    @matrix: default=mat4(1);
     @normal: subtype=Normal;
 */
 vec3 transform_normal(mat4 matrix, vec3 normal)
@@ -57,9 +70,7 @@ vec3 transform_normal(mat4 matrix, vec3 normal)
 */
 vec3 project_normal(mat4 matrix, vec3 position, vec3 normal)
 {
-    vec3 a = project_point(matrix, position);
-    vec3 b = project_point(matrix, position + normal);
-    return normalize(b-a);
+    return normalize(project_direction(matrix, position, normal));
 }
 
 /* META @meta: category=Input; */
@@ -101,7 +112,6 @@ ivec2 screen_pixel()
     #endif
 }
 /* META
-    @meta: internal=false;
     @uv: default=screen_uv();
 */
 vec3 screen_to_camera(vec2 uv, float depth)
@@ -130,12 +140,15 @@ float pixel_depth()
     return 0.0;
 }
 
-/* META @meta: category=Math; internal=false; */
 float depth_to_z(float depth)
 {
     return screen_to_camera(vec2(0,0), depth).z;
 }
-/* META @meta: category=Math; internal=false; */
+
+/*  META
+    @meta: label=Pixel Size in World Space; internal=false;
+    @depth: default=pixel_depth();
+*/
 float pixel_world_size_at(float depth)
 {
     vec2 uv = screen_uv();

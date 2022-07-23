@@ -18,6 +18,7 @@
 
 #include "Node Utils/Input.glsl"
 #include "Node Utils/Texturing.glsl"
+#include "Node Utils/Vector.glsl"
 
 // Basic common API
 #include "Common.glsl"
