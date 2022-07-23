@@ -10,6 +10,8 @@ class MaltFunctionSubCategoryNode(bpy.types.Node, MaltFunctionNodeBase):
     def get_function_enums(self, context=None):
         items = []
         for key, function in self.id_data.get_full_library()['functions'].items():
+            if function['meta'].get('internal'):
+                continue
             subcategory = function['meta'].get('subcategory')
             if subcategory == self.subcategory:
                 label = function['meta'].get('label', function['name'].replace('_',' ').title())
