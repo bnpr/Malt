@@ -150,11 +150,23 @@ void ID_Node(
 
 void Object_Info(
     out vec3 Position,
+    out mat4 Rotation,
+    out vec3 Scale,
     out vec4 Id,
     out mat4 Matrix
 )
 {
-    Position = model_position();
+    Position = MODEL[3].xyz;
+    vec3 i = MODEL[0].xyz;
+    vec3 j = MODEL[1].xyz;
+    vec3 k = MODEL[2].xyz;
+    //TODO: Signed Scale?
+    Scale = vec3(length(i), length(j), length(k));
+    i /= Scale.x;
+    j /= Scale.y;
+    k /= Scale.z;
+    Rotation = mat4(mat3(i,j,k));
+
     Id = unpackUnorm4x8(IO_ID.x);
     Matrix = MODEL;
 }
