@@ -65,4 +65,16 @@ vec4 sample_hdri(sampler2D hdri, vec3 normal)
 	return textureLod(hdri, hdri_uv(normal), 0);
 }
 
+vec3 parallax_mapping(vec3 position, vec3 normal, vec3 tangent, float depth)
+{
+	// From: https://www.youtube.com/watch?v=iSQGp6zHdyM
+	vec3 offset_position = position - view_direction() * vec3(depth);
+	vec3 bitangent = cross(normal, tangent);
+	return vec3(
+		dot(offset_position, tangent),
+		dot(bitangent, offset_position),
+		dot(offset_position, normal)
+	);
+}
+
 #endif //COMMON_MAPPING_GLSL

@@ -222,4 +222,15 @@ void Random(
     per_pixel = random_per_pixel(seed);
 }
 
+/* META
+    @position: subtype=Vector; default=POSITION;
+    @normal: subtype=Vector; default=NORMAL;
+    @tangent: subtype=Vector; default=get_tangent(0);
+    @depth: default = -0.1;
+*/
+vec3 Parallax_Mapping(vec3 position, vec3 normal, vec3 tangent, float depth)
+{
+    return parallax_mapping(position, normal, tangent, depth);
+}
+
 #endif //NODE_UTILS_INPUT_GLSL
