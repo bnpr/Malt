@@ -60,6 +60,7 @@ flat vertex_out uvec4 IO_ID;
 #include "Common/Mapping.glsl"
 #include "Common/Math.glsl"
 #include "Common/Matrix.glsl"
+#include "Common/MixRGB.glsl"
 #include "Common/Normal.glsl"
 #include "Common/Quaternion.glsl"
 #include "Common/Transform.glsl"
