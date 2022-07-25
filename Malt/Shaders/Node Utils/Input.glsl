@@ -57,7 +57,7 @@ void Geometry(
     if(Coordinate_Space == 3) //Screen
     {
         mat4 m = PROJECTION * CAMERA;
-        Position = project_point(m, Position);
+        Position = project_point_to_screen_coordinates(m, Position);
         Incoming = project_normal(m, POSITION, Incoming);
         Normal = project_normal(m, POSITION, Normal);
         True_Normal = project_normal(m, POSITION, True_Normal);
@@ -171,23 +171,28 @@ void Object_Info(
     Matrix = MODEL;
 }
 
+/*  META
+    @Screen_UV: label=Screen UV;
+*/
 void Camera_Data(
-    out vec3 Camera_Position,
     out vec3 View_Direction,
+    out vec2 Screen_UV,
     out float Z_Depth,
     out float View_Distance,
-    out bool Is_Orthographic,
+    out vec3 Camera_Position,
     out mat4 Camera_Matrix,
-    out mat4 Projection_Matrix
+    out mat4 Projection_Matrix,
+    out bool Is_Orthographic
 )
 {
-    Camera_Position = camera_position();
+    Screen_UV = screen_uv();
     View_Direction = view_direction();
     Z_Depth = -transform_point(CAMERA, POSITION).z;
     View_Distance = distance(Camera_Position, POSITION);
-    Is_Orthographic = is_ortho(PROJECTION);
+    Camera_Position = camera_position();
     Camera_Matrix = CAMERA;
     Projection_Matrix = PROJECTION;
+    Is_Orthographic = is_ortho(PROJECTION);
 }
 
 void Render_Info(

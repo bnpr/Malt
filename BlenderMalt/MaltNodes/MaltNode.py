@@ -84,7 +84,7 @@ class MaltNode():
                 if e not in new:
                     remove.append(current[e])
             for e in remove:
-                if len(e.links) == 0:
+                if len(e.links) == 0 or self.should_delete_outdated_links():
                     current.remove(e)
                 else:
                     e.active = False
@@ -152,6 +152,9 @@ class MaltNode():
         self.setup_socket_shapes()
         if self.first_setup:
             self.setup_width()
+    
+    def should_delete_outdated_links(self):
+        return False
     
     def setup_width(self):
         size = bpy.context.preferences.ui_styles[0].widget_label.points

@@ -25,6 +25,9 @@ class MaltFunctionSubCategoryNode(bpy.types.Node, MaltFunctionNodeBase):
 
     function_enum : bpy.props.EnumProperty(name='', items=get_function_enums, update=update_function_enum,
         options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
+    
+    def should_delete_outdated_links(self):
+        return True
 
     def draw_buttons(self, context, layout):
         layout.prop(self, 'function_enum')
