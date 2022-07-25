@@ -21,7 +21,8 @@ void Image(sampler2D Image, vec2 UV, bool Smooth_Interpolation, out vec4 Color, 
     }
     else
     {
-        Color = texelFetch(Image, ivec2(UV*Resolution), 0);
+        ivec2 texel = ivec2(mod(UV * Resolution, Resolution));
+        Color = texelFetch(Image, texel, 0);
     }
 }
 
