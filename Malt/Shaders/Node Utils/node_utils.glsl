@@ -5,6 +5,7 @@
 
 #include "Node Utils/common.glsl"
 #include "Node Utils/conversion.glsl"
+#include "Node Utils/Filter.glsl"
 #include "Node Utils/bool.glsl"
 #include "Node Utils/float.glsl"
 #include "Node Utils/int.glsl"
@@ -23,6 +24,7 @@
 // Basic common API
 #include "Common.glsl"
 #include "Filters/AO.glsl"
+#include "Filters/Bayer.glsl"
 #include "Filters/Bevel.glsl"
 #include "Filters/Blur.glsl"
 #include "Filters/Curvature.glsl"
