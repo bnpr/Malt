@@ -74,4 +74,39 @@ void voronoi(
     cell_distance = result.cell_distance;
 }
 
+float _line_world_scale(float scale)
+{
+    return (1/pow(pixel_world_size(), 0.5)) * scale;
+}
+
+/* META
+    @meta: subcategory=Line Art; label=Tapered;
+    @global_width: label=Width; default=0.3; min=0.0;
+    @depth_influence: label=Edges; default=0.8; min=0.0;
+    @normal_influence: label=Detail; default=0.5; min=0.0;
+    @id_bounds: label=ID Bounds; subtype=Vector; default=vec4(1.0); min=0.0;
+*/
+float tapered_lines(float global_width, float depth_influence, float normal_influence, vec4 id_bounds)
+{
+    //Uses magic numbers that generally work 'well' in this setup
+    return line_width(_line_world_scale(global_width), id_bounds, depth_influence, -0.2, 0.1, 1.0, normal_influence, -0.2, 0.6, 1);
+}
+
+/* META
+    @meta: subcategory=Line Art; label=Noisy;
+    @global_width: label=Width; default=0.3; min=0.0;
+    @depth_influence: label=Edges; default=0.8; min=0.0;
+    @normal_influence: label=Detail; default=0.5; min=0.0;
+    @noise_scale: default = 5.0;
+    @noise_bias: default = 0.3; min=-1.0; max=1.0; subtype=Slider;
+    @id_bounds: label=ID Bounds; subtype=Vector; default=vec4(1.0); min=0.0;
+*/
+float noisy_lines(float global_width, float depth_influence, float normal_influence, float noise_scale, float noise_bias, vec4 id_bounds)
+{   
+    vec3 coords = transform_point(inverse(MODEL), POSITION) * noise_scale;
+    float n = noise(vec4(coords, 1.0)).x;
+    n = clamp(n + noise_bias, 0.0, 1.0);
+    return tapered_lines(global_width, depth_influence, normal_influence, id_bounds) * n;
+}
+
 #endif //NODE_UTILS_TEXTURING_GLSL
