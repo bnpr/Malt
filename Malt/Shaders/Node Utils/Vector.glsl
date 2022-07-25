@@ -31,7 +31,7 @@ void Transform(
     {
         if(Type==0)//Point
         {
-            Vector = project_point(m, Vector);
+            Vector = project_point_to_screen_coordinates(m, Vector);
         }
         if(Type==1)//Vector
         {

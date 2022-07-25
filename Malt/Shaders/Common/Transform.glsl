@@ -31,6 +31,17 @@ vec3 project_point(mat4 matrix, vec3 point)
 /*  META
     @meta: subcategory=Matrix Math; internal=false;
     @matrix: default=mat4(1);
+    @point: subtype=Vector;
+*/
+vec3 project_point_to_screen_coordinates(mat4 matrix, vec3 point)
+{
+    //Assumes gl_DepthRange is 0...1
+    return map_range(project_point(matrix, point), vec3(-1), vec3(1), vec3(0), vec3(1));
+}
+
+/*  META
+    @meta: subcategory=Matrix Math; internal=false;
+    @matrix: default=mat4(1);
     @direction: subtype=Vector;
 */
 vec3 transform_direction(mat4 matrix, vec3 direction)
