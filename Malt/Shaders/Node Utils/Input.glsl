@@ -14,7 +14,7 @@ void Geometry(
     int Coordinate_Space,
     out vec3 Position,
     out vec3 Incoming,
-    inout vec3 Normal,
+    out vec3 Normal,
     out vec3 True_Normal,
     out bool Is_Backfacing,
     out float Facing,
@@ -25,8 +25,9 @@ void Geometry(
 )
 {
     Position = POSITION;
-    True_Normal = true_normal();
     Incoming = -view_direction();
+    Normal = NORMAL;
+    True_Normal = true_normal();
     Facing = dot(Normal, Incoming);
     Is_Backfacing = !is_front_facing();
     float F0 = pow((1-IOR) / (1+IOR), 2);
