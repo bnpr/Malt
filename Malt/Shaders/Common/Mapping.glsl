@@ -77,4 +77,12 @@ vec3 parallax_mapping(vec3 position, vec3 normal, vec3 tangent, float depth)
 	);
 }
 
+vec2 curve_view_mapping(vec2 uv, vec3 normal, vec3 tangent, vec3 incoming)
+{
+	vec3 screen_bitangent = transform_normal(CAMERA, cross(tangent, incoming));
+	vec3 screen_normal = transform_normal(CAMERA, normal);
+	float y_grad = dot(screen_bitangent, screen_normal);
+	return vec2(uv.x, (y_grad + 1) * 0.5);
+}
+
 #endif //COMMON_MAPPING_GLSL

@@ -76,6 +76,22 @@ vec3 vec3_sin(vec3 v) { return sin(v); }
 vec3 vec3_cos(vec3 v) { return cos(v); }
 /* META @meta: label=Tangent; @v: subtype=Vector; */
 vec3 vec3_tan(vec3 v) { return tan(v); }
+/* META @meta: label=Rotate Euler; @v: subtype=Vector; @euler: subtype=Euler; */
+vec3 vec3_rotate_euler(vec3 v, vec3 euler, bool invert) 
+{
+    mat4 m = mat4_rotation_from_euler(euler);
+    if(invert)
+    {
+        m = inverse(m);
+    }
+    return transform_point(m, v); 
+}
+/* META @meta: label=Rotate Axis Angle; @v: subtype=Vector; @axis: subtype=Vector; default=vec3(0.0, 0.0, 1.0); */
+vec3 vec3_rotate_axis_angle(vec3 v, vec3 axis, float angle) 
+{ 
+    mat4 m = mat4_rotation_from_quaternion(quaternion_from_axis_angle(axis, angle));
+    return transform_point(m, v);
+}
 /* META @meta: label=Angle; @a: subtype=Vector; @b: subtype=Vector; */
 float vec3_angle(vec3 a, vec3 b) { return vector_angle(a, b); }
 

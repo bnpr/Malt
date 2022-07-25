@@ -233,4 +233,19 @@ vec3 Parallax_Mapping(vec3 position, vec3 normal, vec3 tangent, float depth)
     return parallax_mapping(position, normal, tangent, depth);
 }
 
+/* META
+    @uv: default=UV[0];
+    @normal: default=NORMAL;
+    @tangent: default=get_tangent(0);
+    @incoming: default=-view_direction();
+*/
+void Curve_View_Mapping(
+    out vec2 Uv,
+    out float Facing
+)
+{
+    Uv = curve_view_mapping(UV[0], NORMAL, get_tangent(0), -view_direction());
+    Facing = 1 - (abs(Uv.y - 0.5) * 2);
+}
+
 #endif //NODE_UTILS_INPUT_GLSL

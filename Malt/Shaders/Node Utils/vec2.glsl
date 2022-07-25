@@ -68,6 +68,8 @@ vec2 vec2_sin(vec2 v) { return sin(v); }
 vec2 vec2_cos(vec2 v) { return cos(v); }
 /* META @meta: label=Tangent; */
 vec2 vec2_tan(vec2 v) { return tan(v); }
+/* META @meta: label=Rotate; */
+vec2 vec2_rotate(vec2 v, float angle) { return rotate_2d(v, angle); }
 /* META @meta: label=Angle; */
 float vec2_angle(vec2 a, vec2 b) { return vector_angle(a, b); }
 
