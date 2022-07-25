@@ -156,36 +156,31 @@ class MaltNode():
     def should_delete_outdated_links(self):
         return False
     
-    def setup_width(self):
-        size = bpy.context.preferences.ui_styles[0].widget_label.points
-        dpi = 72 #dont use bpy.context.preferences.system.dpi because that is influenced by the UI scale but the node widths are not
-        import blf
-        blf.size(0, size, dpi)
+    def calc_node_width(self, point_size, dpi) -> float:
+        import blf 
+        blf.size(0, point_size, dpi)
         header_padding = 36 # account for a little space for the arrow icon + extra padding on the side of a label
         socket_padding = 31 # account for little offset of the text from the node border
 
         def adjust_width(width, text, scale=1, padding=0):
             new_width = blf.dimensions(0, text)[0] * scale + padding
-            print(text, 'has', new_width, 'width')
             result = max(width, new_width)
             return result
 
-        print('-'*20)
-        # max_width = blf.dimensions(0, self.draw_label())[0] + header_padding
         max_width = adjust_width(0, self.draw_label(), padding=header_padding)
         for input in self.inputs.values():
             scale = 2 
             if input.default_initialization or '.' in input.name:
                 scale = 1
-            # max_width = max(max_width, blf.dimensions(0, input.get_ui_label())[0] * scale + socket_padding)
             max_width = adjust_width(max_width, input.get_ui_label(), scale=scale, padding=socket_padding*scale)
         for output in self.outputs.values():
-            # max_width = max(max_width, blf.dimensions(0, output.get_ui_label())[0] + socket_padding)
             max_width = adjust_width(max_width, output.get_ui_label(), padding=socket_padding)
-        # self.width = max(max_width, 140)
-        self.width = max_width
-        print('Final Width:', self.width)
-        return self.width
+        return max_width
+
+    def setup_width(self):
+        point_size = bpy.context.preferences.ui_styles[0].widget_label.points
+        dpi = 72 #dont use bpy.context.preferences.system.dpi because that is influenced by the UI scale but the node widths are not 
+        self.width = self.calc_node_width(point_size, dpi)
 
     def get_source_name(self):
         return self.id_data.get_transpiler().get_source_name(self.name)

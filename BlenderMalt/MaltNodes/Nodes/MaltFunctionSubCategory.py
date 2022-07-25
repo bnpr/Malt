@@ -33,6 +33,14 @@ class MaltFunctionSubCategoryNode(bpy.types.Node, MaltFunctionNodeBase):
         layout.prop(self, 'function_enum')
         return super().draw_buttons(context, layout)
     
+    def calc_node_width(self, point_size, dpi) -> float:
+        import blf
+        blf.size(0, point_size, dpi)
+        max_width = super().calc_node_width(point_size, dpi)
+        layout_padding = 50 # account for the spaces on both sides of the enum dropdown
+        label = next(enum[1] for enum in self.get_function_enums() if enum[0]==self.function_enum)
+        return max(max_width, blf.dimensions(0, label)[0] + layout_padding)
+
     def draw_label(self):
         if self.hide:
             label = self.get_function()['meta'].get('label', None)
