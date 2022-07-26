@@ -1,4 +1,5 @@
 import os, time
+from typing import Union
 from Malt.SourceTranspiler import GLSLTranspiler, PythonTranspiler
 import bpy
 from BlenderMalt.MaltProperties import MaltPropertyGroup
@@ -6,6 +7,95 @@ from BlenderMalt import MaltPipeline
 from BlenderMalt.MaltUtils import malt_path_setter, malt_path_getter
 
 from . MaltNode import MaltNode
+
+class NodeTreePreview(bpy.types.PropertyGroup):
+
+    # Name of the node used as a preview
+    node_name: bpy.props.StringProperty(
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
+    # Socket name and index are stored to provide fallbacks
+    socket_name: bpy.props.StringProperty(
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
+    socket_index: bpy.props.IntProperty(
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
+
+    @property
+    def node_tree(self) -> 'MaltTree':
+        return self.id_data
+
+    def is_socket_valid(self, socket: bpy.types.NodeSocket) -> bool:
+        return (
+            socket.node in self.node_tree.nodes.values()
+            and not socket.is_output
+        )
+    
+    def get_node(self) -> Union[bpy.types.Node, None]:
+        return self.node_tree.nodes.get(self.node_name, None)
+    
+    def get_socket_ex(self) -> tuple[Union[bpy.types.NodeSocket, None], Union[str, int]]:
+        '''Gets the stored socket. Because all references have to be strings and ints, the validity of the references have to be checked first.'''
+        if (node := self.get_node()) == None:
+            return None, ''
+        if self.socket_name in node.inputs.keys():
+            return node.inputs[self.socket_name], self.socket_name
+        elif len(node.inputs) > self.socket_index:
+            return node.inputs[self.socket_index], self.socket_index
+        else:
+            return None, ''
+    
+    def get_socket(self) -> Union[bpy.types.NodeSocket, None]:
+        return self.get_socket_ex()[0]
+
+    @staticmethod
+    def _get_visible_node_sockets(node: bpy.types.Node, get_outputs: bool = False) -> list[bpy.types.NodeSocket]:
+        front = node.outputs if get_outputs else node.inputs
+        return [s for s in front.values() if s.enabled and (not s.hide or len(s.links))]
+
+    def set_socket(self, socket: bpy.types.NodeSocket) -> bool:
+        '''Store the given socket as the preview.'''
+        if not self.is_socket_valid(socket):
+            return False
+
+        self.node_name = socket.node.name
+        self.socket_name = socket.name
+        self.socket_index = next(i for i, s in enumerate(self._get_visible_node_sockets(socket.node, get_outputs=False)) if s == socket)
+        return True
+    
+    def reset_socket_from_node(self, node: bpy.types.Node) -> bool:
+        '''Store a socket as the preview of the given node. If a socket of that node is already the preview, cycle through the sockets, otherwise use the first socket.'''
+        node_inputs = self._get_visible_node_sockets(node, get_outputs=False)
+        if (input_count := len(node_inputs)) < 1:
+            return False
+        old_socket = self.get_socket()
+        if not self.get_node() == node or old_socket == None:
+            return self.set_socket(node_inputs[0])
+        else:
+            old_index = next(i for i, s in enumerate(node_inputs) if s == old_socket)
+            return self.set_socket(node_inputs[(old_index + 1) % input_count])
+    
+    def connect_socket(self, socket: bpy.types.NodeSocket) -> bool:
+        preview_socket = self.get_socket()
+        if not preview_socket or preview_socket.node == socket.node or not socket.is_output:
+            return False
+        self.node_tree.links.new(socket, preview_socket)
+    
+    def reconnect_node(self, node: bpy.types.Node) -> bool:
+        '''Connect a node to the preview socket by cycling through its sockets.'''
+        preview_socket = self.get_socket()
+        node_outputs = self._get_visible_node_sockets(node, get_outputs=True)
+        if not preview_socket or preview_socket.node == node or len(node_outputs) < 1:
+            return False
+        try: # Node is already connected to preview socket. Connect next socket
+            previous_socket = next(
+                link.from_socket 
+                for link in preview_socket.links 
+                if link.from_socket.node == node and link.from_socket in node_outputs)
+            previous_index = next(i for i, s in enumerate(node_outputs) if s == previous_socket)
+            new_socket = node_outputs[(previous_index + 1) % len(node_outputs)]
+            self.connect_socket(new_socket)
+        except StopIteration: # When the node is not already connected, use the first socket
+            self.connect_socket(node_outputs[0])
+        return True
 
 def get_pipeline_graph(context):
     if context is None or context.space_data is None or context.space_data.edit_tree is None:
@@ -42,6 +132,9 @@ class MaltTree(bpy.types.NodeTree):
         options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
     
     subscribed : bpy.props.BoolProperty(name="Subscribed", default=False,
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
+    
+    tree_preview : bpy.props.PointerProperty(type=NodeTreePreview, name="Node Tree Preview",
         options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
 
     def is_active(self):
@@ -562,7 +655,7 @@ def set_node_tree(context, node_tree, node = None):
             locked_spaces[0].node_tree = node_tree
 
 def is_malt_tree_context(context: bpy.types.Context) -> bool:
-    return context.area.ui_type == 'MaltTree' and context.space_data.type == 'NODE_EDITOR'
+    return context.area.ui_type == 'MaltTree' and context.space_data.type == 'NODE_EDITOR' and context.space_data.edit_tree
 
 class OT_MaltEditNodeTree(bpy.types.Operator):
     bl_idname = 'wm.malt_edit_node_tree'
@@ -582,6 +675,43 @@ class OT_MaltEditNodeTree(bpy.types.Operator):
             space_path.append(node_tree, node = node)
         else:
             space_path.pop()
+        return {'FINISHED'}
+
+class OT_MaltSetTreePreview(bpy.types.Operator):
+    bl_idname = 'wm.malt_set_tree_preview'
+    bl_label = 'Set Tree Preview'
+    bl_options = {'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        return is_malt_tree_context(context)
+    
+    def execute(self, context):
+        node_tree: MaltTree = context.space_data.edit_tree
+        node = context.active_node
+        if not node:
+            return {'CANCELLED'}
+        node_tree.tree_preview.reset_socket_from_node(node)
+        context.area.tag_redraw()
+        return {'FINISHED'}
+
+class OT_MaltConnectTreePreview(bpy.types.Operator):
+    bl_idname = 'wm.malt_connect_tree_preview'
+    bl_label = 'Connect To Tree Preview'
+    bl_options = {'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        return is_malt_tree_context(context)
+    
+    def execute(self, context):
+        node_tree: MaltTree = context.space_data.edit_tree
+        node = context.active_node
+        if not node:
+            return {'CANCELLED'}
+        tp: NodeTreePreview = node_tree.tree_preview
+        tp.reconnect_node(node)
+        context.area.tag_redraw()
         return {'FINISHED'}
 
 import string
@@ -694,24 +824,30 @@ class NODE_OT_MaltAddSubcategoryNode(bpy.types.Operator):
         return{'CANCELLED'}
     
 keymaps = []
-def register_node_tree_edit_shortcut(register):
+def register_node_tree_shortcuts():
     wm = bpy.context.window_manager
     kc = wm.keyconfigs.addon
     if kc:
-        if register:
-            km = kc.keymaps.new(name = 'Node Editor', space_type = 'NODE_EDITOR')
-            kmi = km.keymap_items.new(OT_MaltEditNodeTree.bl_idname, type = 'TAB', value = 'PRESS')
-            keymaps.append((km, kmi))
-        else:
-            for km, kmi in keymaps:
-                km.keymap_items.remove(kmi)
-            keymaps.clear()
+        km = kc.keymaps.new(name = 'Node Editor', space_type = 'NODE_EDITOR')
+        kmi = km.keymap_items.new(OT_MaltEditNodeTree.bl_idname, type = 'TAB', value = 'PRESS')
+        keymaps.append((km, kmi))
+
+        km = kc.keymaps.new(name='Node Editor', space_type='NODE_EDITOR')
+        kmi = km.keymap_items.new(OT_MaltSetTreePreview.bl_idname, type ='P', value ='PRESS', shift=True )
+        keymaps.append((km, kmi))
+
+        km = kc.keymaps.new(name='Node Editor', space_type='NODE_EDITOR')
+        kmi = km.keymap_items.new(OT_MaltConnectTreePreview.bl_idname, type='P', value='PRESS', shift=False)
+        keymaps.append((km, kmi))
 
 classes = [
+    NodeTreePreview,
     MaltTree,
     NODE_PT_MaltNodeTree,
     OT_MaltEditNodeTree,
     NODE_OT_MaltAddSubcategoryNode,
+    OT_MaltSetTreePreview,
+    OT_MaltConnectTreePreview,
 ]
 
 def register():
@@ -727,8 +863,7 @@ def register():
         font_id = 0
         context = bpy.context
         space = context.space_data
-        area = context.area
-        if not area.ui_type == 'MaltTree':
+        if not is_malt_tree_context(context):
             return
         if not space.overlay.show_context_path:
             return
@@ -743,17 +878,45 @@ def register():
         blf.position(font_id, 10, 10, 0)
         blf.color(font_id, *color, 1)
         blf.draw(font_id, text)
+    
+    def tree_preview_ui_callback():
+        import blf
+        font_id = 0
+        context = bpy.context
+        space:bpy.types.SpaceNodeEditor = context.space_data
+        if not is_malt_tree_context(context):
+            return
+        node_tree:MaltTree = space.edit_tree
+        tp:NodeTreePreview = node_tree.tree_preview
+        socket, identifier = tp.get_socket_ex()
+        if socket == None:
+            return
+        node = socket.node
+        text = f'Preview: {repr(identifier)}'
+        preferences = context.preferences
+        size = preferences.ui_styles[0].widget_label.points
+        ui_scale = preferences.view.ui_scale
 
-    global CONTEXT_PATH_DRAW_HANDLER
+        blf.size(0, size * ui_scale, 72)
+        blf.position(font_id, node.location[0] * ui_scale, node.location[1] * ui_scale + 2, 0)
+        blf.color(font_id, 1,1,1,1)
+        blf.draw(font_id, text)
+
+    global CONTEXT_PATH_DRAW_HANDLER, TREE_PREVIEW_DRAW_HANDLER
     CONTEXT_PATH_DRAW_HANDLER = bpy.types.SpaceNodeEditor.draw_handler_add(context_path_ui_callback, (), 'WINDOW', 'POST_PIXEL')
+    TREE_PREVIEW_DRAW_HANDLER = bpy.types.SpaceNodeEditor.draw_handler_add(tree_preview_ui_callback, (), 'WINDOW', 'POST_VIEW')
 
-    register_node_tree_edit_shortcut(True)
+    register_node_tree_shortcuts()
 
 def unregister():
-    register_node_tree_edit_shortcut(False)
+
+    for km, kmi in keymaps:
+        km.keymap_items.remove(kmi)
+        keymaps.clear()
     
-    global CONTEXT_PATH_DRAW_HANDLER
+    global CONTEXT_PATH_DRAW_HANDLER, TREE_PREVIEW_DRAW_HANDLER
     bpy.types.SpaceNodeEditor.draw_handler_remove(CONTEXT_PATH_DRAW_HANDLER, 'WINDOW')
+    bpy.types.SpaceNodeEditor.draw_handler_remove(TREE_PREVIEW_DRAW_HANDLER, 'WINDOW')
 
     bpy.app.handlers.depsgraph_update_post.remove(depsgraph_update)
     bpy.app.timers.unregister(track_library_changes)
