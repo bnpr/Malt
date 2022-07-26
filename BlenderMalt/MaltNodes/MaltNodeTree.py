@@ -375,6 +375,23 @@ def preload_menus(structs, functions, graph=None):
 
     from nodeitems_utils import NodeCategory, NodeItem, register_node_categories, unregister_node_categories
 
+    class SubCategoryNodeItem(NodeItem):
+
+        def __init__(self, node_idname, label='', settings: dict={}, poll=None):
+            self.node_idname = node_idname
+            self.subcategory = settings['subcategory']
+            self.function_enum = settings['function_enum']
+            self.node_name = settings['name']
+            self.button_label = label
+            self.poll=poll
+
+        @staticmethod
+        def draw(self:'SubCategoryNodeItem', layout, _context):
+            props = layout.operator(NODE_OT_MaltAddSubcategoryNode.bl_idname, text = self.button_label)
+            props.subcategory = self.subcategory
+            props.function_enum = self.function_enum
+            props.name = self.node_name
+
     category_id = f'BLENDERMALT_{graph.name.upper()}'
 
     try:
@@ -436,22 +453,25 @@ def preload_menus(structs, functions, graph=None):
             elif node_type == 'MaltStructNode':
                 settings['struct_type'] = repr(k)
             subcategory = v['meta'].get('subcategory')
+            
             if subcategory:
                 if subcategory in subcategories:
                     continue
                 subcategories.add(subcategory)
                 _node_type = 'MaltFunctionSubCategoryNode'
                 label = subcategory
-                settings = {
-                    'subcategory': repr(subcategory),
-                    'function_enum': repr(k),
-                }
-            settings['name'] = repr(label)
-            from collections import OrderedDict
-            settings = OrderedDict(settings)
-            # name must be set first for labels to work correctly
-            settings.move_to_end('name', last=False)
-            node_item = NodeItem(_node_type, label=label, settings=settings)
+                node_item = SubCategoryNodeItem(_node_type, label=label, settings={
+                    'name' : label,
+                    'subcategory' : subcategory,
+                    'function_enum' : k,
+                })
+            else:
+                settings['name'] = repr(label)
+                from collections import OrderedDict
+                settings = OrderedDict(settings)
+                # name must be set first for labels to work correctly
+                settings.move_to_end('name', last=False)
+                node_item = NodeItem(_node_type, label=label, settings=settings)
             categories[category].append(node_item)
 
     add_to_category(functions, 'MaltFunctionNode')
@@ -541,13 +561,16 @@ def set_node_tree(context, node_tree, node = None):
         elif len(locked_spaces) > 0:
             locked_spaces[0].node_tree = node_tree
 
+def is_malt_tree_context(context: bpy.types.Context) -> bool:
+    return context.area.ui_type == 'MaltTree' and context.space_data.type == 'NODE_EDITOR'
+
 class OT_MaltEditNodeTree(bpy.types.Operator):
     bl_idname = 'wm.malt_edit_node_tree'
     bl_label = 'Edit Node Tree'
 
     @classmethod
     def poll( cls, context ):
-        return context.area.ui_type == 'MaltTree' and context.space_data.type == 'NODE_EDITOR'
+        return is_malt_tree_context(context)
             
     def execute( self, context ):
         node = context.active_node
@@ -560,6 +583,115 @@ class OT_MaltEditNodeTree(bpy.types.Operator):
         else:
             space_path.pop()
         return {'FINISHED'}
+
+import string
+
+class NODE_OT_MaltAddSubcategoryNode(bpy.types.Operator):
+    bl_idname = 'node.malt_add_subcategory_node'
+    bl_label = 'Add Subcategory Node'
+    bl_options = {'UNDO'}
+
+    subcategory : bpy.props.StringProperty()
+    function_enum : bpy.props.StringProperty()
+    name : bpy.props.StringProperty()
+
+    @classmethod
+    def poll(cls, context):
+        return is_malt_tree_context(context)
+    
+    @staticmethod
+    def get_region_mouse(sd: bpy.types.SpaceNodeEditor) -> tuple[float, float]:
+        return sd.cursor_location
+
+    def add_node(self, node_tree:MaltTree) -> bpy.types.Node:
+        node = node_tree.nodes.new('MaltFunctionSubCategoryNode')
+        node_tree.disable_updates = True
+        node.name = self.name
+        node.subcategory = self.subcategory
+        node.function_enum = self.function_enum
+        return node
+
+    def invoke(self, context: bpy.types.Context, event: bpy.types.Event):
+        self.node_tree: MaltTree = context.space_data.edit_tree
+        self.node_tree.disable_updates = True
+
+        try:
+            self.node: MaltNode = self.add_node(self.node_tree)
+            self.disable_malt_updates(True)
+            self.node.location = self.get_region_mouse(context.space_data)
+            self.disable_malt_updates(False)
+
+            self.function_enums:list[tuple[str,str,str]] = self.node.get_function_enums(context)
+        except:
+            import traceback
+            traceback.print_exc()
+            return self.cancel(context)
+        
+        #Call the transform operator to access auto connection
+        for n in self.node_tree.nodes:
+            n.select = False
+        self.node.select = True
+
+        bpy.ops.transform.transform('INVOKE_DEFAULT')
+
+        self.finish_modal = False
+        
+        wm = context.window_manager
+        wm.modal_handler_add(self)
+        return{'RUNNING_MODAL'}
+    
+    def disable_malt_updates(self, disable):
+        self.node.disable_updates = disable
+        self.node_tree.disable_updates = disable
+    
+    def schedule_execute(self) -> set[str]:
+        self.finish_modal = True
+        return {'PASS_THROUGH'}
+
+    def cycle_function_enums(self, letter: str, cycle_forward: bool) -> None:
+        letter = letter.lower()
+        enum_subset = [enum for enum in self.function_enums if enum[1].lower().startswith(letter)]
+        if not len(enum_subset):
+            return #do nothing if there are no possible function_enums with the given letter
+
+        new_function_enum = enum_subset[0 if cycle_forward else -1][0]
+        if self.node.function_enum in (enum[0] for enum in enum_subset):
+            old_index = next(i for i, enum in enumerate(enum_subset) if enum[0] == self.node.function_enum)
+            offset = 1 if cycle_forward else -1
+            new_function_enum = enum_subset[(old_index + offset) % len(enum_subset)][0]
+        
+        self.disable_malt_updates(True)
+        self.node.function_enum = new_function_enum
+        self.node.setup_width()
+        self.disable_malt_updates(False)
+
+    def modal(self, context: bpy.types.Context, event: bpy.types.Event):
+
+        if self.finish_modal:
+            return self.execute(context)
+
+        if event.type in ['LEFTMOUSE', 'RET', 'SPACE']:
+            self.schedule_execute()
+        if event.type in ['ESC', 'RIGHTMOUSE'] and event.value == 'RELEASE':
+            return self.cancel(context)
+        if event.type in string.ascii_uppercase and event.value == 'PRESS':
+            self.cycle_function_enums(event.type, not event.shift)
+            return{'RUNNING_MODAL'}
+        
+        return{'PASS_THROUGH'}
+
+    def execute(self, context: bpy.types.Context):
+        if not self.options.is_invoke:
+            self.node_tree: MaltTree = context.space_data.edit_tree
+            self.node_tree.disable_updates = True
+            self.add_node(self.node_tree)
+        self.node_tree.disable_updates = False
+        return{'FINISHED'}
+    
+    def cancel(self, context):
+        if self.node:
+            context.space_data.edit_tree.nodes.remove(self.node)
+        return{'CANCELLED'}
     
 keymaps = []
 def register_node_tree_edit_shortcut(register):
@@ -579,6 +711,7 @@ classes = [
     MaltTree,
     NODE_PT_MaltNodeTree,
     OT_MaltEditNodeTree,
+    NODE_OT_MaltAddSubcategoryNode,
 ]
 
 def register():
