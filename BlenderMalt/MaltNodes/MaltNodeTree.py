@@ -228,7 +228,7 @@ class MaltTree(bpy.types.NodeTree):
                         self.cast(a.data_type, b.data_type) is None)):
                         link.is_muted = True
                 except:
-                    pass
+                    link.is_muted = False
             
             source = self.get_generated_source(force_update=True)
             source_dir = self.get_generated_source_dir()
