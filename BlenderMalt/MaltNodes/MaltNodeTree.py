@@ -905,7 +905,7 @@ def register():
         view_loc = ((view_loc[0] + 5) * dpifac, (view_loc[1] + 5) * dpifac)
         region_loc = mathutils.Vector(view2d.view_to_region(*view_loc, clip=False))
         text = f'Preview: {repr(identifier)}'
-        #mix the socket color with white to 
+        #mix the socket color with white to get a result thats not too dark
         color = (mathutils.Vector(socket.draw_color(context, node)) + mathutils.Vector((1,1,1,1))) * 0.5
 
         def draw_text(text: str, size: float, loc: tuple[float, float], color: tuple[float, float, float, float]):
