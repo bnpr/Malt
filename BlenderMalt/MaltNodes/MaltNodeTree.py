@@ -880,7 +880,7 @@ def register():
         blf.draw(font_id, text)
     
     def tree_preview_ui_callback():
-        import blf
+        import blf, mathutils
         font_id = 0
         context = bpy.context
         space:bpy.types.SpaceNodeEditor = context.space_data
@@ -891,20 +891,35 @@ def register():
         socket, identifier = tp.get_socket_ex()
         if socket == None:
             return
-        node = socket.node
-        text = f'Preview: {repr(identifier)}'
+        
         preferences = context.preferences
-        size = preferences.ui_styles[0].widget_label.points
-        ui_scale = preferences.view.ui_scale
+        view2d = context.region.view2d
+        label_style = preferences.ui_styles[0].widget_label
+        size = label_style.points
+        dpifac = preferences.system.dpi * preferences.system.pixel_size / 72
+        #calculate the zoom of the view by taking the difference of transformed points in the x-axis
+        zoom = (view2d.view_to_region(100 * dpifac, 0, clip=False)[0] - view2d.view_to_region(0, 0, clip=False)[0]) / 100.0
 
-        blf.size(0, size * ui_scale, 72)
-        blf.position(font_id, node.location[0] * ui_scale, node.location[1] * ui_scale + 2, 0)
-        blf.color(font_id, 1,1,1,1)
-        blf.draw(font_id, text)
+        node = socket.node
+        view_loc = node.location
+        view_loc = ((view_loc[0] + 5) * dpifac, (view_loc[1] + 5) * dpifac)
+        region_loc = mathutils.Vector(view2d.view_to_region(*view_loc, clip=False))
+        text = f'Preview: {repr(identifier)}'
+        #mix the socket color with white to 
+        color = (mathutils.Vector(socket.draw_color(context, node)) + mathutils.Vector((1,1,1,1))) * 0.5
+
+        def draw_text(text: str, size: float, loc: tuple[float, float], color: tuple[float, float, float, float]):
+            blf.size(0, size, 72)
+            blf.position(0, *loc, 0)
+            blf.color(0, *color)
+            blf.draw(0, text)
+
+        draw_text(text, size * zoom, tuple(region_loc + mathutils.Vector((0,-1))), (0,0,0,1))
+        draw_text(text, size * zoom, region_loc, color)
 
     global CONTEXT_PATH_DRAW_HANDLER, TREE_PREVIEW_DRAW_HANDLER
     CONTEXT_PATH_DRAW_HANDLER = bpy.types.SpaceNodeEditor.draw_handler_add(context_path_ui_callback, (), 'WINDOW', 'POST_PIXEL')
-    TREE_PREVIEW_DRAW_HANDLER = bpy.types.SpaceNodeEditor.draw_handler_add(tree_preview_ui_callback, (), 'WINDOW', 'POST_VIEW')
+    TREE_PREVIEW_DRAW_HANDLER = bpy.types.SpaceNodeEditor.draw_handler_add(tree_preview_ui_callback, (), 'WINDOW', 'POST_PIXEL')
 
     register_node_tree_shortcuts()
 
