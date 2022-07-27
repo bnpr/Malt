@@ -11,7 +11,7 @@
 #endif
 
 /*  META GLOBAL
-    @meta: category=Texturing;
+    @meta: category=Shading;
 */
 
 /*  META
