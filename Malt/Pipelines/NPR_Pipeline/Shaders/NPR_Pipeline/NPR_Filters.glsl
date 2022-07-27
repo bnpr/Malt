@@ -36,6 +36,9 @@ float ao(int samples, float radius, float distribution_exponent, float bias)
     #endif
 }
 
+/*  META
+    @meta: subcategory=Curvature;
+*/
 float curvature()
 {
     #ifdef NPR_FILTERS_ACTIVE
@@ -52,6 +55,7 @@ float curvature()
 }
 
 /*  META
+    @meta: subcategory=Curvature;
     @depth_range: default=0.1;
 */
 float surface_curvature(float depth_range)
