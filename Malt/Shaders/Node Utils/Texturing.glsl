@@ -75,4 +75,23 @@ void voronoi(
     cell_distance = result.cell_distance;
 }
 
+#include "Procedural/Bayer.glsl"
+
+/* META
+    @size: subtype=ENUM(2x2,3x3,4x4,8x8); default=2;
+    @texel: default=vec2(screen_pixel());
+*/
+float bayer_pattern(int size, vec2 texel)
+{
+    switch(size)
+    {
+        case 0: return bayer_2x2(ivec2(texel));
+        case 1: return bayer_3x3(ivec2(texel));
+        case 2: return bayer_4x4(ivec2(texel));
+        case 3: return bayer_8x8(ivec2(texel));
+    }
+
+    return 0;
+}
+
 #endif //NODE_UTILS_TEXTURING_GLSL
