@@ -543,14 +543,15 @@ def depsgraph_update(scene, depsgraph):
 def get_node_spaces(context):
     spaces = []
     locked_spaces = []
-    for area in context.screen.areas:
-        if area.type == 'NODE_EDITOR':
-            for space in area.spaces:
-                if space.type == 'NODE_EDITOR' and space.tree_type == 'MaltTree':
-                    if space.pin == False or space.node_tree is None:
-                        spaces.append(space)
-                    else:
-                        locked_spaces.append(space)
+    for window in context.window_manager.windows:
+        for area in window.screen.areas:
+            if area.type == 'NODE_EDITOR':
+                for space in area.spaces:
+                    if space.type == 'NODE_EDITOR' and space.tree_type == 'MaltTree':
+                        if space.pin == False or space.node_tree is None:
+                            spaces.append(space)
+                        else:
+                            locked_spaces.append(space)
     return spaces, locked_spaces
 
 def set_node_tree(context, node_tree, node = None):
