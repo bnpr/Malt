@@ -222,11 +222,13 @@ class MaltTree(bpy.types.NodeTree):
             for link in self.links:
                 try:
                     b = link.to_socket
-                    a = b.get_linked()
+                    a = b.get_linked(ignore_muted=False)
                     if (a.array_size != b.array_size or 
                         (a.data_type != b.data_type and
                         self.cast(a.data_type, b.data_type) is None)):
                         link.is_muted = True
+                    else:
+                        link.is_muted = False
                 except:
                     pass
             
