@@ -189,7 +189,6 @@ vec3 _reconstruct_cs_position(sampler2D depth_texture, int depth_channel, ivec2 
     return screen_to_camera(uv, depth);
 }
 
- /* META @meta: internal=false; */
 vec3 reconstruct_normal(sampler2D depth_texture, int depth_channel, ivec2 texel)
 {
     vec3 t0 = _reconstruct_cs_position(depth_texture, depth_channel, texel);
@@ -222,7 +221,6 @@ float ray_plane_intersection(vec3 ray_origin, vec3 ray_direction, vec3 plane_pos
     return (p_position - r_origin) / r_direction;
 }
 
-/* META @meta: internal=false; */
 vec2 rotate_2d(vec2 p, float angle)
 {
     mat2 rot = mat2(cos(angle), -sin(angle), sin(angle), cos(angle));
