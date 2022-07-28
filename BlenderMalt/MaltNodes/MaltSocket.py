@@ -77,13 +77,13 @@ class MaltSocket(bpy.types.NodeSocket):
         else:
             return self.get_source_global_reference()
 
-    def get_linked(self):
+    def get_linked(self, ignore_muted=True):
         def get_linked_internal(socket):
             if len(socket.links) == 0:
                 return None
             else:
                 link = socket.links[0]
-                if link.is_muted == True:
+                if ignore_muted and link.is_muted:
                     return None
                 linked = link.to_socket if socket.is_output else link.from_socket
                 if isinstance(linked.node, bpy.types.NodeReroute):
