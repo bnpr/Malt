@@ -335,18 +335,16 @@ keymaps = []
 def register_node_tree_shortcuts():
     wm = bpy.context.window_manager
     kc = wm.keyconfigs.addon
+
+    def add_shortcut(keymaps: list, operator: bpy.types.Operator, *, type: str, value: str, **modifiers):
+        km = kc.keymaps.new(name='Node Editor', space_type='NODE_EDITOR')
+        kmi = km.keymap_items.new(operator.bl_idname, type=type, value=value, **modifiers)
+        keymaps.append((km, kmi))
+
     if kc:
-        km = kc.keymaps.new(name = 'Node Editor', space_type = 'NODE_EDITOR')
-        kmi = km.keymap_items.new(OT_MaltEditNodeTree.bl_idname, type = 'TAB', value = 'PRESS')
-        keymaps.append((km, kmi))
-
-        km = kc.keymaps.new(name='Node Editor', space_type='NODE_EDITOR')
-        kmi = km.keymap_items.new(OT_MaltSetTreePreview.bl_idname, type ='P', value ='PRESS', shift=True )
-        keymaps.append((km, kmi))
-
-        km = kc.keymaps.new(name='Node Editor', space_type='NODE_EDITOR')
-        kmi = km.keymap_items.new(OT_MaltConnectTreePreview.bl_idname, type='P', value='PRESS', shift=False)
-        keymaps.append((km, kmi))
+        add_shortcut(keymaps, OT_MaltEditNodeTree, type='TAB', value='PRESS')
+        add_shortcut(keymaps, OT_MaltSetTreePreview, type='P', value='PRESS', shift=True)
+        add_shortcut(keymaps, OT_MaltConnectTreePreview, type='P', value='PRESS', shift=False)
 
 def register():
     for _class in classes: bpy.utils.register_class(_class)
