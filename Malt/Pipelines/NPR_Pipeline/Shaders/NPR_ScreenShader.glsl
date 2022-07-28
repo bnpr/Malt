@@ -48,3 +48,4 @@ void main()
 
 #include "NPR_Pipeline/NPR_Filters.glsl"
 #include "NPR_Pipeline/NPR_Shading.glsl"
+#include "NPR_Pipeline/NPR_Shading2.glsl"

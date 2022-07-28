@@ -286,3 +286,4 @@ void main()
 #endif //PIXEL_SHADER
 
 #include "NPR_Pipeline/NPR_Mesh.glsl"
+#include "NPR_Pipeline/NPR_Shading2.glsl"

@@ -5,7 +5,7 @@
 #include "Shading/ShadingModels.glsl"
 
 /*  META GLOBAL
-    @meta: category=Shading;
+    @meta: internal=true;
 */
 
 #define _LIT_SCENE_MACRO(callback, light_group, shadows, self_shadows)\
