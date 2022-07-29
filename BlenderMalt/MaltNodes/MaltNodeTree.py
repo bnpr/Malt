@@ -541,7 +541,7 @@ def depsgraph_update(scene, depsgraph):
     if node_tree:
         spaces, locked_spaces = get_node_spaces(bpy.context)
         for space in spaces:
-            if space.node_tree.graph_type == 'Mesh':
+            if space.node_tree is None or space.node_tree.graph_type == 'Mesh':
                 space.node_tree = node_tree
                 return
 

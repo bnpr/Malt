@@ -5,7 +5,7 @@
 #include "NPR_Pipeline/NPR_Shading.glsl"
 
 /*  META GLOBAL
-    @meta: category=Shading;
+    @meta: internal=true;
 */
 
 /* META @meta: subcategory=NPR Diffuse;*/

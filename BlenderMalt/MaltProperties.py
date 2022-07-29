@@ -135,6 +135,11 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                     parameter.enum_options = rna_copy.get('enum_options', None)
                 except:
                     pass
+            
+            if hasattr(parameter, 'label'):
+                rna[name]['label'] = parameter.label
+            else:
+                rna[name]['label'] = name.replace('_',' ').replace('_0_','.').title()
 
             if reset_to_defaults:
                 #TODO: Rename
@@ -195,16 +200,18 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
             if parameter.type == Type.GRADIENT:
                 if name not in self.gradients:
                     self.gradients.add().name = name
+                    texture_name = f"{self.id_data.name} - {rna[name]['label']}"
+                    self.gradients[name].texture = bpy.data.textures.new(texture_name, 'BLEND')
+                    self.gradients[name].texture.use_color_ramp = True
+                    self.gradients[name].texture.color_ramp.elements[0].alpha = 1.0
                     # Load gradient from material nodes (backward compatibility)
                     if isinstance(self.id_data, bpy.types.Material):
                         material = self.id_data
                         if material.use_nodes and name in material.node_tree.nodes:
-                            self.gradients[name].texture = bpy.data.textures.new('malt_color_ramp', 'BLEND')
-                            self.gradients[name].texture.use_color_ramp = True
                             old = material.node_tree.nodes[name].color_ramp
                             new = self.gradients[name].texture.color_ramp
                             MaltTextures.copy_color_ramp(old, new)
-                            self.gradients[name].texture.update_tag()
+                    self.gradients[name].texture.update_tag()
                 if type_changed or self.gradients[name] == rna[name]['default']:
                     if isinstance(parameter.default_value, bpy.types.Texture):
                         self.gradients.texture = parameter.default_value
@@ -270,11 +277,6 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
 
             rna[name]['min'] = getattr(parameter, 'min', None)
             rna[name]['max'] = getattr(parameter, 'max', None)
-            
-            if hasattr(parameter, 'label'):
-                rna[name]['label'] = parameter.label
-            else:
-                rna[name]['label'] = name.replace('_',' ').replace('_0_','.').title()
             
 
         #TODO: We should purge non active properties (specially textures)

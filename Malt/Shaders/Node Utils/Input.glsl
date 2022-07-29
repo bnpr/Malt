@@ -95,15 +95,22 @@ void Tangent_UV_Map(
 }
 /*  META
     @meta: subcategory=Tangent; label=Radial;
-    @axis: subtype=ENUM(X,Y,Z); default=2;
+    @Axis: subtype=ENUM(X,Y,Z); default=2;
+    @Object_Space: default=true;
 */
 void Tangent_Radial(
-    int axis,
+    int Axis,
+    bool Object_Space,
     out vec3 Tangent,
     out vec3 Bitangent
 )
 {
-    vec3 _axis = vec3[3](vec3(1,0,0), vec3(0,1,0), vec3(0,0,1))[axis];
+    vec3 normal = NORMAL;
+    if(Object_Space)
+    {
+        normal = transform_normal(inverse(MODEL), normal);
+    }
+    vec3 _axis = vec3[3](vec3(1,0,0), vec3(0,1,0), vec3(0,0,1))[Axis];
     Tangent = radial_tangent(NORMAL, _axis);
     Bitangent = normalize(cross(NORMAL, Tangent)) * (is_front_facing() ? 1 : -1);
 }
