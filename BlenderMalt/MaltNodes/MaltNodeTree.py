@@ -5,9 +5,8 @@ from BlenderMalt.MaltProperties import MaltPropertyGroup
 from BlenderMalt import MaltPipeline
 from BlenderMalt.MaltUtils import malt_path_setter, malt_path_getter
 
-from . MaltNodeUITools import *
-
-from . MaltNode import MaltNode
+from BlenderMalt.MaltNodes.MaltNodeUITools import NodeTreePreview
+from BlenderMalt.MaltNodes.MaltNode import MaltNode
 
 def get_pipeline_graph(context):
     if context is None or context.space_data is None or context.space_data.edit_tree is None:
@@ -394,7 +393,7 @@ def preload_menus(structs, functions, graph=None):
 
         @staticmethod
         def draw(self:'SubCategoryNodeItem', layout, _context):
-            props = layout.operator(NODE_OT_MaltAddSubcategoryNode.bl_idname, text = self.button_label)
+            props = layout.operator('node.malt_add_subcategory_node', text = self.button_label)
             props.subcategory = self.subcategory
             props.function_enum = self.function_enum
             props.name = self.node_name
@@ -570,7 +569,6 @@ def set_node_tree(context, node_tree, node = None):
             locked_spaces[0].node_tree = node_tree
 
 classes = [
-    NodeTreePreview,
     MaltTree,
     NODE_PT_MaltNodeTree,
 ]

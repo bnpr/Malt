@@ -2,9 +2,6 @@ import bpy
 import string
 from typing import Union
 
-from . MaltNodeTree import *
-
-# Not registered in this file but in MaltNodeTree to ensure that the class is available when the MaltNodeTree class is getting registered
 class NodeTreePreview(bpy.types.PropertyGroup):
 
     # Name of the node used as a preview
@@ -127,7 +124,7 @@ class OT_MaltSetTreePreview(bpy.types.Operator):
         return is_malt_tree_context(context)
     
     def execute(self, context):
-        node_tree: MaltTree = context.space_data.edit_tree
+        node_tree: 'MaltTree' = context.space_data.edit_tree
         node = context.active_node
         if not node:
             return {'CANCELLED'}
@@ -145,7 +142,7 @@ class OT_MaltConnectTreePreview(bpy.types.Operator):
         return is_malt_tree_context(context)
     
     def execute(self, context):
-        node_tree: MaltTree = context.space_data.edit_tree
+        node_tree: 'MaltTree' = context.space_data.edit_tree
         node = context.active_node
         if not node:
             return {'CANCELLED'}
@@ -180,7 +177,7 @@ class NODE_OT_MaltAddSubcategoryNode(bpy.types.Operator):
         return node
 
     def invoke(self, context: bpy.types.Context, event: bpy.types.Event):
-        self.node_tree: MaltTree = context.space_data.edit_tree
+        self.node_tree: 'MaltTree' = context.space_data.edit_tree
         self.node_tree.disable_updates = True
 
         try:
@@ -250,7 +247,7 @@ class NODE_OT_MaltAddSubcategoryNode(bpy.types.Operator):
 
     def execute(self, context: bpy.types.Context):
         if not self.options.is_invoke:
-            self.node_tree: MaltTree = context.space_data.edit_tree
+            self.node_tree: 'MaltTree' = context.space_data.edit_tree
             self.node_tree.disable_updates = True
             self.add_node(self.node_tree)
         self.node_tree.disable_updates = False
@@ -262,6 +259,7 @@ class NODE_OT_MaltAddSubcategoryNode(bpy.types.Operator):
         return{'CANCELLED'}
 
 classes = [
+    NodeTreePreview,
     OT_MaltEditNodeTree,
     OT_MaltSetTreePreview,
     OT_MaltConnectTreePreview,
@@ -300,7 +298,7 @@ class MaltNodeDrawCallbacks:
         space:bpy.types.SpaceNodeEditor = context.space_data
         if not is_malt_tree_context(context):
             return
-        node_tree: MaltTree = space.edit_tree
+        node_tree: 'MaltTree' = space.edit_tree
         tp:NodeTreePreview = node_tree.tree_preview
         socket, identifier = tp.get_socket_ex()
         if socket == None:
