@@ -1,6 +1,9 @@
 import bpy
 import string
 from typing import Union
+from bpy.types import NodeTree
+from bpy.props import PointerProperty
+from . MaltNodeTree import MaltTree
 
 class NodeTreePreview(bpy.types.PropertyGroup):
 
@@ -14,7 +17,7 @@ class NodeTreePreview(bpy.types.PropertyGroup):
         options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
 
     @property
-    def node_tree(self) -> 'MaltTree':
+    def node_tree(self) -> NodeTree:
         return self.id_data
 
     def is_socket_valid(self, socket: bpy.types.NodeSocket) -> bool:
@@ -124,7 +127,7 @@ class OT_MaltSetTreePreview(bpy.types.Operator):
         return is_malt_tree_context(context)
     
     def execute(self, context):
-        node_tree: 'MaltTree' = context.space_data.edit_tree
+        node_tree: NodeTree = context.space_data.edit_tree
         node = context.active_node
         if not node:
             return {'CANCELLED'}
@@ -142,11 +145,11 @@ class OT_MaltConnectTreePreview(bpy.types.Operator):
         return is_malt_tree_context(context)
     
     def execute(self, context):
-        node_tree: 'MaltTree' = context.space_data.edit_tree
+        node_tree: NodeTree = context.space_data.edit_tree
         node = context.active_node
         if not node:
             return {'CANCELLED'}
-        tp: 'NodeTreePreview' = node_tree.tree_preview
+        tp: NodeTreePreview = node_tree.tree_preview
         tp.reconnect_node(node)
         context.area.tag_redraw()
         return {'FINISHED'}
@@ -177,7 +180,7 @@ class NODE_OT_MaltAddSubcategoryNode(bpy.types.Operator):
         return node
 
     def invoke(self, context: bpy.types.Context, event: bpy.types.Event):
-        self.node_tree: 'MaltTree' = context.space_data.edit_tree
+        self.node_tree: MaltTree = context.space_data.edit_tree
         self.node_tree.disable_updates = True
 
         try:
@@ -247,7 +250,7 @@ class NODE_OT_MaltAddSubcategoryNode(bpy.types.Operator):
 
     def execute(self, context: bpy.types.Context):
         if not self.options.is_invoke:
-            self.node_tree: 'MaltTree' = context.space_data.edit_tree
+            self.node_tree: MaltTree = context.space_data.edit_tree
             self.node_tree.disable_updates = True
             self.add_node(self.node_tree)
         self.node_tree.disable_updates = False
@@ -298,7 +301,7 @@ class MaltNodeDrawCallbacks:
         space:bpy.types.SpaceNodeEditor = context.space_data
         if not is_malt_tree_context(context):
             return
-        node_tree: 'MaltTree' = space.edit_tree
+        node_tree: MaltTree = space.edit_tree
         tp:NodeTreePreview = node_tree.tree_preview
         socket, identifier = tp.get_socket_ex()
         if socket == None:
@@ -353,7 +356,12 @@ def register():
 
     register_node_tree_shortcuts()
 
+    NodeTree.tree_preview = PointerProperty(type=NodeTreePreview, name='Node Tree Preview',
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
+
 def unregister():
+
+    del NodeTree.tree_preview
 
     for km, kmi in keymaps:
         km.keymap_items.remove(kmi)

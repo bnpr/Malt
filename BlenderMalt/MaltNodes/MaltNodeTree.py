@@ -5,7 +5,6 @@ from BlenderMalt.MaltProperties import MaltPropertyGroup
 from BlenderMalt import MaltPipeline
 from BlenderMalt.MaltUtils import malt_path_setter, malt_path_getter
 
-from BlenderMalt.MaltNodes.MaltNodeUITools import NodeTreePreview
 from BlenderMalt.MaltNodes.MaltNode import MaltNode
 
 def get_pipeline_graph(context):
@@ -43,9 +42,6 @@ class MaltTree(bpy.types.NodeTree):
         options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
     
     subscribed : bpy.props.BoolProperty(name="Subscribed", default=False,
-        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
-    
-    tree_preview : bpy.props.PointerProperty(type=NodeTreePreview, name="Node Tree Preview",
         options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
 
     def is_active(self):
