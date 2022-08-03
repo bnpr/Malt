@@ -344,8 +344,8 @@ def register_node_tree_shortcuts():
 
     if kc:
         add_shortcut(keymaps, OT_MaltEditNodeTree, type='TAB', value='PRESS')
-        add_shortcut(keymaps, OT_MaltSetTreePreview, type='P', value='PRESS', shift=True)
-        add_shortcut(keymaps, OT_MaltConnectTreePreview, type='P', value='PRESS', shift=False)
+        add_shortcut(keymaps, OT_MaltSetTreePreview, type='LEFTMOUSE', value='PRESS', shift=True, alt=True)
+        add_shortcut(keymaps, OT_MaltConnectTreePreview, type='LEFTMOUSE', value='PRESS', shift=True, ctrl=True)
 
 def register():
     for _class in classes: bpy.utils.register_class(_class)
