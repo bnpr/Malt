@@ -35,12 +35,12 @@ vec4 vec4_property(vec4 v) { return v; }
 
 /*  META
     @meta: label=RGB Color;
-    @v: subtype=Vector;
+    @v: subtype=Color;
 */
 vec3 vec3_color_property(vec3 v) { return v; }
 /*  META
     @meta: label=RGBA Color;
-    @v: subtype=Vector;
+    @v: subtype=Color;
 */
 vec4 vec4_color_property(vec4 v) { return v; }
 
