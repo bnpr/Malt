@@ -9,21 +9,33 @@
 float float_from_int(int i) { return float(i); }
 float float_from_uint(uint u) { return float(u); }
 float float_from_bool(bool b) { return float(b); }
+float float_from_vec2(vec2 v) { return (v.x + v.y)/2.0; }
+float float_from_vec3(vec3 v) { return (v.x + v.y + v.z)/3.0; }
+float float_from_vec4(vec4 c) { return (c.x + c.y + c.z)/3.0 * c.a; }
 
 //int
 int int_from_float(float f) { return int(f); }
 int int_from_uint(uint u) { return int(u); }
 int int_from_bool(bool b) { return int(b); }
+int int_from_vec2(vec2 v) { return int(float_from_vec2(v)); }
+int int_from_vec3(vec3 v) { return int(float_from_vec3(v)); }
+int int_from_vec4(vec4 c) { return int(float_from_vec4(c)); }
 
 //uint
 uint uint_from_float(float f) { return uint(f); }
 uint uint_from_int(int i) { return uint(i); }
 uint uint_from_bool(bool b) { return uint(b); }
+uint uint_from_vec2(vec2 v) { return uint(float_from_vec2(v)); }
+uint uint_from_vec3(vec3 v) { return uint(float_from_vec3(v)); }
+uint uint_from_vec4(vec4 c) { return uint(float_from_vec4(c)); }
 
 //bool
 bool bool_from_float(float f) { return bool(f); }
 bool bool_from_int(int i) { return bool(i); }
 bool bool_from_uint(uint u) { return bool(u); }
+bool bool_from_vec2(vec2 v) { return bool(float_from_vec2(v)); }
+bool bool_from_vec3(vec3 v) { return bool(float_from_vec3(v)); }
+bool bool_from_vec4(vec4 c) { return bool(float_from_vec4(c)); }
 
 //vec2
 vec2 vec2_from_float(float f) { return vec2(f); }
