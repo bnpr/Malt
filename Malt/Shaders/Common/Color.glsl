@@ -90,7 +90,7 @@ vec4 hsv_edit(vec4 color, float hue, float saturation, float value)
     return vec4(hsv_to_rgb(hsv), color.a);
 }
 
-/* META @meta: label=RGB Gradient; */
+/* META @meta: internal=true; */
 vec3 rgb_gradient(sampler1D gradient, vec3 uvw)
 {
     return vec3
@@ -101,7 +101,7 @@ vec3 rgb_gradient(sampler1D gradient, vec3 uvw)
     );
 }
 
-/* META @meta: label=RGBA Gradient; */
+/* META @meta: internal=true; */
 vec4 rgba_gradient(sampler1D gradient, vec4 uvw)
 {
     return vec4

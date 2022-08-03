@@ -15,9 +15,10 @@
 #include "Node Utils/vec4.glsl"
 
 #include "Node Utils/Input.glsl"
-#include "Node Utils/Filter.glsl"
-#include "Node Utils/Texturing.glsl"
+#include "Node Utils/Color.glsl"
 #include "Node Utils/Vector.glsl"
+#include "Node Utils/Texturing.glsl"
+#include "Node Utils/Filter.glsl"
 
 // Basic common API
 #include "Common.glsl"
