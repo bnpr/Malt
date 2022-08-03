@@ -13,9 +13,9 @@
     @x: subtype=Normal; default=vec3(1,0,0);
     @y: subtype=Normal; default=vec3(0,1,0);
 */
-// x and y must be the screen x and y axis in the same coordinate space as the texture normals
 float curvature(sampler2D normal_texture, vec2 uv, float width, vec3 x, vec3 y)
 {
+    // x and y must be the screen x and y axis in the same coordinate space as the texture normals
     vec2 offset = vec2(width) / vec2(textureSize(normal_texture, 0));
 
     vec3 l = texture(normal_texture, uv + vec2(-offset.x,0)).xyz;

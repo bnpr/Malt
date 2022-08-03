@@ -27,11 +27,13 @@ class MaltGradientPropertyWrapper(bpy.types.PropertyGroup):
     texture : bpy.props.PointerProperty(type=bpy.types.Texture, poll=poll,
         options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
 
-    def add_or_duplicate(self):
+    def add_or_duplicate(self, name=None):
         if self.texture:
             self.texture = self.texture.copy()
         else:
-            texture = bpy.data.textures.new('malt_color_ramp', 'BLEND')
+            if name is None:
+                name = f'{self.id_data.name} - {self.name}'
+            texture = bpy.data.textures.new(name, 'BLEND')
             texture.use_color_ramp = True
             texture.color_ramp.elements[0].alpha = 1.0
             self.texture = texture
@@ -51,11 +53,13 @@ class MaltMaterialPropertyWrapper(bpy.types.PropertyGroup):
     extension : bpy.props.StringProperty(
         options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
 
-    def add_or_duplicate(self):
+    def add_or_duplicate(self, name=None):
+        if name is None:
+            name = f'{self.id_data.name} - {self.name}'
         if self.material:
             self.material = self.material.copy()
         else:
-            self.material = bpy.data.materials.new('Material')
+            self.material = bpy.data.materials.new(name)
         self.id_data.update_tag()
         self.material.update_tag()
 
@@ -67,11 +71,13 @@ class MaltGraphPropertyWrapper(bpy.types.PropertyGroup):
     type : bpy.props.StringProperty(
         options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
 
-    def add_or_duplicate(self):
+    def add_or_duplicate(self, name=None):
+        if name is None:
+            name = f'{self.id_data.name} - {self.name} - {self.type}'
         if self.graph:
             self.graph = self.graph.copy()
         else:
-            self.graph = bpy.data.node_groups.new(f'{self.type} Node Tree', 'MaltTree')
+            self.graph = bpy.data.node_groups.new(name, 'MaltTree')
             self.graph.graph_type = self.type
         self.id_data.update_tag()
         self.graph.update_tag()
@@ -200,10 +206,8 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
             if parameter.type == Type.GRADIENT:
                 if name not in self.gradients:
                     self.gradients.add().name = name
-                    texture_name = f"{self.id_data.name} - {rna[name]['label']}"
-                    self.gradients[name].texture = bpy.data.textures.new(texture_name, 'BLEND')
-                    self.gradients[name].texture.use_color_ramp = True
-                    self.gradients[name].texture.color_ramp.elements[0].alpha = 1.0
+                    _name = f"{self.id_data.name} - {rna[name]['label'].replace('.',' - ')}"
+                    self.gradients[name].add_or_duplicate(name=_name)
                     # Load gradient from material nodes (backward compatibility)
                     if isinstance(self.id_data, bpy.types.Material):
                         material = self.id_data
@@ -211,7 +215,6 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                             old = material.node_tree.nodes[name].color_ramp
                             new = self.gradients[name].texture.color_ramp
                             MaltTextures.copy_color_ramp(old, new)
-                    self.gradients[name].texture.update_tag()
                 if type_changed or self.gradients[name] == rna[name]['default']:
                     if isinstance(parameter.default_value, bpy.types.Texture):
                         self.gradients.texture = parameter.default_value

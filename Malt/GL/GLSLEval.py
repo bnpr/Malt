@@ -23,6 +23,14 @@ def vec3(*args):
 def vec4(*args):
     return glsl_vector(4, *args)
 
+ivec2 = vec2
+ivec3 = vec3
+ivec4 = vec4
+
+uvec2 = vec2
+uvec3 = vec3
+uvec4 = vec4
+
 def glsl_eval(str):
     true = True
     false = False
