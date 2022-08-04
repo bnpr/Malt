@@ -90,6 +90,34 @@ vec4 hsv_edit(vec4 color, float hue, float saturation, float value)
     return vec4(hsv_to_rgb(hsv), color.a);
 }
 
+/* META @meta: label=Bright/Contrast; */
+vec4 bright_contrast(vec4 color, float brightness, float contrast)
+{
+    float a = 1.0 + contrast;
+    float b = brightness - contrast * 0.5;
+    vec3 result = max(a * color.rgb + b, vec3(0.0));
+    return vec4(result, color.a);
+}
+/* META 
+    @meta: label=Gamma; 
+    @gamma: default=1.0; min=0.0;
+*/
+vec4 gamma_correction(vec4 color, float gamma)
+{
+    vec3 result = max(pow(color.rgb, vec3(gamma)), vec3(0));
+    return vec4(result, color.a);
+}
+
+/* META 
+    @meta: label=Invert; 
+    @fac: subtype=Slider; min=0.0; max=1.0;
+*/
+vec4 color_invert(vec4 color, float fac)
+{
+    vec4 inverted = vec4(1.0 - color.rgb, color.a);
+    return mix(color, inverted, fac);
+}
+
 /* META @meta: internal=true; */
 vec3 rgb_gradient(sampler1D gradient, vec3 uvw)
 {
