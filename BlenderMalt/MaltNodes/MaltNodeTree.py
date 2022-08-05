@@ -402,7 +402,13 @@ def preload_menus(structs, functions, graph=None):
                     ops.value = setting[1]
 
             self.draw = staticmethod(draw) if draw else staticmethod(draw_default)
-        
+    
+    class MaltSearchMenuItem(MaltNodeItem):
+
+        def __init__(self, nodetype, category, *, label=None, settings=None, poll=None):
+            def draw_nothing(self, layout, _context):
+                return
+            super().__init__(nodetype, category, label=label, settings=settings, poll=poll, draw=draw_nothing)
 
     class SubCategoryNodeItem(NodeItem):
 
@@ -476,33 +482,33 @@ def preload_menus(structs, functions, graph=None):
 
             _node_type = node_type
             label = v['meta'].get('label', v['name'])
-            
-            settings = {}
-            if node_type == 'MaltFunctionNode':
-                settings['function_type'] = repr(k)
-            elif node_type == 'MaltStructNode':
-                settings['struct_type'] = repr(k)
             subcategory = v['meta'].get('subcategory')
             
+            from collections import OrderedDict
+            settings = OrderedDict({'name': repr(label)})
+            
             if subcategory:
+                _node_type = 'MaltFunctionSubCategoryNode'
+                label = subcategory
+                settings.update({
+                    'name' : repr(label),
+                    'subcategory': repr(subcategory),
+                    'function_enum': repr(k),
+                })
+                func_label = v['meta']['label']
+                
+                #add subcategory functions to the search menu but not to the regular menus
+                categories['Node Tree'].append(MaltSearchMenuItem(_node_type, category, label=f'{subcategory}: {func_label}', settings=settings))
                 if subcategory in subcategories:
                     continue
                 subcategories.add(subcategory)
-                _node_type = 'MaltFunctionSubCategoryNode'
-                label = subcategory
-                node_item = SubCategoryNodeItem(_node_type, label=label, settings={
-                    'name' : label,
-                    'category' : category,
-                    'subcategory' : subcategory,
-                    'function_enum' : k,
-                })
             else:
-                settings['name'] = repr(label)
-                from collections import OrderedDict
-                settings = OrderedDict(settings)
-                # name must be set first for labels to work correctly
-                settings.move_to_end('name', last=False)
-                node_item = MaltNodeItem(_node_type, category, label=label, settings=settings)
+                if node_type == 'MaltFunctionNode':
+                    settings['function_type'] = repr(k)
+                elif node_type == 'MaltStructNode':
+                    settings['struct_type'] = repr(k)
+    
+            node_item = MaltNodeItem(_node_type, category, label=label, settings=settings)
             categories[category].append(node_item)
 
     add_to_category(functions, 'MaltFunctionNode')
