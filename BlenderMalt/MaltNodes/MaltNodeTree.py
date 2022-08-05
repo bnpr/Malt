@@ -533,6 +533,17 @@ def preload_menus(structs, functions, graph=None):
     {
         'poll': classmethod(poll_internal),
     })
+
+    from BlenderMalt import _PLUGINS
+    for plugin in _PLUGINS:
+        try:
+            for category, nodeitems in plugin.blendermalt_register_nodeitems(MaltNodeItem).items():
+                if category not in categories.keys():
+                    categories[category] = []
+                categories[category].extend(nodeitems)
+        except:
+            import traceback
+            traceback.print_exc()
             
     category_list = []
     for category_name, node_items in categories.items():
