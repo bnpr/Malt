@@ -30,6 +30,7 @@ class MaltTree(bpy.types.NodeTree):
     graph_type: bpy.props.StringProperty(name='Type',
         options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
 
+    #deprecated
     library_source : bpy.props.StringProperty(name="Local Library", subtype='FILE_PATH',
         options={'LIBRARY_EDITABLE'},
         override={'LIBRARY_OVERRIDABLE'},
@@ -63,6 +64,7 @@ class MaltTree(bpy.types.NodeTree):
                 return src_path
         return None
     
+    #deprecated
     def get_library(self):
         library_path = self.get_library_path()
         if library_path:
@@ -558,7 +560,6 @@ def node_header_ui(self, context):
     def recompile():
         node_tree.update()
     self.layout.operator("wm.malt_callback", text='', icon='FILE_REFRESH').callback.set(recompile, 'Recompile')
-    self.layout.prop(node_tree, 'library_source',text='')
     self.layout.prop_search(node_tree, 'graph_type', context.scene.world.malt, 'graph_types',text='')
 
 @bpy.app.handlers.persistent
