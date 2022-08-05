@@ -2,7 +2,7 @@
 #define VEC2_GLSL
 
 /*  META GLOBAL
-    @meta: category=Math; subcategory=Vector 2D;
+    @meta: category=Math; subcategory=2D Math;
 */
 
 /* META @meta: label=Add; */
