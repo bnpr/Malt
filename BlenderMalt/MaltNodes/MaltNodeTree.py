@@ -377,6 +377,33 @@ def preload_menus(structs, functions, graph=None):
 
     from nodeitems_utils import NodeCategory, NodeItem, register_node_categories, unregister_node_categories
 
+    # Uses copied code from the <nodeitems_utils> module. Manual check for updates required.
+    class MaltNodeItem(NodeItem):
+
+        def __init__(self, nodetype, category, *, label=None, settings=None, poll=None, draw=None, item_params=None):
+            if settings is None:
+                settings = {}
+
+            self.nodetype = nodetype
+            self._label = f'{category} - {label}'
+            self.button_label = label
+            self.settings = settings
+            self.poll = poll
+            self.item_params = item_params
+            
+            def draw_default(self, layout, _context):
+                props = layout.operator("node.add_node", text=self.button_label, text_ctxt=self.translation_context)
+                props.type = self.nodetype
+                props.use_transform = True
+
+                for setting in self.settings.items():
+                    ops = props.settings.add()
+                    ops.name = setting[0]
+                    ops.value = setting[1]
+
+            self.draw = staticmethod(draw) if draw else staticmethod(draw_default)
+        
+
     class SubCategoryNodeItem(NodeItem):
 
         def __init__(self, node_idname, label='', settings: dict={}, poll=None):
@@ -385,6 +412,7 @@ def preload_menus(structs, functions, graph=None):
             self.function_enum = settings['function_enum']
             self.node_name = settings['name']
             self.button_label = label
+            self._label = f'{settings["category"]} - {label}'
             self.poll=poll
 
         @staticmethod
@@ -464,6 +492,7 @@ def preload_menus(structs, functions, graph=None):
                 label = subcategory
                 node_item = SubCategoryNodeItem(_node_type, label=label, settings={
                     'name' : label,
+                    'category' : category,
                     'subcategory' : subcategory,
                     'function_enum' : k,
                 })
@@ -473,7 +502,7 @@ def preload_menus(structs, functions, graph=None):
                 settings = OrderedDict(settings)
                 # name must be set first for labels to work correctly
                 settings.move_to_end('name', last=False)
-                node_item = NodeItem(_node_type, label=label, settings=settings)
+                node_item = MaltNodeItem(_node_type, category, label=label, settings=settings)
             categories[category].append(node_item)
 
     add_to_category(functions, 'MaltFunctionNode')
