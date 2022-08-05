@@ -6,7 +6,7 @@
     @uv: default = UV[0]; label=UV;
     @radius: default=5; min=0;
 */
-vec4 kuwahara_sampling(sampler2D tex, vec2 uv, int radius)
+vec4 kuwahara_sampling(sampler2D tex, vec2 uv, float radius, bool weighted)
 {
     if(radius <= 0)
     {
@@ -23,32 +23,38 @@ vec4 kuwahara_sampling(sampler2D tex, vec2 uv, int radius)
             vec2(0, 0)
         );
     
-    vec2 pos;
     vec3 color;
     vec2 texel = 1.0 / textureSize(tex, 0);
 
-    float sample_count = pow(radius + 1, 2);
     float sigma_f;
     float minimum = 99.0;
 
     for(int i = 0; i < 4; i++)
     {
-        for(int u = 0; u <= radius; u++)
+        float total_weight = 0.0;
+        for(int u = 0; u <= ceil(radius); u++)
         {
-            for(int v = 0; v <= radius; v++)
+            for(int v = 0; v <= ceil(radius); v++)
             {
-                pos = (vec2(u,v) + offsets[i]) * texel;
-                color = texture(tex, uv + pos).rgb;
-                mean[i] += color;
-                sigma[i] += color * color;
+                vec2 offset = (vec2(u,v) + offsets[i]) * texel;
+                float weight = 1.0;
+                if(weighted){
+                    weight = max(0, 1.0 - length(offset / texel) / float(radius));
+                }
+                
+                color = texture(tex, uv + offset).rgb;
+                mean[i] += color * weight;
+                sigma[i] += (color * color) * weight;
+                total_weight += weight;
             }
         }
+        mean[i] /= total_weight;
+        sigma[i] = abs(sigma[i] / total_weight - mean[i] * mean[i]);
     }
+
     
     for(int i = 0; i < 4; i++)
     {
-        mean[i] /= sample_count;
-        sigma[i] = abs(sigma[i] / sample_count - mean[i] * mean[i]);
         sigma_f = sigma[i].r + sigma[i].g + sigma[i].b;
         if(sigma_f < minimum)
         {
