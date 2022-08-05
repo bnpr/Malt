@@ -446,6 +446,7 @@ def preload_menus(structs, functions, graph=None):
         'Filter' : [],
         'Other' : [],
         'Node Tree' : [],
+        'Internal' : [],
     }
 
     for name in graph.graph_io:
@@ -472,9 +473,10 @@ def preload_menus(structs, functions, graph=None):
     
     def add_to_category(dic, node_type):
         for k,v in dic.items():
-            if v['meta'].get('internal'):
-                continue
-            category = v['meta'].get('category')
+            if (is_internal := v['meta'].get('internal')):
+                category = 'Internal'
+            else:
+                category = v['meta'].get('category')
             if category is None:
                 category = v['file'].replace('\\', '/').replace('/', ' - ').replace('.glsl', '').replace('_',' ')
             if category not in categories:
@@ -487,7 +489,7 @@ def preload_menus(structs, functions, graph=None):
             from collections import OrderedDict
             settings = OrderedDict({'name': repr(label)})
             
-            if subcategory:
+            if subcategory and not is_internal:
                 _node_type = 'MaltFunctionSubCategoryNode'
                 label = subcategory
                 settings.update({
@@ -514,14 +516,20 @@ def preload_menus(structs, functions, graph=None):
     add_to_category(functions, 'MaltFunctionNode')
     add_to_category(structs, 'MaltStructNode')
 
-    @classmethod
     def poll(cls, context):
         tree = context.space_data.edit_tree
         return tree and tree.bl_idname == 'MaltTree' and tree.graph_type == graph.name
-    
+
+    def poll_internal(cls, context):
+        return poll(cls, context) and context.window_manager.malt_toggle_internal_category
+
     category_type = type(category_id, (NodeCategory,), 
     {
-        'poll': poll,
+        'poll': classmethod(poll),
+    })
+    category_internal_type = type(f'{category_id}_INTERNAL', (category_type,),
+    {
+        'poll': classmethod(poll_internal),
     })
             
     category_list = []
@@ -532,7 +540,10 @@ def preload_menus(structs, functions, graph=None):
         bl_id = ''.join(c for c in bl_id if c.isalnum())
         if len(bl_id) > 64:
             bl_id = bl_id[:64]
-        category_list.append(category_type(bl_id, category_name, items=node_items))
+        if category_name == 'Internal':
+            category_list.append(category_internal_type(bl_id, category_name, items=node_items))
+        else:
+            category_list.append(category_type(bl_id, category_name, items=node_items))
 
     register_node_categories(category_id, category_list)
 
