@@ -183,6 +183,7 @@ class OT_MaltReloadPlugins(bpy.types.Operator):
 
     def execute(self, context):
         unregister_plugins()
+        bpy.ops.wm.malt_reload_pipeline()
         register_plugins()
         return{"FINISHED"}
 
