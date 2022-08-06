@@ -6,7 +6,7 @@
     @uv: default = UV[0]; label=UV;
     @radius: default=5; min=0;
 */
-vec4 kuwahara_sampling(sampler2D tex, vec2 uv, float radius, bool weighted)
+vec4 kuwahara(sampler2D tex, vec2 uv, float radius, bool weighted)
 {
     if(radius <= 0)
     {
