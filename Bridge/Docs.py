@@ -52,21 +52,39 @@ def build_docs(pipeline, docs_path):
     for graph in graphs.values():
         result = f"# {graph.name} Graph Reference\n"
         if len(graph.functions) > 0:
-            file = ""
+            categories = {
+                'Input' : {},
+                'Parameters' : {},
+                'Math' : {},
+                'Vector' : {},
+                'Color' : {},
+                'Texturing' : {},
+                'Shading' : {},
+                'Filter' : {},
+                'Other' : {},
+                'Node Tree' : {},
+            }
             for key, function in graph.functions.items():
                 if function['meta'].get('internal'):
                     continue
 
-                _file = ' - '.join(key.split(' - ')[:-1])
-                if file != _file:
-                    file = _file
-                    result += '---\n'
-                    result += f"## {file}\n"
+                category = function['meta'].get('category')
+                if category is None:
+                    category = function['file'].replace('\\', '/').replace('/', ' - ').replace('.glsl', '').replace('_',' ')
+                if category not in categories:
+                    categories[category] = {}
+                subcategory = function['meta'].get('subcategory')
+                if subcategory:
+                    if subcategory not in categories[category]:
+                        categories[category][subcategory] = []
+                    categories[category][subcategory].append(function)
+                else:
+                    categories[category][key] = function
 
+            def draw_function(function, depth=3):
+                nonlocal result
                 result += '---\n'
-                result += f"### **{function['name']}**\n"
-                if signature := function.get('signature'):
-                    result += f">{signature}\n\n"
+                result += f"{'#'*depth} **{function['meta'].get('label', function['name'])}**\n"
                 
                 if pass_type := function.get('pass_type'):
                     result += f">Graph Type / Pass : *{pass_type.replace('.', ' / ')}*\n\n"
@@ -74,17 +92,17 @@ def build_docs(pipeline, docs_path):
                 if doc := function['meta'].get('doc'):
                     result += clean_str(doc) + "\n\n"
                 
-                
                 inputs = {}
                 outputs = {}
                 if function['type'] != 'void':
                     outputs['result'] = {'type': function['type'], 'meta':{}}
 
                 for parameter in function['parameters']:
+                    label = parameter['meta'].get('label', parameter['name'])
                     if parameter['io'] in ('in', 'inout'):
-                        inputs[parameter['name']] = parameter
+                        inputs[label] = parameter
                     if parameter['io'] in ('out', 'inout'):
-                        outputs[parameter['name']] = parameter
+                        outputs[label] = parameter
                 
                 def draw_params(type, dict):
                     if len(dict) == 0:
@@ -116,6 +134,21 @@ def build_docs(pipeline, docs_path):
                 
                 draw_params('Inputs', inputs)
                 draw_params('Outputs', outputs)
+            
+            for category, items in categories.items():
+                if len(items) == 0:
+                    continue
+                result += '---\n'
+                result += f"## {category}\n"
+
+                for k, v in items.items():
+                    if isinstance(v, dict):
+                        draw_function(v)
+                    else:
+                        result += '---\n'
+                        result += f"### **{k}**\n"
+                        for subcategory_function in v:
+                            draw_function(subcategory_function, 4)
         
             open(os.path.join(output_path, f'{graph.name}-graph.md'), 'w').write(result)
 
