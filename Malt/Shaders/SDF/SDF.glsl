@@ -5,6 +5,10 @@
 
 // SDF functions adapted from https://www.iquilezles.org/www/articles/distfunctions/distfunctions.htm
 
+/* META GLOBAL
+    @meta: internal=true;
+*/
+
 float sdf_box(vec3 p, vec3 size)
 {
     vec3 q = abs(p) - (size / 2.0);
