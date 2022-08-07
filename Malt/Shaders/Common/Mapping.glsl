@@ -85,4 +85,35 @@ vec2 curve_view_mapping(vec2 uv, vec3 normal, vec3 tangent, vec3 incoming)
 	return vec2(uv.x, (y_grad + 1) * 0.5);
 }
 
+vec4 sample_flipbook(sampler2D tex, vec2 uv, ivec2 dimensions, int page)
+{
+    int page_count = dimensions.x * dimensions.y;
+    page = int(mod(page, page_count));
+    vec2 offset = vec2(
+        mod(page, dimensions.x),
+        floor(page / dimensions.y)
+    );
+    uv = (uv + offset) / vec2(dimensions);
+    return texture(tex, uv);
+}
+
+float pingpong(float a, float b);
+
+vec4 flowmap(sampler2D tex, vec2 uv, vec2 flow, float progression, int samples)
+{
+    vec4 result;
+    float fraction = 1.0 / float(samples);
+    for(int i = 0; i < samples; i++)
+    {
+        float flow_scale = fract(progression - i * fraction);
+        vec4 color = texture(tex, uv - flow * flow_scale);
+
+        float range = fract(progression - (float(i) / float(samples))) * samples;
+        float p = pingpong(range, 1.0);
+        float bounds = (range > 0.0 && range < 2.0)? 1.0 : 0.0;
+        result += color * p * bounds;
+    }
+    return result;
+}
+
 #endif //COMMON_MAPPING_GLSL

@@ -26,6 +26,36 @@ void Image(sampler2D Image, vec2 UV, bool Smooth_Interpolation, out vec4 Color, 
     }
 }
 
+/* META
+    @uv: default=UV[0];
+    @page: min=0.0;
+*/
+vec4 Flipbook(sampler2D tex, vec2 uv, ivec2 dimensions, float page)
+{   
+    int f = int(floor(page));
+    float frac = fract(page);
+    vec4 c = sample_flipbook(tex, uv, dimensions, f);
+    if(frac == 0.0)
+    {
+        return c;
+    }
+    return mix(
+        c,
+        sample_flipbook(tex, uv, dimensions, f + 1),
+        fract(page)
+    );
+}
+
+/* META
+    @uv: default=UV[0];
+    @flow: default="vec2(0.0)";
+    @samples: default=2; min=1 ;
+*/
+vec4 Flowmap(sampler2D tex, vec2 uv, vec2 flow, float progression, int samples)
+{
+    return flowmap(tex, uv, flow, progression, samples);
+}
+
 /*  META
     @Normal: subtype=Normal; default=NORMAL;
 */

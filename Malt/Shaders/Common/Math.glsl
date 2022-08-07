@@ -37,6 +37,11 @@
 
 #include "Common.glsl"
 
+float pingpong(float a, float b)
+{
+    return (b != 0.0)? abs(fract((a - b) / (b * 2.0)) * b * 2.0 - b) : 0.0;
+}
+
 /* META @meta: subcategory=Random; */
 vec4 random_per_object(float seed)
 {
