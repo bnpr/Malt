@@ -4,6 +4,9 @@ from typing import Union
 from bpy.types import NodeTree
 from bpy.props import PointerProperty
 from . MaltNodeTree import MaltTree
+import blf, gpu
+from gpu_extras.batch import batch_for_shader
+from mathutils import Vector
 
 class NodeTreePreview(bpy.types.PropertyGroup):
 
@@ -97,9 +100,13 @@ class NodeTreePreview(bpy.types.PropertyGroup):
 def is_malt_tree_context(context: bpy.types.Context) -> bool:
     return context.area.ui_type == 'MaltTree' and context.space_data.type == 'NODE_EDITOR' and context.space_data.edit_tree
 
+def is_malt_node_context(context: bpy.types.Context) -> bool:
+    return is_malt_tree_context(context) and context.active_node
+
 class OT_MaltEditNodeTree(bpy.types.Operator):
     bl_idname = 'wm.malt_edit_node_tree'
     bl_label = 'Edit Node Tree'
+    bl_description = 'Edit the graph of the active group node'
 
     @classmethod
     def poll( cls, context ):
@@ -120,11 +127,12 @@ class OT_MaltEditNodeTree(bpy.types.Operator):
 class OT_MaltSetTreePreview(bpy.types.Operator):
     bl_idname = 'wm.malt_set_tree_preview'
     bl_label = 'Set Tree Preview'
+    bl_description = 'Set an input socket of the active node as the tree preview socket'
     bl_options = {'UNDO'}
 
     @classmethod
     def poll(cls, context):
-        return is_malt_tree_context(context)
+        return is_malt_node_context(context)
     
     def execute(self, context):
         node_tree: NodeTree = context.space_data.edit_tree
@@ -138,11 +146,12 @@ class OT_MaltSetTreePreview(bpy.types.Operator):
 class OT_MaltConnectTreePreview(bpy.types.Operator):
     bl_idname = 'wm.malt_connect_tree_preview'
     bl_label = 'Connect To Tree Preview'
+    bl_description = 'Connect an output of the active node to the node tree preview socket'
     bl_options = {'UNDO'}
 
     @classmethod
     def poll(cls, context):
-        return is_malt_tree_context(context)
+        return is_malt_node_context(context)
     
     def execute(self, context):
         node_tree: NodeTree = context.space_data.edit_tree
@@ -154,67 +163,46 @@ class OT_MaltConnectTreePreview(bpy.types.Operator):
         context.area.tag_redraw()
         return {'FINISHED'}
 
-class NODE_OT_MaltAddSubcategoryNode(bpy.types.Operator):
-    bl_idname = 'node.malt_add_subcategory_node'
-    bl_label = 'Add Subcategory Node'
+class OT_MaltCycleSubCategories(bpy.types.Operator):
+    bl_idname = 'wm.malt_cycle_sub_categories'
+    bl_label = 'Cycle Subcategories'
+    bl_description = 'Cycle the subcategories of the active subcategory node'
     bl_options = {'UNDO'}
-
-    subcategory : bpy.props.StringProperty()
-    function_enum : bpy.props.StringProperty()
-    name : bpy.props.StringProperty()
 
     @classmethod
     def poll(cls, context):
-        return is_malt_tree_context(context)
-    
-    @staticmethod
-    def get_region_mouse(sd: bpy.types.SpaceNodeEditor) -> tuple[float, float]:
-        return sd.cursor_location
-
-    def add_node(self, node_tree):
-        node = node_tree.nodes.new('MaltFunctionSubCategoryNode')
-        node_tree.disable_updates = True
-        node.name = self.name
-        node.subcategory = self.subcategory
-        node.function_enum = self.function_enum
-        return node
+        return is_malt_node_context(context) and context.active_node.bl_idname == 'MaltFunctionSubCategoryNode'
 
     def invoke(self, context: bpy.types.Context, event: bpy.types.Event):
         self.node_tree: MaltTree = context.space_data.edit_tree
         self.node_tree.disable_updates = True
+        self.node = context.active_node
+            
+        self.function_enums:list[tuple[str,str,str]] = self.node.get_function_enums(context)
+        self.init_function_enum = self.node.function_enum
 
-        try:
-            self.node = self.add_node(self.node_tree)
-            self.disable_malt_updates(True)
-            self.node.location = self.get_region_mouse(context.space_data)
-            self.disable_malt_updates(False)
-
-            self.function_enums:list[tuple[str,str,str]] = self.node.get_function_enums(context)
-        except:
-            import traceback
-            traceback.print_exc()
-            return self.cancel(context)
-        
-        #Call the transform operator to access auto connection
-        for n in self.node_tree.nodes:
-            n.select = False
-        self.node.select = True
-
-        bpy.ops.transform.transform('INVOKE_DEFAULT')
-
-        self.finish_modal = False
-        
+        self.register_interface(True)
         wm = context.window_manager
         wm.modal_handler_add(self)
         return{'RUNNING_MODAL'}
     
+    def register_interface(self, register: bool) -> None:
+        space = bpy.types.SpaceNodeEditor
+        if register:
+            self.reset_ui_lists()
+            self.draw_handler = space.draw_handler_add(self.draw_modal_interface, (self,), 'WINDOW', 'POST_PIXEL')
+        elif self.draw_handler:
+            space.draw_handler_remove(self.draw_handler, 'WINDOW')
+            del self.draw_handler
+    
+    def reset_ui_lists(self):
+        '''These lists are being read by the UI callback.'''
+        self.prev_enums: list[tuple[str, str, str]] = []
+        self.next_enums: list[tuple[str, str, str]] = []
+    
     def disable_malt_updates(self, disable):
         self.node.disable_updates = disable
         self.node_tree.disable_updates = disable
-    
-    def schedule_execute(self) -> set[str]:
-        self.finish_modal = True
-        return {'PASS_THROUGH'}
 
     def cycle_function_enums(self, letter: str, cycle_forward: bool) -> None:
         letter = letter.lower()
@@ -222,11 +210,16 @@ class NODE_OT_MaltAddSubcategoryNode(bpy.types.Operator):
         if not len(enum_subset):
             return #do nothing if there are no possible function_enums with the given letter
 
+        self.reset_ui_lists()
         new_function_enum = enum_subset[0 if cycle_forward else -1][0]
+        self.next_enums = enum_subset[1:]
         if self.node.function_enum in (enum[0] for enum in enum_subset):
             old_index = next(i for i, enum in enumerate(enum_subset) if enum[0] == self.node.function_enum)
             offset = 1 if cycle_forward else -1
-            new_function_enum = enum_subset[(old_index + offset) % len(enum_subset)][0]
+            new_index = (old_index + offset) % len(enum_subset)
+            new_function_enum = enum_subset[new_index][0]
+            self.prev_enums = enum_subset[:new_index]
+            self.next_enums = enum_subset[new_index + 1:]
         
         self.disable_malt_updates(True)
         self.node.function_enum = new_function_enum
@@ -235,12 +228,10 @@ class NODE_OT_MaltAddSubcategoryNode(bpy.types.Operator):
 
     def modal(self, context: bpy.types.Context, event: bpy.types.Event):
 
-        if self.finish_modal:
-            return self.execute(context)
-
+        context.area.tag_redraw()
         if event.type in ['LEFTMOUSE', 'RET', 'SPACE']:
-            self.schedule_execute()
-        if event.type in ['ESC', 'RIGHTMOUSE'] and event.value == 'RELEASE':
+            return self.execute(context)
+        if event.type in ['ESC', 'RIGHTMOUSE'] and event.value == 'PRESS':
             return self.cancel(context)
         if event.type in string.ascii_uppercase and event.value == 'PRESS':
             self.cycle_function_enums(event.type, not event.shift)
@@ -249,28 +240,137 @@ class NODE_OT_MaltAddSubcategoryNode(bpy.types.Operator):
         return{'PASS_THROUGH'}
 
     def execute(self, context: bpy.types.Context):
-        if not self.options.is_invoke:
-            self.node_tree: MaltTree = context.space_data.edit_tree
-            self.node_tree.disable_updates = True
-            self.add_node(self.node_tree)
         self.node_tree.disable_updates = False
+        self.register_interface(False)
+        context.area.tag_redraw()
         return{'FINISHED'}
     
     def cancel(self, context):
-        if self.node:
-            context.space_data.edit_tree.nodes.remove(self.node)
+        self.register_interface(False)
+        self.disable_malt_updates(True)
+        self.node.function_enum = self.init_function_enum
+        self.disable_malt_updates(False)
+        context.area.tag_redraw()
         return{'CANCELLED'}
+    
+    @staticmethod
+    def draw_modal_interface(operator: 'OT_MaltCycleSubCategories') -> None:
+        context = bpy.context
+        node: bpy.types.Node = operator.node
+        font_id = 0
+
+        prefs = context.preferences
+        label_style = prefs.ui_styles[0].widget_label
+        zoom = MaltNodeDrawCallbacks.get_view_zoom(context)
+        dpifac = MaltNodeDrawCallbacks.get_dpifac(context)
+        to_region_loc = MaltNodeDrawCallbacks.real_region_loc
+
+        rect_size = 100 * zoom
+
+        top_left = to_region_loc(Vector(node.location), context)
+        bottom_right = to_region_loc(Vector(node.location) + Vector(node.dimensions) * Vector((1/dpifac, - 1/dpifac)), context)
+        m_color = Vector((0.0, 0.0, 0.0, 0.8))
+        t_color = Vector((0.0, 0.0, 0.0, 0.0))
+
+        vertices = (
+            top_left + Vector((0, rect_size)),         (bottom_right.x, top_left.y + rect_size),
+            top_left,                                   (bottom_right.x, top_left.y),
+
+            (top_left.x, bottom_right.y),               bottom_right,
+            (top_left.x, bottom_right.y - rect_size),   bottom_right + Vector((0, - rect_size))
+        )
+        vertex_colors = (
+            t_color, t_color,
+            m_color, m_color,
+            m_color, m_color, 
+            t_color, t_color
+        )
+        indices = (
+            (0,1,2), (2,1,3),
+            (4,5,6), (6,5,7),
+        )
+
+        shader = gpu.shader.from_builtin('2D_SMOOTH_COLOR')
+        batch = batch_for_shader(shader, 'TRIS', {'pos': vertices, 'color': vertex_colors}, indices=indices)
+        gpu.state.blend_set('ALPHA')
+        batch.draw(shader)
+        gpu.state.blend_set('NONE')
+
+        prev_enums = operator.prev_enums
+        next_enums = operator.next_enums
+        blf.size(font_id, label_style.points * zoom, 72)
+        blf.color(font_id, 1,1,1,1)
+
+        spacing = 15.0 * zoom
+
+        for i, e in enumerate(reversed(prev_enums)):
+            loc = top_left + Vector((spacing * 0.5, i * spacing + spacing * 0.5))
+            blf.position(font_id, *loc, 0)
+            blf.draw(font_id, e[1])
+
+        for i, e in enumerate(next_enums):
+            loc = Vector((top_left.x, bottom_right.y)) + Vector((spacing * 0.5, -((i + 1) * spacing)))
+            blf.position(font_id, *loc, 0)
+            blf.draw(font_id, e[1])
+
+class NODE_OT_add_malt_subcategory_node(bpy.types.Operator):
+    bl_idname = 'node.add_subcategory_node'
+    bl_label = 'Add Malt Subcategory Node'
+    bl_description = 'Add a new Malt Subcategory node. Automatically invoke subcategory cycling'
+    bl_options = {'UNDO'}
+
+    nodetype: bpy.props.StringProperty(default='MaltFunctionSubCategoryNode')
+    settings: bpy.props.StringProperty(default='dict()')
+
+    @classmethod
+    def poll(cls, context: bpy.types.Context):
+        return is_malt_tree_context(context)
+
+    def execute(self, context: bpy.types.Context):
+        for n in context.space_data.edit_tree.nodes:
+            n.select = False
+        bpy.ops.node.add_node('INVOKE_DEFAULT', type=self.nodetype, use_transform=True)
+        node: bpy.types.Node = context.active_node
+        from collections import OrderedDict #maybe there is a better solution for this but without an exception will be thrown because the class is not imported
+        for k, v in eval(self.settings).items():
+            try:
+                setattr(node, k, eval(v))
+            except:
+                print(f'Attribute {repr(k)} could not be set on {repr(node)}')
+
+        bpy.ops.wm.malt_cycle_sub_categories('INVOKE_DEFAULT')
+        return{'FINISHED'}
 
 classes = [
     NodeTreePreview,
     OT_MaltEditNodeTree,
     OT_MaltSetTreePreview,
     OT_MaltConnectTreePreview,
-    NODE_OT_MaltAddSubcategoryNode,
+    OT_MaltCycleSubCategories,
+    NODE_OT_add_malt_subcategory_node,
 ]
 
 class MaltNodeDrawCallbacks:
 
+    @staticmethod
+    def get_dpifac(context: bpy.types.Context):
+        p = context.preferences
+        return p.system.dpi * p.system.pixel_size / 72
+    
+    @staticmethod
+    def real_region_loc(view_location: Vector|tuple|list, context: bpy.types.Context) -> Vector:
+        return Vector(
+            context.region.view2d.view_to_region(
+                *[x * MaltNodeDrawCallbacks.get_dpifac(context) for x in view_location], 
+                clip=False
+                )
+            )
+    
+    @staticmethod
+    def get_view_zoom(context: bpy.types.Context) -> float:
+        get_loc = MaltNodeDrawCallbacks.real_region_loc
+        return (get_loc((100, 0), context).x - get_loc((0, 0), context).x) / 100.0
+    
     @staticmethod
     def context_path_ui_callback():
         import blf
@@ -295,7 +395,6 @@ class MaltNodeDrawCallbacks:
     
     @staticmethod
     def tree_preview_ui_callback():
-        import blf, mathutils
         font_id = 0
         context = bpy.context
         space:bpy.types.SpaceNodeEditor = context.space_data
@@ -308,28 +407,25 @@ class MaltNodeDrawCallbacks:
             return
         
         preferences = context.preferences
-        view2d = context.region.view2d
         label_style = preferences.ui_styles[0].widget_label
         size = label_style.points
-        dpifac = preferences.system.dpi * preferences.system.pixel_size / 72
         #calculate the zoom of the view by taking the difference of transformed points in the x-axis
-        zoom = (view2d.view_to_region(100 * dpifac, 0, clip=False)[0] - view2d.view_to_region(0, 0, clip=False)[0]) / 100.0
+        zoom = MaltNodeDrawCallbacks.get_view_zoom(context)
 
         node = socket.node
-        view_loc = node.location
-        view_loc = ((view_loc[0] + 5) * dpifac, (view_loc[1] + 5) * dpifac)
-        region_loc = mathutils.Vector(view2d.view_to_region(*view_loc, clip=False))
+        view_loc = Vector(node.location) + Vector((5,5))
+        region_loc = MaltNodeDrawCallbacks.real_region_loc(view_loc, context)
         text = f'Preview: {repr(identifier)}'
         #mix the socket color with white to get a result thats not too dark
-        color = (mathutils.Vector(socket.draw_color(context, node)) + mathutils.Vector((1,1,1,1))) * 0.5
+        color = (Vector(socket.draw_color(context, node)) + Vector((1,1,1,1))) * 0.5
 
         def draw_text(text: str, size: float, loc: tuple[float, float], color: tuple[float, float, float, float]):
-            blf.size(0, size, 72)
-            blf.position(0, *loc, 0)
-            blf.color(0, *color)
-            blf.draw(0, text)
+            blf.size(font_id, size, 72)
+            blf.position(font_id, *loc, 0)
+            blf.color(font_id, *color)
+            blf.draw(font_id, text)
 
-        draw_text(text, size * zoom, tuple(region_loc + mathutils.Vector((0,-1))), (0,0,0,1))
+        draw_text(text, size * zoom, tuple(region_loc + Vector((0,-1))), (0,0,0,1))
         draw_text(text, size * zoom, region_loc, color)
 
 def register_internal_category_toggle(register: bool):
