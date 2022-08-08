@@ -150,6 +150,99 @@ LineDetectionOutput line_detection(
     return result;
 }
 
+
+LineDetectionOutput line_detection_2(
+    sampler2D depth_texture,
+    int depth_channel,
+    sampler2D normal_texture,
+    usampler2D id_texture
+)
+{
+    ivec2 uv = screen_pixel();
+
+    LineDetectionOutput result;
+    result.delta_distance = 0.0;
+    result.delta_angle = 0.0;
+    result.id_boundary = bvec4(false);
+
+    float depth = texelFetch(depth_texture, uv, 0)[depth_channel];
+    vec3 normal = texelFetch(normal_texture, uv, 0).xyz;;
+    
+    vec3 position = screen_to_camera(screen_uv(), depth);
+
+    vec3 true_normal = true_normal();
+    //Reconstructing the normal from depth provides more stable results across samples than the "real" true_normal
+    //true_normal = reconstruct_normal(depth_texture, depth_channel, uv);
+
+    vec3 average_normal = vec3(0);
+    int radius = 1;
+    for(int x = -radius; x <= radius; x++)
+    {
+        for(int y = -radius; y <= radius; y++)
+        {
+            //vec3 n = texelFetch(normal_texture, uv + ivec2(x,y), 0).xyz;
+            vec3 n = reconstruct_normal(depth_texture, depth_channel, uv + ivec2(x,y));
+            average_normal += n;
+        }   
+    }
+    true_normal = normalize(average_normal);
+
+    uvec4 id = texelFetch(id_texture, uv, 0);
+    
+    vec3 true_normal_camera = transform_normal(CAMERA, true_normal);
+
+    vec2 offsets[4]; _sampling_pattern(offsets);
+    vec2 offset = vec2(1.0) / RESOLUTION;
+
+    for(int i = 0; i < offsets.length(); i++)
+    {   
+        ivec2 sample_uv = uv + ivec2(offsets[i]);
+        vec2 f_sample_uv = screen_uv() + offsets[i] * offset;
+
+        vec3 sampled_normal = texelFetch(normal_texture, sample_uv, 0).xyz;
+        float sampled_depth = texelFetch(depth_texture, sample_uv, 0)[depth_channel];
+        vec3 sampled_position = screen_to_camera(f_sample_uv , sampled_depth);
+        uvec4 sampled_id = texelFetch(id_texture, sample_uv, 0);
+
+        float delta_normal = dot(true_normal, sampled_normal);
+        
+        float plane_distance = dot(true_normal_camera, position);
+        float offset_plane_distance = dot(true_normal_camera, sampled_position);
+
+        // Scale by pixel world size so results are more stable at different distances and resolutions
+        float delta_distance = abs(plane_distance - offset_plane_distance) / pixel_world_size();
+
+        /* Alternative depth computation
+        {
+            vec3 ray_origin = vec3(0);
+            vec3 ray_direction = normalize(sampled_position);
+
+            float expected_distance = ray_plane_intersection
+            (
+                ray_origin, ray_direction,
+                position, true_normal_camera
+            );
+            
+            delta_distance = distance(position, sampled_position) / distance(position, ray_origin + ray_direction * expected_distance);
+        }
+        //*/
+
+        if(depth <= sampled_depth)
+        {
+            result.delta_distance = max(result.delta_distance, delta_distance);
+            result.delta_angle = max(result.delta_angle, 1.0 - delta_normal);
+            
+            for(int i = 0; i < 4; i++)
+            {
+                result.id_boundary[i] = result.id_boundary[i] || sampled_id[i] != id[i];
+            }
+        }
+    }
+
+    return result;
+}
+
+
 struct LineExpandOutput
 {
     vec4 color;

@@ -115,6 +115,119 @@ vec3 hard_bevel(int samples, float radius, float max_dot, bool only_self)
     return NORMAL;
 }
 
+void _fix_range(inout float value, inout float range)
+{
+    if(range < 0)
+    {
+        range = abs(range);
+        value -= range;
+    }
+}
+
+LineDetectionOutput line_detection_2()
+{
+    LineDetectionOutput result;
+
+    #ifdef NPR_FILTERS_ACTIVE
+    {
+        result = line_detection_2(
+            IN_NORMAL_DEPTH,
+            3,
+            IN_NORMAL_DEPTH,
+            IN_ID
+        );
+    }
+    #endif
+
+    return result;
+}
+
+
+/*  META
+    @width_scale: min=0.0; default=4.0;
+    @id_boundary_width: subtype=Slider; min=0.0; max=1.0; default=vec4(1.0);
+    @depth_width: subtype=Slider; min=0.0; max=1.0; default=1.0;
+    @depth_threshold: subtype=Slider; min=0.0; max=1.0; default=0.1;
+    @depth_threshold_range: subtype=Slider; min=0.0; max=1.0; default=0.0;
+    @normal_width: subtype=Slider; min=0.0; max=1.0; default=1.0;
+    @normal_threshold: subtype=Slider; min=0.0; max=1.0; default=0.5;
+    @normal_threshold_range: subtype=Slider; min=0.0; max=1.0; default=0.0;
+*/
+float line_width_2(
+    float width_scale,
+    float depth_width, float depth_threshold, float depth_threshold_range,
+    float normal_width, float normal_threshold, float normal_threshold_range,
+    vec4 id_boundary_width
+)
+{
+    #ifdef NPR_FILTERS_ACTIVE
+    {
+        depth_threshold = pow(depth_threshold, 10) * 999 + 1;
+        if (depth_threshold_range > 0)
+            depth_threshold_range = pow(depth_threshold_range, 10) * 1000;
+
+        LineDetectionOutput lo = line_detection_2(
+            IN_NORMAL_DEPTH,
+            3,
+            IN_NORMAL_DEPTH,
+            IN_ID
+        );
+
+        float line = 0;
+
+        vec4 id = vec4(lo.id_boundary) * id_boundary_width;
+        
+        for(int i = 0; i < 4; i++)
+        {
+            line = max(line, id[i]);
+        }
+
+        _fix_range(depth_threshold, depth_threshold_range);
+
+        if(lo.delta_distance > depth_threshold)
+        {
+            float depth = depth_width;
+            if(depth_threshold_range != 0)
+            {
+                depth = map_range_clamped(
+                    lo.delta_distance, 
+                    depth_threshold, depth_threshold + depth_threshold_range,
+                    0, depth_width
+                );
+            }
+
+            line = max(line, depth);
+        }
+
+        _fix_range(normal_threshold, normal_threshold_range);
+
+        normal_threshold = max(0.01, normal_threshold);
+
+        if(lo.delta_angle > normal_threshold)
+        {
+            float angle = normal_width;
+            if(normal_threshold_range != 0)
+            {
+                angle = map_range_clamped(
+                    lo.delta_angle, 
+                    normal_threshold, normal_threshold + normal_threshold_range,
+                    0, normal_width
+                );
+            }
+
+            line = max(line, angle);
+        }
+
+        return line * width_scale;
+    }
+    #else
+    {
+        return 0.0;
+    }
+    #endif
+}
+
+
 LineDetectionOutput line_detection()
 {
     LineDetectionOutput result;
@@ -136,15 +249,6 @@ LineDetectionOutput line_detection()
     #endif
 
     return result;
-}
-
-void _fix_range(inout float value, inout float range)
-{
-    if(range < 0)
-    {
-        range = abs(range);
-        value -= range;
-    }
 }
 
 /*  META
