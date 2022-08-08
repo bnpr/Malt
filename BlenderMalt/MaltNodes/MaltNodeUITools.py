@@ -265,7 +265,13 @@ class OT_MaltCycleSubCategories(bpy.types.Operator):
         dpifac = MaltNodeDrawCallbacks.get_dpifac(context)
         to_region_loc = MaltNodeDrawCallbacks.real_region_loc
 
-        rect_size = 100 * zoom
+        prev_enums = operator.prev_enums
+        next_enums = operator.next_enums
+
+        text_spacing = 15.0 * zoom
+        has_display_items = any(len(x) for x in (prev_enums, next_enums))
+        rect_size = 70 if has_display_items else 40
+        rect_size *= zoom
 
         top_left = to_region_loc(Vector(node.location), context)
         bottom_right = to_region_loc(Vector(node.location) + Vector(node.dimensions) * Vector((1/dpifac, - 1/dpifac)), context)
@@ -296,20 +302,16 @@ class OT_MaltCycleSubCategories(bpy.types.Operator):
         batch.draw(shader)
         gpu.state.blend_set('NONE')
 
-        prev_enums = operator.prev_enums
-        next_enums = operator.next_enums
         blf.size(font_id, label_style.points * zoom, 72)
         blf.color(font_id, 1,1,1,1)
 
-        spacing = 15.0 * zoom
-
         for i, e in enumerate(reversed(prev_enums)):
-            loc = top_left + Vector((spacing * 0.5, i * spacing + spacing * 0.5))
+            loc = top_left + Vector((text_spacing * 0.5, i * text_spacing + text_spacing * 0.5))
             blf.position(font_id, *loc, 0)
             blf.draw(font_id, e[1])
 
         for i, e in enumerate(next_enums):
-            loc = Vector((top_left.x, bottom_right.y)) + Vector((spacing * 0.5, -((i + 1) * spacing)))
+            loc = Vector((top_left.x, bottom_right.y)) + Vector((text_spacing * 0.5, -((i + 1) * text_spacing)))
             blf.position(font_id, *loc, 0)
             blf.draw(font_id, e[1])
 
