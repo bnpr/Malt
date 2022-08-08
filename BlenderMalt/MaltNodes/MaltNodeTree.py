@@ -412,23 +412,6 @@ def preload_menus(structs, functions, graph=None):
                 return
             super().__init__(nodetype, category, label=label, settings=settings, poll=poll, draw=draw_nothing)
 
-    class SubCategoryNodeItem(NodeItem):
-
-        def __init__(self, node_idname, label='', settings: dict={}, poll=None):
-            self.node_idname = node_idname
-            self.subcategory = settings['subcategory']
-            self.function_enum = settings['function_enum']
-            self.node_name = settings['name']
-            self.button_label = label
-            self._label = f'{settings["category"]} - {label}'
-            self.poll=poll
-
-        @staticmethod
-        def draw(self:'SubCategoryNodeItem', layout, _context):
-            props = layout.operator('node.malt_add_subcategory_node', text = self.button_label)
-            props.subcategory = self.subcategory
-            props.function_enum = self.function_enum
-            props.name = self.node_name
 
     category_id = f'BLENDERMALT_{graph.name.upper()}'
 
@@ -500,19 +483,24 @@ def preload_menus(structs, functions, graph=None):
                     'function_enum': repr(k),
                 })
                 func_label = v['meta']['label']
+
+                def draw_subcategory_item(self: MaltNodeItem, layout, _context):
+                    props = layout.operator('node.add_subcategory_node', text=self.button_label)
+                    props.settings = repr(self.settings)
                 
                 #add subcategory functions to the search menu but not to the regular menus
                 categories['Node Tree'].append(MaltSearchMenuItem(_node_type, category, label=f'{subcategory}: {func_label}', settings=settings))
                 if subcategory in subcategories:
                     continue
                 subcategories.add(subcategory)
+                node_item = MaltNodeItem(_node_type, category, label=label, settings=settings, draw=draw_subcategory_item)
             else:
                 if node_type == 'MaltFunctionNode':
                     settings['function_type'] = repr(k)
                 elif node_type == 'MaltStructNode':
                     settings['struct_type'] = repr(k)
-    
-            node_item = MaltNodeItem(_node_type, category, label=label, settings=settings)
+                node_item = MaltNodeItem(_node_type, category, label=label, settings=settings)
+            
             categories[category].append(node_item)
 
     add_to_category(functions, 'MaltFunctionNode')
