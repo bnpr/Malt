@@ -28,11 +28,11 @@ vec4 quaternion_from_vector_delta(vec3 from, vec3 to)
 
 /*  META
     @meta: label=Inverted;
-    @quaternion: subtype=Quaternion; default=vec4(0,0,0,1);
+    @a: label=Q; subtype=Quaternion; default=vec4(0,0,0,1);
 */
-vec4 quaternion_inverted(vec4 quaternion)
+vec4 quaternion_inverted(vec4 a)
 { 
-    return vec4(-quaternion.xyz, quaternion.w);
+    return vec4(-a.xyz, a.w);
 }
 
 /*  META
@@ -51,13 +51,13 @@ vec4 quaternion_multiply(vec4 a, vec4 b)
 
 /*  META
     @meta: label=Transform;
-    @quaternion: subtype=Quaternion; default=vec4(0,0,0,1);
+    @a: label=Q; subtype=Quaternion; default=vec4(0,0,0,1);
     @vector: subtype=Vector; default=vec3(0);
 */
-vec3 quaternion_transform(vec4 quaternion, vec3 vector)
+vec3 quaternion_transform(vec4 a, vec3 vector)
 {
-    vec3 t = cross(quaternion.xyz, vector) * 2.0;
-    return vector + t * quaternion.w + cross(quaternion.xyz, t);
+    vec3 t = cross(a.xyz, vector) * 2.0;
+    return vector + t * a.w + cross(a.xyz, t);
 }
 
 /*  META

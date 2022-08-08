@@ -2,7 +2,7 @@
 #define BOOL_GLSL
 
 /*  META GLOBAL
-    @meta: category=Math; subcategory=Boolean Operations;
+    @meta: category=Math; subcategory=Boolean Logic;
 */
 
 /*META @meta: label=And;*/
@@ -15,7 +15,7 @@ bool bool_not(bool b) { return !b; }
 bool bool_equal(bool a, bool b){ return a == b; }
 /*META @meta: label=Not Equal;*/
 bool bool_not_equal(bool a, bool b){ return a != b; }
-
-bool if_else(bool condition, bool if_true, bool if_false){ return condition ? if_true : if_false; }
+/* META @a: label=If True; @b: label=If False; */
+bool if_else(bool condition, bool a, bool b){ return condition ? a : b; }
 
 #endif //BOOL_GLSL

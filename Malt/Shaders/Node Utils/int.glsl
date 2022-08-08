@@ -2,7 +2,7 @@
 #define INT_GLSL
 
 /*  META GLOBAL
-    @meta: category=Math; subcategory=Integer Math;
+    @meta: category=Math; subcategory=Integer;
 */
 
 /*META @meta: label=Add;*/
@@ -16,13 +16,13 @@ int int_divide(int a, int b){ return a/b; }
 /*META @meta: label=Modulo;*/
 int int_modulo(int a, int b){ return a%b; }
 
-/*META @meta: label=Clamp;*/
-int int_clamp(int i, int min, int max){ return clamp(i, min, max); }
+/*META @meta: label=Clamp; @b: label=Min; @c: label=Max; */
+int int_clamp(int a, int b, int c){ return clamp(a, b, c); }
 
 /*META @meta: label=Sign;*/
-int int_sign(int i){ return sign(i); }
+int int_sign(int a){ return sign(a); }
 /*META @meta: label=Absolute;*/
-int int_abs(int i){ return abs(i); }
+int int_abs(int a){ return abs(a); }
 /*META @meta: label=Minimum;*/
 int int_min(int a, int b){ return min(a,b); }
 /*META @meta: label=Maximum;*/
@@ -41,7 +41,7 @@ bool int_less(int a, int b){ return a < b; }
 /*META @meta: label=Less or Equal;*/
 bool int_less_or_equal(int a, int b){ return a <= b; }
 
-/*META @meta: label=If Else;*/
-int int_if_else(bool condition, int if_true, int if_false){ return condition ? if_true : if_false; }
+/*META @meta: label=If Else; @a: label=If True; @b: label=If False; */
+int int_if_else(bool condition, int a, int b){ return condition ? a : b; }
 
 #endif //INT_GLSL

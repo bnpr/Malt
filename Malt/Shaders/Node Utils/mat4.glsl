@@ -2,16 +2,16 @@
 #define MAT4_GLSL
 
 /*  META GLOBAL
-    @meta: category=Math; subcategory=Matrix Math;
+    @meta: category=Math; subcategory=Matrix;
 */
 
 /*  META
     @meta: label=Inverse;
-    @matrix: default=mat4(1);
+    @a: label=Matrix; default=mat4(1);
 */
-mat4 mat4_inverse(mat4 matrix)
+mat4 mat4_inverse(mat4 a)
 {
-    return inverse(matrix);
+    return inverse(a);
 }
 
 /*  META
