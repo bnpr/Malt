@@ -13,6 +13,7 @@
 #include "Node Utils 2/Input.glsl"
 #include "Node Utils 2/Color.glsl"
 #include "Node Utils 2/Vector.glsl"
+#include "Node Utils 2/Parameters.glsl"
 #include "Node Utils 2/Texturing.glsl"
 #include "Node Utils 2/Filter.glsl"
 
