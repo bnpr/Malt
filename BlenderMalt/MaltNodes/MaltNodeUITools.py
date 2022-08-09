@@ -211,20 +211,21 @@ class OT_MaltCycleSubCategories(bpy.types.Operator):
             return #do nothing if there are no possible function_enums with the given letter
 
         self.reset_ui_lists()
-        new_function_enum = enum_subset[0 if cycle_forward else -1][0]
-        self.next_enums = enum_subset[1:]
+        new_index = 0 if cycle_forward else len(enum_subset) - 1
+        new_function_enum = enum_subset[new_index][0]
+
         if self.node.function_enum in (enum[0] for enum in enum_subset):
             old_index = next(i for i, enum in enumerate(enum_subset) if enum[0] == self.node.function_enum)
             offset = 1 if cycle_forward else -1
             new_index = (old_index + offset) % len(enum_subset)
             new_function_enum = enum_subset[new_index][0]
-            self.prev_enums = enum_subset[:new_index]
-            self.next_enums = enum_subset[new_index + 1:]
+        
+        self.prev_enums = enum_subset[:new_index]
+        self.next_enums = enum_subset[new_index + 1:]
         
         self.disable_malt_updates(True)
         self.node.function_enum = new_function_enum
         self.node.setup_width()
-        self.disable_malt_updates(False)
 
     def modal(self, context: bpy.types.Context, event: bpy.types.Event):
 
@@ -242,6 +243,7 @@ class OT_MaltCycleSubCategories(bpy.types.Operator):
     def execute(self, context: bpy.types.Context):
         self.node_tree.disable_updates = False
         self.register_interface(False)
+        self.disable_malt_updates(False)
         context.area.tag_redraw()
         return{'FINISHED'}
     
