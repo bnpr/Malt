@@ -25,6 +25,14 @@ void Image(sampler2D Image, vec2 UV, bool Smooth_Interpolation, out vec4 Color, 
         Color = texelFetch(Image, texel, 0);
     }
 }
+/* META
+    @UV: label=UV; default=UV[0];
+    @UV_Index: label=UV Index;
+*/
+void Normal_Map(sampler2D Texture, vec2 UV, int UV_Index, out vec3 Normal)
+{   
+    Normal = sample_normal_map(Texture, UV_Index, UV);
+}
 
 /* META
     @uv: default=UV[0];
