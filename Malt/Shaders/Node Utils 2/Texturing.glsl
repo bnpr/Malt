@@ -123,5 +123,59 @@ float bayer_pattern(int size, vec2 texel)
 
     return 0;
 }
+/* META @meta: subcategory=Gradient; label=Linear;*/
+float Linear_Gradient(float a)
+{
+    return clamp(a, 0.0, 1.0);
+}
+/* META @meta: subcategory=Gradient; label=Quadratic; */
+float Quadratic_Gradient(float a)
+{
+    return clamp(a*a, 0.0, 1.0);
+}
+/* META @meta: subcategory=Gradient; label=Easing; */
+float Easing_Gradient(float a)
+{
+    float r = clamp(a, 0.0, 1.0);
+    float t = r*r;
+    return (3.0 * t - 2.0 * t * r);
+}
+/* META @meta: subcategory=Gradient; label=Diagonal; @a: label=UV;*/
+float Diagonal_Gradient(vec2 a)
+{
+    return (a.x + a.y) * 0.5;
+}
+/* META @meta: subcategory=Gradient; label=Spherical; @a: label=Vector; subtype=Vector; */
+float Spherical_Gradient(vec3 a)
+{
+    return max(0.999999 - length(a), 0.0);
+}
+/* META @meta: subcategory=Gradient; label=Quadratic Sphere; @a: label=Vector; subtype=Vector; */
+float Quadratic_Sphere_Gradient(vec3 a)
+{
+    return pow(Spherical_Gradient(a), 2.0);
+}
+/* META @meta: subcategory=Gradient; label=Radial; @a: label=UV;*/
+float Radial_Gradient(vec2 a)
+{
+    return atan(a.x, a.y) / (M_PI * 2) + 0.5;
+}
+
+/* META @meta: label=Wave; @mode: subtype=ENUM(Wave,Saw,Triangle); @a: label=Value; @scale: default=5.0;*/
+float Wave_Texture(int mode, float a, float scale, float phase)
+{
+    switch(mode)
+    {
+        case 0:
+            a = a * scale * M_PI * 2.0 + phase;
+            return sin(a - PI/2.0) * 0.5 + 0.5;
+        case 1:
+            a = a * scale + phase;
+            return fract(a);
+        case 2:
+            a = a * scale + phase;
+            return 1.0 - (abs(fract(a) - 0.5) * 2.0);
+    }
+}
 
 #endif //NODE_UTILS_2_TEXTURING_GLSL
