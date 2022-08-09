@@ -1,5 +1,5 @@
-#ifndef CONVERSION_GLSL
-#define CONVERSION_GLSL
+#ifndef NODE_UTILS_2_CONVERSION_GLSL
+#define NODE_UTILS_2_CONVERSION_GLSL
 
 /*  META GLOBAL
     @meta: internal = true;
@@ -241,4 +241,4 @@ bvec4 bvec4_from_uvec4(uvec4 v) { return bvec4(v); }
 bvec4 bvec4_from_bvec2(bvec2 v) { return bvec4(v, 0, 0); }
 bvec4 bvec4_from_bvec3(bvec3 v) { return bvec4(v, 0); }
 
-#endif //CONVERSION_GLSL
+#endif //NODE_UTILS_2_CONVERSION_GLSL

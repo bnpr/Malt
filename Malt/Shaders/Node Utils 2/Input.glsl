@@ -1,5 +1,5 @@
-#ifndef NODE_UTILS_INPUT_GLSL
-#define NODE_UTILS_INPUT_GLSL
+#ifndef NODE_UTILS_2_INPUT_GLSL
+#define NODE_UTILS_2_INPUT_GLSL
 
 /*  META GLOBAL
     @meta: category=Input;
@@ -250,4 +250,4 @@ void Curve_View_Mapping(
     Facing = 1 - (abs(Uv.y - 0.5) * 2);
 }
 
-#endif //NODE_UTILS_INPUT_GLSL
+#endif //NODE_UTILS_2_INPUT_GLSL

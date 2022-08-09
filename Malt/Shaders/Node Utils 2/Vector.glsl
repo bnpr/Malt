@@ -1,5 +1,5 @@
-#ifndef NODE_UTILS_VECTOR_GLSL
-#define NODE_UTILS_VECTOR_GLSL
+#ifndef NODE_UTILS_2_VECTOR_GLSL
+#define NODE_UTILS_2_VECTOR_GLSL
 
 /*  META GLOBAL
     @meta: category=Vector;

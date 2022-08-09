@@ -13,16 +13,19 @@ from Malt.Render import Sampling
 
 _SCREEN_SHADER_HEADER='''
 #include "NPR_ScreenShader.glsl"
+#include "Node Utils 2/node_utils_2.glsl"
 #include "Node Utils/node_utils.glsl"
 '''
 
 _MESH_SHADER_HEADER='''
 #include "NPR_MeshShader.glsl"
+#include "Node Utils 2/node_utils_2.glsl"
 #include "Node Utils/node_utils.glsl"
 '''
 
 _LIGHT_SHADER_HEADER='''
 #include "NPR_LightShader.glsl"
+#include "Node Utils 2/node_utils_2.glsl"
 #include "Node Utils/node_utils.glsl"
 '''
 

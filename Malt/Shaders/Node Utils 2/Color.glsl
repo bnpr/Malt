@@ -1,5 +1,5 @@
-#ifndef NODE_UTILS_COLOR_GLSL
-#define NODE_UTILS_COLOR_GLSL
+#ifndef NODE_UTILS_2_COLOR_GLSL
+#define NODE_UTILS_2_COLOR_GLSL
 
 /*  META GLOBAL
     @meta: category=Color;
@@ -23,4 +23,4 @@ vec3 Color_Gradient_3d(sampler1D Color_Ramp, vec3 Coord) { return rgb_gradient(C
 */
 vec4 Color_Gradient_4d(sampler1D Color_Ramp, vec4 Coord) { return rgba_gradient(Color_Ramp, Coord); }
 
-#endif // NODE_UTILS_COLOR_GLSL
+#endif // NODE_UTILS_2_COLOR_GLSL
