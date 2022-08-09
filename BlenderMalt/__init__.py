@@ -48,14 +48,6 @@ class Preferences(bpy.types.AddonPreferences):
     
     render_fps_cap : bpy.props.IntProperty(name="Max Viewport Render Framerate", default=30)
     
-    def update_show_sockets(self, context):
-        from BlenderMalt.MaltNodes.MaltSocket import MaltSocket
-        MaltSocket.show_in_material_panel = bpy.props.BoolProperty(default=self.show_sockets,
-            options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
-    
-    show_sockets : bpy.props.BoolProperty(name="Show sockets in Material Panel", default=True,
-        update=update_show_sockets, description="Show node socket properties in the Material Panel by default")
-    
     def update_debug_mode(self, context):
         if context.scene.render.engine == 'MALT':
             context.scene.world.malt.update_pipeline(context)
@@ -78,7 +70,6 @@ class Preferences(bpy.types.AddonPreferences):
             row.operator('wm.path_open', text="Open Session Log")
 
         layout.prop(self, "plugins_dir")
-        layout.prop(self, "show_sockets")
         layout.prop(self, "render_fps_cap")
         layout.prop(self, "setup_vs_code")
         layout.prop(self, "renderdoc_path")

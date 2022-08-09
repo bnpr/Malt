@@ -65,7 +65,7 @@ class MaltNode():
     def on_socket_update(self, socket):
         pass
 
-    def setup_sockets(self, inputs, outputs, expand_structs=True):
+    def setup_sockets(self, inputs, outputs, expand_structs=True, show_in_material_panel=False):
         def _expand_structs(sockets):
             result = {}
             for name, dic in sockets.items():
@@ -96,6 +96,7 @@ class MaltNode():
                 size = dic['size'] if 'size' in dic else 0
                 if name not in current:
                     current.new('MaltSocket', name)
+                    current[name].show_in_material_panel = show_in_material_panel
                 if isinstance(type, Parameter):
                     current[name].data_type = type.type_string()
                     current[name].array_size = 0 #TODO

@@ -44,9 +44,8 @@ class MaltSocket(bpy.types.NodeSocket):
     default_initialization: bpy.props.StringProperty(default='',
         options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
     
-    # Declared below, in register()
-    #show_in_material_panel: bpy.props.BoolProperty(default=True,
-    #    options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
+    show_in_material_panel: bpy.props.BoolProperty(default=True,
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
     
     active: bpy.props.BoolProperty(default=True,
         options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
@@ -168,11 +167,6 @@ classes = [
 def register():
     for _class in classes: bpy.utils.register_class(_class)
 
-    #Declare MaltSocket.show_in_material_panel
-    preferences = bpy.context.preferences.addons['BlenderMalt'].preferences
-    preferences.update_show_sockets(None)
-
-    
 def unregister():
     for _class in reversed(classes): bpy.utils.unregister_class(_class)
 

@@ -23,7 +23,9 @@ class MaltFunctionNodeBase(MaltNode):
             if parameter['io'] in ['','in','inout']:
                 inputs[parameter['name']] = parameter
         
-        self.setup_sockets(inputs, outputs)
+        show_in_material_panel = function['meta'].get('category', '') == 'Parameters'
+        
+        self.setup_sockets(inputs, outputs, show_in_material_panel=show_in_material_panel)
         
         if self.pass_graph_type != '':
             graph = self.id_data.get_pipeline_graph(self.pass_graph_type)
