@@ -114,7 +114,7 @@ vec3 toon_shading(float size, float gradient_size, float specularity, float offs
     return result;
 }
 
-/*META @meta: category=Input; subcategory=Pass Info; internal=true;*/
+
 bool is_shadow_pass()
 {
     #ifdef SHADOW_PASS
@@ -127,7 +127,7 @@ bool is_shadow_pass()
     }
     #endif
 }
-/*META @meta: category=Input; subcategory=Pass Info; internal=true;*/
+
 bool is_pre_pass()
 {
     #ifdef PRE_PASS
@@ -140,7 +140,7 @@ bool is_pre_pass()
     }
     #endif
 }
-/*META @meta: category=Input; subcategory=Pass Info; internal=true;*/
+
 bool is_main_pass()
 {
     #ifdef MAIN_PASS
@@ -153,7 +153,8 @@ bool is_main_pass()
     }
     #endif
 }
-/*META @meta: category=Input; */
+
+/*META @meta: category=Input; internal=false;*/
 void pass_info(
     out bool Is_Main_Pass,
     out bool Is_Pre_Pass,
