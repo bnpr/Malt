@@ -100,5 +100,25 @@ vec4 jitter_blur(sampler2D input_texture, vec2 uv, float radius, float distribut
     return result;
 }
 
+/* META
+    @meta: internal=true;
+    @uv: default=UV[0];
+*/
+vec4 tent_blur(sampler2D tex, vec2 uv)
+{
+    // Half pixel offset takes advantage of hardware texture interpolation to achieve a 3x3 gaussian blur
+    // with just 4 samples instead of 9.
+    // The resulting kernel looks like this:
+    //  1  2  1
+    //  2  4  2
+    //  1  2  1
+    vec2 texel = 1.0 / textureSize(tex, 0);
+    return
+        (texture(tex, uv + texel * vec2(-0.5, -0.5)) +
+         texture(tex, uv + texel * vec2(-0.5, +0.5)) +
+         texture(tex, uv + texel * vec2(+0.5, -0.5)) +
+         texture(tex, uv + texel * vec2(+0.5, +0.5))) / 4.0;
+}
+
 #endif //BLUR_GLSL
 
