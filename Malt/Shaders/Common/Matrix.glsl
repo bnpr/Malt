@@ -2,7 +2,7 @@
 #define COMMON_MATRIX_GLSL
 
 /* META GLOBAL
-    @meta: category=Math; subcategory=Matrix Math;
+    @meta: category=Math; subcategory=Matrix;
 */
 
 #include "Common/Quaternion.glsl"
