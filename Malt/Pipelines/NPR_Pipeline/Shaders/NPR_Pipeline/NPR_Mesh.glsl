@@ -166,4 +166,26 @@ void pass_info(
     Is_Shadow_Pass = is_shadow_pass();
 }
 
+/*  META
+    @meta: label=Pack ID; category=Node Tree; internal=false;
+    @object_id: label=Object ID; default=unpackUnorm4x8(ID.x);
+    @custom_id_a: label=Custom ID A; default=unpackUnorm4x8(ID.y);
+    @custom_id_b: label=Custom ID B; default=unpackUnorm4x8(ID.z);
+    @custom_id_c: label=Custom ID C; default=unpackUnorm4x8(ID.w);
+    @id: label=ID;
+*/
+void pack_id(
+    vec4 object_id,
+    vec4 custom_id_a,
+    vec4 custom_id_b,
+    vec4 custom_id_c,
+    out uvec4 id
+)
+{
+    id.x = packUnorm4x8(object_id);
+    id.y = packUnorm4x8(custom_id_a);
+    id.z = packUnorm4x8(custom_id_b);
+    id.w = packUnorm4x8(custom_id_c);
+}
+
 #endif //NPR_MESH_GLSL
