@@ -124,7 +124,41 @@ void _fix_range(inout float value, inout float range)
     }
 }
 
-LineDetectionOutput line_detection_2()
+/*  META
+    @meta: label=Line Detection;
+    @is_id_boundary: label=Is ID Boundary;
+*/
+void line_detection_2(
+    out float delta_distance,
+    out float delta_angle,
+    out vec4 is_id_boundary
+)
+{
+    #ifdef NPR_FILTERS_ACTIVE
+    {
+        LineDetectionOutput result;
+        
+        result = line_detection(
+            POSITION,
+            NORMAL, true_normal(),
+            1,
+            LINE_DEPTH_MODE_NEAR,
+            screen_uv(),
+            IN_NORMAL_DEPTH,
+            3,
+            IN_NORMAL_DEPTH,
+            IN_ID
+        );
+
+        delta_distance = result.delta_distance;
+        delta_angle = result.delta_angle;
+        is_id_boundary = vec4(result.id_boundary);
+    }
+    #endif
+}
+
+/*META @meta: internal=true;*/
+LineDetectionOutput line_detection()
 {
     LineDetectionOutput result;
 
@@ -144,6 +178,7 @@ LineDetectionOutput line_detection_2()
 
 
 /*  META
+    @meta: label=Line Width;
     @width_scale: min=0.0; default=4.0;
     @id_boundary_width: subtype=Slider; min=0.0; max=1.0; default=vec4(1.0);
     @depth_width: subtype=Slider; min=0.0; max=1.0; default=1.0;
@@ -227,31 +262,8 @@ float line_width_2(
     #endif
 }
 
-
-LineDetectionOutput line_detection()
-{
-    LineDetectionOutput result;
-
-    #ifdef NPR_FILTERS_ACTIVE
-    {
-        result = line_detection(
-            POSITION,
-            NORMAL, true_normal(),
-            1,
-            LINE_DEPTH_MODE_NEAR,
-            screen_uv(),
-            IN_NORMAL_DEPTH,
-            3,
-            IN_NORMAL_DEPTH,
-            IN_ID
-        );
-    }
-    #endif
-
-    return result;
-}
-
 /*  META
+    @meta: internal=true;
     @line_width_scale: default=2.0;
     @id_boundary_width: subtype=Data; default=vec4(1);
     @depth_width: default=1.0;
