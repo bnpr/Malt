@@ -8,7 +8,6 @@
 */
 
 /*  META
-    @meta: label=Normal Curvature;
     @uv: default=UV[0];
     @width: default=1.0;
     @x: subtype=Normal; default=vec3(1,0,0);
