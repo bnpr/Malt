@@ -25,81 +25,8 @@ void _shadow_params(int enum_value, out bool shadows, out bool self_shadows)
 
 #ifdef IS_MESH_SHADER
 /*  META
-    @meta: label=Diffuse Base;
-    @color: default=vec3(1);
-    @normal: subtype=Normal; default=NORMAL;
-    @light_groups: default=MATERIAL_LIGHT_GROUPS;
-    @shadows: subtype=ENUM(Inherit from Material,Enable Shadows,Disable Self-Shadows,Disable Shadows); default=0;
-*/
-#else
-/*  META
-    @meta: label=Diffuse Base;
-    @color: default=vec3(1);
-    @normal: subtype=Normal; default=NORMAL;
-    @light_groups: default=ivec4(1,0,0,0);
-    @shadows: subtype=ENUM(Enable Shadows,Disable Self-Shadows,Disable Shadows); default=0;
-*/
-#endif
-vec3 NPR_diffuse_shading_base(
-    vec3 color,
-    bool full_range,
-    bool max_contribution,
-    int shadows,
-    ivec4 light_groups,
-    vec3 normal
-)
-{
-    vec3 position = POSITION;
-
-    bool shadow;
-    bool self_shadow;
-    _shadow_params(shadows, shadow, self_shadow);
-    
-    vec3 result = vec3(0,0,0);
-    for (int i = 0; i < LIGHTS.lights_count; i++)
-    {
-        for(int group_index = 0; group_index < 4; group_index++)
-        {
-            if(LIGHT_GROUP_INDEX(i) != light_groups[group_index])
-            {
-                continue;
-            }
-            Light L = LIGHTS.lights[i];
-            LitSurface LS = npr_lit_surface(position, normal, ID.x, L, i, shadow, self_shadow);
-
-            if(!full_range && LS.NoL < 0)
-            {
-                continue;
-            }
-            
-            float lambert = LS.NoL;
-            vec3 shadow_multiply = LS.shadow_multiply;
-            if(full_range)
-            {
-                lambert = map_range(LS.NoL, -1, 1, 0, 1);
-                shadow_multiply = map_range_clamped(LS.shadow_multiply,vec3(0),vec3(1),vec3(0.5),vec3(1));
-            }
-            
-            vec3 diffuse = min(vec3(lambert), shadow_multiply) * LS.light_color;
-
-            if(max_contribution)
-            {
-                result = max(result, diffuse);
-            }
-            else
-            {
-                result += diffuse;
-            }
-        }
-    }
-    
-    return result * color;
-}
-
-
-#ifdef IS_MESH_SHADER
-/*  META
-    @meta: label=Diffuse Gradient;
+    @meta: label=NPR Diffuse;
+    @color_multiply: default=vec3(1);
     @position: subtype=Vector; default=POSITION;
     @normal: subtype=Normal; default=NORMAL;
     @offset: subtype=Slider; min=-1.0; max=1.0; default=0.0;
@@ -108,7 +35,8 @@ vec3 NPR_diffuse_shading_base(
 */
 #else
 /*  META
-    @meta: label=Diffuse Gradient;
+    @meta: label=NPR Diffuse;
+    @color_multiply: default=vec3(1);
     @position: subtype=Vector; default=POSITION;
     @normal: subtype=Normal; default=NORMAL;
     @offset: subtype=Slider; min=-1.0; max=1.0; default=0.0;
@@ -117,6 +45,7 @@ vec3 NPR_diffuse_shading_base(
 */
 #endif
 vec3 NPR_diffuse_shading(
+    vec3 color_multiply,
     sampler1D gradient,
     float offset,
     bool full_range,
@@ -170,98 +99,13 @@ vec3 NPR_diffuse_shading(
         }
     }
     
-    return result;
+    return result * color_multiply;
 }
 
 #ifdef IS_MESH_SHADER
 /*  META
-    @meta: label=Specular Base;
-    @color: default=vec3(1);
-    @normal: subtype=Normal; default=NORMAL;
-    @tangent: subtype=Normal; default=radial_tangent(NORMAL, vec3(0,0,1));
-    @anisotropy: subtype=Slider; min=0.0; max=1.0; default=0.5;
-    @roughness: subtype=Slider; min=0.0; max=1.0; default=0.5;
-    @light_groups: default=MATERIAL_LIGHT_GROUPS;
-    @shadows: subtype=ENUM(Inherit from Material,Enable Shadows,Disable Self-Shadows,Disable Shadows); default=0;
-*/
-#else
-/*  META
-    @meta: label=Specular Base;
-    @color: default=vec3(1);
-    @normal: subtype=Normal; default=NORMAL;
-    @tangent: subtype=Normal; default=radial_tangent(NORMAL, vec3(0,0,1));
-    @anisotropy: subtype=Slider; min=0.0; max=1.0; default=0.5;
-    @roughness: subtype=Slider; min=0.0; max=1.0; default=0.5;
-    @light_groups: default=ivec4(1,0,0,0);
-    @shadows: subtype=ENUM(Enable Shadows,Disable Self-Shadows,Disable Shadows); default=0;
-*/
-#endif
-vec3 NPR_specular_shading_base(
-    vec3 color,
-    float roughness,
-    float anisotropy,
-    bool max_contribution,
-    int shadows,
-    ivec4 light_groups,
-    vec3 normal,
-    vec3 tangent
-)
-{
-    vec3 position = POSITION;
-
-    bool shadow;
-    bool self_shadow;
-    _shadow_params(shadows, shadow, self_shadow);
-    
-    vec3 result = vec3(0,0,0);
-    for (int i = 0; i < LIGHTS.lights_count; i++)
-    {
-        for(int group_index = 0; group_index < 4; group_index++)
-        {
-            if(LIGHT_GROUP_INDEX(i) != light_groups[group_index])
-            {
-                continue;
-            }
-            Light L = LIGHTS.lights[i];
-            LitSurface LS = npr_lit_surface(position, normal, ID.x, L, i, shadow, self_shadow);
-
-            if(LS.NoL < 0)
-            {
-                continue;
-            }
-
-            float NoH = dot(normal, LS.H);
-            
-            vec3 bitangent = normalize(cross(normal, tangent));
-            float XoH = dot(LS.H, tangent);
-            float YoH = dot(LS.H, bitangent);
-
-            vec2 a = vec2(anisotropy, 1.0 - anisotropy) * roughness;
-
-            float custom_ggx = (1.0 / (pow((XoH*XoH) / (a.x*a.x) + (YoH*YoH) / (a.y*a.y) + NoH*NoH, 3.0)));
-            
-            //minimal geometric shadowing
-            custom_ggx *= saturate(pow(LS.NoL*3,3));
-            
-            vec3 specular = custom_ggx * LS.light_color * LS.shadow_multiply;
-            
-            if(max_contribution)
-            {
-                result = max(result, specular);
-            }
-            else
-            {
-                result += specular;
-            }
-        }
-    }
-    
-    return result * color;
-}
-
-#ifdef IS_MESH_SHADER
-/*  META
-    @meta: label=Specular Gradient;
+    @meta: label=NPR Specular;
+    @color_multiply: default=vec3(1);
     @position: subtype=Vector; default=POSITION;
     @normal: subtype=Normal; default=NORMAL;
     @tangent: subtype=Normal; default=radial_tangent(NORMAL, vec3(0,0,1));
@@ -273,7 +117,8 @@ vec3 NPR_specular_shading_base(
 */
 #else
 /*  META
-    @meta: label=Specular Gradient;
+    @meta: label=NPR Specular;
+    @color_multiply: default=vec3(1);
     @position: subtype=Vector; default=POSITION;
     @normal: subtype=Normal; default=NORMAL;
     @tangent: subtype=Normal; default=radial_tangent(NORMAL, vec3(0,0,1));
@@ -285,6 +130,7 @@ vec3 NPR_specular_shading_base(
 */
 #endif
 vec3 NPR_specular_shading(
+    vec3 color_multiply,
     sampler1D gradient,
     float offset,
     float roughness,
@@ -348,7 +194,7 @@ vec3 NPR_specular_shading(
         }
     }
     
-    return result;
+    return result * color_multiply;
 }
 
 #endif //NPR_SHADING2_GLSL
