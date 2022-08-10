@@ -447,12 +447,13 @@ def preload_menus(structs, functions, graph=None):
             'name' : repr(f'{label} Output'),
         }))
     
-    categories['Other'].append(NodeItem('MaltInlineNode', label='Inline Code', settings={
-        'name' : repr('Inline Code')
-    }))
-    categories['Other'].append(NodeItem('MaltArrayIndexNode', label='Array Element', settings={
-        'name' : repr('Array Element')
-    }))
+    if graph.language == 'GLSL':
+        categories['Other'].append(NodeItem('MaltInlineNode', label='Inline Code', settings={
+            'name' : repr('Inline Code')
+        }))
+        categories['Other'].append(NodeItem('MaltArrayIndexNode', label='Array Element', settings={
+            'name' : repr('Array Element')
+        }))
 
     subcategories = set()
     
