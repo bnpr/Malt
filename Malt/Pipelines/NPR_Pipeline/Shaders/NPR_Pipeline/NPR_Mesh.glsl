@@ -159,10 +159,11 @@ void pass_info(
     out bool Is_Main_Pass,
     out bool Is_Pre_Pass,
     out bool Is_Shadow_Pass
-    ) {
-        Is_Main_Pass = is_main_pass();
-        Is_Pre_Pass = is_pre_pass();
-        Is_Shadow_Pass = is_shadow_pass();
-    }
+)
+{
+    Is_Main_Pass = is_main_pass();
+    Is_Pre_Pass = is_pre_pass();
+    Is_Shadow_Pass = is_shadow_pass();
+}
 
 #endif //NPR_MESH_GLSL
