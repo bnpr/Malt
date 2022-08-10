@@ -9,7 +9,7 @@
 
 /*  META
     @meta: label=Normal Curvature;
-    @uv: default=screen_uv();
+    @uv: default=UV[0];
     @width: default=1.0;
     @x: subtype=Normal; default=vec3(1,0,0);
     @y: subtype=Normal; default=vec3(0,1,0);
@@ -42,7 +42,7 @@ float curvature(sampler2D normal_texture, vec2 uv, float width, vec3 x, vec3 y)
 // Like curvature, but discard depth discontinuities
 /*  META
     @meta: internal=true;
-    @uv: default=screen_uv();
+    @uv: default=UV[0];
     @width: default=1.0;
     @x: subtype=Normal; default=vec3(1,0,0);
     @y: subtype=Normal; default=vec3(0,1,0);

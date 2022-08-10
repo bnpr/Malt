@@ -69,7 +69,7 @@ struct LineDetectionOutput
     @true_normal: subtype=Normal; default=true_normal();
     @width: default=1.0;
     @LINE_DEPTH_MODE: subtype=ENUM(Near, Far, Any);
-    @uv: default=screen_uv();
+    @uv: default=UV[0];
 */
 LineDetectionOutput line_detection(
     vec3 position,
@@ -250,7 +250,7 @@ struct LineExpandOutput
 };
 
 /*  META
-    @uv: default=screen_uv();
+    @uv: default=UV[0];
     @max_width: default=10;
 */
 LineExpandOutput line_expand(vec2 uv, int max_width,

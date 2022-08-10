@@ -123,7 +123,7 @@ ivec2 screen_pixel()
     #endif
 }
 /* META
-    @uv: default=screen_uv();
+    @uv: default=UV[0];
 */
 vec3 screen_to_camera(vec2 uv, float depth)
 {
