@@ -20,6 +20,8 @@
 #define M_2_SQRTPI  1.12837916709551257389615890312154517   /* 2/sqrt(pi) */
 #define M_SQRT2     1.41421356237309504880168872420969808   /* sqrt(2) */
 #define M_SQRT1_2   0.707106781186547524400844362104849039  /* 1/sqrt(2) */
+#define M_GRATIO    1.618033988749894848204586834365638117  /* phi */
+#define M_GANGLE    2.399963229728652887367000547681316645  /* pi*(3-sqrt(5)) */                              
 
 #define PI M_PI
 
@@ -60,6 +62,12 @@ vec2 screen_uv(); //FORWARD DECLARATION
 vec4 random_per_pixel(float seed) 
 {
     return hash(vec4(screen_uv(), float(SAMPLE_COUNT), seed));
+}
+
+vec2 phyllotaxis_disk(float p, int total)
+{
+    float r = p * M_GANGLE;
+    return vec2(cos(r), sin(r)) * vec2(pow(p / float(total), 0.5));
 }
 
 #endif // COMMON_MATH_GLSL
