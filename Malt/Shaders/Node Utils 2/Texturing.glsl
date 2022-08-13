@@ -9,7 +9,7 @@
 */
 
 /*  META
-    @UV: default=UV[0];
+    @UV: label=UV; default=UV[0];
     @Smooth_Interpolation: default=true;
 */
 void Image(sampler2D Image, vec2 UV, bool Smooth_Interpolation, out vec4 Color, out vec2 Resolution)
@@ -35,7 +35,7 @@ void Normal_Map(sampler2D Texture, vec2 UV, int UV_Index, out vec3 Normal)
 }
 
 /* META
-    @uv: default=UV[0];
+    @uv: label=UV; default=UV[0];
     @page: min=0.0;
 */
 vec4 Flipbook(sampler2D tex, vec2 uv, ivec2 dimensions, float page)
@@ -55,7 +55,7 @@ vec4 Flipbook(sampler2D tex, vec2 uv, ivec2 dimensions, float page)
 }
 
 /* META
-    @uv: default=UV[0];
+    @uv: label=UV; default=UV[0];
     @flow: default="vec2(0.0)";
     @samples: default=2; min=1 ;
 */

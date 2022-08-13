@@ -236,10 +236,7 @@ void Random(
 }
 
 /* META
-    @uv: default=UV[0];
-    @normal: default=NORMAL;
-    @tangent: default=get_tangent(0);
-    @incoming: default=-view_direction();
+    @Uv: label=UV;
 */
 void Curve_View_Mapping(
     out vec2 Uv,
