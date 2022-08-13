@@ -196,8 +196,8 @@ void Camera_Data(
     Screen_UV = screen_uv();
     View_Direction = view_direction();
     Z_Depth = -transform_point(CAMERA, POSITION).z;
-    View_Distance = distance(Camera_Position, POSITION);
     Camera_Position = camera_position();
+    View_Distance = distance(Camera_Position, POSITION);
     Camera_Matrix = CAMERA;
     Projection_Matrix = PROJECTION;
     Is_Orthographic = is_ortho(PROJECTION);
