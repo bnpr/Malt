@@ -137,13 +137,8 @@ void line_detection_2(
     #ifdef NPR_FILTERS_ACTIVE
     {
         LineDetectionOutput result;
-        
-        result = line_detection(
-            POSITION,
-            NORMAL, true_normal(),
-            1,
-            LINE_DEPTH_MODE_NEAR,
-            screen_uv(),
+
+        result = line_detection_2(
             IN_NORMAL_DEPTH,
             3,
             IN_NORMAL_DEPTH,
@@ -164,7 +159,12 @@ LineDetectionOutput line_detection()
 
     #ifdef NPR_FILTERS_ACTIVE
     {
-        result = line_detection_2(
+        result = line_detection(
+            POSITION,
+            NORMAL, true_normal(),
+            1,
+            LINE_DEPTH_MODE_NEAR,
+            screen_uv(),
             IN_NORMAL_DEPTH,
             3,
             IN_NORMAL_DEPTH,
