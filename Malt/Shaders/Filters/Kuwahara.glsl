@@ -8,11 +8,11 @@
 /*  META
     @meta: label=Isotropic;
     @uv: default = UV[0]; label=UV;
-    @radius: default=5; min=0;
+    @size: default=5; min=0;
 */
-vec4 kuwahara(sampler2D tex, vec2 uv, int radius)
+vec4 kuwahara(sampler2D tex, vec2 uv, int size)
 {
-    if(radius <= 0)
+    if(size <= 0)
     {
         return texture(tex, uv);
     }
@@ -21,9 +21,9 @@ vec4 kuwahara(sampler2D tex, vec2 uv, int radius)
 
     vec2 offsets[4] = vec2[]
         (
-            vec2(-radius, -radius), 
-            vec2(-radius, 0),
-            vec2(0, -radius),
+            vec2(-size, -size), 
+            vec2(-size, 0),
+            vec2(0, -size),
             vec2(0, 0)
         );
     
@@ -36,12 +36,12 @@ vec4 kuwahara(sampler2D tex, vec2 uv, int radius)
     for(int i = 0; i < 4; i++)
     {
         float total_weight = 0.0;
-        for(int u = 0; u <= ceil(radius); u++)
+        for(int u = 0; u <= ceil(size); u++)
         {
-            for(int v = 0; v <= ceil(radius); v++)
+            for(int v = 0; v <= ceil(size); v++)
             {
                 vec2 offset = (vec2(u,v) + offsets[i]) * texel;
-                float weight = max(0, 1.0 - length(offset / texel) / float(radius));
+                float weight = max(0, 1.0 - length(offset / texel) / float(size));
                 
                 color = texture(tex, uv + offset).rgb;
                 mean[i] += color * weight;
