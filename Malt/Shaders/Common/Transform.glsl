@@ -201,7 +201,9 @@ vec3 reconstruct_normal(sampler2D depth_texture, int depth_channel, ivec2 texel)
     vec3 y = distance(y1.z, t0.z) < distance(y2.z, t0.z) ? y1 : y2;
 
     vec3 n = normalize(cross(x - t0, y - t0));
-    n = dot(n, t0) < 0 ? n : -n;
+    
+    vec3 view_direction = screen_to_camera(screen_uv(), 1);
+    n = dot(n, view_direction) < 0 ? n : -n;
 
     return transform_normal(inverse(CAMERA), n);
 }
