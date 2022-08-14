@@ -112,11 +112,15 @@ class MaltSocket(bpy.types.NodeSocket):
                     return linked if linked.active else None
         return get_linked_internal(self)
     
-    def get_ui_label(self):
-        type = self.data_type
+    def get_ui_label(self, print_type=True):
         name = self.ui_label
+        if print_type == False:
+            return name
+
+        type = self.data_type
         if self.array_size > 0:
             type += f'[{self.array_size}]'
+        
         if self.is_output:
             return f'({type}) : {name}'
         else:
@@ -127,7 +131,7 @@ class MaltSocket(bpy.types.NodeSocket):
             layout.active = False
             layout.label(text=text)
         elif context.region.type != 'UI' or self.get_source_global_reference() == self.get_source_initialization():
-            text = self.get_ui_label()
+            text = self.get_ui_label(context.window_manager.malt_show_socket_types)
             node.draw_socket(context, layout, self, text)
             if context.region.type == 'UI':
                 icon = 'HIDE_OFF' if self.show_in_material_panel else 'HIDE_ON'
