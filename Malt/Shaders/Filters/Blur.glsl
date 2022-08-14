@@ -6,6 +6,7 @@
 */
 
 /*  META
+    @input_texture: label=Texture;
     @uv: label=UV; default=UV[0];
     @radius: default=5.0; min=0.0;
 */
@@ -47,6 +48,7 @@ float _gaussian_weight_2d(vec2 v, float sigma)
 }
 
 /*  META
+    @input_texture: label=Texture;
     @uv: label=UV; default=UV[0];
     @radius: default=5.0; min=0.0;
     @sigma: default=1.0;
@@ -75,6 +77,7 @@ vec4 gaussian_blur(sampler2D input_texture, vec2 uv, float radius, float sigma)
 #include "Common/Math.glsl"
 
 /*  META
+    @input_texture: label=Texture;
     @uv: label=UV; default=UV[0];
     @radius: default=5.0;
     @distribution_exponent: default=5.0;

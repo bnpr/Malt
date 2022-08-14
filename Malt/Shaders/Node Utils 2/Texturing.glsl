@@ -35,6 +35,7 @@ void Normal_Map(sampler2D Texture, vec2 UV, int UV_Index, out vec3 Normal)
 }
 
 /* META
+    @tex: label=Texture;
     @uv: label=UV; default=UV[0];
     @page: min=0.0;
 */
@@ -55,6 +56,7 @@ vec4 Flipbook(sampler2D tex, vec2 uv, ivec2 dimensions, float page)
 }
 
 /* META
+    @tex: label=Texture;
     @uv: label=UV; default=UV[0];
     @flow: default="vec2(0.0)";
     @samples: default=2; min=1 ;

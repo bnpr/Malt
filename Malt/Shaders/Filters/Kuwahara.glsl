@@ -7,6 +7,7 @@
 
 /*  META
     @meta: label=Isotropic;
+    @tex: label=Texture;
     @uv: default = UV[0]; label=UV;
     @size: default=5; min=0;
 */
@@ -68,6 +69,7 @@ vec4 kuwahara(sampler2D tex, vec2 uv, int size)
 
 /* META
     @meta: label=Anisotropic;
+    @tex: label=Texture;
     @uv: label=UV; default=UV[0];
     @direction: default='vec2(0.0, 0.0)';
     @size: default=2.0; min=0.0;

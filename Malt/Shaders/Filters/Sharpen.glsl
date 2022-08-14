@@ -16,6 +16,7 @@ vec4 _sharpen_common(sampler2D tex, vec2 uv, vec4 blurred, float sharpness)
 
 /* META
     @meta: label=Box;
+    @tex: label=Texture;
     @uv: label=UV; default = UV[0];
     @radius: default=1.0; min=0.0;
     @sharpness: default = 0.3; min=0.0;
@@ -28,6 +29,7 @@ vec4 box_sharpen(sampler2D tex, vec2 uv, float radius, bool circular, float shar
 
 /* META
     @meta: label=Gaussian;
+    @tex: label=Texture;
     @uv: label=UV; default = UV[0];
     @radius: default=1.0; min=0.0;
     @sigma: default=1.0;
@@ -41,6 +43,7 @@ vec4 gaussian_sharpen(sampler2D tex, vec2 uv, float radius, float sigma, float s
 
 /* META
     @meta: label=Jitter;
+    @tex: label=Texture;
     @uv: label=UV; default = UV[0];
     @radius: default=1.0; min=0.0;
     @distribution_exponent: default=5.0;
