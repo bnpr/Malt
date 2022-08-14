@@ -18,7 +18,7 @@ class PipelineGraph():
     GLOBAL_GRAPH = 1
     SCENE_GRAPH = 2
     
-    def __init__(self, name, language, file_extension, graph_type, graph_io):
+    def __init__(self, name, language, file_extension, graph_type, graph_io, default_graph_path):
         self.name = name
         self.language = language
         self.file_extension = file_extension
@@ -29,6 +29,7 @@ class PipelineGraph():
         self.functions = {}
         self.structs = {}
         self.graph_io = { io.name : io for io in graph_io }
+        self.default_graph_path = default_graph_path
         self.timestamp = 0
     
     def add_library(self, path):
@@ -86,9 +87,10 @@ class GLSLGraphIO(PipelineGraphIO):
 
 class GLSLPipelineGraph(PipelineGraph):
 
-    def __init__(self, name, graph_type, default_global_scope, default_shader_src, shaders=['SHADER'], graph_io=[]):
+    def __init__(self, name, graph_type, default_global_scope, default_shader_src, shaders=['SHADER'], graph_io=[],
+        default_graph_path=None):
         file_extension = f'.{name.lower()}.glsl'
-        super().__init__(name, 'GLSL', file_extension, graph_type, graph_io)
+        super().__init__(name, 'GLSL', file_extension, graph_type, graph_io, default_graph_path)
         self.default_global_scope = default_global_scope
         self.default_shader_src = default_shader_src
         self.shaders = shaders
@@ -178,9 +180,9 @@ class PythonGraphIO(PipelineGraphIO):
 
 class PythonPipelineGraph(PipelineGraph):
     
-    def __init__(self, name, graph_io):
+    def __init__(self, name, graph_io, default_graph_path=None):
         extension = f'-{name}.py'
-        super().__init__(name, 'Python', extension, self.GLOBAL_GRAPH, graph_io)
+        super().__init__(name, 'Python', extension, self.GLOBAL_GRAPH, graph_io, default_graph_path)
         self.node_instances = {}
         self.nodes = {}
 

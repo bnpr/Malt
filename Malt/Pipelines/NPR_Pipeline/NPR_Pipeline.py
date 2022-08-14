@@ -63,6 +63,8 @@ void MAIN_PASS_PIXEL_SHADER()
 }
 '''
 
+DEFAULTS_PATH = os.path.join(os.path.dirname(__file__), 'Defaults', 'defaults')
+
 class NPR_Pipeline(Pipeline):
 
     def __init__(self, plugins=[]):
@@ -86,13 +88,11 @@ class NPR_Pipeline(Pipeline):
             The width (and height) of the sampling grid. 
             Larger values will result in smoother/blurrier images while lower values will result in sharper/more aliased ones. 
             Keep it withing the 1-2 range for best results.""")
-        
-        defaults_path = os.path.join(os.path.dirname(__file__), 'Defaults', 'defaults')
-        
-        self.parameters.world['Material.Default'] = MaterialParameter((defaults_path, 'Malt - Default Mesh Material'), '.mesh.glsl',
+                
+        self.parameters.world['Material.Default'] = MaterialParameter((DEFAULTS_PATH, 'Malt - Default Mesh Material'), '.mesh.glsl',
             doc = self.parameters.world['Material.Default'].doc)
         
-        self.parameters.world['Render'] = GraphParameter((defaults_path, 'Default Render'), 'Render', doc="""
+        self.parameters.world['Render'] = GraphParameter((DEFAULTS_PATH, 'Default Render'), 'Render', doc="""
             The *Render Node Tree* used to render the scene. 
             See [Render & Render Layers](#Render & Render Layers) for more info.""")
         
@@ -117,6 +117,7 @@ class NPR_Pipeline(Pipeline):
             default_global_scope=_MESH_SHADER_HEADER,
             default_shader_src=_DEFAULT_SHADER_SRC,
             shaders=['PRE_PASS', 'MAIN_PASS', 'SHADOW_PASS'],
+            default_graph_path=(DEFAULTS_PATH, 'Malt - Default Mesh Material'),
             graph_io=[
                 GLSLGraphIO(
                     name='PRE_PASS_PIXEL_SHADER',

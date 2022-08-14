@@ -27,7 +27,21 @@ class MaltTree(bpy.types.NodeTree):
     def poll_material(self, material):
         return material.malt.shader_nodes is self
     
-    graph_type: bpy.props.StringProperty(name='Type',
+    def update_graph_type(self, context):
+        graph = self.get_pipeline_graph()
+        if graph and graph.default_graph_path and len(self.nodes) == 0:
+            blend_path, tree_name = graph.default_graph_path
+            blend_path += '.blend'
+            if tree_name not in bpy.data.node_groups:
+                internal_dir = 'NodeTree'
+                bpy.ops.wm.append(
+                    filepath=os.path.join(blend_path, internal_dir, tree_name),
+                    directory=os.path.join(blend_path, internal_dir),
+                    filename=tree_name
+                )
+            #TODO: Copy the node tree contents to this one
+    
+    graph_type: bpy.props.StringProperty(name='Type', update=update_graph_type,
         options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
 
     #deprecated
