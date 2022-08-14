@@ -117,7 +117,7 @@ class NPR_Pipeline(Pipeline):
             default_global_scope=_MESH_SHADER_HEADER,
             default_shader_src=_DEFAULT_SHADER_SRC,
             shaders=['PRE_PASS', 'MAIN_PASS', 'SHADOW_PASS'],
-            default_graph_path=(DEFAULTS_PATH, 'Malt - Default Mesh Material'),
+            default_graph_path=(DEFAULTS_PATH, 'Default Mesh'),
             graph_io=[
                 GLSLGraphIO(
                     name='PRE_PASS_PIXEL_SHADER',

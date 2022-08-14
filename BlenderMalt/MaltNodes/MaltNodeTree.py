@@ -39,7 +39,12 @@ class MaltTree(bpy.types.NodeTree):
                     directory=os.path.join(blend_path, internal_dir),
                     filename=tree_name
                 )
-            #TODO: Copy the node tree contents to this one
+            name = self.name
+            copy = bpy.data.node_groups[tree_name].copy()
+            self.user_remap(copy)
+            bpy.data.node_groups.remove(self)
+            copy.name = name
+            context.space.node_tree = copy
     
     graph_type: bpy.props.StringProperty(name='Type', update=update_graph_type,
         options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
