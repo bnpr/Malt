@@ -44,7 +44,16 @@ class MaltTree(bpy.types.NodeTree):
             self.user_remap(copy)
             bpy.data.node_groups.remove(self)
             copy.name = name
-            context.space.node_tree = copy
+            copy.update()#Compile
+            #Workaround: Setting the node_tree directly doesn't work
+            space = context.space_data
+            bpy.ops.node.view_all()
+            def set_node_tree():
+                try:
+                    space.node_tree = copy
+                    bpy.ops.node.view_all()
+                except: pass
+            bpy.app.timers.register(set_node_tree, first_interval=0.01)
     
     graph_type: bpy.props.StringProperty(name='Type', update=update_graph_type,
         options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
