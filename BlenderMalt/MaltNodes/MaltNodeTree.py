@@ -512,7 +512,8 @@ def preload_menus(structs, functions, graph=None):
         return tree and tree.bl_idname == 'MaltTree' and tree.graph_type == graph.name
 
     def poll_internal(cls, context):
-        return poll(cls, context) and context.window_manager.malt_toggle_internal_category
+        preferences = bpy.context.preferences.addons['BlenderMalt'].preferences
+        return poll(cls, context) and preferences.show_internal_nodes
 
     category_type = type(category_id, (NodeCategory,), 
     {

@@ -432,25 +432,6 @@ class MaltNodeDrawCallbacks:
         draw_text(text, size * zoom, tuple(region_loc + Vector((0,-1))), (0,0,0,1))
         draw_text(text, size * zoom, region_loc, color)
 
-def register_node_tree_overlays(register: bool):
-    menu = bpy.types.NODE_PT_overlay
-    wm = bpy.types.WindowManager
-
-    def draw_toggle(self:bpy.types.Menu, context: bpy.types.Context):
-        self.layout.label(text='Malt')
-        self.layout.prop(context.window_manager, 'malt_show_socket_types')
-        self.layout.prop(context.window_manager, 'malt_toggle_internal_category')
-    
-    if register:
-        wm.malt_show_socket_types = bpy.props.BoolProperty(name='Show Socket Types', default=False)
-        wm.malt_toggle_internal_category = bpy.props.BoolProperty(name='Show Internal Nodes', default=False)
-        menu.append(draw_toggle)
-    else:
-        del wm.malt_show_socket_types
-        del wm.malt_toggle_internal_category
-        menu.remove(draw_toggle)
-
-
 keymaps = []
 def register_node_tree_shortcuts():
     wm = bpy.context.window_manager
@@ -478,12 +459,8 @@ def register():
     NodeTree.tree_preview = PointerProperty(type=NodeTreePreview, name='Node Tree Preview',
         options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
 
-    register_node_tree_overlays(True)
 
 def unregister():
-
-    register_node_tree_overlays(False)
-
     del NodeTree.tree_preview
 
     for km, kmi in keymaps:

@@ -55,6 +55,10 @@ class Preferences(bpy.types.AddonPreferences):
     debug_mode : bpy.props.BoolProperty(name="Debug Mode", default=False, update=update_debug_mode,
         description="Developers only. Do not touch !!!")
 
+    #Drawn in NODE_PT_overlay
+    show_socket_types : bpy.props.BoolProperty(name='Show Socket Types', default=True)
+    show_internal_nodes : bpy.props.BoolProperty(name='Show Internal Nodes', default=False)
+
     def draw(self, context):
         layout = self.layout
 
@@ -76,7 +80,12 @@ class Preferences(bpy.types.AddonPreferences):
         layout.label(text='Developer Settings :')
         layout.prop(self, "debug_mode")
         layout.prop(self, "docs_path")
-
+    
+def draw_node_tree_overlays(self:bpy.types.Menu, context: bpy.types.Context):
+    preferences = bpy.context.preferences.addons['BlenderMalt'].preferences
+    self.layout.label(text='Malt')
+    self.layout.prop(preferences, 'show_socket_types')
+    self.layout.prop(preferences, 'show_internal_nodes')
 
 _VS_CODE_SETTINGS = '''
 {{
@@ -211,6 +220,8 @@ def register():
 
     bpy.app.handlers.save_post.append(setup_vs_code)
 
+    bpy.types.NODE_PT_overlay.append(draw_node_tree_overlays)
+
 def unregister():
     for _class in reversed(classes): bpy.utils.unregister_class(_class)
     
@@ -223,3 +234,5 @@ def unregister():
         module.unregister()
     
     bpy.app.handlers.save_post.remove(setup_vs_code)
+
+    bpy.types.NODE_PT_overlay.remove(draw_node_tree_overlays)

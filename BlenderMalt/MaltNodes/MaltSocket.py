@@ -131,7 +131,8 @@ class MaltSocket(bpy.types.NodeSocket):
             layout.active = False
             layout.label(text=text)
         elif context.region.type != 'UI' or self.get_source_global_reference() == self.get_source_initialization():
-            text = self.get_ui_label(context.window_manager.malt_show_socket_types)
+            preferences = bpy.context.preferences.addons['BlenderMalt'].preferences
+            text = self.get_ui_label(preferences.show_socket_types)
             node.draw_socket(context, layout, self, text)
             if context.region.type == 'UI':
                 icon = 'HIDE_OFF' if self.show_in_material_panel else 'HIDE_ON'
