@@ -118,7 +118,7 @@ class NPR_Pipeline(Pipeline):
             default_global_scope=_MESH_SHADER_HEADER,
             default_shader_src=_DEFAULT_SHADER_SRC,
             shaders=['PRE_PASS', 'MAIN_PASS', 'SHADOW_PASS'],
-            default_graph_path=(DEFAULTS_PATH, 'Default Mesh'),
+            default_graph_path=(DEFAULTS_PATH, 'Mesh Node Tree Base'),
             graph_io=[
                 GLSLGraphIO(
                     name='PRE_PASS_PIXEL_SHADER',
@@ -164,6 +164,7 @@ class NPR_Pipeline(Pipeline):
             graph_type=GLSLPipelineGraph.GLOBAL_GRAPH,
             default_global_scope=_SCREEN_SHADER_HEADER,
             default_shader_src="void SCREEN_SHADER(){ }",
+            default_graph_path=(DEFAULTS_PATH, 'Screen Node Tree Base'),
             graph_io=[ 
                 GLSLGraphIO(
                     name='SCREEN_SHADER',
@@ -183,6 +184,7 @@ class NPR_Pipeline(Pipeline):
             graph_type=GLSLPipelineGraph.INTERNAL_GRAPH,
             default_global_scope=_LIGHT_SHADER_HEADER,
             default_shader_src="void LIGHT_SHADER(vec3 relative_coordinates, vec3 uvw, inout vec3 color, inout float attenuation) { }",
+            default_graph_path=(DEFAULTS_PATH, 'Light Node Tree Base'),
             graph_io=[ 
                 GLSLGraphIO(
                     name='LIGHT_SHADER',
@@ -194,6 +196,7 @@ class NPR_Pipeline(Pipeline):
         
         render_layer = PythonPipelineGraph(
             name='Render Layer',
+            default_graph_path=(DEFAULTS_PATH, 'Default Render Layer'),
             graph_io = [
                 PythonGraphIO(
                     name = 'Render Layer',
@@ -217,6 +220,7 @@ class NPR_Pipeline(Pipeline):
 
         render = PythonPipelineGraph(
             name='Render',
+            default_graph_path=(DEFAULTS_PATH, 'Default Render'),
             graph_io = [
                 PythonGraphIO(
                     name = 'Render',
