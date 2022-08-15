@@ -501,13 +501,17 @@ def preload_menus(structs, functions, graph=None):
             subcategory = v['meta'].get('subcategory')
             
             from collections import OrderedDict
-            settings = OrderedDict({'name': repr(label)})
+            settings = OrderedDict({
+                'name': repr(label),
+                'malt_label': repr(label)
+            })
             
             if subcategory and not is_internal:
                 _node_type = 'MaltFunctionSubCategoryNode'
                 label = subcategory
                 settings.update({
                     'name' : repr(label),
+                    'malt_label': repr(label),
                     'subcategory': repr(subcategory),
                     'function_enum': repr(k),
                 })

@@ -52,11 +52,10 @@ class MaltFunctionSubCategoryNode(bpy.types.Node, MaltFunctionNodeBase):
         return max(max_width, blf.dimensions(0, label)[0] + layout_padding)
 
     def draw_label(self):
+        label = super().draw_label()
         if self.hide:
-            label = self.get_function()['meta'].get('label', None)
-            if label:
-                return self.name + ' - ' + label
-        return self.name
+            label += ' - ' + self.get_function()['meta'].get('label', None)
+        return label
 
 
 def register():

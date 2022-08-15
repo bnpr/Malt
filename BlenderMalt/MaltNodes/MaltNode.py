@@ -17,6 +17,9 @@ class MaltNode():
 
     subscribed : bpy.props.BoolProperty(name="Subscribed", default=False,
         options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
+    
+    malt_label : bpy.props.StringProperty(
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
 
     # Blender will trigger update callbacks even before init and update has finished
     # So we use some wrappers to get a more sane behaviour
@@ -245,7 +248,16 @@ class MaltNode():
         return ntree.bl_idname == 'MaltTree'
     
     def draw_label(self):
-        return self.name.replace('_', ' ')
+        print_label = self.malt_label != ''
+        if print_label:
+            for input in self.inputs:
+                if input.show_in_material_panel:
+                    print_label = False
+                    break
+        if print_label:
+            return self.malt_label
+        else:
+            return self.name.replace('_', ' ')
 
     
 classes = []
