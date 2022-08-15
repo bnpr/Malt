@@ -30,7 +30,7 @@
 #define saturate(value) clamp((value), 0, 1)
 
 #define map_range(value, from_min, from_max, to_min, to_max) (mix((to_min), (to_max), ((value) - (from_min)) / ((from_max) - (from_min))))
-#define map_range_clamped(value, from_min, from_max, to_min, to_max) clamp(map_range(value, from_min, from_max, to_min, to_max), to_min, to_max)
+#define map_range_clamped(value, from_min, from_max, to_min, to_max) clamp(map_range(value, from_min, from_max, to_min, to_max), min(to_min, to_max), max(to_max, to_min))
 
 #define snap(value, range) (round((value) / (range)) * (range))
 #define distort(base, distortion, fac) (base + (distortion - 0.5) * 2 * fac)
