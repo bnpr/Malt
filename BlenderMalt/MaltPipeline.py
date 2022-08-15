@@ -211,9 +211,12 @@ def setup_parameters(ids):
             from BlenderMalt.MaltNodes import MaltCustomPasses
             MaltCustomPasses.setup_default_passes(get_bridge().graphs, bid)
         if isinstance(bid, bpy.types.Material):
-            #Patch old materials
-            if bid.malt.material_type == '' and bid.malt.shader_nodes:
-                bid.malt.material_type = bid.malt.shader_nodes.graph_type
+            #Patch material types
+            if bid.malt.material_type == '':
+                if bid.malt.shader_nodes:
+                    bid.malt.material_type = bid.malt.shader_nodes.graph_type
+                else:
+                    bid.malt.material_type = 'Mesh'
         for cls, parameters in class_parameters_map.items():
             if isinstance(bid, cls):
                 bid.malt_parameters.setup(parameters)
