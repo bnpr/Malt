@@ -180,6 +180,7 @@ LineDetectionOutput line_detection()
 /*  META
     @meta: label=Line Width;
     @width_scale: min=0.0; default=4.0;
+    @width_units: subtype=ENUM(Pixel,Screen,World);
     @id_boundary_width: subtype=Slider; min=0.0; max=1.0; default=vec4(1.0);
     @depth_width: subtype=Slider; min=0.0; max=1.0; default=1.0;
     @depth_threshold: subtype=Slider; min=0.0; max=1.0; default=0.1;
@@ -189,7 +190,7 @@ LineDetectionOutput line_detection()
     @normal_threshold_range: subtype=Slider; min=0.0; max=1.0; default=0.0;
 */
 float line_width_2(
-    float width_scale,
+    float width_scale, int width_units,
     float depth_width, float depth_threshold, float depth_threshold_range,
     float normal_width, float normal_threshold, float normal_threshold_range,
     vec4 id_boundary_width
@@ -253,6 +254,15 @@ float line_width_2(
             line = max(line, angle);
         }
 
+        if(width_units == 1)//Screen %
+        {
+            width_scale *= length(vec2(RESOLUTION)) / 1000.0;
+        }
+        if(width_units == 2)//World
+        {
+            width_scale /= pixel_world_size() * 100.0;
+        }
+                
         return line * width_scale;
     }
     #else
