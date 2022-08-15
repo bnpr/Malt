@@ -180,8 +180,12 @@ LineDetectionOutput line_detection_2(
     {
         for(int y = -radius; y <= radius; y++)
         {
-            //vec3 n = texelFetch(normal_texture, uv + ivec2(x,y), 0).xyz;
-            vec3 n = reconstruct_normal(depth_texture, depth_channel, uv + ivec2(x,y));
+            ivec2 uv = uv + ivec2(x,y);
+            if(uv != clamp(uv, ivec2(0), RESOLUTION))
+            {
+                continue;
+            }
+            vec3 n = reconstruct_normal(depth_texture, depth_channel, uv);
             average_normal += n;
         }   
     }
@@ -197,6 +201,10 @@ LineDetectionOutput line_detection_2(
     for(int i = 0; i < offsets.length(); i++)
     {   
         ivec2 sample_uv = uv + ivec2(offsets[i]);
+        if(sample_uv != clamp(sample_uv, ivec2(0), RESOLUTION))
+        {
+            continue;
+        }
         vec2 f_sample_uv = screen_uv() + offsets[i] * offset;
 
         vec3 sampled_normal = texelFetch(normal_texture, sample_uv, 0).xyz;
