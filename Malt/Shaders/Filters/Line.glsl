@@ -212,7 +212,7 @@ LineDetectionOutput line_detection_2(
         vec3 sampled_position = screen_to_camera(f_sample_uv , sampled_depth);
         uvec4 sampled_id = texelFetch(id_texture, sample_uv, 0);
 
-        float delta_normal = dot(true_normal, sampled_normal);
+        float delta_normal = dot(normal, sampled_normal);
         
         float plane_distance = dot(true_normal_camera, position);
         float offset_plane_distance = dot(true_normal_camera, sampled_position);
