@@ -47,10 +47,13 @@ class MaltTexturePropertyWrapper(bpy.types.PropertyGroup):
         options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
 
 class MaltMaterialPropertyWrapper(bpy.types.PropertyGroup):
-    #TODO:poll
-    material : bpy.props.PointerProperty(type=bpy.types.Material,
+    def poll(self, material):
+        return material.malt.material_type == self.type or self.type == ''
+    material : bpy.props.PointerProperty(type=bpy.types.Material, poll=poll,
         options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
     extension : bpy.props.StringProperty(
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
+    type : bpy.props.StringProperty(
         options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
 
     def add_or_duplicate(self, name=None):
@@ -60,6 +63,7 @@ class MaltMaterialPropertyWrapper(bpy.types.PropertyGroup):
             self.material = self.material.copy()
         else:
             self.material = bpy.data.materials.new(name)
+            self.material.malt.material_type = self.type
         self.id_data.update_tag()
         self.material.update_tag()
 
@@ -224,6 +228,7 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                     self.materials.add().name = name
                 
                 self.materials[name].extension = parameter.extension
+                self.materials[name].type = parameter.graph_type
                 shader_path = parameter.default_value
                 if shader_path and shader_path != '':
                     if isinstance(shader_path, str):
@@ -345,7 +350,8 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
         new_name = property_name + ' @ ' + override_name
         property = {}
         if main_prop['type'] == Type.MATERIAL:
-            property[new_name] =  MaterialParameter(main_prop['default'], self.materials[property_name].extension)
+            property[new_name] =  MaterialParameter(main_prop['default'], 
+            self.materials[property_name].extension, self.materials[property_name].type)
         else:
             property[new_name] = Parameter(main_prop['default'], main_prop['type'], main_prop['size'], main_prop['filter'], main_prop['malt_subtype'])
         self.setup(property, replace_parameters= False)

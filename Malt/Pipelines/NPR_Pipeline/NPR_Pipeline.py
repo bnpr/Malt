@@ -89,7 +89,8 @@ class NPR_Pipeline(Pipeline):
             Larger values will result in smoother/blurrier images while lower values will result in sharper/more aliased ones. 
             Keep it withing the 1-2 range for best results.""")
                 
-        self.parameters.world['Material.Default'] = MaterialParameter((DEFAULTS_PATH, 'Malt - Default Mesh Material'), '.mesh.glsl',
+        self.parameters.world['Material.Default'] = MaterialParameter((DEFAULTS_PATH, 'Malt - Default Mesh Material'),
+            '.mesh.glsl', 'Mesh',
             doc = self.parameters.world['Material.Default'].doc)
         
         self.parameters.world['Render'] = GraphParameter((DEFAULTS_PATH, 'Default Render'), 'Render', doc="""
@@ -99,7 +100,7 @@ class NPR_Pipeline(Pipeline):
         self.parameters.light['Light Group'] = Parameter(1, Type.INT, doc=
             "Lights only affect materials with a matching *Light Group* value.")
         
-        self.parameters.light['Shader'] = MaterialParameter('', '.light.glsl', doc=
+        self.parameters.light['Shader'] = MaterialParameter('', '.light.glsl', 'Light', doc=
             "When set, the *Material* with a custom *Light Shader* or *Light Node Tree* that will be used to render this light.")
         
         self.parameters.material['Light Groups.Light'] = Parameter([1,0,0,0], Type.INT, 4, '.mesh.glsl', doc=

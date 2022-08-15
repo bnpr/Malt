@@ -22,7 +22,10 @@ class MaltMaterial(bpy.types.PropertyGroup):
         self.update_source(context)
     
     def poll_tree(self, object):
-        return object.bl_idname == 'MaltTree'
+        return object.bl_idname == 'MaltTree' and (object.graph_type == self.material_type or self.material_type == '')
+    
+    material_type : bpy.props.StringProperty(name='Type',
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
 
     shader_source : bpy.props.StringProperty(name="Shader Source", subtype='FILE_PATH', update=update_source,
         set=malt_path_setter('shader_source'), get=malt_path_getter('shader_source'),
@@ -50,6 +53,7 @@ class MaltMaterial(bpy.types.PropertyGroup):
     
     def draw_ui(self, layout, extension, material_parameters):
         layout.active = self.id_data.library is None #only local data can be edited
+        layout.prop_search(self, 'material_type', bpy.context.scene.world.malt, 'material_types')
         row = layout.row()
         row.active = self.shader_nodes is None
         row.prop(self, 'shader_source')
@@ -59,6 +63,7 @@ class MaltMaterial(bpy.types.PropertyGroup):
                 self.shader_nodes = self.shader_nodes.copy()
             else:
                 self.shader_nodes = bpy.data.node_groups.new(f'{self.id_data.name} Node Tree', 'MaltTree')
+                self.shader_nodes.graph_type = self.material_type
             self.id_data.update_tag()
             self.shader_nodes.update_tag()
         row = layout.row(align=True)
@@ -131,11 +136,32 @@ class MALT_PT_MaterialSettings(bpy.types.Panel):
                 col.operator("object.material_slot_move", icon='TRIA_UP', text="").direction = 'UP'
                 col.operator("object.material_slot_move", icon='TRIA_DOWN', text="").direction = 'DOWN'
 
-        row = layout.row()
+        row = layout.row(align=True)
 
         if ob:
-            row.template_ID(ob, "active_material", new="material.new")
-
+            row.template_ID(ob, "active_material")
+            def add_or_duplicate():
+                nonlocal ob, slot
+                name = f'{ob.data.name} Material'
+                material = None
+                if slot and slot.material:
+                    material = slot.material.copy()
+                else:
+                    material = bpy.data.materials.new(name)
+                material.malt.material_type = 'Mesh'
+                if slot:
+                    slot.material = material
+                else:
+                    ob.data.materials.append(material)
+                ob.data.update_tag()
+                material.update_tag()
+            
+            if slot and slot.material:
+                row.operator('wm.malt_callback', text='', icon='DUPLICATE').callback.set(
+                    add_or_duplicate, 'Duplicate')
+            else:
+                row.operator('wm.malt_callback', text='New', icon='ADD').callback.set(
+                    add_or_duplicate, 'New')
             if slot:
                 icon_link = 'MESH_DATA' if slot.link == 'DATA' else 'OBJECT_DATA'
                 row.prop(slot, "link", icon=icon_link, icon_only=True)

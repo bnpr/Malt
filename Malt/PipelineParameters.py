@@ -107,9 +107,10 @@ class Parameter():
         return Parameter(default_value, type, size, subtype=subtype)
 
 class MaterialParameter(Parameter):
-    def __init__(self, default_path, extension, filter=None, doc=None):
+    def __init__(self, default_path, extension, graph_type=None, filter=None, doc=None):
         super().__init__(default_path, Type.MATERIAL, 1, filter, extension, doc)
         self.extension = extension
+        self.graph_type = graph_type
 
 class GraphParameter(Parameter):
     def __init__(self, default_path, graph_type, filter=None, doc=None):

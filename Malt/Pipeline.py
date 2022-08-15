@@ -57,10 +57,10 @@ class Pipeline():
             It's disabled by default since it slows down mesh loading in Blender.  
             When disabled, the *tangents* are calculated on the fly from the *pixel shader*.""")
         
-        self.parameters.world['Material.Default'] = MaterialParameter('', '.mesh.glsl', doc=
+        self.parameters.world['Material.Default'] = MaterialParameter('', '.mesh.glsl', 'Mesh', doc=
             "The default material, used for objects with no material assigned.")
         
-        self.parameters.world['Material.Override'] = MaterialParameter('', '.mesh.glsl', doc=
+        self.parameters.world['Material.Override'] = MaterialParameter('', '.mesh.glsl', 'Mesh', doc=
             "When set, overrides all scene materials with this one.")
         
         self.parameters.world['Viewport.Resolution Scale'] = Parameter(1.0 , Type.FLOAT, doc="""

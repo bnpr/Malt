@@ -38,7 +38,7 @@ class MaltFunctionNodeBase(MaltNode):
                     )
                 else:
                     self.malt_parameters.setup(
-                        {'PASS_MATERIAL': MaterialParameter(None, graph.file_extension)},
+                        {'PASS_MATERIAL': MaterialParameter(None, graph.file_extension, self.pass_graph_type)},
                         replace_parameters=False,
                         skip_private=False
                     )
