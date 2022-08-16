@@ -1,6 +1,8 @@
 #ifndef NODE_UTILS_2_INPUT_GLSL
 #define NODE_UTILS_2_INPUT_GLSL
 
+#include "Shading/BRDF.glsl"
+
 /*  META GLOBAL
     @meta: category=Input;
 */
