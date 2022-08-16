@@ -206,7 +206,7 @@ float Radial_Gradient(vec2 a)
     return atan(a.x, a.y) / (M_PI * 2) + 0.5;
 }
 
-/* META @meta: label=Wave; @mode: subtype=ENUM(Wave,Saw,Triangle); @a: label=Value; @scale: default=5.0;*/
+/* META @meta: label=Wave; @mode: subtype=ENUM(Sine,Saw,Triangle); @a: label=Value; @scale: default=5.0;*/
 float Wave_Texture(int mode, float a, float scale, float phase)
 {
     switch(mode)
