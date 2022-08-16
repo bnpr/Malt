@@ -82,16 +82,11 @@ vec3 hsv_to_rgb(vec3 hsv)
     return srgb_to_linear(hsv.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), hsv.y));
 }
 
-/* META 
-    @meta: label=HSV Edit; 
-    @value: default=1.0; min=0.0;
-*/
+/* META @meta: label=HSV Edit; */
 vec4 hsv_edit(vec4 color, float hue, float saturation, float value)
 {
     vec3 hsv = rgb_to_hsv(color.rgb);
-    hsv.x += hue;
-    hsv.y = max(hsv.y + saturation, 0.0);
-    hsv.z *= value;
+    hsv += vec3(hue, saturation, value);
     return vec4(hsv_to_rgb(hsv), color.a);
 }
 
