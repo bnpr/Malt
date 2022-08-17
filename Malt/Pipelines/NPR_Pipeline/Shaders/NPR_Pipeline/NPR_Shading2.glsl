@@ -26,7 +26,7 @@ void _shadow_params(int enum_value, out bool shadows, out bool self_shadows)
 #ifdef IS_MESH_SHADER
 /*  META
     @meta: label=NPR Diffuse;
-    @color_multiply: default=vec3(1);
+    @color: default=vec3(1);
     @position: subtype=Vector; default=POSITION;
     @normal: subtype=Normal; default=NORMAL;
     @offset: subtype=Slider; min=-1.0; max=1.0; default=0.0;
@@ -36,7 +36,7 @@ void _shadow_params(int enum_value, out bool shadows, out bool self_shadows)
 #else
 /*  META
     @meta: label=NPR Diffuse;
-    @color_multiply: default=vec3(1);
+    @color: default=vec3(1);
     @position: subtype=Vector; default=POSITION;
     @normal: subtype=Normal; default=NORMAL;
     @offset: subtype=Slider; min=-1.0; max=1.0; default=0.0;
@@ -45,7 +45,7 @@ void _shadow_params(int enum_value, out bool shadows, out bool self_shadows)
 */
 #endif
 vec3 NPR_diffuse_shading(
-    vec3 color_multiply,
+    vec3 color,
     sampler1D gradient,
     float offset,
     bool full_range,
@@ -99,13 +99,13 @@ vec3 NPR_diffuse_shading(
         }
     }
     
-    return result * color_multiply;
+    return result * color;
 }
 
 #ifdef IS_MESH_SHADER
 /*  META
     @meta: label=NPR Specular;
-    @color_multiply: default=vec3(1);
+    @color: default=vec3(1);
     @position: subtype=Vector; default=POSITION;
     @normal: subtype=Normal; default=NORMAL;
     @tangent: subtype=Normal; default=radial_tangent(NORMAL, vec3(0,0,1));
@@ -118,7 +118,7 @@ vec3 NPR_diffuse_shading(
 #else
 /*  META
     @meta: label=NPR Specular;
-    @color_multiply: default=vec3(1);
+    @color: default=vec3(1);
     @position: subtype=Vector; default=POSITION;
     @normal: subtype=Normal; default=NORMAL;
     @tangent: subtype=Normal; default=radial_tangent(NORMAL, vec3(0,0,1));
@@ -130,7 +130,7 @@ vec3 NPR_diffuse_shading(
 */
 #endif
 vec3 NPR_specular_shading(
-    vec3 color_multiply,
+    vec3 color,
     sampler1D gradient,
     float offset,
     float roughness,
@@ -194,7 +194,7 @@ vec3 NPR_specular_shading(
         }
     }
     
-    return result * color_multiply;
+    return result * color;
 }
 
 #endif //NPR_SHADING2_GLSL
