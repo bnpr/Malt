@@ -7,6 +7,8 @@
     @meta: category=Input;
 */
 
+#if !(defined(NO_POSITION_INPUT) && defined(NO_NORMAL_INPUT))
+
 /*  META
     @Coordinate_Space: label=Space; subtype=ENUM(Object,World,Camera,Screen); default=1;
     @Normal: default=NORMAL;
@@ -69,6 +71,10 @@ void Geometry(
     }
 }
 
+#endif //NO_POSITION_INPUT && NO_NORMAL_INPUT
+
+#ifndef NO_UV_INPUT
+
 /*  META
     @meta: label=UV Map;
     @Index: min=0; max=3;
@@ -95,6 +101,11 @@ void Tangent_UV_Map(
     Tangent = get_tangent(UV_Index);
     Bitangent = get_bitangent(UV_Index);
 }
+
+#endif //NO_GEOMETRY_UV
+
+#ifndef NO_NORMAL_INPUT
+
 /*  META
     @meta: subcategory=Tangent; label=Radial;
     @Axis: subtype=ENUM(X,Y,Z); default=2;
@@ -130,6 +141,10 @@ void Tangent_Procedural_UV(
     Bitangent = normalize(cross(NORMAL, Tangent)) * t.w;
 }
 
+#endif //NO_NORMAL_INPUT
+
+#ifndef NO_VERTEX_COLOR_INPUT
+
 /*  META
     @Index: min=0; max=3;
     @uv: label=UV;
@@ -141,6 +156,10 @@ void Vertex_Color(
 {
     Vertex_Color = COLOR[Index];
 }
+
+#endif //NO_VERTEX_COLOR_INPUT
+
+#ifndef NO_ID_INPUT
 
 /*  META
     @meta: label=Id;
@@ -157,6 +176,10 @@ void ID_Node(
     Custom_Id_B = unpackUnorm4x8(IO_ID.z);
     Custom_Id_C = unpackUnorm4x8(IO_ID.w);
 }
+
+#endif //NO_ID_INPUT
+
+#ifndef NO_MODEL_INPUT
 
 void Object_Info(
     out vec3 Position,
@@ -181,6 +204,10 @@ void Object_Info(
     Matrix = MODEL;
 }
 
+#endif //NO_MODEL_INPUT
+
+#ifndef NO_CAMERA_INPUT
+
 /*  META
     @Screen_UV: label=Screen UV;
 */
@@ -204,6 +231,8 @@ void Camera_Data(
     Projection_Matrix = PROJECTION;
     Is_Orthographic = is_ortho(PROJECTION);
 }
+
+#endif //NO_CAMERA_INPUT
 
 void Render_Info(
     out vec2 Resolution,
@@ -237,6 +266,8 @@ void Random(
     per_pixel = random_per_pixel(seed);
 }
 
+#if !(defined(NO_NORMAL_INPUT) || defined(NO_UV_INPUT))
+
 /* META
     @Uv: label=UV;
 */
@@ -248,5 +279,7 @@ void Curve_View_Mapping(
     Uv = curve_view_mapping(UV[0], NORMAL, get_tangent(0), -view_direction());
     Facing = 1 - (abs(Uv.y - 0.5) * 2);
 }
+
+#endif //NO_NORMAL_INPUT || NO_UV_INPUT
 
 #endif //NODE_UTILS_2_INPUT_GLSL

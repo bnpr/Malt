@@ -1,3 +1,7 @@
+#define NO_UV_INPUT
+#define NO_VERTEX_COLOR_INPUT
+#define NO_MODEL_INPUT
+
 #include "NPR_Intellisense.glsl"
 
 #ifdef PIXEL_SHADER
