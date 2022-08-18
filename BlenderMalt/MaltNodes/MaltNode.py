@@ -48,6 +48,8 @@ class MaltNode():
         if self.subscribed == False:
             tree = self.id_data
             bpy.msgbus.subscribe_rna(key=self.path_resolve('name', False),
+                owner=self, args=(None,), notify=lambda _ : self.setup())
+            bpy.msgbus.subscribe_rna(key=self.path_resolve('name', False),
                 owner=self, args=(None,), notify=lambda _ : tree.update())
             self.subscribed = True
 
