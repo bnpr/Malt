@@ -341,8 +341,8 @@ class NODE_OT_add_malt_subcategory_node(bpy.types.Operator):
                 setattr(node, k, eval(v))
             except:
                 print(f'Attribute {repr(k)} could not be set on {repr(node)}')
-
-        bpy.ops.wm.malt_cycle_sub_categories('INVOKE_DEFAULT')
+        if context.preferences.addons['BlenderMalt'].preferences.use_subfunction_cycling:
+            bpy.ops.wm.malt_cycle_sub_categories('INVOKE_DEFAULT')
         return{'FINISHED'}
 
 classes = [

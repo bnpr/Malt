@@ -40,7 +40,8 @@ class MaltFunctionSubCategoryNode(bpy.types.Node, MaltFunctionNodeBase):
         r = layout.row(align=True)
         r.context_pointer_set('active_node', self)
         r.prop(self, 'function_enum')
-        r.operator('wm.malt_cycle_sub_categories', text='', icon='COLLAPSEMENU')
+        if context.preferences.addons['BlenderMalt'].preferences.use_subfunction_cycling:
+            r.operator('wm.malt_cycle_sub_categories', text='', icon='COLLAPSEMENU')
         return super().draw_buttons(context, layout)
     
     def calc_node_width(self, point_size, dpi) -> float:

@@ -58,6 +58,7 @@ class Preferences(bpy.types.AddonPreferences):
     #Drawn in NODE_PT_overlay
     show_socket_types : bpy.props.BoolProperty(name='Show Socket Types', default=True)
     show_internal_nodes : bpy.props.BoolProperty(name='Show Internal Nodes', default=False)
+    use_subfunction_cycling: bpy.props.BoolProperty(name='Use Subfunction Cycling', default=True)
 
     def draw(self, context):
         layout = self.layout
@@ -86,6 +87,7 @@ def draw_node_tree_overlays(self:bpy.types.Menu, context: bpy.types.Context):
     self.layout.label(text='Malt')
     self.layout.prop(preferences, 'show_socket_types')
     self.layout.prop(preferences, 'show_internal_nodes')
+    self.layout.prop(preferences, 'use_subfunction_cycling')
 
 _VS_CODE_SETTINGS = '''
 {{
