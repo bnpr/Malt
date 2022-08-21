@@ -40,4 +40,12 @@ vec3 structure_tensor(sampler2D tex, vec2 uv)
     );
 }
 
+/* META @meta: internal=true; */
+vec3 flow_from_structure(vec3 s)
+{
+    float l = 0.5 * (s.y + s.x +sqrt(s.y*s.y - 2.0*s.x*s.y + s.x*s.x + 4.0*s.z*s.z));
+    vec2 d = vec2(s.x - l, s.z);
+    return (length(d) > 0.0)? vec3(normalize(d), sqrt(l)) : vec3(0,1,0);
+}
+
 #endif //STRUCTURE_TENSOR_GLSL

@@ -121,15 +121,22 @@ mat3 get_TBN(int uv_index)
 }
 
 /* META 
+    @tangent_normal: subtype=Vector; default='vec3(0.5, 0.5, 1.0)'; 
+    @TBN: label=TBN; default=get_TBN(0);
+*/
+vec3 tangent_to_world_normal(vec3 tangent_normal, mat3 TBN)
+{
+    return normalize(TBN * (tangent_normal * 2 - 1));
+}
+
+/* META 
     @meta: category=Texturing;
     @TBN: default=get_TBN(0);
     @uv: default=UV[0]; label=UV;
 */
 vec3 sample_normal_map_ex(sampler2D normal_texture, mat3 TBN, vec2 uv)
 {
-    vec3 tangent = texture(normal_texture, uv).xyz;
-    tangent = tangent * 2.0 - 1.0;
-    return normalize(TBN * tangent);
+    return tangent_to_world_normal(texture(normal_texture, uv).rgb, TBN);
 }
 
 /* META 
