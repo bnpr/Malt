@@ -82,10 +82,10 @@ float Float_degrees(float a) { return degrees(a); }
 /*META @meta: label=Degrees to Radians;*/
 float Float_radians(float a) { return radians(a); }
 
-/*META @meta: label=Equal;*/
-bool Float_equal(float a, float b){ return a == b; }
-/*META @meta: label=Not Equal;*/
-bool Float_not_equal(float a, float b){ return a != b; }
+/*META @meta: label=Equal; @e: default=0.1; min=0.0; */
+bool Float_equal(float a, float b, float e){ return abs(a - b) < abs(e); }
+/*META @meta: label=Not Equal; @e: default=0.1; min=0.0; */
+bool Float_not_equal(float a, float b, float e){ return !Float_equal(a, b, e); }
 /*META @meta: label=Greater;*/
 bool Float_greater(float a, float b){ return a > b; }
 /*META @meta: label=Greater or Equal;*/
