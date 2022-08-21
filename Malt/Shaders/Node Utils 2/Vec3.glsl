@@ -123,9 +123,9 @@ bool Vec3_not_equal(vec3 a, vec3 b){ return a != b; }
 /*META @meta: label=If Else; @a: label=If True; subtype=Vector; @b: label=If False; subtype=Vector;*/
 vec3 Vec3_if_else(bool condition, vec3 a, vec3 b){ return condition ? a : b; }
 
-/* META @meta: label=Join; */ 
-vec3 Vec3_join(float x, float y, float z) { return vec3(x,y,z);}
-/*META @meta: label=Split; @a: subtype=Vector;*/
-void Vec3_split(vec3 a, out float x, out float y, out float z){ x=a.x; y=a.y; z=a.z; }
+/* META @meta: label=Combine; */
+vec3 Vec3_combine(float x, float y, float z) { return vec3(x,y,z);}
+/*META @meta: label=Separate; @a: subtype=Vector;*/
+void Vec3_separate(vec3 a, out float x, out float y, out float z){ x=a.x; y=a.y; z=a.z; }
 
 #endif //NODE_UTILS_2_VEC3_GLSL

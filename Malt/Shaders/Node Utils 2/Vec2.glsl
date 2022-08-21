@@ -101,9 +101,9 @@ bool Vec2_not_equal(vec2 a, vec2 b){ return a != b; }
 /* META @meta: label=If Else; @a: label=If True; @b: label=If False; */
 vec2 Vec2_if_else(bool condition, vec2 a, vec2 b){ return condition ? a : b; }
 
-/* META @meta: label=Join; */
-vec2 Vec2_join(float x, float y) { return vec2(x,y);}
-/* META @meta: label=Split; */
-void Vec2_split(vec2 a, out float x, out float y){ x=a.x; y=a.y; }
+/* META @meta: label=Combine; */
+vec2 Vec2_combine(float x, float y) { return vec2(x,y);}
+/* META @meta: label=Separate; */
+void Vec2_separate(vec2 a, out float x, out float y){ x=a.x; y=a.y; }
 
 #endif //NODE_UTILS_2_VEC2_GLSL

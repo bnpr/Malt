@@ -97,13 +97,13 @@ bool Vec4_not_equal(vec4 a, vec4 b){ return a != b; }
 /*META @a: label=If True; subtype=Vector; @b: label=If False; subtype=Vector;*/
 vec4 Vec4_if_else(bool condition, vec4 a, vec4 b){ return condition ? a : b; }
 
-/*META @meta: label=Join; */
-vec4 Vec4_join(float r, float g, float b, float a) { return vec4(r,g,b,a);}
-/* META @meta: label=Join Color; @c: subtype=Color; @a: subtype=Slider; min=0.0; max=1.0; default=1.0;*/
-vec4 Vec4_join_color(vec3 c, float a){ return vec4(c, a); }
-/*META @meta: label=Split; @a: subtype=Vector; @w: label=A;*/
-void Vec4_split(vec4 a, out float r, out float g, out float b, out float w){ r=a.r; g=a.g; b=a.b; w=a.a; }
-/*META @meta: label=Split Color; @a: subtype=Color; @w: label=A; */
-void Vec4_split_color(vec4 a, out vec3 c, out float w){ c=a.xyz; w=a.a; }
+/*META @meta: label=Combine; */
+vec4 Vec4_combine(float r, float g, float b, float a) { return vec4(r,g,b,a);}
+/* META @meta: label=Combine Color; @c: subtype=Color; @a: subtype=Slider; min=0.0; max=1.0; default=1.0;*/
+vec4 Vec4_combine_color(vec3 c, float a){ return vec4(c, a); }
+/*META @meta: label=Separate; @a: subtype=Vector; @w: label=A;*/
+void Vec4_separate(vec4 a, out float r, out float g, out float b, out float w){ r=a.r; g=a.g; b=a.b; w=a.a; }
+/*META @meta: label=Separate Color; @a: subtype=Color; @w: label=A; */
+void Vec4_separate_color(vec4 a, out vec3 c, out float w){ c=a.xyz; w=a.a; }
 
 #endif //NODE_UTILS_2_VEC4_GLSL

@@ -25,8 +25,13 @@ float ao(int samples, float radius, float distribution_exponent, float bias)
 {
     #ifdef NPR_FILTERS_ACTIVE
     {
-        vec3 true_normal = true_normal();
-        float ao = ao(IN_NORMAL_DEPTH, 3, POSITION, true_normal, samples, radius, distribution_exponent, bias);
+        vec3 normal = NORMAL;
+        #ifdef IS_MESH_SHADER
+        {
+            normal = IO_NORMAL;
+        }
+        #endif
+        float ao = ao(IN_NORMAL_DEPTH, 3, POSITION, normal, samples, radius, distribution_exponent, bias);
         return ao;
     }
     #else
