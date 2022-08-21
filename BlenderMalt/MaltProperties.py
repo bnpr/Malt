@@ -143,6 +143,8 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                     parameter.filter = rna_copy.get('filter', None)
                     parameter.label = rna_copy.get('label', None)
                     parameter.enum_options = rna_copy.get('enum_options', None)
+                    parameter.min = rna_copy.get('min', None)
+                    parameter.max = rna_copy.get('max', None)
                 except:
                     pass
             
