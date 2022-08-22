@@ -586,6 +586,14 @@ def glsl_reflection(code, root_paths=[]):
                 new_key = key + ' - ' + function['signature']
                 reflection['functions'][new_key] = function
     
+    reflection['subcategories'] = {}
+    for key, function in reflection['functions'].items():
+        subcategory = function['meta'].get('subcategory')
+        if subcategory:
+            if subcategory not in reflection['subcategories'].keys():
+                reflection['subcategories'][subcategory] = []
+            reflection['subcategories'][subcategory].append(key)
+    
     return reflection
 
 

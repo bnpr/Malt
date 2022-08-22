@@ -96,12 +96,22 @@ class MaltTree(bpy.types.NodeTree):
     
     def get_full_library(self):
         #TODO: Cache
-        result = get_empty_library()
-        result['functions'].update(self.get_pipeline_graph().functions)
-        result['structs'].update(self.get_pipeline_graph().structs)
-        result['functions'].update(self.get_library()['functions'])
-        result['structs'].update(self.get_library()['structs'])
-        return result
+        graph = self.get_pipeline_graph()
+        library = self.get_library()
+        if library:
+            result = get_empty_library()
+            result['functions'].update(graph.functions)
+            result['structs'].update(graph.structs)
+            result['subcategories'].update(graph.subcategories)
+            result['functions'].update(library['functions'])
+            result['structs'].update(library['structs'])
+            return result
+        else:
+            return {
+                'functions' : graph.functions,
+                'structs' : graph.structs,
+                'subcategories' : graph.subcategories,
+            }
     
     def get_pipeline_graph(self, graph_type=None):
         if graph_type is None: 
@@ -319,6 +329,7 @@ def get_empty_library():
     return {
         'structs':{},
         'functions':{},
+        'subcategories':{},
         'paths':[],
     }
 __TIMESTAMP = time.time()

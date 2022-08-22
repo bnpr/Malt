@@ -28,6 +28,7 @@ class PipelineGraph():
         self.include_paths = []
         self.functions = {}
         self.structs = {}
+        self.subcategories = {}
         self.graph_io = { io.name : io for io in graph_io }
         self.default_graph_path = default_graph_path
         self.timestamp = 0
@@ -122,6 +123,7 @@ class GLSLPipelineGraph(PipelineGraph):
         reflection = glsl_reflection(src, self.include_paths)
         functions = reflection["functions"]
         structs = reflection["structs"]
+        subcategories = reflection["subcategories"]
         for io in self.graph_io.values():
             io.function = functions[io.name]
             io.signature = io.function['signature']
@@ -132,8 +134,11 @@ class GLSLPipelineGraph(PipelineGraph):
         for name in [*structs.keys()]:
             if name.startswith('_'): #TODO: Upper???
                 structs.pop(name)
+        for key, subcategory in subcategories.items():
+            subcategories[key] = [k for k in subcategory if k in functions.keys()]
         self.functions = functions
         self.structs = structs
+        self.subcategories = subcategories
     
     def generate_source(self, parameters):
         import textwrap

@@ -8,14 +8,16 @@ class MaltFunctionSubCategoryNode(bpy.types.Node, MaltFunctionNodeBase):
     subcategory : bpy.props.StringProperty(options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
 
     def get_function_enums(self, context=None):
+        library = self.id_data.get_full_library()
         items = []
-        for key, function in self.id_data.get_full_library()['functions'].items():
-            if function['meta'].get('internal'):
+        for key in library['subcategories'][self.subcategory]:
+            function = library['functions'].get(key)
+            if function is None or function['meta'].get('internal'):
                 continue
-            subcategory = function['meta'].get('subcategory')
-            if subcategory == self.subcategory:
-                label = function['meta'].get('label', function['name'].replace('_',' ').title())
-                items.append((key, label, label))
+            label = function['meta'].get('label')
+            if label is None:
+                label = function['name'].replace('_',' ').title()
+            items.append((key, label, label))
         return items
     
     def update_function_enum(self, context=None):
