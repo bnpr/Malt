@@ -166,7 +166,7 @@ float bayer_pattern(int size, vec2 texel)
         case 3: return bayer_8x8(ivec2(texel));
     }
 
-    return 0;
+    return 0.0;
 }
 /* META @meta: subcategory=Gradient; label=Linear;*/
 float Linear_Gradient(float a)
