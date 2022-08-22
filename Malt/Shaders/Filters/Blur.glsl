@@ -37,7 +37,7 @@ float _gaussian_weight(float x, float sigma)
 {
     float sigma2 = sigma * sigma;
 
-    return (1.0 / sqrt(2*PI*sigma2)) * exp(-(x*x, 2.0*sigma2));
+    return (1.0 / sqrt(2*PI*sigma2)) * exp(-(x*x / 2.0*sigma2));
 }
 
 float _gaussian_weight_2d(vec2 v, float sigma)
