@@ -63,6 +63,9 @@ class MaltTree(bpy.types.NodeTree):
     
     subscribed : bpy.props.BoolProperty(name="Subscribed", default=False,
         options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
+    
+    links_hash : bpy.props.StringProperty(options={'SKIP_SAVE','LIBRARY_EDITABLE'},
+        override={'LIBRARY_OVERRIDABLE'})
 
     def is_active(self):
         return self.get_pipeline_graph() is not None
@@ -237,6 +240,19 @@ class MaltTree(bpy.types.NodeTree):
             bpy.msgbus.subscribe_rna(key=self.path_resolve('name', False),
                 owner=self, args=(None,), notify=lambda _ : self.update())
             self.subscribed = True
+        
+        links_str = ''
+        for link in self.links:
+            try:
+                b = link.to_socket
+                a = b.get_linked(ignore_muted=False)
+                links_str += str(a) + str(b)
+            except:
+                pass #Reroute Node
+        links_hash = str(hash(links_str))
+        if links_hash == self.links_hash:
+            return
+        self.links_hash = links_hash
 
         self.disable_updates = True
         try:
