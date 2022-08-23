@@ -318,7 +318,7 @@ def setup_node_trees():
     for tree in bpy.data.node_groups:
         if tree.bl_idname == 'MaltTree' and tree.is_active():
             tree.reload_nodes()
-            tree.update_ext(force_track_shader_changes=False)
+            tree.update_ext(force_track_shader_changes=False, force_update=True)
     from BlenderMalt import MaltMaterial
     MaltMaterial.track_shader_changes()
 
@@ -395,7 +395,7 @@ def track_library_changes(force_update=False, is_initial_setup=False):
                 src_path = tree.get_library_path()
                 if tree.graph_type in updated_graphs or (src_path and src_path in needs_update):
                     tree.reload_nodes()
-                    tree.update_ext(force_track_shader_changes=False)
+                    tree.update_ext(force_track_shader_changes=False, force_update=True)
         from BlenderMalt import MaltMaterial
         MaltMaterial.track_shader_changes()
     
