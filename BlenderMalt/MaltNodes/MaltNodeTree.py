@@ -44,7 +44,7 @@ class MaltTree(bpy.types.NodeTree):
             self.user_remap(copy)
             bpy.data.node_groups.remove(self)
             copy.name = name
-            copy.update()#Compile
+            copy.update_ext(force_update=True)#Compile
     
     graph_type: bpy.props.StringProperty(name='Type', update=update_graph_type,
         options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
@@ -239,7 +239,7 @@ class MaltTree(bpy.types.NodeTree):
         if self.is_active():
             self.update_ext()
     
-    def update_ext(self, force_track_shader_changes=True):
+    def update_ext(self, force_track_shader_changes=True, force_update=False):
         if self.disable_updates:
             return
 
@@ -248,7 +248,7 @@ class MaltTree(bpy.types.NodeTree):
         
         if self.subscribed == False:
             bpy.msgbus.subscribe_rna(key=self.path_resolve('name', False),
-                owner=self, args=(None,), notify=lambda _ : self.update())
+                owner=self, args=(None,), notify=lambda _ : self.update_ext(force_update=True))
             self.subscribed = True
         
         links_str = ''
@@ -260,7 +260,7 @@ class MaltTree(bpy.types.NodeTree):
             except:
                 pass #Reroute Node
         links_hash = str(hash(links_str))
-        if links_hash == self.links_hash:
+        if force_update == False and links_hash == self.links_hash:
             return
         self.links_hash = links_hash
 
@@ -609,7 +609,7 @@ def node_header_ui(self, context):
         context.space_data.node_tree = node_tree.copy()
     self.layout.operator('wm.malt_callback', text='', icon='DUPLICATE').callback.set(duplicate, 'Duplicate')
     def recompile():
-        node_tree.update()
+        node_tree.update_ext(force_update=True)
     self.layout.operator("wm.malt_callback", text='', icon='FILE_REFRESH').callback.set(recompile, 'Recompile')
     self.layout.prop_search(node_tree, 'graph_type', context.scene.world.malt, 'graph_types',text='')
 

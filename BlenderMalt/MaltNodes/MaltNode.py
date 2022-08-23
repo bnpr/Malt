@@ -50,7 +50,7 @@ class MaltNode():
             bpy.msgbus.subscribe_rna(key=self.path_resolve('name', False),
                 owner=self, args=(None,), notify=lambda _ : self.setup())
             bpy.msgbus.subscribe_rna(key=self.path_resolve('name', False),
-                owner=self, args=(None,), notify=lambda _ : tree.update())
+                owner=self, args=(None,), notify=lambda _ : tree.update_ext(force_update=True))
             self.subscribed = True
 
     def update(self):

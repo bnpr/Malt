@@ -177,7 +177,7 @@ class MaltIONode(bpy.types.Node, MaltNode):
                 for tree in bpy.data.node_groups:
                     if tree.bl_idname == 'MaltTree':
                         tree.reload_nodes()
-                        tree.update()
+                        tree.update_ext(force_update=True)
             layout.operator("wm.malt_callback", text='Reload', icon='FILE_REFRESH').callback.set(refresh, 'Reload')
             def draw_parameters_list(owner, parameters_key):
                 row = layout.row()
