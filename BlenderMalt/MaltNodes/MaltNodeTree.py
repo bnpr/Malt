@@ -612,31 +612,7 @@ def node_header_ui(self, context):
         node_tree.update_ext(force_update=True)
     self.layout.operator("wm.malt_callback", text='', icon='FILE_REFRESH').callback.set(recompile, 'Recompile')
     self.layout.prop_search(node_tree, 'graph_type', context.scene.world.malt, 'graph_types',text='')
-
-@bpy.app.handlers.persistent
-def depsgraph_update(scene, depsgraph):
-    # Show the active material node tree in the Node Editor
-    from BlenderMalt import MaltPipeline
-    if MaltPipeline.is_malt_active() == False:
-        return
-    scene_updated = False
-    for deps_update in depsgraph.updates:
-        if isinstance(deps_update.id, bpy.types.Scene):
-            scene_updated = True
-    if scene_updated == False:
-        return
-    node_tree = None
-    try:
-        material = bpy.context.object.active_material
-        node_tree = material.malt.shader_nodes
-    except:
-        pass
-    if node_tree:
-        spaces, locked_spaces = get_node_spaces(bpy.context)
-        for space in spaces:
-            if space.node_tree is None or space.node_tree.graph_type == 'Mesh':
-                space.node_tree = node_tree
-                return
+    
 
 def get_node_spaces(context):
     spaces = []
@@ -652,6 +628,7 @@ def get_node_spaces(context):
                             locked_spaces.append(space)
     return spaces, locked_spaces
 
+
 def set_node_tree(context, node_tree, node = None):
     if context.space_data.type == 'NODE_EDITOR' and context.area.ui_type == 'MaltTree':
         context.space_data.path.append(node_tree, node = node)
@@ -662,10 +639,51 @@ def set_node_tree(context, node_tree, node = None):
         elif len(locked_spaces) > 0:
             locked_spaces[0].node_tree = node_tree
 
+
+def active_material_update(dummy=None):
+    try:
+        material = bpy.context.object.active_material
+        node_tree = material.malt.shader_nodes
+    except:
+        node_tree = None
+    if node_tree:
+        spaces, locked_spaces = get_node_spaces(bpy.context)
+        for space in spaces:
+            if space.node_tree is None or space.node_tree.graph_type == 'Mesh':
+                space.node_tree = node_tree
+                return
+
+
+@bpy.app.handlers.persistent
+def depsgraph_update(scene, depsgraph):
+    # Show the active material node tree in the Node Editor
+    from BlenderMalt import MaltPipeline
+    if MaltPipeline.is_malt_active() == False:
+        return
+    scene_updated = False
+    for deps_update in depsgraph.updates:
+        if isinstance(deps_update.id, bpy.types.Scene):
+            scene_updated = True
+    if scene_updated == False:
+        return
+    active_material_update()
+
+@bpy.app.handlers.persistent
+def load_post(dummy=None):
+    #msgbus subscriptions can't be persistent across file loads :(
+    bpy.msgbus.subscribe_rna(
+        key=(bpy.types.Object, "active_material_index"),
+        owner=__msgbus_owner,
+        args=(None,),
+        notify=active_material_update
+    )
+
 classes = [
     MaltTree,
     NODE_PT_MaltNodeTree,
 ]
+__msgbus_owner = object()
+
 
 def register():
     for _class in classes: bpy.utils.register_class(_class)
@@ -674,9 +692,13 @@ def register():
 
     bpy.app.timers.register(track_library_changes, persistent=True)
     bpy.app.handlers.depsgraph_update_post.append(depsgraph_update)
+    bpy.app.handlers.load_post.append(load_post)
+    
 
 def unregister():
+    bpy.msgbus.clear_by_owner(__msgbus_owner)
 
+    bpy.app.handlers.load_post.remove(load_post)
     bpy.app.handlers.depsgraph_update_post.remove(depsgraph_update)
     bpy.app.timers.unregister(track_library_changes)
     
