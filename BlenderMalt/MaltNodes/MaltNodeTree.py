@@ -424,6 +424,7 @@ def preload_menus(structs, functions, graph=None):
         return
 
     from nodeitems_utils import NodeCategory, NodeItem, register_node_categories, unregister_node_categories
+    from collections import OrderedDict
 
     # Uses copied code from the <nodeitems_utils> module. Manual check for updates required.
     class MaltNodeItem(NodeItem):
@@ -482,16 +483,16 @@ def preload_menus(structs, functions, graph=None):
 
     for name in graph.graph_io:
         label = name.replace('_',' ')
-        categories['Node Tree'].append(NodeItem('MaltIONode', label=f'{label} Input', settings={
+        categories['Node Tree'].append(NodeItem('MaltIONode', label=f'{label} Input', settings=OrderedDict({
+            'name' : repr(f'{label} Input'),
             'is_output' : repr(False),
             'io_type' : repr(name),
-            'name' : repr(f'{label} Input'),
-        }))
-        categories['Node Tree'].append(NodeItem('MaltIONode', label=f'{label} Output', settings={
+        })))
+        categories['Node Tree'].append(NodeItem('MaltIONode', label=f'{label} Output', settings=OrderedDict({
+            'name' : repr(f'{label} Output'),
             'is_output' : repr(True),
             'io_type' : repr(name),
-            'name' : repr(f'{label} Output'),
-        }))
+        })))
     
     if graph.language == 'GLSL':
         categories['Other'].append(NodeItem('MaltInlineNode', label='Inline Code', settings={
@@ -518,7 +519,6 @@ def preload_menus(structs, functions, graph=None):
             label = v['meta'].get('label', v['name'])
             subcategory = v['meta'].get('subcategory')
             
-            from collections import OrderedDict
             settings = OrderedDict({
                 'name': repr(label),
                 'malt_label': repr(label)
