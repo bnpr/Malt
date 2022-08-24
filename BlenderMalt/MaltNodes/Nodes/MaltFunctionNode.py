@@ -5,7 +5,7 @@ from BlenderMalt.MaltNodes.MaltNode import MaltNode
 
 class MaltFunctionNodeBase(MaltNode):
         
-    def malt_setup(self):
+    def malt_setup(self, copy=None):
         pass_type = self.get_pass_type()
         if pass_type != '':
             self.pass_graph_type, self.pass_graph_io_type = pass_type.split('.')
@@ -25,7 +25,7 @@ class MaltFunctionNodeBase(MaltNode):
         
         show_in_material_panel = function['meta'].get('category', '') == 'Parameters'
         
-        self.setup_sockets(inputs, outputs, show_in_material_panel=show_in_material_panel)
+        self.setup_sockets(inputs, outputs, show_in_material_panel=show_in_material_panel, copy=copy)
         
         if self.pass_graph_type != '':
             graph = self.id_data.get_pipeline_graph(self.pass_graph_type)

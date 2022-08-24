@@ -28,12 +28,12 @@ class MaltFunctionSubCategoryNode(bpy.types.Node, MaltFunctionNodeBase):
     function_enum : bpy.props.EnumProperty(name='', items=get_function_enums, update=update_function_enum,
         options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
     
-    def malt_setup(self):
+    def malt_setup(self, copy=None):
         #Keep the correct function when the subcategory list changes
         if self.function_type != '' and self.function_type != self.function_enum:
             try: self.function_enum = self.function_type
             except: pass
-        return super().malt_setup()
+        return super().malt_setup(copy=copy)
     
     def should_delete_outdated_links(self):
         return True

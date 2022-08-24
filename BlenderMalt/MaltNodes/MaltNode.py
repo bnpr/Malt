@@ -52,7 +52,10 @@ class MaltNode():
         self._disable_updates_wrapper(self.malt_init)
         
     def setup(self, context=None):
-        self._disable_updates_wrapper(self.malt_setup)
+        self.setup_implementation()
+    
+    def setup_implementation(self, copy=None):
+        self._disable_updates_wrapper(lambda: self.malt_setup(copy=copy))
         self.first_setup = False
         if self.subscribed == False:
             tree = self.id_data
@@ -66,11 +69,21 @@ class MaltNode():
         if self.disable_updates:
             return
         self._disable_updates_wrapper(self.malt_update)
+    
+    def copy(self, node):
+        #Find the node from its node tree so we have access to the node id_data
+        for tree in bpy.data.node_groups:
+            if node.name in tree.nodes:
+                if node.as_pointer() == tree.nodes[node.name].as_pointer():
+                    node = tree.nodes[node.name]
+                    break
+        self.subscribed = False #TODO: Is this needed???
+        self.setup_implementation(copy=node)
         
     def malt_init(self):
         pass
 
-    def malt_setup(self):
+    def malt_setup(self, copy=None):
         pass
     
     def malt_update(self):
@@ -79,7 +92,7 @@ class MaltNode():
     def on_socket_update(self, socket):
         pass
 
-    def setup_sockets(self, inputs, outputs, expand_structs=True, show_in_material_panel=False):
+    def setup_sockets(self, inputs, outputs, expand_structs=True, show_in_material_panel=False, copy=None):
         def _expand_structs(sockets):
             result = {}
             for name, dic in sockets.items():
@@ -162,19 +175,40 @@ class MaltNode():
                 label = input.get('meta', {}).get('label', name)
                 node_label = self.name.replace('.', ' ')
                 parameter.label = f'{node_label}.{label}'
-                _name = name
-                _postfix = ''
-                if ' @ ' in _name:
-                    name_postfix = _name.split(' @ ')
-                    _name = name_postfix[0]
-                    _postfix = ' @ ' + name_postfix[1]
-                key = self.inputs[_name].get_source_global_reference() + _postfix
-                key = key.replace('"','')
-                parameters[key] = parameter
-        self.id_data.malt_parameters.setup(parameters, skip_private=False, replace_parameters=False)
+                parameters[self.get_input_parameter_name(name)] = parameter
+        
+        copy_map = None
+        copy_map = {}
+        if copy is None:
+            #Copy from the node parameters, for backward compatibility 
+            for key in self.malt_parameters.get_rna().keys():
+                copy_map[self.get_input_parameter_name(key)] = key
+            copy = self.malt_parameters
+        else:
+            for key in inputs.keys():
+                from_name = copy.get_input_parameter_name(key)
+                to_name = self.get_input_parameter_name(key)
+                copy_map[to_name] = from_name
+            copy = copy.id_data.malt_parameters
+
+        self.id_data.malt_parameters.setup(parameters, skip_private=False, replace_parameters=False,
+            copy_from=copy, copy_map=copy_map)
         self.setup_socket_shapes()
         if self.first_setup:
             self.setup_width()
+    
+    def get_input_parameter_name(self, key):
+        name = key
+        postfix = ''
+        if ' @ ' in name:
+            name_postfix = name.split(' @ ')
+            name = name_postfix[0]
+            postfix = ' @ ' + name_postfix[1]
+        if name in self.inputs.keys() and self.inputs[name].active:
+            name = self.inputs[name].get_source_global_reference()
+        name += postfix 
+        name = name.replace('"','')
+        return name
     
     def should_delete_outdated_links(self):
         return False

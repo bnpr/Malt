@@ -6,13 +6,13 @@ class MaltStructNode(bpy.types.Node, MaltNode):
     
     bl_label = "Struct Node"
 
-    def malt_setup(self, context=None):
+    def malt_setup(self, copy=None):
         inputs = {}
         inputs[self.struct_type] = {'type' : self.struct_type}
         outputs = {}
         outputs[self.struct_type] = {'type' : self.struct_type}
 
-        self.setup_sockets(inputs, outputs)
+        self.setup_sockets(inputs, outputs, copy=copy)
 
     struct_type : bpy.props.StringProperty(update=MaltNode.setup,
         options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
