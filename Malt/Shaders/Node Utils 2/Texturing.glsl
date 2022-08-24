@@ -168,58 +168,58 @@ float bayer_pattern(int size, vec2 texel)
 
     return 0.0;
 }
-/* META @meta: subcategory=Gradient; label=Linear;*/
-float Linear_Gradient(float a)
+/* META @meta: subcategory=Gradient; label=Linear; @value: default=UV[0].x; */
+float Linear_Gradient(float value)
 {
-    return clamp(a, 0.0, 1.0);
+    return clamp(value, 0.0, 1.0);
 }
-/* META @meta: subcategory=Gradient; label=Quadratic; */
-float Quadratic_Gradient(float a)
+/* META @meta: subcategory=Gradient; label=Quadratic; @value: default=UV[0].x; */
+float Quadratic_Gradient(float value)
 {
-    return clamp(a*a, 0.0, 1.0);
+    return clamp(value*value, 0.0, 1.0);
 }
-/* META @meta: subcategory=Gradient; label=Easing; */
-float Easing_Gradient(float a)
+/* META @meta: subcategory=Gradient; label=Easing; @value: default=UV[0].x; */
+float Easing_Gradient(float value)
 {
-    float r = clamp(a, 0.0, 1.0);
+    float r = clamp(value, 0.0, 1.0);
     float t = r*r;
     return (3.0 * t - 2.0 * t * r);
 }
-/* META @meta: subcategory=Gradient; label=Diagonal; @a: label=UV;*/
-float Diagonal_Gradient(vec2 a)
+/* META @meta: subcategory=Gradient; label=Diagonal; @value: label=UV; default=UV[0]; */
+float Diagonal_Gradient(vec2 value)
 {
-    return (a.x + a.y) * 0.5;
+    return (value.x + value.y) * 0.5;
 }
-/* META @meta: subcategory=Gradient; label=Spherical; @a: label=Vector; subtype=Vector; */
-float Spherical_Gradient(vec3 a)
+/* META @meta: subcategory=Gradient; label=Spherical; @value: label=Vector; subtype=Vector; default=POSITION; */
+float Spherical_Gradient(vec3 value)
 {
-    return max(0.999999 - length(a), 0.0);
+    return max(0.999999 - length(value), 0.0);
 }
-/* META @meta: subcategory=Gradient; label=Quadratic Sphere; @a: label=Vector; subtype=Vector; */
-float Quadratic_Sphere_Gradient(vec3 a)
+/* META @meta: subcategory=Gradient; label=Quadratic Sphere; @value: label=Vector; subtype=Vector; default=POSITION; */
+float Quadratic_Sphere_Gradient(vec3 value)
 {
-    return pow(Spherical_Gradient(a), 2.0);
+    return pow(Spherical_Gradient(value), 2.0);
 }
-/* META @meta: subcategory=Gradient; label=Radial; @a: label=UV;*/
-float Radial_Gradient(vec2 a)
+/* META @meta: subcategory=Gradient; label=Radial; @value: label=UV; default=UV[0]; */
+float Radial_Gradient(vec2 value)
 {
-    return atan(a.x, a.y) / (M_PI * 2) + 0.5;
+    return atan(value.x, value.y) / (M_PI * 2) + 0.5;
 }
 
-/* META @meta: label=Wave; @mode: subtype=ENUM(Sine,Saw,Triangle); @a: label=Value; @scale: default=5.0;*/
-float Wave_Texture(int mode, float a, float scale, float phase)
+/* META @meta: label=Wave; @mode: subtype=ENUM(Sine,Saw,Triangle); @value: label=Coord; default=UV[0].x; @scale: default=5.0;*/
+float Wave_Texture(int mode, float value, float scale, float phase)
 {
     switch(mode)
     {
         case 0:
-            a = a * scale * M_PI * 2.0 + phase;
-            return sin(a - PI/2.0) * 0.5 + 0.5;
+            value = value * scale * M_PI * 2.0 + phase;
+            return sin(value - PI/2.0) * 0.5 + 0.5;
         case 1:
-            a = a * scale + phase;
-            return fract(a);
+            value = value * scale + phase;
+            return fract(value);
         case 2:
-            a = a * scale + phase;
-            return 1.0 - (abs(fract(a) - 0.5) * 2.0);
+            value = value * scale + phase;
+            return 1.0 - (abs(fract(value) - 0.5) * 2.0);
     }
 }
 
