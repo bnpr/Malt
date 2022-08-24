@@ -121,8 +121,12 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
         except:
             return {}
 
-    def setup(self, parameters, replace_parameters=True, reset_to_defaults=False, skip_private=True):
+    def setup(self, parameters, replace_parameters=True, reset_to_defaults=False, skip_private=True,
+        copy_from=None, copy_map=None):
         rna = self.get_rna()
+
+        if copy_from is None and self.parent:
+            copy_from = self.parent.malt_parameters
         
         def setup_parameter(name, parameter):
             if name not in rna.keys():
@@ -131,10 +135,14 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
             type_changed = 'type' not in rna[name].keys() or rna[name]['type'] != parameter.type
             size_changed = 'size' in rna[name].keys() and rna[name]['size'] != parameter.size
 
-            if self.parent:
+            copy_name = name
+            if copy_map and name in copy_map:
+                copy_name = copy_map[name]
+
+            if copy_from:
                 try:
                     rna_copy = {}
-                    parameter.default_value = self.parent.malt_parameters.get_parameter(name, [], {},
+                    parameter.default_value = copy_from.get_parameter(copy_name, [], {},
                         retrieve_blender_type=True, rna_copy=rna_copy)
                     parameter.default_value = rna_copy.get("default", None)
                     parameter.type = rna_copy.get('type', None)
@@ -148,10 +156,10 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                 except:
                     pass
             
-            if hasattr(parameter, 'label'):
+            if hasattr(parameter, 'label') and parameter.label:
                 rna[name]['label'] = parameter.label
             else:
-                rna[name]['label'] = name.replace('_',' ').replace('_0_','.').title()
+                rna[name]['label'] = name.removeprefix('U_0_').replace('_0_','.').replace('_',' ').title()
 
             if reset_to_defaults:
                 #TODO: Rename
@@ -178,19 +186,28 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
 
             if parameter.type in (Type.INT, Type.FLOAT):
                 if type_changed or equals(rna[name]['default'], self[name]):
-                    self[name] = parameter.default_value   
+                    if copy_from and copy_name in copy_from.keys():
+                        self[name] = copy_from[copy_name]
+                    else:
+                        self[name] = parameter.default_value   
                 elif size_changed:
                     resize()
             
             if parameter.type == Type.STRING:
                 if type_changed or equals(rna[name]['default'], self[name]):
-                    self[name] = parameter.default_value   
+                    if copy_from and copy_name in copy_from.keys():
+                        self[name] = copy_from[copy_name]
+                    else:
+                        self[name] = parameter.default_value  
 
             if parameter.type == Type.BOOL:
                 if name not in self.bools:
                     self.bools.add().name = name
                 if type_changed or equals(rna[name]['default'], self.bools[name].boolean):
-                    self.bools[name].boolean = parameter.default_value
+                    if copy_from and copy_name in copy_from.bools.keys():
+                        self.bools[name].boolean = copy_from.bools[copy_name].boolean
+                    else:
+                        self.bools[name].boolean = parameter.default_value
                 elif size_changed:
                     resize()
             
@@ -200,13 +217,18 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                 rna[name]['enum_options'] = parameter.enum_options
                 self.enums[name].enum_options = ','.join(parameter.enum_options)
                 if type_changed or equals(rna[name]['default'], self.enums[name].enum):
-                    self.enums[name].enum = parameter.default_value
+                    if copy_from and copy_name in copy_from.enums.keys():
+                        self.enums[name].enum = copy_from.enums[copy_name].enum
+                    else:
+                        self.enums[name].enum = parameter.default_value
             
             if parameter.type == Type.TEXTURE:
                 if name not in self.textures:
                     self.textures.add().name = name
                 if type_changed or self.textures[name] == rna[name]['default']:
-                    if isinstance(parameter.default_value, bpy.types.Image):
+                    if copy_from and copy_name in copy_from.textures.keys():
+                        self.textures[name].texture = copy_from.textures[copy_name].texture
+                    elif isinstance(parameter.default_value, bpy.types.Image):
                         self.textures.texture = parameter.default_value
 
             if parameter.type == Type.GRADIENT:
@@ -222,7 +244,9 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                             new = self.gradients[name].texture.color_ramp
                             MaltTextures.copy_color_ramp(old, new)
                 if type_changed or self.gradients[name] == rna[name]['default']:
-                    if isinstance(parameter.default_value, bpy.types.Texture):
+                    if copy_from and copy_name in copy_from.gradients.keys():
+                        self.gradients[name].texture = copy_from.gradients[copy_name].texture
+                    elif isinstance(parameter.default_value, bpy.types.Texture):
                         self.gradients.texture = parameter.default_value
 
             if parameter.type == Type.MATERIAL:
@@ -232,7 +256,10 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                 self.materials[name].extension = parameter.extension
                 self.materials[name].type = parameter.graph_type
                 shader_path = parameter.default_value
-                if shader_path and shader_path != '':
+                
+                if type_changed and copy_from and copy_name in copy_from.materials.keys():
+                    self.materials[name].material = copy_from.materials[copy_name].material
+                elif shader_path and shader_path != '':
                     if isinstance(shader_path, str):
                         material_name = name + ' : ' + os.path.basename(shader_path)
                         if material_name not in bpy.data.materials:
@@ -260,7 +287,10 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                 if name not in self.graphs:
                     self.graphs.add().name = name
                 self.graphs[name].type = parameter.graph_type
-                if parameter.default_value and isinstance(parameter.default_value, tuple):
+
+                if type_changed and copy_from and copy_name in copy_from.graphs.keys():
+                    self.graphs[name].graph = copy_from.graphs[copy_name].graph
+                elif parameter.default_value and isinstance(parameter.default_value, tuple):
                     blend_path, tree_name = parameter.default_value
                     blend_path += '.blend'
                     if tree_name not in bpy.data.node_groups:
