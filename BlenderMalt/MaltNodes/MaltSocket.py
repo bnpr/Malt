@@ -69,7 +69,12 @@ class MaltSocket(bpy.types.NodeSocket):
     def get_source_global_reference(self):
         assert(self.active)
         transpiler = self.id_data.get_transpiler()
-        return transpiler.global_reference(self.node.get_source_name(), self.name)
+        result = transpiler.global_reference(self.node.get_source_name(), self.name)
+        if len(result) > 63:
+            #Blender dictionary keys are limited to 63 characters
+            import xxhash
+            result = result[:59] + xxhash.xxh32_hexdigest(result)[:4]
+        return result
     
     def is_struct_member(self):
         return '.' in self.name
