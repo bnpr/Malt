@@ -364,9 +364,9 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                     updates = dict(default=rna_prop['default'], subtype='NONE')         
                     if rna_prop['subtype'] == 'COLOR':
                         updates.update(subtype='COLOR', soft_min=0.0, soft_max=1.0)
-                    if (soft_min := rna_prop['min']) != None:
+                    if (soft_min := rna_prop.get('min')) != None:
                         updates.update(soft_min=soft_min)
-                    if (soft_max := rna_prop['max']) != None:
+                    if (soft_max := rna_prop.get('max')) != None:
                         updates.update(soft_max=soft_max)
                     ui.update(**updates)
 
