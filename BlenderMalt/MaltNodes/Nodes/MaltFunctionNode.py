@@ -51,8 +51,14 @@ class MaltFunctionNodeBase(MaltNode):
         options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
 
     def get_parameters(self, overrides, resources):
-        parameters = MaltNode.get_parameters(self, overrides, resources)
+        parameters = super().get_parameters(overrides, resources)
         parameters['CUSTOM_IO'] = self.get_custom_io()
+        if 'PASS_GRAPH' in self.malt_parameters.graphs.keys():
+            try: parameters['PASS_GRAPH'] = self.malt_parameters.get_parameter('PASS_GRAPH', overrides, resources)
+            except: pass
+        if 'PASS_MATERIAL' in self.malt_parameters.materials.keys():
+            try: parameters['PASS_MATERIAL'] = self.malt_parameters.get_parameter('PASS_MATERIAL', overrides, resources)
+            except: pass
         return parameters
     
     def find_replacement_function(self):

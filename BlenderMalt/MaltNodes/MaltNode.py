@@ -25,7 +25,16 @@ class MaltNode():
     # So we use some wrappers to get a more sane behaviour
 
     def get_parameters(self, overrides, resources):
-        return self.malt_parameters.get_parameters(overrides, resources)
+        parameters = self.id_data.malt_parameters.get_parameters(overrides, resources)
+        result = {}
+        for name, input in self.inputs.items():
+            if '@' in name or input.active == False:
+                continue
+            key = input.get_source_global_reference()
+            key = key.replace('"','')
+            if key in parameters:
+                result[name] = parameters[key]
+        return result
 
     def _disable_updates_wrapper(self, function):
         tree = self.id_data
@@ -153,8 +162,16 @@ class MaltNode():
                 label = input.get('meta', {}).get('label', name)
                 node_label = self.name.replace('.', ' ')
                 parameter.label = f'{node_label}.{label}'
-                parameters[name] = parameter
-        self.malt_parameters.setup(parameters, skip_private=False)
+                _name = name
+                _postfix = ''
+                if ' @ ' in _name:
+                    name_postfix = _name.split(' @ ')
+                    _name = name_postfix[0]
+                    _postfix = ' @ ' + name_postfix[1]
+                key = self.inputs[_name].get_source_global_reference() + _postfix
+                key = key.replace('"','')
+                parameters[key] = parameter
+        self.id_data.malt_parameters.setup(parameters, skip_private=False, replace_parameters=False)
         self.setup_socket_shapes()
         if self.first_setup:
             self.setup_width()
@@ -238,10 +255,12 @@ class MaltNode():
                     return column.column()
                 else:
                     return column.row()
-            self.malt_parameters.draw_parameter(get_layout(), socket.name, text, is_node_socket=True)
-            for key in self.malt_parameters.get_rna().keys():
-                if key.startswith(socket.name + ' @ '):
-                    self.malt_parameters.draw_parameter(get_layout(), key, None, is_node_socket=True)
+            parameter_key = socket.get_source_global_reference()
+            parameter_key = parameter_key.replace('"','')
+            self.id_data.malt_parameters.draw_parameter(get_layout(), parameter_key, text, is_node_socket=True)
+            for key in self.id_data.malt_parameters.get_rna().keys():
+                if key.startswith(parameter_key + ' @ '):
+                    self.id_data.malt_parameters.draw_parameter(get_layout(), key, None, is_node_socket=True)
         else:
             layout.label(text=text)
 
