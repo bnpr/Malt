@@ -20,6 +20,10 @@ class MaltNode():
     
     malt_label : bpy.props.StringProperty(
         options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
+    
+    #Used on copy() to find the correct node instance
+    temp_id : bpy.props.StringProperty(
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
 
     # Blender will trigger update callbacks even before init and update has finished
     # So we use some wrappers to get a more sane behaviour
@@ -55,6 +59,7 @@ class MaltNode():
         self.setup_implementation()
     
     def setup_implementation(self, copy=None):
+        self.temp_id = str(hash(self))
         self._disable_updates_wrapper(lambda: self.malt_setup(copy=copy))
         self.first_setup = False
         if self.subscribed == False:
@@ -74,7 +79,7 @@ class MaltNode():
         #Find the node from its node tree so we have access to the node id_data
         for tree in bpy.data.node_groups:
             if node.name in tree.nodes:
-                if node.as_pointer() == tree.nodes[node.name].as_pointer():
+                if node.temp_id == tree.nodes[node.name].temp_id:
                     node = tree.nodes[node.name]
                     break
         self.subscribed = False #TODO: Is this needed???
