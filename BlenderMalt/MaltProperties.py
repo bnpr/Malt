@@ -389,6 +389,28 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
             for area in screen.areas:
                 area.tag_redraw()
     
+    def rename_property(self, old_name, new_name):
+        rna = self.get_rna()
+        rna[new_name] = rna.pop(old_name)
+        type = rna[new_name]['type']
+        self.override_from_parents[old_name].name = new_name
+        if old_name in self.show_in_children.keys():
+            self.show_in_children[old_name].name = new_name
+        if type in (Type.FLOAT, Type.INT, Type.STRING):
+            self[new_name] = self.pop(old_name)
+        elif type == Type.BOOL:
+            self.bools[old_name].name = new_name
+        elif type == Type.ENUM:
+            self.enums[old_name].name = new_name
+        elif type == Type.TEXTURE:
+            self.textures[old_name].name = new_name
+        elif type == Type.GRADIENT:
+            self.gradients[old_name].name = new_name
+        elif type == Type.MATERIAL:
+            self.materials[old_name].name = new_name
+        elif type == Type.GRAPH:
+            self.graphs[old_name].name = new_name
+    
     def remove_property(self, name):
         rna = self.get_rna()
         rna_prop = rna[name]

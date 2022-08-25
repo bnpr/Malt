@@ -197,9 +197,17 @@ class MaltNode():
         copy_map = None
         copy_map = {}
         if copy is None:
-            #Copy from the node parameters, for backward compatibility 
+            #Copy from the node parameters (backward compatibility)
+            materials = [m for m in bpy.data.materials if m.malt.shader_nodes is self.id_data]
+            transpiler = self.id_data.get_transpiler()
+            #Rename old material parameters (backward compatibility) 
             for key in self.malt_parameters.get_rna().keys():
-                copy_map[self.get_input_parameter_name(key)] = key
+                new_name = self.get_input_parameter_name(key)
+                copy_map[new_name] = key
+                old_name = transpiler.global_reference(transpiler.get_source_name(self.name), key)
+                for material in materials:
+                    if material.malt.parameters.get_rna().get(old_name):
+                        material.malt.parameters.rename_property(old_name, new_name)
             copy = self.malt_parameters
         else:
             for key in inputs.keys():
