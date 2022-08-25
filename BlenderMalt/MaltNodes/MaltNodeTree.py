@@ -39,6 +39,7 @@ class MaltTree(bpy.types.NodeTree):
                     directory=os.path.join(blend_path, internal_dir),
                     filename=tree_name
                 )
+                bpy.data.node_groups[tree_name].reload_nodes()
             name = self.name
             copy = bpy.data.node_groups[tree_name].copy()
             self.user_remap(copy)

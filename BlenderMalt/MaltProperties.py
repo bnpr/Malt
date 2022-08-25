@@ -283,7 +283,9 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                                 filepath=os.path.join(blend_path, internal_dir, material_name),
                                 directory=os.path.join(blend_path, internal_dir),
                                 filename=material_name
-                            )    
+                            )
+                            if bpy.data.materials[material_name].malt.shader_nodes:
+                                bpy.data.materials[material_name].malt.shader_nodes.reload_nodes()
                         if type_changed:
                             self.materials[name].material = bpy.data.materials[material_name]
                     
@@ -304,6 +306,7 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                             directory=os.path.join(blend_path, internal_dir),
                             filename=tree_name
                         )
+                        bpy.data.node_groups[tree_name].reload_nodes()
                     if type_changed:
                         self.graphs[name].graph = bpy.data.node_groups[tree_name]
                     if self.graphs[name].graph is not None:
