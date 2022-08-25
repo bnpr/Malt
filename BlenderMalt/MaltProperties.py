@@ -246,9 +246,10 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                             old = material.node_tree.nodes[name].color_ramp
                             new = self.gradients[name].texture.color_ramp
                             MaltTextures.copy_color_ramp(old, new)
-                if type_changed or self.gradients[name] == rna[name]['default']:
                     if copy_from and copy_name in copy_from.gradients.keys():
-                        self.gradients[name].texture = copy_from.gradients[copy_name].texture
+                        parent = copy_from.gradients[copy_name].texture.color_ramp
+                        child = self.gradients[name].texture.color_ramp
+                        MaltTextures.copy_color_ramp(parent, child)
                     elif isinstance(parameter.default_value, bpy.types.Texture):
                         self.gradients.texture = parameter.default_value
 
