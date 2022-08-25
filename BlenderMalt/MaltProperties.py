@@ -397,7 +397,9 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
             collection.remove(collection.find(key))
         remove(self.override_from_parents, name)
         remove(self.show_in_children, name)
-        if type == Type.BOOL:
+        if type in (Type.FLOAT, Type.INT, Type.STRING):
+            self.pop(name)
+        elif type == Type.BOOL:
             remove(self.bools, name)
         elif type == Type.ENUM:
             remove(self.enums, name)
