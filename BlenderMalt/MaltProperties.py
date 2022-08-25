@@ -152,7 +152,8 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                     parameter.subtype = rna_copy.get('malt_subtype', None)
                     parameter.size = rna_copy.get('size', None)
                     parameter.filter = rna_copy.get('filter', None)
-                    parameter.label = rna_copy.get('label', None)
+                    #Don't override the label
+                    #parameter.label = rna_copy.get('label', None)
                     parameter.enum_options = rna_copy.get('enum_options', None)
                     parameter.min = rna_copy.get('min', None)
                     parameter.max = rna_copy.get('max', None)
@@ -551,9 +552,15 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
 
             if filter and rna[key]['filter'] and rna[key]['filter'] != filter:
                 continue
-            
-            labels = rna[key].get('label', key.replace('_0_','.').replace('_',' '))
-            labels = labels.split('.')
+
+            label = rna[key].get('label')
+            if self.parent:
+                parent_prop = self.parent.malt_parameters.get_rna().get(key)
+                if parent_prop:
+                    label = parent_prop.get('label', label)
+            if label is None:
+                label = key.replace('_0_','.').replace('_',' ')
+            labels = label.split('.')
             label = labels[-1]
             
             #defer layout (box) creation until a property is actually drawn
