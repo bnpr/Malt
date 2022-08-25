@@ -16,7 +16,7 @@ class MaltNode():
         options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
 
     subscribed : bpy.props.BoolProperty(name="Subscribed", default=False,
-        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
+        options={'SKIP_SAVE','LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
     
     malt_label : bpy.props.StringProperty(
         options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
@@ -24,9 +24,9 @@ class MaltNode():
     #Used on copy() to find the correct node instance
     temp_id : bpy.props.StringProperty(
         options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
-
-    # Blender will trigger update callbacks even before init and update has finished
-    # So we use some wrappers to get a more sane behaviour
+    
+    internal_name : bpy.props.StringProperty(
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
 
     def get_parameters(self, overrides, resources):
         parameters = self.id_data.malt_parameters.get_parameters(overrides, resources)
@@ -40,6 +40,8 @@ class MaltNode():
                 result[name] = parameters[key]
         return result
 
+    # Blender will trigger update callbacks even before init and update has finished
+    # So we use some wrappers to get a more sane behaviour
     def _disable_updates_wrapper(self, function):
         tree = self.id_data
         tree.disable_updates = True
@@ -60,14 +62,15 @@ class MaltNode():
     
     def setup_implementation(self, copy=None):
         self.temp_id = str(hash(self))
+        if self.internal_name == '':
+            label = self.malt_label if self.malt_label != '' else self.name
+            self.internal_name = self.id_data.get_unique_node_id(label)
         self._disable_updates_wrapper(lambda: self.malt_setup(copy=copy))
         self.first_setup = False
         if self.subscribed == False:
-            tree = self.id_data
-            bpy.msgbus.subscribe_rna(key=self.path_resolve('name', False),
-                owner=self, args=(None,), notify=lambda _ : self.setup())
-            bpy.msgbus.subscribe_rna(key=self.path_resolve('name', False),
-                owner=self, args=(None,), notify=lambda _ : tree.update_ext(force_update=True))
+            def callback(dummy=None):
+                self.setup_implementation()
+            bpy.msgbus.subscribe_rna(key=self.path_resolve('name', False), owner=self, args=(None,), notify=callback)
             self.subscribed = True
 
     def update(self):
@@ -82,7 +85,11 @@ class MaltNode():
                 if node.temp_id == tree.nodes[node.name].temp_id:
                     node = tree.nodes[node.name]
                     break
+        #We can't copy a node without ID data
+        if node.id_data is None:
+            node = None
         self.subscribed = False #TODO: Is this needed???
+        self.internal_name = ''
         self.setup_implementation(copy=node)
     
     def free(self):
@@ -183,7 +190,7 @@ class MaltNode():
                     if k not in parameter.__dict__.keys():
                         parameter.__dict__[k] = v
                 label = input.get('meta', {}).get('label', name)
-                node_label = self.name.replace('.', ' ')
+                node_label = self.draw_label().replace('.', ' ')
                 parameter.label = f'{node_label}.{label}'
                 parameters[self.get_input_parameter_name(name)] = parameter
         
@@ -253,7 +260,7 @@ class MaltNode():
         self.width = self.calc_node_width(point_size, dpi)
 
     def get_source_name(self):
-        return self.id_data.get_transpiler().get_source_name(self.name)
+        return self.id_data.get_transpiler().get_source_name(self.internal_name)
 
     def get_source_code(self, transpiler):
         if self.id_data.get_source_language() == 'GLSL':

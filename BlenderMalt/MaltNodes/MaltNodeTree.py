@@ -122,6 +122,15 @@ class MaltTree(bpy.types.NodeTree):
             return bridge.graphs[graph_type]
         return None
     
+    def get_unique_node_id(self, base_name):
+        if 'NODE_NAMES' not in self.keys():
+            self['NODE_NAMES'] = {}
+        if base_name not in self['NODE_NAMES'].keys():
+            self['NODE_NAMES'][base_name] = 1
+        else:
+            self['NODE_NAMES'][base_name] += 1
+        return base_name + str(self['NODE_NAMES'][base_name])
+    
     def get_custom_io(self, io_type):
         params = []
         for node in self.nodes:
@@ -299,14 +308,6 @@ class MaltTree(bpy.types.NodeTree):
         # Otherwise these will be outddated in scene_eval
         self.update_tag()
 
-
-def reset_subscriptions():
-    for tree in bpy.data.node_groups:
-        if tree.bl_idname == 'MaltTree':
-            tree.subscribed = False
-            for node in tree.nodes:
-                if isinstance(node, MaltNode):
-                    node.subscribed = False
 
 def setup_node_trees():
     graphs = MaltPipeline.get_bridge().graphs
