@@ -193,6 +193,9 @@ class MaltNode():
 
         self.id_data.malt_parameters.setup(parameters, skip_private=False, replace_parameters=False,
             copy_from=copy, copy_map=copy_map)
+        for input in self.inputs:
+            #Sync old nodes with the new system
+            input.show_in_material_panel_update()
         self.setup_socket_shapes()
         if self.first_setup:
             self.setup_width()

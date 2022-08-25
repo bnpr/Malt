@@ -44,7 +44,13 @@ class MaltSocket(bpy.types.NodeSocket):
     default_initialization: bpy.props.StringProperty(default='',
         options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
     
-    show_in_material_panel: bpy.props.BoolProperty(default=True,
+    def show_in_material_panel_update(self, context=None):
+        key = self.node.get_input_parameter_name(self.name)
+        show_in_children = self.node.id_data.malt_parameters.show_in_children
+        if key in show_in_children.keys():
+            show_in_children[key].boolean = self.show_in_material_panel
+
+    show_in_material_panel: bpy.props.BoolProperty(default=True, update=show_in_material_panel_update,
         options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
     
     active: bpy.props.BoolProperty(default=True,

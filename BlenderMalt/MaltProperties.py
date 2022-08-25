@@ -112,6 +112,9 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
     override_from_parents : bpy.props.CollectionProperty(type=MaltBoolPropertyWrapper,
         options={'LIBRARY_EDITABLE'},
         override={'LIBRARY_OVERRIDABLE', 'USE_INSERTION'})
+    show_in_children : bpy.props.CollectionProperty(type=MaltBoolPropertyWrapper,
+        options={'LIBRARY_EDITABLE'},
+        override={'LIBRARY_OVERRIDABLE', 'USE_INSERTION'})
 
     def get_rna(self):
         try:
@@ -307,6 +310,10 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
 
             if name not in self.override_from_parents:
                 self.override_from_parents.add().name = name
+            if name not in self.show_in_children:
+                prop = self.show_in_children.add()
+                prop.name = name
+                prop.boolean = True
 
             rna[name]['active'] = True
             rna[name]["default"] = parameter.default_value
@@ -551,16 +558,20 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
             self.draw_parameter(get_layout, key, label, draw_callback=draw_callback)
 
 
-    def draw_parameter(self, layout, key, label, draw_callback=None, is_node_socket=False):
+    def draw_parameter(self, layout, key, label, draw_callback=None, is_node_socket=False, drawn_from_child=False):
         from . MaltNodes.MaltNodeTree import MaltTree
         from . MaltNodes.MaltNode import MaltNode
         if self.parent and self.override_from_parents[key].boolean == False:
-            if self.parent.malt_parameters.draw_parameter(layout, key, label, draw_callback, is_node_socket):
+            if self.parent.malt_parameters.draw_parameter(layout, key, label, draw_callback, is_node_socket, True):
                 return True
 
-        if key not in self.get_rna().keys():
+        rna = self.get_rna()
+        
+        if key not in rna.keys():
             return False
         
+        if drawn_from_child and key in self.show_in_children.keys() and self.show_in_children[key].boolean == False:
+            return True
 
         if callable(layout):
             layout = layout()
@@ -595,7 +606,6 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
             
             return result
 
-        rna = self.get_rna()
         if rna[key]['type'] in (Type.INT, Type.FLOAT, Type.STRING):
             #TODO: add subtype toggle
             slider = rna[key]['malt_subtype'] == 'Slider'
