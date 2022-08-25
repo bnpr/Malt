@@ -384,6 +384,28 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
         for screen in bpy.data.screens:
             for area in screen.areas:
                 area.tag_redraw()
+    
+    def remove_property(self, name):
+        rna = self.get_rna()
+        rna_prop = rna[name]
+        type = rna_prop['type']
+        rna.pop(name)
+        def remove(collection, key):
+            collection.remove(collection.find(key))
+        remove(self.override_from_parents, name)
+        remove(self.show_in_children, name)
+        if type == Type.BOOL:
+            remove(self.bools, name)
+        elif type == Type.ENUM:
+            remove(self.enums, name)
+        elif type == Type.TEXTURE:
+            remove(self.textures, name)
+        elif type == Type.GRADIENT:
+            remove(self.gradients, name)
+        elif type == Type.MATERIAL:
+            remove(self.materials, name)
+        elif type == Type.GRAPH:
+            remove(self.graphs, name)
 
     def add_override(self, property_name, override_name):
         main_prop = self.get_rna()[property_name]

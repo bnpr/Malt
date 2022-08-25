@@ -79,6 +79,11 @@ class MaltNode():
                     break
         self.subscribed = False #TODO: Is this needed???
         self.setup_implementation(copy=node)
+    
+    def free(self):
+        for input in self.inputs:
+            key = self.get_input_parameter_name(input.name)
+            self.id_data.malt_parameters.remove_property(key)
         
     def malt_init(self):
         pass
