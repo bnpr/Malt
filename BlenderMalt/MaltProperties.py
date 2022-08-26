@@ -128,6 +128,7 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
         copy_from=None, copy_map=None):
         rna = self.get_rna()
 
+        copy_values = copy_from is not None
         if copy_from is None and self.parent:
             copy_from = self.parent.malt_parameters
         
@@ -190,7 +191,7 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
 
             if parameter.type in (Type.INT, Type.FLOAT):
                 if type_changed or equals(rna[name]['default'], self[name]):
-                    if copy_from and copy_name in copy_from.keys():
+                    if copy_values and copy_name in copy_from.keys():
                         self[name] = copy_from[copy_name]
                     else:
                         self[name] = parameter.default_value   
@@ -199,7 +200,7 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
             
             if parameter.type == Type.STRING:
                 if type_changed or equals(rna[name]['default'], self[name]):
-                    if copy_from and copy_name in copy_from.keys():
+                    if copy_values and copy_name in copy_from.keys():
                         self[name] = copy_from[copy_name]
                     else:
                         self[name] = parameter.default_value  
@@ -208,7 +209,7 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                 if name not in self.bools:
                     self.bools.add().name = name
                 if type_changed or equals(rna[name]['default'], self.bools[name].boolean):
-                    if copy_from and copy_name in copy_from.bools.keys():
+                    if copy_values and copy_name in copy_from.bools.keys():
                         self.bools[name].boolean = copy_from.bools[copy_name].boolean
                     else:
                         self.bools[name].boolean = parameter.default_value
@@ -221,7 +222,7 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                 rna[name]['enum_options'] = parameter.enum_options
                 self.enums[name].enum_options = ','.join(parameter.enum_options)
                 if type_changed or equals(rna[name]['default'], self.enums[name].enum):
-                    if copy_from and copy_name in copy_from.enums.keys():
+                    if copy_values and copy_name in copy_from.enums.keys():
                         self.enums[name].enum = copy_from.enums[copy_name].enum
                     else:
                         self.enums[name].enum = parameter.default_value
@@ -230,7 +231,7 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                 if name not in self.textures:
                     self.textures.add().name = name
                 if type_changed or self.textures[name] == rna[name]['default']:
-                    if copy_from and copy_name in copy_from.textures.keys():
+                    if copy_values and copy_name in copy_from.textures.keys():
                         self.textures[name].texture = copy_from.textures[copy_name].texture
                     elif isinstance(parameter.default_value, bpy.types.Image):
                         self.textures.texture = parameter.default_value
@@ -247,7 +248,7 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                             old = material.node_tree.nodes[name].color_ramp
                             new = self.gradients[name].texture.color_ramp
                             MaltTextures.copy_color_ramp(old, new)
-                    if copy_from and copy_name in copy_from.gradients.keys():
+                    if copy_values and copy_name in copy_from.gradients.keys():
                         parent = copy_from.gradients[copy_name].texture.color_ramp
                         child = self.gradients[name].texture.color_ramp
                         MaltTextures.copy_color_ramp(parent, child)
@@ -262,7 +263,7 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                 self.materials[name].type = parameter.graph_type
                 shader_path = parameter.default_value
                 
-                if type_changed and copy_from and copy_name in copy_from.materials.keys():
+                if type_changed and copy_values and copy_name in copy_from.materials.keys():
                     self.materials[name].material = copy_from.materials[copy_name].material
                 elif shader_path and shader_path != '':
                     if isinstance(shader_path, str):
@@ -295,7 +296,7 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                     self.graphs.add().name = name
                 self.graphs[name].type = parameter.graph_type
 
-                if type_changed and copy_from and copy_name in copy_from.graphs.keys():
+                if type_changed and copy_values and copy_name in copy_from.graphs.keys():
                     self.graphs[name].graph = copy_from.graphs[copy_name].graph
                 elif parameter.default_value and isinstance(parameter.default_value, tuple):
                     blend_path, tree_name = parameter.default_value
