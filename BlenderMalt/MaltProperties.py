@@ -143,23 +143,18 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
             if copy_map and name in copy_map:
                 copy_name = copy_map[name]
 
-            if copy_from:
-                try:
-                    rna_copy = {}
-                    parameter.default_value = copy_from.get_parameter(copy_name, [], {},
-                        retrieve_blender_type=True, rna_copy=rna_copy)
-                    parameter.default_value = rna_copy.get("default", None)
-                    parameter.type = rna_copy.get('type', None)
-                    parameter.subtype = rna_copy.get('malt_subtype', None)
-                    parameter.size = rna_copy.get('size', None)
-                    parameter.filter = rna_copy.get('filter', None)
-                    #Don't override the label
-                    #parameter.label = rna_copy.get('label', None)
-                    parameter.enum_options = rna_copy.get('enum_options', None)
-                    parameter.min = rna_copy.get('min', None)
-                    parameter.max = rna_copy.get('max', None)
-                except:
-                    pass
+            if copy_from and copy_name in copy_from.get_rna():
+                rna_prop = copy_from.get_rna()[copy_name]
+                parameter.default_value = rna_prop.get("default")
+                parameter.type = rna_prop.get('type')
+                parameter.subtype = rna_prop.get('malt_subtype')
+                parameter.size = rna_prop.get('size')
+                parameter.filter = rna_prop.get('filter')
+                if self.parent:
+                    parameter.label = rna_prop.get('label')
+                parameter.enum_options = rna_prop.get('enum_options')
+                parameter.min = rna_prop.get('min')
+                parameter.max = rna_prop.get('max')
             
             if hasattr(parameter, 'label') and parameter.label:
                 rna[name]['label'] = parameter.label
@@ -440,11 +435,23 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
         main_prop = self.get_rna()[property_name]
         new_name = property_name + ' @ ' + override_name
         property = {}
+        parameter = None
         if main_prop['type'] == Type.MATERIAL:
-            property[new_name] =  MaterialParameter(main_prop['default'], 
+            parameter =  MaterialParameter(main_prop['default'], 
             self.materials[property_name].extension, self.materials[property_name].type)
         else:
-            property[new_name] = Parameter(main_prop['default'], main_prop['type'], main_prop['size'], main_prop['filter'], main_prop['malt_subtype'])
+            parameter = Parameter(main_prop['default'], main_prop['type'], main_prop['size'],
+                main_prop['filter'], main_prop['malt_subtype'])
+            parameter.default_value = main_prop.get("default")
+            parameter.type = main_prop.get('type')
+        parameter.subtype = main_prop.get('malt_subtype')
+        parameter.size = main_prop.get('size')
+        parameter.filter = main_prop.get('filter')
+        parameter.label = main_prop.get('label') + ' @ ' + override_name
+        parameter.enum_options = main_prop.get('enum_options')
+        parameter.min = main_prop.get('min')
+        parameter.max = main_prop.get('max')
+        property[new_name] = parameter
         self.setup(property, replace_parameters= False)
     
     def remove_override(self, property):
