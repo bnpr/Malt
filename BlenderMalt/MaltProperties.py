@@ -378,18 +378,16 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
         return parameters
     
     def get_parameter(self, key, overrides, proxys, retrieve_blender_type=False, rna_copy={}):
-        from . MaltNodes.MaltNodeTree import MaltTree
-        from . MaltNodes.MaltNode import MaltNode
         if self.parent and self.override_from_parents[key].boolean == False:
             try:
                 return self.parent.malt_parameters.get_parameter(key, overrides, proxys, retrieve_blender_type, rna_copy)
             except:
                 pass
         if key not in self.get_rna().keys():
-            if isinstance(self.id_data, MaltTree) and self.id_data.malt_parameters.as_pointer() == self.as_pointer():
+            if self.id_data.__class__.__name__ == 'MaltTree' and self.id_data.malt_parameters.as_pointer() == self.as_pointer():
                 if self.id_data.is_active():
                     for node in self.id_data.nodes:
-                        if isinstance(node, MaltNode):
+                        if hasattr(node, 'malt_parameters'):
                             for input in node.inputs:
                                 if key == input.get_source_global_reference():
                                     try:
@@ -468,7 +466,7 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                 result['source'] = graph.get_generated_source()
                 result['parameters'] = {}
                 for node in graph.nodes:
-                    if isinstance(node, MaltNode):
+                    if hasattr(node, 'get_source_name'):
                         result['parameters'][node.get_source_name()] = node.get_parameters(overrides, proxys)
                 return result
             else:
@@ -535,16 +533,14 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
 
 
     def draw_parameter(self, layout, key, label, draw_callback=None, is_node_socket=False):
-        from . MaltNodes.MaltNodeTree import MaltTree
-        from . MaltNodes.MaltNode import MaltNode
         if self.parent and self.override_from_parents[key].boolean == False:
             if self.parent.malt_parameters.draw_parameter(layout, key, label, draw_callback, is_node_socket):
                 return True
         if key not in self.get_rna().keys():
-            if isinstance(self.id_data, MaltTree) and self.id_data.malt_parameters.as_pointer() == self.as_pointer():
+            if self.id_data.__class__.__name__ == 'MaltTree' and self.id_data.malt_parameters.as_pointer() == self.as_pointer():
                 if self.id_data.is_active():
                     for node in self.id_data.nodes:
-                        if isinstance(node, MaltNode):
+                        if hasattr(node, 'malt_parameters'):
                             for input in node.inputs:
                                 if key == input.get_source_global_reference():
                                     if input.show_in_material_panel:

@@ -277,7 +277,7 @@ def depsgraph_update(scene, depsgraph):
             elif isinstance(update.id, bpy.types.Texture):
                 MaltTextures.unload_gradients(update.id)
                 redraw = True
-            elif isinstance(update.id, MaltTree):
+            elif update.id.__class__.__name__ == 'MaltTree':
                 redraw = True
         if redraw:
             for screen in bpy.data.screens:
