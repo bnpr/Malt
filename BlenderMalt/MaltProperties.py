@@ -474,8 +474,6 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
         return parameters
     
     def get_parameter(self, key, overrides, proxys, retrieve_blender_type=False, rna_copy={}):
-        from . MaltNodes.MaltNodeTree import MaltTree
-        from . MaltNodes.MaltNode import MaltNode
         if self.parent and self.override_from_parents[key].boolean == False:
             try:
                 return self.parent.malt_parameters.get_parameter(key, overrides, proxys, retrieve_blender_type, rna_copy)
@@ -551,7 +549,7 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                 result['source'] = graph.get_generated_source()
                 result['parameters'] = {}
                 for node in graph.nodes:
-                    if isinstance(node, MaltNode):
+                    if hasattr(node, 'get_source_name'):
                         result['parameters'][node.get_source_name()] = node.get_parameters(overrides, proxys)
                 return result
             else:
@@ -624,8 +622,6 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
 
 
     def draw_parameter(self, layout, key, label, draw_callback=None, is_node_socket=False, drawn_from_child=False):
-        from . MaltNodes.MaltNodeTree import MaltTree
-        from . MaltNodes.MaltNode import MaltNode
         if self.parent and self.override_from_parents[key].boolean == False:
             if self.parent.malt_parameters.draw_parameter(layout, key, label, draw_callback, is_node_socket, True):
                 return True

@@ -213,7 +213,7 @@ class MaltTree(bpy.types.NodeTree):
             add_node_inputs(output, nodes, output.io_type)
             code = ''
             for node in nodes:
-                if isinstance(node, MaltNode):
+                if hasattr(node, 'get_source_code'):
                     code += node.get_source_code(transpiler) + '\n'
             code += output.get_source_code(transpiler)
             return code
@@ -226,7 +226,7 @@ class MaltTree(bpy.types.NodeTree):
         if library_path:
             shader['GLOBAL'] += '#include "{}"\n'.format(library_path)
         for node in linked_nodes:
-            if isinstance(node, MaltNode):
+            if hasattr(node, 'get_source_global_parameters'):
                 shader['GLOBAL'] += node.get_source_global_parameters(transpiler)
         self['source'] = pipeline_graph.generate_source(shader)
         return self['source']
@@ -235,10 +235,10 @@ class MaltTree(bpy.types.NodeTree):
         self.disable_updates = True
         try:
             for node in self.nodes:
-                if isinstance(node, MaltNode):
+                if hasattr(node, 'setup'):
                     node.setup()
             for node in self.nodes:
-                if isinstance(node, MaltNode):
+                if hasattr(node, 'update'):
                     node.update()
         except:
             import traceback
@@ -361,7 +361,7 @@ def track_library_changes(force_update=False, is_initial_setup=False):
     #purge unused libraries
     new_dic = {}
     for tree in bpy.data.node_groups:
-        if isinstance(tree, MaltTree) and tree.is_active():
+        if tree.bl_idname == 'MaltTree' and tree.is_active():
             src_path = tree.get_library_path()
             if src_path:
                 if src_path in __LIBRARIES:
@@ -393,7 +393,7 @@ def track_library_changes(force_update=False, is_initial_setup=False):
         
     if is_initial_setup == False and max(len(needs_update), len(updated_graphs)) > 0:
         for tree in bpy.data.node_groups:
-            if isinstance(tree, MaltTree) and tree.is_active():
+            if tree.bl_idname == 'MaltTree' and tree.is_active():
                 src_path = tree.get_library_path()
                 if tree.graph_type in updated_graphs or (src_path and src_path in needs_update):
                     tree.reload_nodes()
