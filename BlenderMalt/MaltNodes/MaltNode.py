@@ -44,6 +44,7 @@ class MaltNode():
     # So we use some wrappers to get a more sane behaviour
     def _disable_updates_wrapper(self, function):
         tree = self.id_data
+        initial_tree_updates = tree.disable_updates
         tree.disable_updates = True
         self.disable_updates = True
         try:
@@ -51,7 +52,7 @@ class MaltNode():
         except:
             import traceback
             traceback.print_exc()
-        tree.disable_updates = False
+        tree.disable_updates = initial_tree_updates
         self.disable_updates = False
 
     def init(self, context):
