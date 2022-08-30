@@ -32,7 +32,11 @@ class MaltFunctionSubCategoryNode(bpy.types.Node, MaltFunctionNodeBase):
         #Keep the correct function when the subcategory list changes
         if self.function_type != '' and self.function_type != self.function_enum:
             try: self.function_enum = self.function_type
-            except: pass
+            except:
+                try:
+                    self.function_type = self.function_enum
+                except:
+                    self.function_type = self.get_function_enums()[0][0]
         return super().malt_setup()
     
     def should_delete_outdated_links(self):
