@@ -182,10 +182,10 @@ void pack_id(
     out uvec4 id
 )
 {
-    id.x = packUnorm4x8(object_id);
-    id.y = packUnorm4x8(custom_id_a);
-    id.z = packUnorm4x8(custom_id_b);
-    id.w = packUnorm4x8(custom_id_c);
+    id.x = packUnorm4x8(object_id)%65535;
+    id.y = packUnorm4x8(custom_id_a)%65535;
+    id.z = packUnorm4x8(custom_id_b)%65535;
+    id.w = packUnorm4x8(custom_id_c)%65535;
 }
 
 #endif //NPR_MESH_GLSL

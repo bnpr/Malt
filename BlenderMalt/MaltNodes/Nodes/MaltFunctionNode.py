@@ -62,6 +62,8 @@ class MaltFunctionNodeBase(MaltNode):
         return parameters
     
     def find_replacement_function(self):
+        print(f'Try to find replacement function for "{self.name}"')
+        print(f'Current function is "{self.function_type}"')
         library = self.id_data.get_full_library()['functions']
         for key, function in library.items():
             try:
@@ -89,9 +91,12 @@ class MaltFunctionNodeBase(MaltNode):
                     total_parameters = len(_function['parameters'])
                     key = _key
                     function = _function
-        if _key:
+        if key:
+            print(f'Found replacement function: "{key}"')
             self.function_type = key
             return function
+        else:
+            self.select = True
 
     def get_function(self, skip_overrides=True, find_replacement=False):
         graph = self.id_data.get_pipeline_graph()
