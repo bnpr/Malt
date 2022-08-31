@@ -5,7 +5,7 @@ from BlenderMalt.MaltNodes.MaltNode import MaltNode
 
 class MaltFunctionNodeBase(MaltNode):
         
-    def malt_setup(self):
+    def malt_setup(self, copy=None):
         pass_type = self.get_pass_type()
         if pass_type != '':
             self.pass_graph_type, self.pass_graph_io_type = pass_type.split('.')
@@ -25,7 +25,7 @@ class MaltFunctionNodeBase(MaltNode):
         
         show_in_material_panel = function['meta'].get('category', '') == 'Parameters'
         
-        self.setup_sockets(inputs, outputs, show_in_material_panel=show_in_material_panel)
+        self.setup_sockets(inputs, outputs, show_in_material_panel=show_in_material_panel, copy=copy)
         
         if self.pass_graph_type != '':
             graph = self.id_data.get_pipeline_graph(self.pass_graph_type)
@@ -51,8 +51,14 @@ class MaltFunctionNodeBase(MaltNode):
         options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
 
     def get_parameters(self, overrides, resources):
-        parameters = MaltNode.get_parameters(self, overrides, resources)
+        parameters = super().get_parameters(overrides, resources)
         parameters['CUSTOM_IO'] = self.get_custom_io()
+        if 'PASS_GRAPH' in self.malt_parameters.graphs.keys():
+            try: parameters['PASS_GRAPH'] = self.malt_parameters.get_parameter('PASS_GRAPH', overrides, resources)
+            except: pass
+        if 'PASS_MATERIAL' in self.malt_parameters.materials.keys():
+            try: parameters['PASS_MATERIAL'] = self.malt_parameters.get_parameter('PASS_MATERIAL', overrides, resources)
+            except: pass
         return parameters
     
     def find_replacement_function(self):

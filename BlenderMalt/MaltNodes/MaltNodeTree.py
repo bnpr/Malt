@@ -39,6 +39,7 @@ class MaltTree(bpy.types.NodeTree):
                     directory=os.path.join(blend_path, internal_dir),
                     filename=tree_name
                 )
+                bpy.data.node_groups[tree_name].reload_nodes()
             name = self.name
             copy = bpy.data.node_groups[tree_name].copy()
             self.user_remap(copy)
@@ -120,6 +121,15 @@ class MaltTree(bpy.types.NodeTree):
         if bridge and graph_type in bridge.graphs:
             return bridge.graphs[graph_type]
         return None
+    
+    def get_unique_node_id(self, base_name):
+        if 'NODE_NAMES' not in self.keys():
+            self['NODE_NAMES'] = {}
+        if base_name not in self['NODE_NAMES'].keys():
+            self['NODE_NAMES'][base_name] = 1
+        else:
+            self['NODE_NAMES'][base_name] += 1
+        return base_name + str(self['NODE_NAMES'][base_name])
     
     def get_custom_io(self, io_type):
         params = []
@@ -298,14 +308,6 @@ class MaltTree(bpy.types.NodeTree):
         # Otherwise these will be outddated in scene_eval
         self.update_tag()
 
-
-def reset_subscriptions():
-    for tree in bpy.data.node_groups:
-        if tree.bl_idname == 'MaltTree':
-            tree.subscribed = False
-            for node in tree.nodes:
-                if hasattr(node, 'subscribed'):
-                    node.subscribed = False
 
 def setup_node_trees():
     graphs = MaltPipeline.get_bridge().graphs

@@ -16,19 +16,35 @@ class MaltNode():
         options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
 
     subscribed : bpy.props.BoolProperty(name="Subscribed", default=False,
-        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
+        options={'SKIP_SAVE','LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
     
     malt_label : bpy.props.StringProperty(
         options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
+    
+    #Used on copy() to find the correct node instance
+    temp_id : bpy.props.StringProperty(
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
+    
+    internal_name : bpy.props.StringProperty(
+        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
+
+    def get_parameters(self, overrides, resources):
+        parameters = self.id_data.malt_parameters.get_parameters(overrides, resources)
+        result = {}
+        for name, input in self.inputs.items():
+            if '@' in name or input.active == False:
+                continue
+            key = input.get_source_global_reference()
+            key = key.replace('"','')
+            if key in parameters:
+                result[name] = parameters[key]
+        return result
 
     # Blender will trigger update callbacks even before init and update has finished
     # So we use some wrappers to get a more sane behaviour
-
-    def get_parameters(self, overrides, resources):
-        return self.malt_parameters.get_parameters(overrides, resources)
-
     def _disable_updates_wrapper(self, function):
         tree = self.id_data
+        initial_tree_updates = tree.disable_updates
         tree.disable_updates = True
         self.disable_updates = True
         try:
@@ -36,32 +52,56 @@ class MaltNode():
         except:
             import traceback
             traceback.print_exc()
-        tree.disable_updates = False
+        tree.disable_updates = initial_tree_updates
         self.disable_updates = False
 
     def init(self, context):
         self._disable_updates_wrapper(self.malt_init)
         
     def setup(self, context=None):
-        self._disable_updates_wrapper(self.malt_setup)
+        self.setup_implementation()
+    
+    def setup_implementation(self, copy=None):
+        self.temp_id = str(hash(self))
+        if self.internal_name == '':
+            label = self.malt_label if self.malt_label != '' else self.name
+            self.internal_name = self.id_data.get_unique_node_id(label)
+        self._disable_updates_wrapper(lambda: self.malt_setup(copy=copy))
         self.first_setup = False
         if self.subscribed == False:
-            tree = self.id_data
-            bpy.msgbus.subscribe_rna(key=self.path_resolve('name', False),
-                owner=self, args=(None,), notify=lambda _ : self.setup())
-            bpy.msgbus.subscribe_rna(key=self.path_resolve('name', False),
-                owner=self, args=(None,), notify=lambda _ : tree.update_ext(force_update=True))
+            def callback(dummy=None):
+                self.setup_implementation()
+            bpy.msgbus.subscribe_rna(key=self.path_resolve('name', False), owner=self, args=(None,), notify=callback)
             self.subscribed = True
 
     def update(self):
         if self.disable_updates:
             return
         self._disable_updates_wrapper(self.malt_update)
+    
+    def copy(self, node):
+        #Find the node from its node tree so we have access to the node id_data
+        for tree in bpy.data.node_groups:
+            if node.name in tree.nodes:
+                if node.temp_id == tree.nodes[node.name].temp_id:
+                    node = tree.nodes[node.name]
+                    break
+        #We can't copy a node without ID data
+        if node.id_data is None:
+            node = None
+        self.subscribed = False #TODO: Is this needed???
+        self.internal_name = ''
+        self.setup_implementation(copy=node)
+    
+    def free(self):
+        for input in self.inputs:
+            key = self.get_input_parameter_name(input.name)
+            self.id_data.malt_parameters.remove_property(key)
         
     def malt_init(self):
         pass
 
-    def malt_setup(self):
+    def malt_setup(self, copy=None):
         pass
     
     def malt_update(self):
@@ -70,7 +110,7 @@ class MaltNode():
     def on_socket_update(self, socket):
         pass
 
-    def setup_sockets(self, inputs, outputs, expand_structs=True, show_in_material_panel=False):
+    def setup_sockets(self, inputs, outputs, expand_structs=True, show_in_material_panel=False, copy=None):
         def _expand_structs(sockets):
             result = {}
             for name, dic in sockets.items():
@@ -151,13 +191,53 @@ class MaltNode():
                     if k not in parameter.__dict__.keys():
                         parameter.__dict__[k] = v
                 label = input.get('meta', {}).get('label', name)
-                node_label = self.name.replace('.', ' ')
+                node_label = self.draw_label().replace('.', ' ')
                 parameter.label = f'{node_label}.{label}'
-                parameters[name] = parameter
-        self.malt_parameters.setup(parameters, skip_private=False)
+                parameters[self.get_input_parameter_name(name)] = parameter
+        
+        copy_map = None
+        copy_map = {}
+        if copy is None:
+            #Copy from the node parameters (backward compatibility)
+            materials = [m for m in bpy.data.materials if m.malt.shader_nodes is self.id_data]
+            transpiler = self.id_data.get_transpiler()
+            #Rename old material parameters (backward compatibility) 
+            for key in self.malt_parameters.get_rna().keys():
+                new_name = self.get_input_parameter_name(key)
+                copy_map[new_name] = key
+                old_name = transpiler.global_reference(transpiler.get_source_name(self.name), key)
+                for material in materials:
+                    if material.malt.parameters.get_rna().get(old_name):
+                        material.malt.parameters.rename_property(old_name, new_name)
+            copy = self.malt_parameters
+        else:
+            for key in inputs.keys():
+                from_name = copy.get_input_parameter_name(key)
+                to_name = self.get_input_parameter_name(key)
+                copy_map[to_name] = from_name
+            copy = copy.id_data.malt_parameters
+
+        self.id_data.malt_parameters.setup(parameters, skip_private=False, replace_parameters=False,
+            copy_from=copy, copy_map=copy_map)
+        for input in self.inputs:
+            #Sync old nodes with the new system
+            input.show_in_material_panel_update()
         self.setup_socket_shapes()
         if self.first_setup:
             self.setup_width()
+    
+    def get_input_parameter_name(self, key):
+        name = key
+        postfix = ''
+        if ' @ ' in name:
+            name_postfix = name.split(' @ ')
+            name = name_postfix[0]
+            postfix = ' @ ' + name_postfix[1]
+        if name in self.inputs.keys() and self.inputs[name].active:
+            name = self.inputs[name].get_source_global_reference()
+        name += postfix 
+        name = name.replace('"','')
+        return name
     
     def should_delete_outdated_links(self):
         return False
@@ -189,7 +269,7 @@ class MaltNode():
         self.width = self.calc_node_width(point_size, dpi)
 
     def get_source_name(self):
-        return self.id_data.get_transpiler().get_source_name(self.name)
+        return self.id_data.get_transpiler().get_source_name(self.internal_name)
 
     def get_source_code(self, transpiler):
         if self.id_data.get_source_language() == 'GLSL':
@@ -238,10 +318,12 @@ class MaltNode():
                     return column.column()
                 else:
                     return column.row()
-            self.malt_parameters.draw_parameter(get_layout(), socket.name, text, is_node_socket=True)
-            for key in self.malt_parameters.get_rna().keys():
-                if key.startswith(socket.name + ' @ '):
-                    self.malt_parameters.draw_parameter(get_layout(), key, None, is_node_socket=True)
+            parameter_key = socket.get_source_global_reference()
+            parameter_key = parameter_key.replace('"','')
+            self.id_data.malt_parameters.draw_parameter(get_layout(), parameter_key, text, is_node_socket=True)
+            for key in self.id_data.malt_parameters.get_rna().keys():
+                if key.startswith(parameter_key + ' @ '):
+                    self.id_data.malt_parameters.draw_parameter(get_layout(), key, None, is_node_socket=True)
         else:
             layout.label(text=text)
 

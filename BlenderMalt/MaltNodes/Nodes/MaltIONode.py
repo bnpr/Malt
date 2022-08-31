@@ -26,7 +26,7 @@ class MaltIONode(bpy.types.Node, MaltNode):
     allow_custom_parameters : bpy.props.BoolProperty(default=False,
         options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
 
-    def malt_setup(self):
+    def malt_setup(self, copy=None):
         function = self.get_function()
         
         self.graph_type = self.id_data.graph_type
@@ -57,7 +57,7 @@ class MaltIONode(bpy.types.Node, MaltNode):
                     'type': parameter.parameter
                 }
         
-        self.setup_sockets(inputs, outputs)
+        self.setup_sockets(inputs, outputs, copy=copy)
 
     io_type : bpy.props.StringProperty(update=MaltNode.setup,
         options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})

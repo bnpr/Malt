@@ -199,10 +199,6 @@ class OT_MaltCycleSubCategories(bpy.types.Operator):
         '''These lists are being read by the UI callback.'''
         self.prev_enums: list[tuple[str, str, str]] = []
         self.next_enums: list[tuple[str, str, str]] = []
-    
-    def disable_malt_updates(self, disable):
-        self.node.disable_updates = disable
-        self.node_tree.disable_updates = disable
 
     def cycle_function_enums(self, letter: str, cycle_forward: bool) -> None:
         letter = letter.lower()
@@ -223,12 +219,10 @@ class OT_MaltCycleSubCategories(bpy.types.Operator):
         self.prev_enums = enum_subset[:new_index]
         self.next_enums = enum_subset[new_index + 1:]
         
-        self.disable_malt_updates(True)
         self.node.function_enum = new_function_enum
         self.node.setup_width()
 
     def modal(self, context: bpy.types.Context, event: bpy.types.Event):
-
         context.area.tag_redraw()
         if event.type in ['LEFTMOUSE', 'RET', 'SPACE']:
             return self.execute(context)
@@ -242,16 +236,16 @@ class OT_MaltCycleSubCategories(bpy.types.Operator):
 
     def execute(self, context: bpy.types.Context):
         self.node_tree.disable_updates = False
+        if self.node.function_enum != self.init_function_enum:
+            self.node_tree.update_ext(force_update=True)
         self.register_interface(False)
-        self.disable_malt_updates(False)
         context.area.tag_redraw()
         return{'FINISHED'}
     
     def cancel(self, context):
-        self.register_interface(False)
-        self.disable_malt_updates(True)
         self.node.function_enum = self.init_function_enum
-        self.disable_malt_updates(False)
+        self.node_tree.disable_updates = False
+        self.register_interface(False)
         context.area.tag_redraw()
         return{'CANCELLED'}
     

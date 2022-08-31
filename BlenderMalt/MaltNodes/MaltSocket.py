@@ -44,7 +44,13 @@ class MaltSocket(bpy.types.NodeSocket):
     default_initialization: bpy.props.StringProperty(default='',
         options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
     
-    show_in_material_panel: bpy.props.BoolProperty(default=True,
+    def show_in_material_panel_update(self, context=None):
+        key = self.node.get_input_parameter_name(self.name)
+        show_in_children = self.node.id_data.malt_parameters.show_in_children
+        if key in show_in_children.keys():
+            show_in_children[key].boolean = self.show_in_material_panel
+
+    show_in_material_panel: bpy.props.BoolProperty(default=True, update=show_in_material_panel_update,
         options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
     
     active: bpy.props.BoolProperty(default=True,
@@ -69,7 +75,12 @@ class MaltSocket(bpy.types.NodeSocket):
     def get_source_global_reference(self):
         assert(self.active)
         transpiler = self.id_data.get_transpiler()
-        return transpiler.global_reference(self.node.get_source_name(), self.name)
+        result = transpiler.global_reference(self.node.get_source_name(), self.name)
+        if len(result) > 63:
+            #Blender dictionary keys are limited to 63 characters
+            import xxhash
+            result = result[:59] + xxhash.xxh32_hexdigest(result)[:4]
+        return result
     
     def is_struct_member(self):
         return '.' in self.name

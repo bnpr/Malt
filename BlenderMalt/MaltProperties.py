@@ -112,6 +112,9 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
     override_from_parents : bpy.props.CollectionProperty(type=MaltBoolPropertyWrapper,
         options={'LIBRARY_EDITABLE'},
         override={'LIBRARY_OVERRIDABLE', 'USE_INSERTION'})
+    show_in_children : bpy.props.CollectionProperty(type=MaltBoolPropertyWrapper,
+        options={'LIBRARY_EDITABLE'},
+        override={'LIBRARY_OVERRIDABLE', 'USE_INSERTION'})
 
     def get_rna(self):
         try:
@@ -121,8 +124,13 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
         except:
             return {}
 
-    def setup(self, parameters, replace_parameters=True, reset_to_defaults=False, skip_private=True):
+    def setup(self, parameters, replace_parameters=True, reset_to_defaults=False, skip_private=True,
+        copy_from=None, copy_map=None):
         rna = self.get_rna()
+
+        copy_values = copy_from is not None
+        if copy_from is None and self.parent:
+            copy_from = self.parent.malt_parameters
         
         def setup_parameter(name, parameter):
             if name not in rna.keys():
@@ -131,27 +139,27 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
             type_changed = 'type' not in rna[name].keys() or rna[name]['type'] != parameter.type
             size_changed = 'size' in rna[name].keys() and rna[name]['size'] != parameter.size
 
-            if self.parent:
-                try:
-                    rna_copy = {}
-                    parameter.default_value = self.parent.malt_parameters.get_parameter(name, [], {},
-                        retrieve_blender_type=True, rna_copy=rna_copy)
-                    parameter.default_value = rna_copy.get("default", None)
-                    parameter.type = rna_copy.get('type', None)
-                    parameter.subtype = rna_copy.get('malt_subtype', None)
-                    parameter.size = rna_copy.get('size', None)
-                    parameter.filter = rna_copy.get('filter', None)
-                    parameter.label = rna_copy.get('label', None)
-                    parameter.enum_options = rna_copy.get('enum_options', None)
-                    parameter.min = rna_copy.get('min', None)
-                    parameter.max = rna_copy.get('max', None)
-                except:
-                    pass
+            copy_name = name
+            if copy_map and name in copy_map:
+                copy_name = copy_map[name]
+
+            if copy_from and copy_name in copy_from.get_rna():
+                rna_prop = copy_from.get_rna()[copy_name]
+                parameter.default_value = rna_prop.get("default")
+                parameter.type = rna_prop.get('type')
+                parameter.subtype = rna_prop.get('malt_subtype')
+                parameter.size = rna_prop.get('size')
+                parameter.filter = rna_prop.get('filter')
+                if self.parent:
+                    parameter.label = rna_prop.get('label')
+                parameter.enum_options = rna_prop.get('enum_options')
+                parameter.min = rna_prop.get('min')
+                parameter.max = rna_prop.get('max')
             
-            if hasattr(parameter, 'label'):
+            if hasattr(parameter, 'label') and parameter.label:
                 rna[name]['label'] = parameter.label
             else:
-                rna[name]['label'] = name.replace('_',' ').replace('_0_','.').title()
+                rna[name]['label'] = name.removeprefix('U_0_').replace('_0_','.').replace('_',' ').title()
 
             if reset_to_defaults:
                 #TODO: Rename
@@ -178,19 +186,28 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
 
             if parameter.type in (Type.INT, Type.FLOAT):
                 if type_changed or equals(rna[name]['default'], self[name]):
-                    self[name] = parameter.default_value   
+                    if copy_values and copy_name in copy_from.keys():
+                        self[name] = copy_from[copy_name]
+                    else:
+                        self[name] = parameter.default_value   
                 elif size_changed:
                     resize()
             
             if parameter.type == Type.STRING:
                 if type_changed or equals(rna[name]['default'], self[name]):
-                    self[name] = parameter.default_value   
+                    if copy_values and copy_name in copy_from.keys():
+                        self[name] = copy_from[copy_name]
+                    else:
+                        self[name] = parameter.default_value  
 
             if parameter.type == Type.BOOL:
                 if name not in self.bools:
                     self.bools.add().name = name
                 if type_changed or equals(rna[name]['default'], self.bools[name].boolean):
-                    self.bools[name].boolean = parameter.default_value
+                    if copy_values and copy_name in copy_from.bools.keys():
+                        self.bools[name].boolean = copy_from.bools[copy_name].boolean
+                    else:
+                        self.bools[name].boolean = parameter.default_value
                 elif size_changed:
                     resize()
             
@@ -200,13 +217,18 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                 rna[name]['enum_options'] = parameter.enum_options
                 self.enums[name].enum_options = ','.join(parameter.enum_options)
                 if type_changed or equals(rna[name]['default'], self.enums[name].enum):
-                    self.enums[name].enum = parameter.default_value
+                    if copy_values and copy_name in copy_from.enums.keys():
+                        self.enums[name].enum = copy_from.enums[copy_name].enum
+                    else:
+                        self.enums[name].enum = parameter.default_value
             
             if parameter.type == Type.TEXTURE:
                 if name not in self.textures:
                     self.textures.add().name = name
                 if type_changed or self.textures[name] == rna[name]['default']:
-                    if isinstance(parameter.default_value, bpy.types.Image):
+                    if copy_values and copy_name in copy_from.textures.keys():
+                        self.textures[name].texture = copy_from.textures[copy_name].texture
+                    elif isinstance(parameter.default_value, bpy.types.Image):
                         self.textures.texture = parameter.default_value
 
             if parameter.type == Type.GRADIENT:
@@ -221,8 +243,11 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                             old = material.node_tree.nodes[name].color_ramp
                             new = self.gradients[name].texture.color_ramp
                             MaltTextures.copy_color_ramp(old, new)
-                if type_changed or self.gradients[name] == rna[name]['default']:
-                    if isinstance(parameter.default_value, bpy.types.Texture):
+                    if copy_values and copy_name in copy_from.gradients.keys():
+                        parent = copy_from.gradients[copy_name].texture.color_ramp
+                        child = self.gradients[name].texture.color_ramp
+                        MaltTextures.copy_color_ramp(parent, child)
+                    elif isinstance(parameter.default_value, bpy.types.Texture):
                         self.gradients.texture = parameter.default_value
 
             if parameter.type == Type.MATERIAL:
@@ -232,7 +257,10 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                 self.materials[name].extension = parameter.extension
                 self.materials[name].type = parameter.graph_type
                 shader_path = parameter.default_value
-                if shader_path and shader_path != '':
+                
+                if type_changed and copy_values and copy_name in copy_from.materials.keys():
+                    self.materials[name].material = copy_from.materials[copy_name].material
+                elif shader_path and shader_path != '':
                     if isinstance(shader_path, str):
                         material_name = name + ' : ' + os.path.basename(shader_path)
                         if material_name not in bpy.data.materials:
@@ -252,7 +280,9 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                                 filepath=os.path.join(blend_path, internal_dir, material_name),
                                 directory=os.path.join(blend_path, internal_dir),
                                 filename=material_name
-                            )    
+                            )
+                            if bpy.data.materials[material_name].malt.shader_nodes:
+                                bpy.data.materials[material_name].malt.shader_nodes.reload_nodes()
                         if type_changed:
                             self.materials[name].material = bpy.data.materials[material_name]
                     
@@ -260,7 +290,10 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                 if name not in self.graphs:
                     self.graphs.add().name = name
                 self.graphs[name].type = parameter.graph_type
-                if parameter.default_value and isinstance(parameter.default_value, tuple):
+
+                if type_changed and copy_values and copy_name in copy_from.graphs.keys():
+                    self.graphs[name].graph = copy_from.graphs[copy_name].graph
+                elif parameter.default_value and isinstance(parameter.default_value, tuple):
                     blend_path, tree_name = parameter.default_value
                     blend_path += '.blend'
                     if tree_name not in bpy.data.node_groups:
@@ -270,6 +303,7 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                             directory=os.path.join(blend_path, internal_dir),
                             filename=tree_name
                         )
+                        bpy.data.node_groups[tree_name].reload_nodes()
                     if type_changed:
                         self.graphs[name].graph = bpy.data.node_groups[tree_name]
                     if self.graphs[name].graph is not None:
@@ -277,6 +311,10 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
 
             if name not in self.override_from_parents:
                 self.override_from_parents.add().name = name
+            if name not in self.show_in_children:
+                prop = self.show_in_children.add()
+                prop.name = name
+                prop.boolean = True
 
             rna[name]['active'] = True
             rna[name]["default"] = parameter.default_value
@@ -334,9 +372,9 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                     updates = dict(default=rna_prop['default'], subtype='NONE')         
                     if rna_prop['subtype'] == 'COLOR':
                         updates.update(subtype='COLOR', soft_min=0.0, soft_max=1.0)
-                    if (soft_min := rna_prop['min']) != None:
+                    if (soft_min := rna_prop.get('min')) != None:
                         updates.update(soft_min=soft_min)
-                    if (soft_max := rna_prop['max']) != None:
+                    if (soft_max := rna_prop.get('max')) != None:
                         updates.update(soft_max=soft_max)
                     ui.update(**updates)
 
@@ -346,16 +384,74 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
         for screen in bpy.data.screens:
             for area in screen.areas:
                 area.tag_redraw()
+    
+    def rename_property(self, old_name, new_name):
+        rna = self.get_rna()
+        rna[new_name] = rna.pop(old_name)
+        type = rna[new_name]['type']
+        self.override_from_parents[old_name].name = new_name
+        if old_name in self.show_in_children.keys():
+            self.show_in_children[old_name].name = new_name
+        if type in (Type.FLOAT, Type.INT, Type.STRING):
+            self[new_name] = self.pop(old_name)
+        elif type == Type.BOOL:
+            self.bools[old_name].name = new_name
+        elif type == Type.ENUM:
+            self.enums[old_name].name = new_name
+        elif type == Type.TEXTURE:
+            self.textures[old_name].name = new_name
+        elif type == Type.GRADIENT:
+            self.gradients[old_name].name = new_name
+        elif type == Type.MATERIAL:
+            self.materials[old_name].name = new_name
+        elif type == Type.GRAPH:
+            self.graphs[old_name].name = new_name
+    
+    def remove_property(self, name):
+        rna = self.get_rna()
+        rna_prop = rna[name]
+        type = rna_prop['type']
+        rna.pop(name)
+        def remove(collection, key):
+            collection.remove(collection.find(key))
+        remove(self.override_from_parents, name)
+        remove(self.show_in_children, name)
+        if type in (Type.FLOAT, Type.INT, Type.STRING):
+            self.pop(name)
+        elif type == Type.BOOL:
+            remove(self.bools, name)
+        elif type == Type.ENUM:
+            remove(self.enums, name)
+        elif type == Type.TEXTURE:
+            remove(self.textures, name)
+        elif type == Type.GRADIENT:
+            remove(self.gradients, name)
+        elif type == Type.MATERIAL:
+            remove(self.materials, name)
+        elif type == Type.GRAPH:
+            remove(self.graphs, name)
 
     def add_override(self, property_name, override_name):
         main_prop = self.get_rna()[property_name]
         new_name = property_name + ' @ ' + override_name
         property = {}
+        parameter = None
         if main_prop['type'] == Type.MATERIAL:
-            property[new_name] =  MaterialParameter(main_prop['default'], 
+            parameter =  MaterialParameter(main_prop['default'], 
             self.materials[property_name].extension, self.materials[property_name].type)
         else:
-            property[new_name] = Parameter(main_prop['default'], main_prop['type'], main_prop['size'], main_prop['filter'], main_prop['malt_subtype'])
+            parameter = Parameter(main_prop['default'], main_prop['type'], main_prop['size'],
+                main_prop['filter'], main_prop['malt_subtype'])
+            parameter.default_value = main_prop.get("default")
+            parameter.type = main_prop.get('type')
+        parameter.subtype = main_prop.get('malt_subtype')
+        parameter.size = main_prop.get('size')
+        parameter.filter = main_prop.get('filter')
+        parameter.label = main_prop.get('label') + ' @ ' + override_name
+        parameter.enum_options = main_prop.get('enum_options')
+        parameter.min = main_prop.get('min')
+        parameter.max = main_prop.get('max')
+        property[new_name] = parameter
         self.setup(property, replace_parameters= False)
     
     def remove_override(self, property):
@@ -383,19 +479,6 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                 return self.parent.malt_parameters.get_parameter(key, overrides, proxys, retrieve_blender_type, rna_copy)
             except:
                 pass
-        if key not in self.get_rna().keys():
-            if self.id_data.__class__.__name__ == 'MaltTree' and self.id_data.malt_parameters.as_pointer() == self.as_pointer():
-                if self.id_data.is_active():
-                    for node in self.id_data.nodes:
-                        if hasattr(node, 'malt_parameters'):
-                            for input in node.inputs:
-                                if key == input.get_source_global_reference():
-                                    try:
-                                        return node.malt_parameters.get_parameter(input.name, overrides, proxys, 
-                                            retrieve_blender_type, rna_copy)
-                                    except:
-                                        pass
-            raise Exception()
 
         rna = self.get_rna()
         rna_copy.update(rna[key])
@@ -497,9 +580,15 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
 
             if filter and rna[key]['filter'] and rna[key]['filter'] != filter:
                 continue
-            
-            labels = rna[key].get('label', key.replace('_0_','.').replace('_',' '))
-            labels = labels.split('.')
+
+            label = rna[key].get('label')
+            if self.parent:
+                parent_prop = self.parent.malt_parameters.get_rna().get(key)
+                if parent_prop:
+                    label = parent_prop.get('label', label)
+            if label is None:
+                label = key.replace('_0_','.').replace('_',' ')
+            labels = label.split('.')
             label = labels[-1]
             
             #defer layout (box) creation until a property is actually drawn
@@ -532,24 +621,19 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
             self.draw_parameter(get_layout, key, label, draw_callback=draw_callback)
 
 
-    def draw_parameter(self, layout, key, label, draw_callback=None, is_node_socket=False):
+    def draw_parameter(self, layout, key, label, draw_callback=None, is_node_socket=False, drawn_from_child=False):
         if self.parent and self.override_from_parents[key].boolean == False:
-            if self.parent.malt_parameters.draw_parameter(layout, key, label, draw_callback, is_node_socket):
+            if self.parent.malt_parameters.draw_parameter(layout, key, label, draw_callback, is_node_socket, True):
                 return True
-        if key not in self.get_rna().keys():
-            if self.id_data.__class__.__name__ == 'MaltTree' and self.id_data.malt_parameters.as_pointer() == self.as_pointer():
-                if self.id_data.is_active():
-                    for node in self.id_data.nodes:
-                        if hasattr(node, 'malt_parameters'):
-                            for input in node.inputs:
-                                if key == input.get_source_global_reference():
-                                    if input.show_in_material_panel:
-                                        node.malt_parameters.draw_parameter(layout, input.name, label, draw_callback, is_node_socket=True)
-                                    return True
-            return False
-        if self.get_rna()[key]['active'] == False:
+
+        rna = self.get_rna()
+        
+        if key not in rna.keys():
             return False
         
+        if drawn_from_child and key in self.show_in_children.keys() and self.show_in_children[key].boolean == False:
+            return True
+
         if callable(layout):
             layout = layout()
 
@@ -583,7 +667,6 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
             
             return result
 
-        rna = self.get_rna()
         if rna[key]['type'] in (Type.INT, Type.FLOAT, Type.STRING):
             #TODO: add subtype toggle
             slider = rna[key]['malt_subtype'] == 'Slider'
