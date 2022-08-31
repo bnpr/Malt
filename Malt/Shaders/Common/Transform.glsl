@@ -52,19 +52,6 @@ vec3 transform_direction(mat4 matrix, vec3 direction)
 /*  META
     @meta: subcategory=Matrix; internal=false;
     @matrix: default=mat4(1);
-    @position: subtype=Vector;
-    @direction: subtype=Vector;
-*/
-vec3 project_direction(mat4 matrix, vec3 position, vec3 direction)
-{
-    vec3 a = project_point(matrix, position);
-    vec3 b = project_point(matrix, position + direction);
-    return b-a;
-}
-
-/*  META
-    @meta: subcategory=Matrix; internal=false;
-    @matrix: default=mat4(1);
     @normal: subtype=Normal;
 */
 vec3 transform_normal(mat4 matrix, vec3 normal)
@@ -73,15 +60,25 @@ vec3 transform_normal(mat4 matrix, vec3 normal)
     return normalize(m * normal);
 }
 
-/*  META
-    @meta: subcategory=Matrix; internal=false;
-    @matrix: default=mat4(1);
-    @position: subtype=Vector;
-    @normal: subtype=Normal;
-*/
-vec3 project_normal(mat4 matrix, vec3 position, vec3 normal)
+vec3 screen_to_camera(vec2 uv, float depth);
+
+vec3 camera_direction_to_screen_space(vec3 vector)
 {
-    return normalize(project_direction(matrix, position, normal));
+    vec3 N = normalize(vector);
+    vec3 I = -normalize(screen_to_camera(screen_uv(), 1));
+    vec3 x = vec3(1,0,0);
+	vec3 tangent = normalize(x - I * dot(x, I));
+	vec3 y = vec3(0,1,0);
+	vec3 bitangent = normalize(y - I * dot(y, I));
+	
+	vec3 screen_normal = vec3
+	(
+		dot(N, tangent),
+		dot(N, bitangent),
+		dot(N, I)
+	);
+
+	return normalize(screen_normal) * length(vector);
 }
 
 /* META @meta: category=Input; */

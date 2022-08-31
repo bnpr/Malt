@@ -61,13 +61,13 @@ void Geometry(
     }
     if(Coordinate_Space == 3) //Screen
     {
-        mat4 m = PROJECTION * CAMERA;
-        Position = project_point_to_screen_coordinates(m, Position);
-        Incoming = project_normal(m, POSITION, Incoming);
-        Normal = project_normal(m, POSITION, Normal);
-        True_Normal = project_normal(m, POSITION, True_Normal);
-        Reflection = project_normal(m, POSITION, Reflection);
-        Refraction = project_normal(m, POSITION, Refraction);
+        Position = project_point_to_screen_coordinates(PROJECTION * CAMERA, Position);
+        mat4 m = CAMERA;
+        Incoming = camera_direction_to_screen_space(transform_normal(m, Incoming));
+        Normal = camera_direction_to_screen_space(transform_normal(m, Normal));
+        True_Normal = camera_direction_to_screen_space(transform_normal(m, True_Normal));
+        Reflection = camera_direction_to_screen_space(transform_normal(m, Reflection));
+        Refraction = camera_direction_to_screen_space(transform_normal(m, Refraction));
     }
 }
 

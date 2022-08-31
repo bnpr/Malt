@@ -5,16 +5,15 @@
     @meta: category=Vector;
 */
 
-mat4 CONVERSION_TABLE[4*4] = mat4[4*4](
-    mat4(1), MODEL, CAMERA*MODEL, PROJECTION*CAMERA*MODEL,
-    inverse(MODEL), mat4(1), CAMERA, PROJECTION*CAMERA,
-    inverse(CAMERA*MODEL), inverse(CAMERA), mat4(1), PROJECTION,
-    inverse(PROJECTION*CAMERA*MODEL),inverse(PROJECTION*CAMERA),inverse(PROJECTION),mat4(1)
+mat4 TRANSFORM_CONVERSION_TABLE[3*3] = mat4[3*3](
+    mat4(1), MODEL, CAMERA*MODEL,
+    inverse(MODEL), mat4(1), CAMERA,
+    inverse(CAMERA*MODEL), inverse(CAMERA), mat4(1)
 );
 
 /*  META
     @Type: subtype=ENUM(Point,Vector,Normal);
-    @From: subtype=ENUM(Object,World,Camera,Screen);
+    @From: subtype=ENUM(Object,World,Camera);
     @To: subtype=ENUM(Object,World,Camera,Screen);
     @Vector: subtype=Vector;
 */
@@ -25,29 +24,22 @@ void Transform(
     inout vec3 Vector
 )
 {
-    mat4 m = CONVERSION_TABLE[clamp(From,0,3)*4 + clamp(To,0,3)];
-    bool project = From == 3 || To == 3;
-    if (project)
+    mat4 m = TRANSFORM_CONVERSION_TABLE[clamp(From,0,2)*3 + clamp(To,0,2)];
+    bool project = To == 3;
+    if(Type==0)//Point
     {
-        if(Type==0)//Point
+        if(project)
         {
+            m = PROJECTION * m;
             Vector = project_point_to_screen_coordinates(m, Vector);
         }
-        if(Type==1)//Vector
+        else
         {
-            Vector = project_direction(m, POSITION, Vector);
-        }
-        if(Type==2)//Normal
-        {
-            Vector = project_normal(m, POSITION, Vector);
+            Vector = transform_point(m, Vector);
         }
     }
     else
     {
-        if(Type==0)//Point
-        {
-            Vector = transform_point(m, Vector);
-        }
         if(Type==1)//Vector
         {
             Vector = transform_direction(m, Vector);
@@ -55,6 +47,10 @@ void Transform(
         if(Type==2)//Normal
         {
             Vector = transform_normal(m, Vector);
+        }
+        if (project)
+        {
+            Vector = camera_direction_to_screen_space(Vector);
         }
     }
 }
