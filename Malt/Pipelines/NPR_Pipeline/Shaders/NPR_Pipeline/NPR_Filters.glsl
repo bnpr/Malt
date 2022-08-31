@@ -15,13 +15,14 @@
 */
 
 /*  META
-    @meta: label=AO;
+    @meta: label=Ambient Occlusion;
     @samples: default=32; min=1;
     @radius: default=1.0; min=0.0;
     @distribution_exponent: default=5.0;
+    @contrast: subtype=Slider; default=0.1; min=0.0; max=1.0;
     @bias: subtype=Slider; default=0.01; min=0.01; max=0.1;
 */
-float ao(int samples, float radius, float distribution_exponent, float bias)
+float ao(int samples, float radius, float distribution_exponent, float contrast, float bias)
 {
     #ifdef NPR_FILTERS_ACTIVE
     {
@@ -32,7 +33,7 @@ float ao(int samples, float radius, float distribution_exponent, float bias)
         }
         #endif
         float ao = ao(IN_NORMAL_DEPTH, 3, POSITION, normal, samples, radius, distribution_exponent, bias);
-        return ao;
+        return pow(ao, map_range(contrast, 0.0, 1.0, 1.0, 10.0));
     }
     #else
     {
