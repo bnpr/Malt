@@ -204,10 +204,12 @@ class MaltNode():
             #Rename old material parameters (backward compatibility) 
             for key in self.malt_parameters.get_rna().keys():
                 new_name = self.get_input_parameter_name(key)
+                if new_name in self.id_data.malt_parameters.get_rna().keys():
+                    continue
                 copy_map[new_name] = key
                 old_name = transpiler.global_reference(transpiler.get_source_name(self.name), key)
                 for material in materials:
-                    if material.malt.parameters.get_rna().get(old_name):
+                    if old_name in material.malt.parameters.get_rna().keys():
                         material.malt.parameters.rename_property(old_name, new_name)
             copy = self.malt_parameters
         else:
