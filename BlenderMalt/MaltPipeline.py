@@ -296,6 +296,8 @@ def load_scene(dummy1=None,dummy2=None):
 
 @bpy.app.handlers.persistent
 def load_scene_post(dummy1=None,dummy2=None):
+    from BlenderMalt.MaltNodes.MaltNodeTree import manual_skip_save
+    manual_skip_save()
     if is_malt_active():
         bpy.context.scene.world.malt.update_pipeline(bpy.context)
 

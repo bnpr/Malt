@@ -63,7 +63,7 @@ class MaltTree(bpy.types.NodeTree):
         options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
     
     subscribed : bpy.props.BoolProperty(name="Subscribed", default=False,
-        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
+        options={'SKIP_SAVE','LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
     
     links_hash : bpy.props.StringProperty(options={'SKIP_SAVE','LIBRARY_EDITABLE'},
         override={'LIBRARY_OVERRIDABLE'})
@@ -323,6 +323,16 @@ def setup_node_trees():
             tree.update_ext(force_track_shader_changes=False, force_update=True)
     from BlenderMalt import MaltMaterial
     MaltMaterial.track_shader_changes()
+
+#SKIP_SAVE doesn't work
+def manual_skip_save():
+    for tree in bpy.data.node_groups:
+        if tree.bl_idname == 'MaltTree':
+            tree.subscribed = False
+            tree.links_hash = ''
+            for node in tree.nodes:
+                if hasattr(node, 'subscribed'):
+                    node.subscribed = False
 
 __LIBRARIES = {}    
 def get_libraries():
