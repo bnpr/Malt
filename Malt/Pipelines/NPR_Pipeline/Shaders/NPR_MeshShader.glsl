@@ -29,6 +29,11 @@ struct Vertex
     vec4 color[4];
 };
 
+/*  META
+    @id: label=ID;
+    @opacity: label=Opacity Mask;
+    @transparent_shadowmap_color: label=Transparent Shadow Color;
+*/
 struct PrePassOutput
 {
     vec3 normal;
