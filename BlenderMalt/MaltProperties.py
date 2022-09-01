@@ -570,9 +570,9 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
         # so there's no point in tracking the actual index since it doesn't follow
         # the declaration order
         import re
-        def natual_sort_key(k):
-            return [int(c) if c.isdigit() else c for c in re.split('([0-9]+)', k)]
-        keys = sorted(rna.keys(), key=natual_sort_key)
+        def natual_sort_labels(k):
+            return [int(c) if c.isdigit() else c for c in re.split('([0-9]+)', self.get_rna()[k].get('label', k))]
+        keys = sorted(rna.keys(), key=natual_sort_labels)
         
         for key in keys:
             if rna[key]['active'] == False:
