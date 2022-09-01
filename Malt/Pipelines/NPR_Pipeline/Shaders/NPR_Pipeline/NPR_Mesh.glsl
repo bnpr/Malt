@@ -166,6 +166,21 @@ void pass_info(
     Is_Shadow_Pass = is_shadow_pass();
 }
 
+uint _pack_id_channel(vec4 color)
+{
+    uint max_uint16 = 65535;
+    uint p = packUnorm4x8(color);
+    if(p <= max_uint16)
+    {
+        //Since it's already in the 16 bit range, assume the custom ID has not been overriden
+        //For actual colors, they will only fit if alpha < 0.002
+        return p;
+    }
+    //Otherwise, generate a pcg4d hash and scale it to the 16 bit range
+    uvec4 h = _pcg4d(floatBitsToUint(color));
+    return h.x / max_uint16;
+}
+
 /*  META
     @meta: label=Pack ID; category=Node Tree; internal=false;
     @object_id: label=Object ID; default=unpackUnorm4x8(ID.x);
@@ -182,10 +197,10 @@ void pack_id(
     out uvec4 id
 )
 {
-    id.x = packUnorm4x8(object_id)%65535;
-    id.y = packUnorm4x8(custom_id_a)%65535;
-    id.z = packUnorm4x8(custom_id_b)%65535;
-    id.w = packUnorm4x8(custom_id_c)%65535;
+    id.x = _pack_id_channel(object_id);
+    id.y = _pack_id_channel(custom_id_a);
+    id.z = _pack_id_channel(custom_id_b);
+    id.w = _pack_id_channel(custom_id_c);
 }
 
 #endif //NPR_MESH_GLSL
