@@ -26,7 +26,6 @@ def get_type_color(type):
         rand = random.Random(seed)
         __TYPE_COLORS[type] = (rand.random(),rand.random(),rand.random(),1.0)
     return __TYPE_COLORS[type]
-        
 
 class MaltSocket(bpy.types.NodeSocket):
     
@@ -175,9 +174,59 @@ class MaltSocket(bpy.types.NodeSocket):
             color[3] = 0.25
         return color
 
+class MaltRerouteSocket(bpy.types.NodeSocket):
+    bl_idname = 'MaltRerouteSocket'
+    bl_label = 'Reroute Socket'
+
+    @staticmethod
+    def is_valid_reroute_socket(socket):
+        return isinstance(socket, MaltRerouteSocket) and isinstance(socket.node, bpy.types.NodeReroute)
+
+    def get_opposite_socket(self, node):
+        node_front = getattr(node, 'inputs' if self.is_output else 'outputs')
+        if not len(node_front):
+            return None
+        else:
+            return node_front[0]
+    
+    def get_connected_socket(self):
+        if len(self.links) == 0:
+            return None
+        socket = getattr(self.links[0], 'to_socket' if self.is_output else 'from_socket')
+        if self.is_valid_reroute_socket(socket):
+            #This is needed/wanted to avoid recursion and get the right socket color
+            return socket.get_opposite_socket(socket.node).get_connected_socket()
+        else:
+            return socket
+
+    def get_imitation_socket(self, node):
+        '''get the socket of which this instance will imitate the shape and color'''
+        socket = self
+        if len(self.links) == 0:
+            socket = self.get_opposite_socket(node)
+        if self.is_valid_reroute_socket(socket):
+            return socket.get_connected_socket()
+        return None
+
+    def draw_color(self, context, node):
+        socket = self.get_imitation_socket(node)
+        if socket is not None:
+            return socket.draw_color(context, socket.node)
+        else:
+            return (0.0, 0.0, 0.0, 1.0)
+    
+    def draw(self, context, layout, node, text):
+        return #this method is required to be defined for a NodeSocket subclass
+    
+    def update_socket_shape(self):
+        socket = self.get_imitation_socket(self.node)
+        if socket is None:
+            return
+        self.display_shape = socket.display_shape
 
 classes = [
-    MaltSocket
+    MaltSocket,
+    MaltRerouteSocket
 ]
 
 def register():
