@@ -269,14 +269,16 @@ void Random(
 #if !(defined(NO_NORMAL_INPUT) || defined(NO_UV_INPUT))
 
 /* META
+    @scale: default=vec2(1.0);
     @Uv: label=UV;
 */
 void Curve_View_Mapping(
+    vec2 scale,
     out vec2 Uv,
     out float Facing
 )
 {
-    Uv = curve_view_mapping(UV[0], NORMAL, get_tangent(0), -view_direction());
+    Uv = curve_view_mapping(UV[0], NORMAL, get_tangent(0), -view_direction()) * scale;
     Facing = 1 - (abs(Uv.y - 0.5) * 2);
 }
 
