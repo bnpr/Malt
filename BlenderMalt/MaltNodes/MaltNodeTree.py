@@ -269,9 +269,6 @@ class MaltTree(bpy.types.NodeTree):
                 links_str += str(a) + str(b)
             except:
                 pass #Reroute Node
-        
-        self.update_reroute_nodes()
-
         links_hash = str(hash(links_str))
         if force_update == False and links_hash == self.links_hash:
             return
@@ -310,37 +307,7 @@ class MaltTree(bpy.types.NodeTree):
         # Force a depsgraph update. 
         # Otherwise these will be outddated in scene_eval
         self.update_tag()
-    
-    def update_reroute_nodes(self):
-        '''Replace the sockets of Reroute nodes with a custom socket type that shows the color of whatever socket is connected'''
 
-        def is_valid_reroute_node(node):
-            return(
-                isinstance(node, bpy.types.NodeReroute)
-                and not all(x.bl_idname == 'MaltRerouteSocket' for x in node.inputs.values() + node.inputs.values())
-                and (node.inputs[0].is_linked or node.outputs[0].is_linked)
-            )
-        
-        def replace_socket(socket, socket_idname):
-            is_output = socket.is_output
-            name = socket.name
-            node_front = getattr(socket.node, 'outputs' if is_output else 'inputs')
-            prev_connected_sockets = [getattr(x, 'to_socket' if is_output else 'from_socket') for x in socket.links]
-            index = next(i for i, x in enumerate(node_front) if x == socket)
-            node_front.remove(socket)
-            new_socket = node_front.new(type=socket_idname, name=name)
-            node_front.move(len(node_front) - 1, index)
-            for s in prev_connected_sockets:
-                socket.id_data.links.new(socket, s)
-            return new_socket
-
-        reroutes = [x for x in self.nodes if is_valid_reroute_node(x)]
-        for node in reroutes:
-            for s in node.inputs.values() + node.outputs.values():
-                replace_socket(s, 'MaltRerouteSocket')
-            # Updating socket shapes in another pass to ensure that all sockets have been updated
-            for s in node.inputs.values() + node.outputs.values():
-                s.update_socket_shape()
 
 def setup_node_trees():
     graphs = MaltPipeline.get_bridge().graphs
