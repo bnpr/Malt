@@ -129,7 +129,7 @@ class MaltNode():
                 if e not in new:
                     remove.append(current[e])
             for e in remove:
-                if len(e.links) == 0 or self.should_delete_outdated_links():
+                if e.is_linked == False or self.should_delete_outdated_links():
                     current.remove(e)
                 else:
                     e.active = False
@@ -323,8 +323,10 @@ class MaltNode():
             parameter_key = socket.get_source_global_reference()
             parameter_key = parameter_key.replace('"','')
             self.id_data.malt_parameters.draw_parameter(get_layout(), parameter_key, text, is_node_socket=True)
-            for key in self.id_data.malt_parameters.get_rna().keys():
-                if key.startswith(parameter_key + ' @ '):
+            rna_keys = self.id_data.malt_parameters.get_rna().keys()
+            for override in ('Preview', 'Final Render'):
+                key = f'{parameter_key} @ {override}'
+                if key in rna_keys:
                     self.id_data.malt_parameters.draw_parameter(get_layout(), key, None, is_node_socket=True)
         else:
             layout.label(text=text)
