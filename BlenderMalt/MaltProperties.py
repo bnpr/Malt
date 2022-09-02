@@ -369,7 +369,11 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
             if bpy.app.version[0] >= 3:
                 if rna_prop['type'] in (Type.FLOAT, Type.INT) and not isinstance(rna_prop['default'], str):
                     ui = self.id_properties_ui(key)
-                    updates = dict(default=rna_prop['default'], subtype='NONE')         
+                    step_size = {
+                        Type.FLOAT: 10,
+                        Type.INT: 1
+                    }[rna_prop['type']]
+                    updates = dict(default=rna_prop['default'], subtype='NONE', step=step_size)         
                     if rna_prop['subtype'] == 'COLOR':
                         updates.update(subtype='COLOR', soft_min=0.0, soft_max=1.0)
                     if (soft_min := rna_prop.get('min')) != None:
