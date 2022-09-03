@@ -87,43 +87,46 @@ void Hdri(sampler2D Hdri, vec3 Normal, out vec4 Color, out vec2 UV)
 
 /*  META
     @meta: subcategory=Noise; label=Infinite;
-    @coord: subtype=Vector; default=vec4(POSITION,0);
+    @coord: subtype=Vector; default=POSITION;
     @scale: default=5.0;
-    @detail: default=3.0; min=1.0;
+    @detail: default=3.0; min=1.0; max=16.0;
     @balance: subtype=Slider; min=0.0; max=1.0; default = 0.5;
 */
-vec4 Noise(vec4 coord, float scale, float detail, float balance)
+vec4 Noise(vec3 coord, float seed, float scale, float detail, float balance)
 {
-    return fractal_noise_ex(coord * scale, detail, balance, false, vec4(0.0));
+    detail = min(detail, 16);
+    return fractal_noise_ex(vec4(coord * scale, seed), detail, balance, false, vec4(0.0));
 }
 
 /*  META
     @meta: subcategory=Noise; label=Tiled;
-    @coord: subtype=Vector; default=vec4(POSITION,0);
+    @coord: subtype=Vector; default=POSITION;
     @scale: default=5.0;
-    @detail: default=3.0; min=1.0;
+    @detail: default=3.0; min=1.0; max=16.0;
     @balance: subtype=Slider; min=0.0; max=1.0; default = 0.5;
-    @tile_size: subtype=Vector; default=vec4(5.0);
+    @tile_size: subtype=Vector; default=uvec4(5); min=2;
 */
-vec4 Noise_Tiled(vec4 coord, float scale, float detail, float balance, vec4 tile_size)
+vec4 Noise_Tiled(vec3 coord, float seed, float scale, float detail, float balance, uvec4 tile_size)
 {
-    return fractal_noise_ex(coord * scale, detail, balance, true, tile_size);
+    detail = min(detail, 16);
+    tile_size = max(uvec4(2), tile_size);
+    return fractal_noise_ex(vec4(coord * scale, seed), detail, balance, true, tile_size);
 }
 
 /* META
     @meta: subcategory=Voronoi; label=Infinite;
-    @coord: subtype=Vector; default=vec4(POSITION,0);
+    @coord: subtype=Vector; default=POSITION;
     @scale: default=5.0;
 */
 void Voronoi( 
-    vec4 coord,
+    vec3 coord, float seed,
     float scale,
     out vec4 cell_color,
     out vec3 cell_position,
     out float cell_distance
 )
 {
-    CellNoiseResult result = cell_noise_ex(coord * scale, false, vec4(0.0));
+    CellNoiseResult result = cell_noise_ex(vec4(coord * scale, seed), false, vec4(0.0));
     cell_color = result.cell_color;
     cell_position = result.cell_position;
     cell_distance = result.cell_distance;
@@ -131,20 +134,21 @@ void Voronoi(
 
 /* META
     @meta: subcategory=Voronoi; label=Tiled;
-    @coord: subtype=Vector; default=vec4(POSITION,0);
+    @coord: subtype=Vector; default=POSITION;
     @scale: default=5.0;
-    @tile_size: subtype=Vector; default = vec4(5.0);
+    @tile_size: subtype=Vector; default=uvec4(5); min=2;
 */
 void Voronoi_Tiled(
-    vec4 coord,
+    vec3 coord, float seed,
     float scale,
-    vec4 tile_size,
+    uvec4 tile_size,
     out vec4 cell_color,
     out vec3 cell_position,
     out float cell_distance
 )
 {
-    CellNoiseResult result = cell_noise_ex(coord * scale, true, tile_size);
+    tile_size = max(uvec4(2), tile_size);
+    CellNoiseResult result = cell_noise_ex(vec4(coord * scale, seed), true, tile_size);
     cell_color = result.cell_color;
     cell_position = result.cell_position;
     cell_distance = result.cell_distance;
