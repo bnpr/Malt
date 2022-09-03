@@ -171,10 +171,10 @@ void ID_Node(
     out vec4 Custom_Id_C
 )
 {
-    Object_Id = unpackUnorm4x8(IO_ID.x);
-    Custom_Id_A = unpackUnorm4x8(IO_ID.y);
-    Custom_Id_B = unpackUnorm4x8(IO_ID.z);
-    Custom_Id_C = unpackUnorm4x8(IO_ID.w);
+    Object_Id = unpackUnorm4x8(ID.x);
+    Custom_Id_A = unpackUnorm4x8(ID.y);
+    Custom_Id_B = unpackUnorm4x8(ID.z);
+    Custom_Id_C = unpackUnorm4x8(ID.w);
 }
 
 #endif //NO_ID_INPUT
