@@ -575,8 +575,12 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
         # the declaration order
         import re
         def natual_sort_labels(k):
-            return [int(c) if c.isdigit() else c for c in re.split('([0-9]+)', self.get_rna()[k].get('label', k))]
+            return [int(c) if c.isdigit() else c for c in re.split('([0-9]+)', rna[k].get('label', k))]
         keys = sorted(rna.keys(), key=natual_sort_labels)
+        # Put Settings first. Kind of hacky, but ¯\_(ツ)_/¯
+        def settings_first(k):
+            return not rna[k].get('label', k).startswith('Settings.')
+        keys.sort(key=settings_first)
         
         for key in keys:
             if rna[key]['active'] == False:
