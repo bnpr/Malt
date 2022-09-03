@@ -108,16 +108,7 @@ vec3 get_bitangent(int uv_index)
 /* META @meta: subcategory=Tangent; */
 mat3 get_TBN(int uv_index)
 {
-    mat3 TBN = mat3(get_tangent(uv_index), get_bitangent(uv_index), NORMAL);
-    #ifdef PIXEL_SHADER
-    {
-        if(!gl_FrontFacing)
-        {
-            TBN[2] *= -1;
-        }
-    }
-    #endif //PIXEL_SHADER
-    return TBN;
+    return mat3(get_tangent(uv_index), get_bitangent(uv_index), NORMAL);
 }
 
 /* META 
