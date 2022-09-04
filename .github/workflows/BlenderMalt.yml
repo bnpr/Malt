@@ -22,13 +22,24 @@ jobs:
 
     - uses: ncipollo/release-action@v1
       id: create_release
+      if: ${{ github.ref_type == 'branch' }}
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         allowUpdates: true
         tag: ${{ env.BRANCH_NAME }}-latest
+        commit: ${{ github.sha }}
         prerelease: ${{ env.BRANCH_NAME != 'Release' }}
-        bodyFile: ".github/download.md"
-      if: ${{ github.ref_type == 'branch' }}
+        body: |
+          ### Sponsored by
+          ## <a href="https://www.creativeshrimp.com/"><img src="/docs/images/creativeshrimp_logo.png" height="65">Creative Shrimp<a>
+          ## <a href="https://twitter.com/MatchaChoco010">オリトイツキ - Orito Itsuki<a>
+          ---
+          [**BlenderMalt-Windows.zip**](https://github.com/${{github.repository}}/releases/download/${{env.BRANCH_NAME}}-latest/BlenderMalt-Windows.zip)
+          [**BlenderMalt-Linux.zip**](https://github.com/${{github.repository}}/releases/download/${{env.BRANCH_NAME}}-latest/BlenderMalt-Linux.zip) 
+          
+          *(Requires Blender 3.2)* 
+          ---
+          <a href="https://patreon.com/pragma37"><img src="/docs/images/become_a_patron.png" height="45"><a> 
     
     - name: Rollback Tagged Release
       uses: author/action-rollback@stable
@@ -41,12 +52,23 @@ jobs:
     
     - uses: ncipollo/release-action@v1
       id: create_tagged_release
+      if: ${{ github.ref_type == 'tag' }}
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
+        commit: ${{ github.sha }}
         allowUpdates: true
         prerelease: ${{ env.BRANCH_NAME != 'Release' }}
-        bodyFile: ".github/download.md"
-      if: ${{ github.ref_type == 'tag' }}
+        body: |
+          ### Sponsored by
+          ## <a href="https://www.creativeshrimp.com/"><img src="/docs/images/creativeshrimp_logo.png" height="65">Creative Shrimp<a>
+          ## <a href="https://twitter.com/MatchaChoco010">オリトイツキ - Orito Itsuki<a>
+          ---
+          [**BlenderMalt-Windows.zip**](https://github.com/${{github.repository}}/releases/download/${{github.ref_name}}/BlenderMalt-Windows.zip)
+          [**BlenderMalt-Linux.zip**](https://github.com/${{github.repository}}/releases/download/${{github.ref_name}}/BlenderMalt-Linux.zip)
+          
+          *(Requires Blender 3.2)* 
+          ---
+          <a href="https://patreon.com/pragma37"><img src="/docs/images/become_a_patron.png" height="45"><a>
             
     outputs:
       upload_url: ${{ steps.create_release.outputs.upload_url }}  
@@ -60,7 +82,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest, ubuntu-18.04]
+        os: [windows-latest, ubuntu-latest]
 
     steps:
     - uses: actions/checkout@v2
