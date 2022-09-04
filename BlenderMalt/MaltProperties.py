@@ -569,14 +569,37 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
         rna = self.get_rna()
 
         namespace_stack = [(None, layout)]
+
+        def get_label(key):
+            label = rna[key].get('label')
+            if self.parent:
+                parent_prop = self.parent.malt_parameters.get_rna().get(key)
+                if parent_prop:
+                    label = parent_prop.get('label', label)
+            if label is None:
+                label = key.replace('_0_','.').replace('_',' ')
+            return label
         
         # Most drivers sort the uniforms in alphabetical order anyway, 
         # so there's no point in tracking the actual index since it doesn't follow
         # the declaration order
         import re
-        def natual_sort_labels(k):
-            return [int(c) if c.isdigit() else c for c in re.split('([0-9]+)', rna[k].get('label', k))]
-        keys = sorted(rna.keys(), key=natual_sort_labels)
+        def natural_sort_labels(k):
+            label = get_label(k)
+            n_split = re.split('([0-9]+)', label)
+            ns_split = []
+            for n in n_split:
+                ns_split.extend(n.split('.'))
+            result = []
+            for e in ns_split:
+                if e.isdigit():
+                    result.append('z')
+                    result.append(int(e))
+                else:
+                    result.append(e)
+                    result.append(0)
+            return result
+        keys = sorted(rna.keys(), key=natural_sort_labels)
         # Put Settings first. Kind of hacky, but ¯\_(ツ)_/¯
         def settings_first(k):
             return not rna[k].get('label', k).startswith('Settings.')
@@ -589,14 +612,7 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
             if filter and rna[key]['filter'] and rna[key]['filter'] != filter:
                 continue
 
-            label = rna[key].get('label')
-            if self.parent:
-                parent_prop = self.parent.malt_parameters.get_rna().get(key)
-                if parent_prop:
-                    label = parent_prop.get('label', label)
-            if label is None:
-                label = key.replace('_0_','.').replace('_',' ')
-            labels = label.split('.')
+            labels = get_label(key).split('.')
             label = labels[-1]
             
             #defer layout (box) creation until a property is actually drawn
