@@ -3,7 +3,7 @@
 Malt is a fully customizable real-time rendering framework for animation and illustration.  
 It's aimed at advanced users and technical artists who want more control over their workflow and/or their art style, with special care put into the needs of stylized non photorealistic rendering.
 
-[Docs](https://malt3d.com) | [Forums & Support](https://github.com/bnpr/Malt/discussions) | [Bug Reports](https://github.com/bnpr/Malt/issues) | [Twitter](https://twitter.com/pragma37) | [Patreon](https://patreon.com/pragma37)
+[Download](#install) | [Docs](https://malt3d.com) | [Forums & Support](https://github.com/bnpr/Malt/discussions) | [Bug Reports](https://github.com/bnpr/Malt/issues) | [Twitter](https://twitter.com/pragma37) | [Patreon](https://patreon.com/pragma37)
 
 ## Features
 
