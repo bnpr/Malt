@@ -27,6 +27,7 @@ jobs:
         token: ${{ secrets.GITHUB_TOKEN }}
         allowUpdates: true
         tag: ${{ env.BRANCH_NAME }}-latest
+        commit: ${{ github.sha }}
         prerelease: ${{ env.BRANCH_NAME != 'Release' }}
         body: |
           ### Sponsored by
@@ -54,6 +55,7 @@ jobs:
       if: ${{ github.ref_type == 'tag' }}
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
+        commit: ${{ github.sha }}
         allowUpdates: true
         prerelease: ${{ env.BRANCH_NAME != 'Release' }}
         body: |
