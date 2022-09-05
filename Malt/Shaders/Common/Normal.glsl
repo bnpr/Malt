@@ -152,26 +152,38 @@ vec3 radial_tangent(vec3 normal, vec3 axis)
 
 /*  META
     @meta: internal=false;
+    @base_normal: subtype=Normal; default=NORMAL;
     @custom_normal: subtype=Normal; default=NORMAL;
 */
-vec3 surface_gradient_from_normal(vec3 custom_normal)
+vec3 surface_gradient_from_normal(vec3 base_normal, vec3 custom_normal)
 {
     // Copyright (c) 2020 mmikk. MIT License
     // http://jcgt.org/published/0009/03/04/
     const float epsilon = 1.192092896e-07f;
-    float NoC = dot(NORMAL, custom_normal);
-    return (NoC * NORMAL - custom_normal) / max(epsilon, abs(NoC));
+    float NoC = dot(base_normal, custom_normal);
+    return (NoC * base_normal - custom_normal) / max(epsilon, abs(NoC));
+}
+
+vec3 surface_gradient_from_normal(vec3 custom_normal)
+{
+    return surface_gradient_from_normal(NORMAL, custom_normal);
 }
 
 /*  META
     @meta: internal=false;
+    @base_normal: subtype=Normal; default=NORMAL;
     @surface_gradient: subtype=Vector; default=vec3(0);
 */
-vec3 normal_from_surface_gradient(vec3 surface_gradient)
+vec3 normal_from_surface_gradient(vec3 base_normal, vec3 surface_gradient)
 {
     // Copyright (c) 2020 mmikk. MIT License
     // http://jcgt.org/published/0009/03/04/
-    return normalize(NORMAL - surface_gradient);
+    return normalize(base_normal - surface_gradient);
+}
+
+vec3 normal_from_surface_gradient(vec3 surface_gradient)
+{
+    return normal_from_surface_gradient(NORMAL, surface_gradient);
 }
 
 #endif //COMMON_NORMAL_GLSL
