@@ -1,6 +1,5 @@
-import os
+import math, os, ctypes
 from os import path
-import ctypes
 
 from Malt.Utils import LOG
 
@@ -305,7 +304,10 @@ class Pipeline():
 
                         if i == batch_length or instances_count == max_instances:
                             local_models = ((ctypes.c_float * 16) * instances_count).from_address(ctypes.addressof(models))
-                            local_ids = (ctypes.c_uint * instances_count).from_address(ctypes.addressof(ids))
+                            # IDs are stored as uvec4, so we make sure the buffer count is a multiple of 4,
+                            # since some drivers will only bind a full uvec4 (see issue #319)
+                            id_buffer_count = math.ceil(instances_count/4)*4
+                            local_ids = (ctypes.c_uint * id_buffer_count).from_address(ctypes.addressof(ids))
 
                             models_UBO = UBO()
                             ids_UBO = UBO()
