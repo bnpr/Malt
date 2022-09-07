@@ -71,12 +71,8 @@ class PipelineGraph():
 
 class GLSLGraphIO(PipelineGraphIO): 
 
-    COMMON_INPUT_TYPES = ['sampler2D', 'usampler2D', 'isampler2D']
-    COMMON_OUTPUT_TYPES = [
-        'float','vec2','vec3','vec4',
-        'uint','uvec2','uvec3','uvec4',
-        'int','ivec2','ivec3','ivec4',
-    ]
+    COMMON_INPUT_TYPES = ['sampler2D']
+    COMMON_OUTPUT_TYPES = ['float','vec2','vec3','vec4']
     
     def __init__(self, name, define = None, io_wrap=None, dynamic_input_types = [], dynamic_output_types = [], 
     default_dynamic_inputs = {}, default_dynamic_outputs = {}, shader_type=None, custom_output_start_index=0):

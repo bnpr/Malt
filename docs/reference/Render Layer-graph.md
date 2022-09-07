@@ -27,18 +27,6 @@ Performs anti-aliasing by accumulating multiple render samples into a single tex
 - **Outputs**  
 	- **Color** *: ( Texture )*  
 ---
-### **Unpack8bitTextures**
-Unpacks up to 4 textures packed into a single one using the *pack_8bit* shader function.  
-*(Useful when a shader needs to output more than 8 textures)*
-
-- **Inputs**  
-	- **Packed Texture** *: ( usampler2D )*  
-- **Outputs**  
-	- **A** *: ( Texture )*  
-	- **B** *: ( Texture )*  
-	- **C** *: ( Texture )*  
-	- **D** *: ( Texture )*  
----
 ### **MainPass**
 >Graph Type / Pass : *Mesh / MAIN_PASS_PIXEL_SHADER*
 

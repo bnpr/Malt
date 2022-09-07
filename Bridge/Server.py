@@ -169,6 +169,12 @@ class Viewport():
                     self.final_texture = Texture(resolution, GL_RGBA8, GL_UNSIGNED_BYTE, pixel_format=GL_RGBA)
                 self.final_texture.channel_size = 1
                 self.final_target = RenderTarget([self.final_texture])
+            elif self.bit_depth == 16:
+                self.final_texture = Texture(resolution, GL_RGBA16F)
+                self.final_target = RenderTarget([self.final_texture])
+            elif self.bit_depth == 32:
+                self.final_texture = Texture(resolution, GL_RGBA32F)
+                self.final_target = RenderTarget([self.final_texture])
         
         if new_buffers:
             self.buffers = new_buffers
@@ -202,7 +208,7 @@ class Viewport():
 
         if self.needs_more_samples:
             result = self.pipeline.render(self.resolution, self.scene, self.is_final_render, self.is_new_frame)
-            if self.final_texture:
+            if self.final_texture.internal_format != result['COLOR'].internal_format:
                 self.pipeline.copy_textures(self.final_target, [result['COLOR']])
                 result = { 'COLOR' : self.final_texture }
             self.is_new_frame = False

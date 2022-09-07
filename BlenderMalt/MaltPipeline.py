@@ -112,7 +112,7 @@ class MaltPipeline(bpy.types.PropertyGroup):
         set=malt_path_setter('plugins_dir'), get=malt_path_getter('plugins_dir'),
         options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
 
-    viewport_bit_depth : bpy.props.EnumProperty(items=[('8', '8', ''),('32', '32', '')], 
+    viewport_bit_depth : bpy.props.EnumProperty(items=[('8', '8', ''),('16', '16', ''),('32', '32', '')], 
         name="Bit Depth (Viewport)", update=update_pipeline_settings,
         options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
     graph_types : bpy.props.CollectionProperty(type=bpy.types.PropertyGroup,

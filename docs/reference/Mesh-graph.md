@@ -1741,6 +1741,14 @@ Blends the blend color as a layer over the base color.
 - **Outputs**  
 	- **result** *: ( vec2 )*  
 ---
+### **vec2_normalize**
+>vec2 vec2_normalize(vec2 v)
+
+- **Inputs**  
+	- **v** *: ( vec2 )*  
+- **Outputs**  
+	- **result** *: ( vec2 )*  
+---
 ### **vec2_length**
 >float vec2_length(vec2 v)
 
@@ -1979,6 +1987,14 @@ Blends the blend color as a layer over the base color.
 	- **a** *: ( vec3 | Vector )*  
 	- **b** *: ( vec3 | Vector )*  
 	- **factor** *: ( float )*  
+- **Outputs**  
+	- **result** *: ( vec3 )*  
+---
+### **vec3_normalize**
+>vec3 vec3_normalize(vec3 v)
+
+- **Inputs**  
+	- **v** *: ( vec3 | Vector )*  
 - **Outputs**  
 	- **result** *: ( vec3 )*  
 ---
@@ -2231,6 +2247,14 @@ Blends the blend color as a layer over the base color.
 	- **a** *: ( vec4 | Vector )*  
 	- **b** *: ( vec4 | Vector )*  
 	- **factor** *: ( float )*  
+- **Outputs**  
+	- **result** *: ( vec4 )*  
+---
+### **vec4_normalize**
+>vec4 vec4_normalize(vec4 v)
+
+- **Inputs**  
+	- **v** *: ( vec4 | Vector )*  
 - **Outputs**  
 	- **result** *: ( vec4 )*  
 ---

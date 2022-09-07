@@ -25,6 +25,8 @@ vec2 vec2_max(vec2 a, vec2 b){ return max(a,b); }
 vec2 vec2_mix(vec2 a, vec2 b, vec2 factor){ return mix(a,b,factor); }
 vec2 vec2_mix_float(vec2 a, vec2 b, float factor){ return mix(a,b,factor); }
 
+vec2 vec2_normalize(vec2 v){ return normalize(v); }
+
 float vec2_length(vec2 v){ return length(v); }
 float vec2_distance(vec2 a, vec2 b){ return distance(a,b); }
 float vec2_dot_product(vec2 a, vec2 b){ return dot(a,b); }

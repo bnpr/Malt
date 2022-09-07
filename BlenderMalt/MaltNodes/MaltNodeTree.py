@@ -151,12 +151,15 @@ class MaltTree(bpy.types.NodeTree):
                     output_nodes.append(node)
                     linked_nodes.append(node)
         
-        def add_node_inputs(node, list):
+        def add_node_inputs(node, list, io_type):
             for input in node.inputs:
                 if input.get_linked():
                     new_node = input.get_linked().node
+                    if new_node.bl_idname == 'MaltIONode' and new_node.io_type != io_type:
+                        input.links[0].is_muted = True
+                        continue
                     if new_node not in list:
-                        add_node_inputs(new_node, list)
+                        add_node_inputs(new_node, list, io_type)
                         list.append(new_node)
                     if new_node not in linked_nodes:
                         linked_nodes.append(new_node)
@@ -164,7 +167,7 @@ class MaltTree(bpy.types.NodeTree):
         transpiler = self.get_transpiler()
         def get_source(output):
             nodes = []
-            add_node_inputs(output, nodes)
+            add_node_inputs(output, nodes, output.io_type)
             code = ''
             for node in nodes:
                 if isinstance(node, MaltNode):
@@ -219,11 +222,12 @@ class MaltTree(bpy.types.NodeTree):
         try:
             for link in self.links:
                 try:
-                    if (link.from_socket.array_size != link.to_socket.array_size or 
-                        (link.from_socket.data_type != link.to_socket.data_type and
-                        self.cast(link.from_socket.data_type, link.to_socket.data_type) is None)):
-                        #TODO: handle reroute nodes
-                        self.links.remove(link)
+                    b = link.to_socket
+                    a = b.get_linked()
+                    if (a.array_size != b.array_size or 
+                        (a.data_type != b.data_type and
+                        self.cast(a.data_type, b.data_type) is None)):
+                        link.is_muted = True
                 except:
                     pass
             
@@ -557,7 +561,7 @@ def node_header_ui(self, context):
     if context.space_data.tree_type != 'MaltTree' or node_tree is None:
         return
     def duplicate():
-        node_tree = node_tree.copy()
+        context.space_data.node_tree = node_tree.copy()
     self.layout.operator('wm.malt_callback', text='', icon='DUPLICATE').callback.set(duplicate, 'Duplicate')
     def recompile():
         node_tree.update()

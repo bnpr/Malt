@@ -45,6 +45,9 @@ vec4 vec4_mix(vec4 a, vec4 b, vec4 factor){ return mix(a,b,factor); }
 vec4 vec4_mix_float(vec4 a, vec4 b, float factor){ return mix(a,b,factor); }
 
 /*META @v: subtype=Vector;*/
+vec4 vec4_normalize(vec4 v){ return normalize(v); }
+
+/*META @v: subtype=Vector;*/
 float vec4_length(vec4 v){ return length(v); }
 /*META @a: subtype=Vector; @b: subtype=Vector;*/
 float vec4_distance(vec4 a, vec4 b){ return distance(a,b); }

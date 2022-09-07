@@ -66,6 +66,11 @@ class SceneLighting(PipelineNode):
         sample_offset = self.pipeline.get_sample(scene.world_parameters['Samples.Width'])
         opaque_batches, transparent_batches = self.pipeline.get_scene_batches(scene)
 
+        inputs['Spot Resolution'] = max(8, inputs['Spot Resolution'])
+        inputs['Sun Resolution'] = max(8, inputs['Sun Resolution'])
+        inputs['Point Resolution'] = max(8, inputs['Point Resolution'])
+        inputs['Sun CSM Count'] = max(1, inputs['Sun CSM Count'])
+
         self.lights_buffer.load(scene, 
             inputs['Spot Resolution'],
             inputs['Sun Resolution'],

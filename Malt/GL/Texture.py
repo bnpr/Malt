@@ -172,7 +172,8 @@ class Gradient():
 def internal_format_to_data_format(internal_format):
     name = GL_ENUMS[internal_format]
     table = {
-        'F' : GL_FLOAT,
+        '32F' : GL_FLOAT,
+        '16F' : GL_HALF_FLOAT,
         'UI' : GL_UNSIGNED_INT,
         'I' : GL_INT,
     }
@@ -197,6 +198,7 @@ def internal_format_to_sampler_type(internal_format):
     table = {
         GL_UNSIGNED_BYTE : 'sampler2D',
         GL_FLOAT : 'sampler2D',
+        GL_HALF_FLOAT : 'sampler2D',
         GL_INT : 'isampler2D',
         GL_UNSIGNED_INT : 'usampler2D'
     }

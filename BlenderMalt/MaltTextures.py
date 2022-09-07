@@ -14,7 +14,7 @@ def __load_texture(texture):
     w,h = texture.size
     channels = int(texture.channels)
     size = w*h*channels
-    sRGB = texture.colorspace_settings.name == 'sRGB' and texture.use_generated_float == False
+    sRGB = texture.colorspace_settings.name == 'sRGB' and texture.is_float == False
     if size == 0:
         return True
 

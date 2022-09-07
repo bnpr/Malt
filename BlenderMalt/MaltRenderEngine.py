@@ -1,4 +1,5 @@
 import ctypes, time, platform
+import xxhash
 import bpy
 from mathutils import Vector, Matrix, Quaternion
 from Malt import Scene
@@ -187,7 +188,7 @@ class MaltRenderEngine(bpy.types.RenderEngine):
 
         for obj in depsgraph.objects:
             if is_f12 or obj.visible_in_viewport_get(context.space_data):
-                id = abs(hash(obj.name_full)) % (2**16)
+                id = xxhash.xxh3_64_intdigest(obj.name_full.encode()) % (2**16)
                 add_object(obj, obj.matrix_world, id)
 
         for instance in depsgraph.object_instances:
@@ -354,6 +355,9 @@ class MaltRenderEngine(bpy.types.RenderEngine):
             texture_format = GL.GL_RGBA8
             if GL.glGetInternalformativ(GL.GL_TEXTURE_2D, texture_format, GL.GL_READ_PIXELS, 1) != GL.GL_ZERO:
                 data_format = GL.glGetInternalformativ(GL.GL_TEXTURE_2D, texture_format, GL.GL_TEXTURE_IMAGE_TYPE, 1)
+        elif self.bridge.viewport_bit_depth == 16:
+            data_format = GL.GL_HALF_FLOAT
+            texture_format = GL.GL_RGBA16F
         
         render_texture = Texture(resolution, texture_format, data_format, pixels.buffer(), mag_filter=mag_filter)
 

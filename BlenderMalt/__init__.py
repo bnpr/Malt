@@ -2,7 +2,7 @@ bl_info = {
     "name": "BlenderMalt",
     "description" : "Extensible Python Render Engine",
     "author" : "Miguel Pozo",
-    "version": (1,0,0,'beta.2','Release'),
+    "version": (1,0,0,'beta.3','Release'),
     "blender" : (3, 2, 0),
     "doc_url": "https://malt3d.com",
     "tracker_url": "https://github.com/bnpr/Malt/issues/new/choose",
@@ -34,7 +34,8 @@ class Preferences(bpy.types.AddonPreferences):
     # this must match the addon name
     bl_idname = __package__
 
-    setup_vs_code : bpy.props.BoolProperty(name="Auto setup VSCode", default=True, description="Setups a VSCode project on your .blend file folder")
+    setup_vs_code : bpy.props.BoolProperty(name="Auto setup VSCode", default=True,
+        description="Setups a VSCode project on your .blend file folder")
 
     renderdoc_path : bpy.props.StringProperty(name="RenderDoc Path", subtype='FILE_PATH',
         set=malt_path_setter('renderdoc_path'), get=malt_path_getter('renderdoc_path'))
@@ -47,11 +48,20 @@ class Preferences(bpy.types.AddonPreferences):
     
     render_fps_cap : bpy.props.IntProperty(name="Max Viewport Render Framerate", default=30)
     
+    def update_show_sockets(self, context):
+        from BlenderMalt.MaltNodes.MaltSocket import MaltSocket
+        MaltSocket.show_in_material_panel = bpy.props.BoolProperty(default=self.show_sockets,
+            options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
+    
+    show_sockets : bpy.props.BoolProperty(name="Show sockets in Material Panel", default=True,
+        update=update_show_sockets, description="Show node socket properties in the Material Panel by default")
+    
     def update_debug_mode(self, context):
         if context.scene.render.engine == 'MALT':
             context.scene.world.malt.update_pipeline(context)
 
-    debug_mode : bpy.props.BoolProperty(name="Debug Mode", default=False, update=update_debug_mode, description="Developers only. Do not touch !!!")
+    debug_mode : bpy.props.BoolProperty(name="Debug Mode", default=False, update=update_debug_mode,
+        description="Developers only. Do not touch !!!")
 
     def draw(self, context):
         layout = self.layout
@@ -68,9 +78,10 @@ class Preferences(bpy.types.AddonPreferences):
             row.operator('wm.path_open', text="Open Session Log")
 
         layout.prop(self, "plugins_dir")
+        layout.prop(self, "show_sockets")
+        layout.prop(self, "render_fps_cap")
         layout.prop(self, "setup_vs_code")
         layout.prop(self, "renderdoc_path")
-        layout.prop(self, "render_fps_cap")
         layout.label(text='Developer Settings :')
         layout.prop(self, "debug_mode")
         layout.prop(self, "docs_path")

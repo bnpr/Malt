@@ -2,6 +2,7 @@
 
 Render pipelines can be customized through plugins.
 Plugins can:
+
 - Add new node libraries to *Pipeline Graphs*.
 - Add new *Pipeline Parameters*.
 - Add new *PipelineGraph types*.

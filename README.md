@@ -3,7 +3,7 @@
 Malt is a fully customizable real-time rendering framework for animation and illustration.  
 It's aimed at advanced users and technical artists who want more control over their workflow and/or their art style, with special care put into the needs of stylized non photorealistic rendering.
 
-[Docs](https://malt3d.com) | [Forums & Support](https://github.com/bnpr/Malt/discussions) | [Bug Reports](https://github.com/bnpr/Malt/issues) | [Twitter](https://twitter.com/pragma37) | [Patreon](https://patreon.com/pragma37)
+[Download](#install) | [Docs](https://malt3d.com) | [Forums & Support](https://github.com/bnpr/Malt/discussions) | [Bug Reports](https://github.com/bnpr/Malt/issues) | [Twitter](https://twitter.com/pragma37) | [Patreon](https://patreon.com/pragma37)
 
 ## Features
 
@@ -20,7 +20,8 @@ It's aimed at advanced users and technical artists who want more control over th
 
 ## Current State
 
-The 1.0 Release is almost ready, take a look at the [1.0 Preview](https://github.com/bnpr/Malt/discussions/231) and leave your feedback.
+We've been working on a full redesign of the default nodes before the 1.0 Release.  
+[Give it try and leave your feedback](https://github.com/bnpr/Malt/discussions/382).
 
 Malt is software agnostic, but Blender is the only integration planned right now.
 
@@ -28,6 +29,7 @@ Malt is software agnostic, but Blender is the only integration planned right now
 
 - OpenGL 4.1+
 - Blender 3.2
+- Windows or Linux
 
 > A dedicated Nvidia or AMD graphics card is highly recomended.  
 
@@ -48,10 +50,8 @@ Malt is software agnostic, but Blender is the only integration planned right now
 
 ## First steps
 
-To learn how to use *Malt*, check [this playlist](https://www.youtube.com/playlist?list=PLiN2BGdwwlLqbks8h5MohvH0Xd0Zql_Sg) and the [Sample Files](https://github.com/bnpr/Malt/discussions/94).
-
-> Malt allows to use different settings for *Viewport Preview*, *Viewport Render* and *F12 Render*.  
-> By default, the *Viewport Preview* should be faster than the *Viewport Render* mode.
+To learn how to use *Malt*, check the [Docs](https://malt3d.com/Documentation/Getting%20Started/), this [playlist](https://www.youtube.com/playlist?list=PLiN2BGdwwlLqbks8h5MohvH0Xd0Zql_Sg) and the [Sample Files](https://github.com/bnpr/Malt/discussions/94).  
+The [Q&A section](https://github.com/bnpr/Malt/discussions/categories/q-a) is full of info as well.
 
 ## Developer Documentation
 
