@@ -95,7 +95,7 @@ void Hdri(sampler2D Hdri, vec3 Normal, out vec4 Color, out vec2 UV)
 vec4 Noise(vec3 coord, float seed, float scale, float detail, float balance)
 {
     detail = min(detail, 16);
-    return fractal_noise_ex(vec4(coord * scale, seed), detail, balance, false, vec4(0.0));
+    return fractal_noise(vec4(coord * scale, seed), detail, balance);
 }
 
 /*  META
@@ -104,13 +104,13 @@ vec4 Noise(vec3 coord, float seed, float scale, float detail, float balance)
     @scale: default=5.0;
     @detail: default=3.0; min=1.0; max=16.0;
     @balance: subtype=Slider; min=0.0; max=1.0; default = 0.5;
-    @tile_size: subtype=Vector; default=uvec4(5); min=2;
+    @tile_size: subtype=Vector; default=ivec4(5); min=2;
 */
-vec4 Noise_Tiled(vec3 coord, float seed, float scale, float detail, float balance, uvec4 tile_size)
+vec4 Noise_Tiled(vec3 coord, float seed, float scale, float detail, float balance, ivec4 tile_size)
 {
     detail = min(detail, 16);
-    tile_size = max(uvec4(2), tile_size);
-    return fractal_noise_ex(vec4(coord * scale, seed), detail, balance, true, tile_size);
+    tile_size = max(ivec4(2), tile_size);
+    return fractal_noise(vec4(coord * scale, seed), detail, balance, tile_size);
 }
 
 /* META
