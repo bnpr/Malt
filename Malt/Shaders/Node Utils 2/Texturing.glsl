@@ -122,11 +122,11 @@ void Voronoi(
     vec3 coord, float seed,
     float scale,
     out vec4 cell_color,
-    out vec3 cell_position,
+    out vec4 cell_position,
     out float cell_distance
 )
 {
-    CellNoiseResult result = cell_noise_ex(vec4(coord * scale, seed), false, vec4(0.0));
+    CellNoiseResult result = cell_noise(vec4(coord * scale, seed));
     cell_color = result.cell_color;
     cell_position = result.cell_position;
     cell_distance = result.cell_distance;
@@ -136,19 +136,19 @@ void Voronoi(
     @meta: subcategory=Voronoi; label=Tiled;
     @coord: subtype=Vector; default=POSITION;
     @scale: default=5.0;
-    @tile_size: subtype=Vector; default=uvec4(5); min=2;
+    @tile_size: subtype=Vector; default=ivec4(5); min=2;
 */
 void Voronoi_Tiled(
     vec3 coord, float seed,
     float scale,
-    uvec4 tile_size,
+    ivec4 tile_size,
     out vec4 cell_color,
-    out vec3 cell_position,
+    out vec4 cell_position,
     out float cell_distance
 )
 {
-    tile_size = max(uvec4(2), tile_size);
-    CellNoiseResult result = cell_noise_ex(vec4(coord * scale, seed), true, tile_size);
+    tile_size = max(ivec4(2), tile_size);
+    CellNoiseResult result = cell_noise(vec4(coord * scale, seed), tile_size);
     cell_color = result.cell_color;
     cell_position = result.cell_position;
     cell_distance = result.cell_distance;
