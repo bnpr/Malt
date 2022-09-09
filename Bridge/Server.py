@@ -166,7 +166,7 @@ class Viewport():
                     self.final_texture = Texture(resolution, GL_RGBA8, optimal_format, pixel_format=GL_RGBA)
                 except:
                     # Fallback to unsigned byte, just in case
-                    self.final_texture = Texture(resolution, GL_RGBA8, GL_UNSIGNED_BYTE, pixel_format=GL_RGBA)
+                    self.final_texture = Texture(resolution, GL_RGBA8, GL_UNSIGNED_BYTE)
                 self.final_texture.channel_size = 1
                 self.final_target = RenderTarget([self.final_texture])
             elif self.bit_depth == 16:
@@ -201,6 +201,15 @@ class Viewport():
             self.scene.time = scene.time
             self.scene.frame = scene.frame
     
+    TO_SRGB_SHADER = None
+    def to_srgb(self, texture, target):
+        if Viewport.TO_SRGB_SHADER is None:
+            source='#include "Passes/sRGBConversion.glsl"'
+            Viewport.TO_SRGB_SHADER = self.pipeline.compile_shader_from_source(source)
+        Viewport.TO_SRGB_SHADER.uniforms["to_srgb"].set_value(True)
+        Viewport.TO_SRGB_SHADER.textures["input_texture"] = texture
+        self.pipeline.draw_screen_pass(Viewport.TO_SRGB_SHADER, target)   
+    
     def render(self):
         from . import renderdoc
         if self.renderdoc_capture:
@@ -208,7 +217,10 @@ class Viewport():
 
         if self.needs_more_samples:
             result = self.pipeline.render(self.resolution, self.scene, self.is_final_render, self.is_new_frame)
-            if self.final_texture.internal_format != result['COLOR'].internal_format:
+            if self.bit_depth == 8:
+                self.to_srgb(result['COLOR'], self.final_target)
+                result = { 'COLOR' : self.final_texture }
+            elif self.final_texture.internal_format != result['COLOR'].internal_format:
                 self.pipeline.copy_textures(self.final_target, [result['COLOR']])
                 result = { 'COLOR' : self.final_texture }
             self.is_new_frame = False

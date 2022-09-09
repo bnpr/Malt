@@ -3,8 +3,11 @@ import xxhash
 import bpy
 from mathutils import Vector, Matrix, Quaternion
 from Malt import Scene
+from Malt.Pipeline import SHADER_DIR
 from Malt.GL import GL
 from Malt.GL.Texture import Texture
+from Malt.GL.Shader import Shader, shader_preprocessor
+from Malt.GL.Mesh import Mesh
 from . import MaltPipeline, MaltMeshes, MaltMaterial, CBlenderMalt
 
 CAPTURE = False
@@ -359,14 +362,6 @@ class MaltRenderEngine(bpy.types.RenderEngine):
             data_format = GL.GL_HALF_FLOAT
             texture_format = GL.GL_RGBA16F
         
-
-        self.bind_display_space_shader(depsgraph.scene_eval)
-        if self.display_draw is None or self.display_draw.resolution != viewport_resolution:
-            if self.display_draw:
-                self.display_draw.gl_delete()
-            self.display_draw = DisplayDraw(viewport_resolution)
-        self.display_draw.draw(fbo, render_texture)
-        self.unbind_display_space_shader()
         try:
             render_texture = Texture(resolution, texture_format, data_format, pixels.buffer(),
                 mag_filter=mag_filter, pixel_format=GL.GL_RGBA)
@@ -374,66 +369,39 @@ class MaltRenderEngine(bpy.types.RenderEngine):
             # Fallback to unsigned byte, just in case (matches Server behavior)
             render_texture = Texture(resolution, GL.GL_RGBA8, GL.GL_UNSIGNED_BYTE, pixels.buffer(),
                 mag_filter=mag_filter)
+        
+        global DISPLAY_DRAW
+        if DISPLAY_DRAW is None:
+            DISPLAY_DRAW = DisplayDraw()
+        DISPLAY_DRAW.draw(fbo, render_texture)
 
+DISPLAY_DRAW = None
 
-#Boilerplate code to draw an OpenGL texture to the viewport using Blender color management
 class DisplayDraw():
-    def __init__(self, resolution):
-        self.resolution = resolution
-        width, height = resolution
-
-        shader_program = GL.gl_buffer(GL.GL_INT, 1)
-        GL.glGetIntegerv(GL.GL_CURRENT_PROGRAM, shader_program)
-
-        self.vertex_array = GL.gl_buffer(GL.GL_INT, 1)
-        GL.glGenVertexArrays(1, self.vertex_array)
-        GL.glBindVertexArray(self.vertex_array[0])
-
-        texturecoord_location = GL.glGetAttribLocation(shader_program[0], "texCoord")
-        position_location = GL.glGetAttribLocation(shader_program[0], "pos")
-
-        GL.glEnableVertexAttribArray(texturecoord_location)
-        GL.glEnableVertexAttribArray(position_location)
-
-        position = [0.0, 0.0, width, 0.0, width, height, 0.0, height]
-        position = GL.gl_buffer(GL.GL_FLOAT, len(position), position)
-        texcoord = [0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0]
-        texcoord = GL.gl_buffer(GL.GL_FLOAT, len(texcoord), texcoord)
-
-        self.vertex_buffer = GL.gl_buffer(GL.GL_INT, 2)
-
-        GL.glGenBuffers(2, self.vertex_buffer)
-        GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self.vertex_buffer[0])
-        GL.glBufferData(GL.GL_ARRAY_BUFFER, 32, position, GL.GL_STATIC_DRAW)
-        GL.glVertexAttribPointer(position_location, 2, GL.GL_FLOAT, GL.GL_FALSE, 0, None)
-
-        GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self.vertex_buffer[1])
-        GL.glBufferData(GL.GL_ARRAY_BUFFER, 32, texcoord, GL.GL_STATIC_DRAW)
-        GL.glVertexAttribPointer(texturecoord_location, 2, GL.GL_FLOAT, GL.GL_FALSE, 0, None)
-
-        GL.glBindBuffer(GL.GL_ARRAY_BUFFER, 0)
-        GL.glBindVertexArray(0)
-
-    def __del__(self):
-        # We can't guarantee that the descructor runs on the correct OpenGL context.
-        # This can cause driver crashes.
-        # So it's better to just return early and let the memory leak. :(
-        return
-        self.gl_delete()
-    
-    def gl_delete(self):
-        GL.glDeleteBuffers(2, self.vertex_buffer)
-        GL.glDeleteVertexArrays(1, self.vertex_array)
-        GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
+    def __init__(self):
+        positions=[
+             1.0,  1.0, 1.0,
+             1.0, -1.0, 1.0,
+            -1.0, -1.0, 1.0,
+            -1.0,  1.0, 1.0,
+        ]
+        indices=[
+            0, 1, 3,
+            1, 2, 3,
+        ]
+        self.quad = Mesh(positions, indices)
+        source='#include "Passes/sRGBConversion.glsl"'
+        vertex_src = shader_preprocessor(source, [SHADER_DIR], ['VERTEX_SHADER'])
+        pixel_src = shader_preprocessor(source, [SHADER_DIR], ['PIXEL_SHADER'])
+        self.shader = Shader(vertex_src, pixel_src)
 
     def draw(self, fbo, texture):
         GL.glBindFramebuffer(GL.GL_FRAMEBUFFER, fbo[0])
-        GL.glActiveTexture(GL.GL_TEXTURE0)
-        texture.bind()
-        GL.glBindVertexArray(self.vertex_array[0])
-        GL.glDrawArrays(GL.GL_TRIANGLE_FAN, 0, 4)
-        GL.glBindVertexArray(0)
-        GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
+        self.shader.uniforms["to_srgb"].set_value(False)
+        self.shader.uniforms["convert"].set_value(texture.internal_format == GL.GL_RGBA8)
+        self.shader.textures["input_texture"] = texture
+        self.shader.bind()
+        self.quad.draw()
 
 
 class OT_MaltRenderDocCapture(bpy.types.Operator):
