@@ -177,6 +177,7 @@ class MaltFunctionNodeBase(MaltNode):
             return transpiler.parameter_reference(self.get_source_name(), socket.name, 'out' if socket.is_output else 'in')
         else:
             source = self.get_source_code(transpiler)
+            #TODO: Assumes return type, support out and inout parameters
             return source.splitlines()[-1].split('=')[-1].split(';')[0]
 
     def get_source_code(self, transpiler):

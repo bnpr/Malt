@@ -70,6 +70,38 @@ class MaltTree(bpy.types.NodeTree):
 
     def is_active(self):
         return self.get_pipeline_graph() is not None
+    
+    def is_group(self):
+        return self.graph_type.endswith(' group')
+    
+    def get_group_source_name(self):
+        name = self.get_transpiler().get_source_name(self.name_full, prefix='').upper()
+        return name
+
+    def get_group_function(self):
+        parameters = []
+        for node in self.nodes:
+            if node.bl_idname == 'MaltIONode':
+                sockets = node.inputs if node.is_output else node.outputs
+                for socket in sockets:
+                    parameters.append({
+                        'meta': {
+                            'label': socket.name,    
+                        },
+                        'name': socket.get_source_reference(),
+                        'type': socket.data_type,
+                        'size': socket.array_size,
+                        'io': 'out' if node.is_output else 'in'
+                    })
+        parameter_signature = ','.join([f"{p['io']} {p['type']} {p['name']}" for p in parameters])
+        signature = f'void {self.get_group_source_name()}({parameter_signature})'
+        return {
+            'meta': {},
+            'name': self.get_group_source_name(),
+            'type': 'void',
+            'parameters': parameters,
+            'signature': signature,
+        }
 
     def get_source_language(self):
         return self.get_pipeline_graph().language
@@ -228,7 +260,13 @@ class MaltTree(bpy.types.NodeTree):
         for node in linked_nodes:
             if hasattr(node, 'get_source_global_parameters'):
                 shader['GLOBAL'] += node.get_source_global_parameters(transpiler)
-        self['source'] = pipeline_graph.generate_source(shader)
+        if self.is_group():
+            shader['INCLUDE GUARD'] = self.get_group_source_name() + '_GLSL'
+        source = pipeline_graph.generate_source(shader)
+        if self.is_group():
+            source = source.replace('void NODE_GROUP_FUNCTION()', self.get_group_function()['signature'])
+            source = source.replace('NODE_GROUP_FUNCTION', self.get_group_source_name())
+        self['source'] = source
         return self['source']
     
     def reload_nodes(self):
@@ -472,7 +510,7 @@ def preload_menus(structs, functions, graph=None):
             super().__init__(nodetype, category, label=label, settings=settings, poll=poll, draw=draw_nothing)
 
 
-    category_id = f'BLENDERMALT_{graph.name.upper()}'
+    category_id = f'MALT{graph.name.upper()}'
 
     try:
         unregister_node_categories(category_id) # you could also check the hidden <nodeitems_utils._node_categories>
@@ -512,6 +550,9 @@ def preload_menus(structs, functions, graph=None):
         }))
         categories['Other'].append(NodeItem('MaltArrayIndexNode', label='Array Element', settings={
             'name' : repr('Array Element')
+        }))
+        categories['Other'].append(NodeItem('MaltGroupNode', label='Node Group', settings={
+            'name' : repr('Node Group')
         }))
 
     subcategories = set()

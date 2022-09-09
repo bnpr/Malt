@@ -4,9 +4,9 @@ import textwrap
 class SourceTranspiler():
     
     @classmethod
-    def get_source_name(self, name):
+    def get_source_name(self, name, prefix='_'):
         name = name.replace('.','_').replace(' ', '_')
-        name = '_' + ''.join(char for char in name if char.isalnum() or char == '_')
+        name = prefix + ''.join(char for char in name if char.isalnum() or char == '_')
         while '__' in name:
             name = name.replace('__','_')
         return name
@@ -86,6 +86,10 @@ class GLSLTranspiler(SourceTranspiler):
     @classmethod
     def custom_io_reference(self, io, graph_io_type, name):
         return f"{io.upper()}_{graph_io_type.upper()}_{''.join(char.upper() for char in name if char.isalnum())}"
+    
+    @classmethod
+    def io_parameter_reference(self, parameter_name, io_type):
+        return self.get_source_name(parameter_name, '')
     
     @classmethod
     def preprocessor_wrap(self, define, content):

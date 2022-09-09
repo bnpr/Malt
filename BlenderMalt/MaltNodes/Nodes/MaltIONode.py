@@ -106,7 +106,7 @@ class MaltIONode(bpy.types.Node, MaltNode):
     def get_source_socket_reference(self, socket):
         transpiler = self.id_data.get_transpiler()
         io = 'out' if self.is_output else 'in'
-        if self.is_custom_socket(socket):
+        if self.is_custom_socket(socket) and self.id_data.is_group() == False:
             return transpiler.custom_io_reference(io, self.io_type, socket.name)
         else:
             return transpiler.io_parameter_reference(socket.name, io)
@@ -139,6 +139,8 @@ class MaltIONode(bpy.types.Node, MaltNode):
     
     def get_source_global_parameters(self, transpiler):
         src = MaltNode.get_source_global_parameters(self, transpiler)
+        if self.id_data.is_group():
+            return src
         custom_outputs = ''
         graph_io = self.id_data.get_pipeline_graph().graph_io[self.io_type]
         try: index = graph_io.custom_output_start_index
