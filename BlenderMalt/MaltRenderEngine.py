@@ -359,7 +359,6 @@ class MaltRenderEngine(bpy.types.RenderEngine):
             data_format = GL.GL_HALF_FLOAT
             texture_format = GL.GL_RGBA16F
         
-        render_texture = Texture(resolution, texture_format, data_format, pixels.buffer(), mag_filter=mag_filter)
 
         self.bind_display_space_shader(depsgraph.scene_eval)
         if self.display_draw is None or self.display_draw.resolution != viewport_resolution:
@@ -368,6 +367,13 @@ class MaltRenderEngine(bpy.types.RenderEngine):
             self.display_draw = DisplayDraw(viewport_resolution)
         self.display_draw.draw(fbo, render_texture)
         self.unbind_display_space_shader()
+        try:
+            render_texture = Texture(resolution, texture_format, data_format, pixels.buffer(),
+                mag_filter=mag_filter, pixel_format=GL.GL_RGBA)
+        except:
+            # Fallback to unsigned byte, just in case (matches Server behavior)
+            render_texture = Texture(resolution, GL.GL_RGBA8, GL.GL_UNSIGNED_BYTE, pixels.buffer(),
+                mag_filter=mag_filter)
 
 
 #Boilerplate code to draw an OpenGL texture to the viewport using Blender color management
