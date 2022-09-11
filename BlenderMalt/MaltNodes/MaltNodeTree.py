@@ -348,6 +348,17 @@ class MaltTree(bpy.types.NodeTree):
             pathlib.Path(source_dir).mkdir(parents=True, exist_ok=True)
             with open(source_path,'w') as f:
                 f.write(source)
+            
+            if self.is_group():
+                from pathlib import Path
+                for tree in bpy.data.node_groups:
+                    if tree.bl_idname == 'MaltTree' and tree is not self:
+                        for node in tree.nodes:
+                            if node.bl_idname == 'MaltGroupNode' and node.group is self:
+                                #Touch the file to force a recompilation
+                                Path(tree.get_generated_source_path()).touch()
+                                break
+            
             if force_track_shader_changes:
                 from BlenderMalt import MaltMaterial
                 MaltMaterial.track_shader_changes()

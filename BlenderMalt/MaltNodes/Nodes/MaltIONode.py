@@ -175,11 +175,17 @@ class MaltIONode(bpy.types.Node, MaltNode):
     def draw_buttons_ext(self, context, layout):
         if self.allow_custom_parameters:
             def refresh():
-                #TODO: Overkill
+                def update_tree(tree):
+                    tree.reload_nodes()
+                    tree.update_ext(force_update=True)
+                update_tree(self.id_data)
                 for tree in bpy.data.node_groups:
-                    if tree.bl_idname == 'MaltTree':
-                        tree.reload_nodes()
-                        tree.update_ext(force_update=True)
+                    if tree.bl_idname == 'MaltTree' and tree is not self.id_data:
+                        for node in tree.nodes:
+                            if hasattr(node, 'get_linked_node_tree') and node.get_linked_node_tree() is self.id_data:
+                                update_tree(tree)
+                                break
+                                
             layout.operator("wm.malt_callback", text='Reload', icon='FILE_REFRESH').callback.set(refresh, 'Reload')
             def draw_parameters_list(owner, parameters_key):
                 row = layout.row()

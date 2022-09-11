@@ -116,8 +116,8 @@ class OT_MaltEditNodeTree(bpy.types.Operator):
         node = context.active_node
         space_path = context.space_data.path
         node_tree = None
-        if node and hasattr(node, 'get_pass_node_tree'):
-            node_tree = node.get_pass_node_tree()
+        if node and hasattr(node, 'get_linked_node_tree'):
+            node_tree = node.get_linked_node_tree()
         if node_tree:
             space_path.append(node_tree, node = node)
         else:

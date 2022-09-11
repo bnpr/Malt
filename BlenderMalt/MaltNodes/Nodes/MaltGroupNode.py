@@ -18,6 +18,9 @@ class MaltGroupNode(bpy.types.Node, MaltFunctionNodeBase):
 
     group : bpy.props.PointerProperty(type=bpy.types.NodeTree, poll=poll_group, update=update_group)
 
+    def get_linked_node_tree(self):
+        return self.group
+
     def get_function(self, skip_overrides=True, find_replacement=False):
         return self.group.get_group_function()
     
@@ -26,7 +29,12 @@ class MaltGroupNode(bpy.types.Node, MaltFunctionNodeBase):
         return src + super().get_source_global_parameters(transpiler)
 
     def draw_buttons(self, context, layout):
-        layout.prop(self, 'group', text='')
+        from BlenderMalt.MaltNodes.MaltNodeTree import set_node_tree
+        row = layout.row(align=True)
+        row.prop(self, 'group', text='')
+        row.operator('wm.malt_callback', text = '', icon = 'GREASEPENCIL').callback.set(
+            lambda: set_node_tree(context, self.group, self)
+        )
     
 classes = [
     MaltGroupNode,
