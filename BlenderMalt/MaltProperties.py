@@ -536,7 +536,7 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                 material_key = ('material', material.name_full)
                 if material_key not in proxys.keys():
                     path = material.malt.get_source_path()
-                    shader_parameters = material.malt.parameters.get_parameters(overrides, proxys)
+                    shader_parameters = material.malt.get_parameters(overrides, proxys)
                     material_parameters = material.malt_parameters.get_parameters(overrides, proxys)
                     from Bridge.Proxys import MaterialProxy
                     proxys[material_key] = MaterialProxy(path, shader_parameters, material_parameters)
@@ -552,6 +552,7 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                 result = {}
                 result['source'] = graph.get_generated_source()
                 result['parameters'] = {}
+                #TODO: Optimize. Retrieve all parameters from the tree, and pass them to node.get_parameters
                 for node in graph.nodes:
                     if hasattr(node, 'get_source_name'):
                         result['parameters'][node.get_source_name()] = node.get_parameters(overrides, proxys)

@@ -102,6 +102,20 @@ class MaltTree(bpy.types.NodeTree):
             'parameters': parameters,
             'signature': signature,
         }
+    
+    def get_group_parameters(self, overrides, proxys):
+        groups = []
+        parameters = {}
+        def get_groups(tree):
+            for node in tree.nodes:
+                if node.bl_idname == 'MaltGroupNode' and node.group is not None:
+                    if node.group not in groups:
+                        groups.append(node.group)
+                        get_groups(node.group)
+        get_groups(self)
+        for group in groups:
+            parameters.update(group.malt_parameters.get_parameters(overrides, proxys))
+        return parameters
 
     def get_source_language(self):
         return self.get_pipeline_graph().language
