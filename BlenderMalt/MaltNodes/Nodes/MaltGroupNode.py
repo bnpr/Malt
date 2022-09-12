@@ -9,8 +9,8 @@ class MaltGroupNode(bpy.types.Node, MaltFunctionNodeBase):
 
     def poll_group(self, tree):
         group_type = self.id_data.graph_type
-        if group_type.endswith(' group') == False:
-            group_type += ' group'
+        if group_type.endswith(' (Group)') == False:
+            group_type += ' (Group)'
         return tree.bl_idname == 'MaltTree' and tree.graph_type == group_type
     
     def update_group(self, context):

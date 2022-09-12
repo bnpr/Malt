@@ -28,7 +28,7 @@ class MaltTree(bpy.types.NodeTree):
         return material.malt.shader_nodes is self
     
     def update_graph_type(self, context):
-        self.is_group_type = self.graph_type.endswith(' group')
+        self.is_group_type = self.graph_type.endswith(' (Group)')
         graph = self.get_pipeline_graph()
         if graph and graph.default_graph_path and len(self.nodes) == 0:
             blend_path, tree_name = graph.default_graph_path

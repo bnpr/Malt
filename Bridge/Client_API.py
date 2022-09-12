@@ -118,7 +118,7 @@ class Bridge():
         group_graphs = {}
         for name, graph in self.graphs.items():
             if graph.language == 'GLSL':
-                group_graphs[f'{name} group'] = copy.deepcopy(graph)
+                group_graphs[f'{name} (Group)'] = copy.deepcopy(graph)
         
         for name, graph in group_graphs.items():
             graph.name = name
