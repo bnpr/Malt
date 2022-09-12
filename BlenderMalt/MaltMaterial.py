@@ -60,7 +60,10 @@ class MaltMaterial(bpy.types.PropertyGroup):
 
         def nodes_add_or_duplicate():
             if self.shader_nodes:
-                self.shader_nodes = self.shader_nodes.copy()
+                copy = self.shader_nodes.copy()
+                copy.reload_nodes()
+                copy.update_ext(force_update=True)
+                self.shader_nodes = copy
             else:
                 self.shader_nodes = bpy.data.node_groups.new(f'{self.id_data.name} Node Tree', 'MaltTree')
                 self.shader_nodes.graph_type = self.material_type
