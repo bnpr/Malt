@@ -93,7 +93,7 @@ class MaltTree(bpy.types.NodeTree):
                         'size': socket.array_size,
                         'io': 'out' if node.is_output else 'in'
                     })
-        parameter_signature = ','.join([f"{p['io']} {p['type']} {p['name']}" for p in parameters])
+        parameter_signature = ', '.join([f"{p['io']} {p['type']} {p['name']}" for p in parameters])
         signature = f'void {self.get_group_source_name()}({parameter_signature})'
         return {
             'meta': {},
