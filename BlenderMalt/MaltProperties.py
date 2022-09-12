@@ -79,7 +79,7 @@ class MaltGraphPropertyWrapper(bpy.types.PropertyGroup):
         if name is None:
             name = f'{self.id_data.name} - {self.name} - {self.type}'
         if self.graph:
-            self.graph = self.graph.copy()
+            self.graph = self.graph.get_copy()
         else:
             self.graph = bpy.data.node_groups.new(name, 'MaltTree')
             self.graph.graph_type = self.type

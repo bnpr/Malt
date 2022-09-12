@@ -17,6 +17,13 @@ class MaltTree(bpy.types.NodeTree):
     bl_label = "Malt Node Tree"
     bl_icon = 'NODETREE'
 
+    def get_copy(self):
+        copy = self.copy()
+        copy.subscribed = False
+        copy.reload_nodes()
+        copy.update_ext(force_update=True)
+        return copy
+    
     type : bpy.props.EnumProperty(name = 'Type', items = [("MALT", "Malt", "Malt")],
         options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
 
@@ -42,11 +49,10 @@ class MaltTree(bpy.types.NodeTree):
                 )
                 bpy.data.node_groups[tree_name].reload_nodes()
             name = self.name
-            copy = bpy.data.node_groups[tree_name].copy()
+            copy = bpy.data.node_groups[tree_name].get_copy()
             self.user_remap(copy)
             bpy.data.node_groups.remove(self)
             copy.name = name
-            copy.update_ext(force_update=True)#Compile
         else:
             self.reload_nodes()
             self.update_ext(force_update=True)
@@ -705,10 +711,7 @@ def node_header_ui(self, context):
     if context.space_data.tree_type != 'MaltTree' or node_tree is None:
         return
     def duplicate():
-        tree = node_tree.copy()
-        tree.reload_nodes()
-        tree.update_ext(force_update=True)
-        context.space_data.node_tree = tree
+        context.space_data.node_tree = node_tree.get_copy()
     self.layout.operator('wm.malt_callback', text='', icon='DUPLICATE').callback.set(duplicate, 'Duplicate')
     def recompile():
         node_tree.reload_nodes()

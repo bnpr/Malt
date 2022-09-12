@@ -323,10 +323,11 @@ class MaltNode():
             parameter_key = socket.get_source_global_reference()
             parameter_key = parameter_key.replace('"','')
             self.id_data.malt_parameters.draw_parameter(get_layout(), parameter_key, text, is_node_socket=True)
-            rna_keys = self.id_data.malt_parameters.get_rna().keys()
+            rna = self.id_data.malt_parameters.get_rna()
+            rna_keys = rna.keys()
             for override in ('Preview', 'Final Render'):
                 key = f'{parameter_key} @ {override}'
-                if key in rna_keys:
+                if key in rna_keys and rna[key].get('active'):
                     self.id_data.malt_parameters.draw_parameter(get_layout(), key, None, is_node_socket=True)
         else:
             layout.label(text=text)
