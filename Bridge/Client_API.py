@@ -113,6 +113,45 @@ class Bridge():
     def get_parameters(self):
         return self.parameters
     
+    def generate_group_graphs(self):
+        import copy
+        group_graphs = {}
+        for name, graph in self.graphs.items():
+            if graph.language == 'GLSL':
+                group_graphs[f'{name} group'] = copy.deepcopy(graph)
+        
+        for name, graph in group_graphs.items():
+            graph.name = name
+            from Malt.PipelineGraph import GLSLGraphIO
+            output_types = [
+                'bool','float','int','uint',
+                'vec2','vec3','vec4',
+                'ivec2','ivec3','ivec4',
+                'uvec2','uvec3','uvec4',
+                'mat4',
+            ]
+            input_types = [*output_types] + ['sampler1D','sampler2D']
+            graph.graph_io={
+                'NODE_GROUP_FUNCTION': GLSLGraphIO('NODE_GROUP_FUNCTION',
+                    dynamic_input_types=input_types,
+                    dynamic_output_types=output_types
+                )
+            }
+            io = graph.graph_io['NODE_GROUP_FUNCTION']
+            io.function = {
+                'meta': {},
+                'name': 'NODE_GROUP_FUNCTION',
+                'type': 'void',
+                'parameters': [],
+            }
+            io.signature = 'void NODE_GROUP_FUNCTION()'
+            graph.default_graph_path = None
+            graph.default_global_scope = ""
+            graph.default_shader_src = ""
+            graph.graph_type = graph.GLOBAL_GRAPH
+        
+        self.graphs.update(group_graphs)
+    
     @bridge_method
     def get_stats(self):
         if 'STATS' in self.shared_dict and self.shared_dict['STATS']:
