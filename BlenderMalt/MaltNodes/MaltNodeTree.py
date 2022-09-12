@@ -28,6 +28,7 @@ class MaltTree(bpy.types.NodeTree):
         return material.malt.shader_nodes is self
     
     def update_graph_type(self, context):
+        self.is_group_type = self.graph_type.endswith(' group')
         graph = self.get_pipeline_graph()
         if graph and graph.default_graph_path and len(self.nodes) == 0:
             blend_path, tree_name = graph.default_graph_path
@@ -46,9 +47,14 @@ class MaltTree(bpy.types.NodeTree):
             bpy.data.node_groups.remove(self)
             copy.name = name
             copy.update_ext(force_update=True)#Compile
+        else:
+            self.reload_nodes()
+            self.update_ext(force_update=True)
     
     graph_type: bpy.props.StringProperty(name='Type', update=update_graph_type,
         options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
+    is_group_type : bpy.props.BoolProperty(default=False,
+        options={'SKIP_SAVE','LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
 
     #deprecated
     library_source : bpy.props.StringProperty(name="Local Library", subtype='FILE_PATH',
@@ -72,13 +78,15 @@ class MaltTree(bpy.types.NodeTree):
         return self.get_pipeline_graph() is not None
     
     def is_group(self):
-        return self.graph_type.endswith(' group')
+        return self.is_group_type
     
     def get_group_source_name(self):
         name = self.get_transpiler().get_source_name(self.name_full, prefix='').upper()
         return name
 
-    def get_group_function(self):
+    def get_group_function(self, force_update=False):
+        if force_update == False and self.get('group_function'):
+            return self['group_function']
         parameters = []
         for node in self.nodes:
             if node.bl_idname == 'MaltIONode':
@@ -95,13 +103,14 @@ class MaltTree(bpy.types.NodeTree):
                     })
         parameter_signature = ', '.join([f"{p['io']} {p['type']} {p['name']}" for p in parameters])
         signature = f'void {self.get_group_source_name()}({parameter_signature})'
-        return {
+        self['group_function'] = {
             'meta': {},
             'name': self.get_group_source_name(),
             'type': 'void',
             'parameters': parameters,
             'signature': signature,
         }
+        return self['group_function']
     
     def get_group_parameters(self, overrides, proxys):
         groups = []
@@ -292,6 +301,7 @@ class MaltTree(bpy.types.NodeTree):
             for node in self.nodes:
                 if hasattr(node, 'update'):
                     node.update()
+            self.get_group_function(force_update=True)
         except:
             import traceback
             traceback.print_exc()
@@ -349,17 +359,25 @@ class MaltTree(bpy.types.NodeTree):
             with open(source_path,'w') as f:
                 f.write(source)
             
-            if self.is_group():
-                from pathlib import Path
-                for tree in bpy.data.node_groups:
-                    if tree.bl_idname == 'MaltTree' and tree is not self:
-                        for node in tree.nodes:
-                            if node.bl_idname == 'MaltGroupNode' and node.group is self:
-                                #Touch the file to force a recompilation
-                                Path(tree.get_generated_source_path()).touch()
-                                break
-            
             if force_track_shader_changes:
+                if self.is_group():
+                    from pathlib import Path
+                    visited_trees = set()
+                    def recompile_users(updated_tree):
+                        visited_trees.add(updated_tree)
+                        if updated_tree.is_group():
+                            for tree in bpy.data.node_groups:
+                                if tree.bl_idname == 'MaltTree' and tree not in visited_trees:
+                                    for node in tree.nodes:
+                                        if node.bl_idname == 'MaltGroupNode' and node.group is updated_tree:
+                                            recompile_users(tree)
+                                            break
+                        else:
+                            #Touch the file to force a recompilation
+                            Path(updated_tree.get_generated_source_path()).touch()
+                            return
+                    recompile_users(self)
+            
                 from BlenderMalt import MaltMaterial
                 MaltMaterial.track_shader_changes()
         except:
@@ -383,7 +401,10 @@ def setup_node_trees():
     for tree in bpy.data.node_groups:
         if tree.bl_idname == 'MaltTree' and tree.is_active():
             tree.reload_nodes()
+    for tree in bpy.data.node_groups:
+        if tree.bl_idname == 'MaltTree' and tree.is_active():
             tree.update_ext(force_track_shader_changes=False, force_update=True)
+            
     from BlenderMalt import MaltMaterial
     MaltMaterial.track_shader_changes()
 
@@ -684,9 +705,13 @@ def node_header_ui(self, context):
     if context.space_data.tree_type != 'MaltTree' or node_tree is None:
         return
     def duplicate():
-        context.space_data.node_tree = node_tree.copy()
+        tree = node_tree.copy()
+        tree.reload_nodes()
+        tree.update_ext(force_update=True)
+        context.space_data.node_tree = tree
     self.layout.operator('wm.malt_callback', text='', icon='DUPLICATE').callback.set(duplicate, 'Duplicate')
     def recompile():
+        node_tree.reload_nodes()
         node_tree.update_ext(force_update=True)
     self.layout.operator("wm.malt_callback", text='', icon='FILE_REFRESH').callback.set(recompile, 'Recompile')
     self.layout.prop_search(node_tree, 'graph_type', context.scene.world.malt, 'graph_types',text='')

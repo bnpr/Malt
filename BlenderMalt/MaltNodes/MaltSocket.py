@@ -112,7 +112,8 @@ class MaltSocket(bpy.types.NodeSocket):
             if socket.is_linked == False:
                 return None
             else:
-                link = socket.links[0]
+                try: link = socket.links[0]
+                except: return None #socket.links can be empty even if is_linked is true!?!?!
                 if ignore_muted and link.is_muted:
                     return None
                 linked = link.to_socket if socket.is_output else link.from_socket

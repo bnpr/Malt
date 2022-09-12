@@ -45,7 +45,7 @@ class SourceTranspiler():
 
     @classmethod
     def io_parameter_reference(self, parameter_name, io_type):
-        return parameter_name
+        pass
 
     @classmethod
     def is_instantiable_type(self, type):
