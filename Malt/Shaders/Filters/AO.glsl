@@ -18,6 +18,11 @@ float ao(sampler2D depth_texture, int depth_channel, vec3 position, vec3 normal,
     //Loosely based on https://learnopengl.com/Advanced-Lighting/SSAO
     float occlusion = 0;
 
+    if(samples <= 0 || radius <= 0.0)
+    {
+        return 1.0;
+    }
+    
     for(int i = 0; i < samples; i++)
     {
         // Generate a random TBN matrix
