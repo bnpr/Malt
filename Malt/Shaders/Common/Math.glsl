@@ -75,4 +75,13 @@ vec2 phyllotaxis_disk(float p, int total)
     return vec2(cos(r), sin(r)) * vec2(pow(p / float(total), 0.5));
 }
 
+float ease(float a, float b)
+{
+    b = pow(b * 2.0, 5.0); // remapping the easing parameter 'b' to have a more sensible value range that lies roughly between 0-1
+    float v = 1.0 - (abs(a - 0.5) * 2);
+    v = pow(v, b);
+    v = (a > 0.5)? 2 - v : v;
+    return v * 0.5;
+}
+
 #endif // COMMON_MATH_GLSL

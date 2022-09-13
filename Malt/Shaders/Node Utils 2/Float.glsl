@@ -98,4 +98,7 @@ bool Float_less_or_equal(float a, float b){ return a <= b; }
 /*META @meta: label=If Else; @a: label=If True; @b: label=If False; */
 float Float_if_else(bool condition, float a, float b){ return condition ? a : b; }
 
+/* META @meta: label=Ease; @a: min=0.0; max=1.0; subtype=Slider; @b: default=0.55; min=0.0; */
+float Float_ease(float a, float b){ return ease(a,b);}
+
 #endif //NODE_UTILS_2_FLOAT_GLSL
