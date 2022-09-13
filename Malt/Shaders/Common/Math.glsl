@@ -84,4 +84,15 @@ float ease(float a, float b)
     return v * 0.5;
 }
 
+float smin(float a, float b, float s)
+{
+    float h = saturate(0.5 + 0.5 * (a-b) / s);
+    return mix(a, b, h) - s * h * (1.0 - h);
+}
+
+float smax(float a, float b, float s)
+{
+    return smin(a, b, -s);
+}
+
 #endif // COMMON_MATH_GLSL
