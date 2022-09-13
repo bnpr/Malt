@@ -45,7 +45,12 @@ def log_system_info():
 
     def log_format_prop(format, prop):
         read = glGetInternalformativ(GL_TEXTURE_2D, format, prop, 1)
-        LOG.info('{} {}: {}'.format(GL_ENUMS[format], GL_ENUMS[prop], GL_ENUMS[read]))
+        try:
+            LOG.info('{} {}: {}'.format(GL_ENUMS[format], GL_ENUMS[prop], GL_ENUMS[read]))
+        except:
+            #Some returned formats are not present in GL_ENUMS? See #393
+            import traceback
+            traceback.print_exc()
 
     def log_format_props(format):
         log_format_prop(format, GL_READ_PIXELS)
