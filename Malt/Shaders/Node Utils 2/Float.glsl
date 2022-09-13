@@ -61,9 +61,6 @@ float Float_min(float a, float b){ return min(a,b); }
 /*META @meta: label=Maximum;*/
 float Float_max(float a, float b){ return max(a,b); }
 /*META @meta: label=Smooth Minimum; @s: min=0.0; */
-float Float_smin(float a, float b, float s){ return smin(a,b,s); }
-/*META @meta: label=Smooth Maximum; @s: min=0.0; */
-float Float_smax(float a, float b, float s){ return smax(a,b,s); }
 
 /*META @meta: label=Mix;*/
 float Float_mix(float a, float b, float fac){ return mix(a,b,fac); }
@@ -101,8 +98,5 @@ bool Float_less_or_equal(float a, float b){ return a <= b; }
 
 /*META @meta: label=If Else; @a: label=If True; @b: label=If False; */
 float Float_if_else(bool condition, float a, float b){ return condition ? a : b; }
-
-/* META @meta: label=Ease; @a: min=0.0; max=1.0; subtype=Slider; @b: default=0.55; min=0.0; */
-float Float_ease(float a, float b){ return ease(a,b);}
 
 #endif //NODE_UTILS_2_FLOAT_GLSL
