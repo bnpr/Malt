@@ -286,10 +286,14 @@ def compile_gl_program(vertex, fragment):
     error = ""
 
     if cache:
-        glProgramBinary(program, format, cache, len(cache))
-        glGetProgramiv(program, GL_LINK_STATUS, status)
-        if status[0] != GL_FALSE:
-            return (program, error)
+        try:
+            glProgramBinary(program, format, cache, len(cache))
+            glGetProgramiv(program, GL_LINK_STATUS, status)
+            if status[0] != GL_FALSE:
+                return (program, error)
+        except:
+            #Program binary format can change on driver updates
+            LOG.error(f"Failed to load cached program binary: {shader_hash} ({format})")
 
     def compile_shader (source, shader_type):
         bindless_setup = ''
