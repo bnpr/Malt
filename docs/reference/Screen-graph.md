@@ -1,2344 +1,2214 @@
 # Screen Graph Reference
 ---
-## Common - Color
+## Input
 ---
-### **alpha_blend**
->vec4 alpha_blend(vec4 base, vec4 blend)
-
+### **Geometry**
+- **Inputs**  
+	- **Space** *: ( int | ENUM(Object,World,Camera,Screen) ) - default = 1*  
+	- **IOR** *: ( float ) - default = 1.45*  
+- **Outputs**  
+	- **Position** *: ( vec3 )*  
+	- **Incoming** *: ( vec3 )*  
+	- **Normal** *: ( vec3 ) - default = NORMAL*  
+	- **True Normal** *: ( vec3 )*  
+	- **Is Backfacing** *: ( bool )*  
+	- **Facing** *: ( float )*  
+	- **Fresnel** *: ( float )*  
+	- **Reflection** *: ( vec3 )*  
+	- **Refraction** *: ( vec3 )*  
+---
+### **Tangent**
+---
+#### **Radial**
+- **Inputs**  
+	- **Axis** *: ( int | ENUM(X,Y,Z) ) - default = 2*  
+	- **Object Space** *: ( bool ) - default = True*  
+- **Outputs**  
+	- **Tangent** *: ( vec3 )*  
+	- **Bitangent** *: ( vec3 )*  
+---
+#### **Procedural UV**
+- **Inputs**  
+	- **Uv** *: ( vec2 )*  
+- **Outputs**  
+	- **Tangent** *: ( vec3 )*  
+	- **Bitangent** *: ( vec3 )*  
+---
+### **Id**
+- **Outputs**  
+	- **Object Id** *: ( vec4 )*  
+	- **Custom Id A** *: ( vec4 )*  
+	- **Custom Id B** *: ( vec4 )*  
+	- **Custom Id C** *: ( vec4 )*  
+---
+### **Camera Data**
+- **Outputs**  
+	- **View Direction** *: ( vec3 )*  
+	- **Screen UV** *: ( vec2 )*  
+	- **Z Depth** *: ( float )*  
+	- **View Distance** *: ( float )*  
+	- **Camera Position** *: ( vec3 )*  
+	- **Camera Matrix** *: ( mat4 )*  
+	- **Projection Matrix** *: ( mat4 )*  
+	- **Is Orthographic** *: ( bool )*  
+---
+### **Render Info**
+- **Outputs**  
+	- **Resolution** *: ( vec2 )*  
+	- **Current Sample** *: ( int )*  
+	- **Sample Offset** *: ( vec2 )*  
+---
+### **Time Info**
+- **Outputs**  
+	- **Time** *: ( float )*  
+	- **Frame** *: ( int )*  
+---
+### **Random**
+- **Inputs**  
+	- **Seed** *: ( float )*  
+- **Outputs**  
+	- **Per Object** *: ( vec4 )*  
+	- **Per Sample** *: ( vec4 )*  
+	- **Per Pixel** *: ( vec4 )*  
+---
+## Parameters
+---
+### **Boolean**
+- **Inputs**  
+	- **B** *: ( bool )*  
+- **Outputs**  
+	- **result** *: ( bool )*  
+---
+### **Float**
+- **Inputs**  
+	- **F** *: ( float )*  
+- **Outputs**  
+	- **result** *: ( float )*  
+---
+### **Integer**
+- **Inputs**  
+	- **I** *: ( int )*  
+- **Outputs**  
+	- **result** *: ( int )*  
+---
+### **Vector 2D**
+- **Inputs**  
+	- **V** *: ( vec2 )*  
+- **Outputs**  
+	- **result** *: ( vec2 )*  
+---
+### **Vector 3D**
+- **Inputs**  
+	- **V** *: ( vec3 | Vector )*  
+- **Outputs**  
+	- **result** *: ( vec3 )*  
+---
+### **Vector 4D**
+- **Inputs**  
+	- **V** *: ( vec4 | Vector )*  
+- **Outputs**  
+	- **result** *: ( vec4 )*  
+---
+### **RGB Color**
+- **Inputs**  
+	- **V** *: ( vec3 | Color )*  
+- **Outputs**  
+	- **result** *: ( vec3 )*  
+---
+### **RGBA Color**
+- **Inputs**  
+	- **V** *: ( vec4 | Color )*  
+- **Outputs**  
+	- **result** *: ( vec4 )*  
+---
+### **Color Ramp**
+- **Inputs**  
+	- **Color Ramp** *: ( sampler1D )*  
+- **Outputs**  
+	- **result** *: ( sampler1D )*  
+---
+### **Image**
+- **Inputs**  
+	- **Image** *: ( sampler2D )*  
+- **Outputs**  
+	- **result** *: ( sampler2D )*  
+---
+## Math
+---
+### **Hash**
+- **Inputs**  
+	- **V** *: ( vec4 | Data )*  
+- **Outputs**  
+	- **result** *: ( vec4 )*  
+---
+### **Quaternion**
+---
+#### **From Axis Angle**
+- **Inputs**  
+	- **Axis** *: ( vec3 | Normal )*  
+	- **Angle** *: ( float | Angle )*  
+- **Outputs**  
+	- **result** *: ( vec4 )*  
+---
+#### **From Vector Delta**
+- **Inputs**  
+	- **From** *: ( vec3 | Normal )*  
+	- **To** *: ( vec3 | Normal )*  
+- **Outputs**  
+	- **result** *: ( vec4 )*  
+---
+#### **Inverted**
+- **Inputs**  
+	- **Q** *: ( vec4 | Quaternion ) - default = (0.0, 0.0, 0.0, 1.0)*  
+- **Outputs**  
+	- **result** *: ( vec4 )*  
+---
+#### **Multiply**
+- **Inputs**  
+	- **A** *: ( vec4 | Quaternion ) - default = (0.0, 0.0, 0.0, 1.0)*  
+	- **B** *: ( vec4 | Quaternion ) - default = (0.0, 0.0, 0.0, 1.0)*  
+- **Outputs**  
+	- **result** *: ( vec4 )*  
+---
+#### **Transform**
+- **Inputs**  
+	- **Q** *: ( vec4 | Quaternion ) - default = (0.0, 0.0, 0.0, 1.0)*  
+	- **Vector** *: ( vec3 | Vector ) - default = (0.0, 0.0, 0.0)*  
+- **Outputs**  
+	- **result** *: ( vec3 )*  
+---
+#### **Mix**
+- **Inputs**  
+	- **A** *: ( vec4 | Quaternion ) - default = (0.0, 0.0, 0.0, 1.0)*  
+	- **B** *: ( vec4 | Quaternion ) - default = (0.0, 0.0, 0.0, 1.0)*  
+	- **Factor** *: ( float | Slider ) - default = 0.5*  
+- **Outputs**  
+	- **result** *: ( vec4 )*  
+---
+### **Matrix**
+---
+#### **From Translation**
+- **Inputs**  
+	- **T** *: ( vec3 | Vector )*  
+- **Outputs**  
+	- **result** *: ( mat4 )*  
+---
+#### **From Quaternion**
+- **Inputs**  
+	- **Q** *: ( vec4 | Quaternion ) - default = (0.0, 0.0, 0.0, 1.0)*  
+- **Outputs**  
+	- **result** *: ( mat4 )*  
+---
+#### **From Euler**
+- **Inputs**  
+	- **E** *: ( vec3 | Euler )*  
+- **Outputs**  
+	- **result** *: ( mat4 )*  
+---
+#### **From Scale**
+- **Inputs**  
+	- **S** *: ( vec3 | Vector ) - default = (1.0, 1.0, 1.0)*  
+- **Outputs**  
+	- **result** *: ( mat4 )*  
+---
+#### **Is Orthographic**
+- **Inputs**  
+	- **Matrix** *: ( mat4 ) - default = mat4(1)*  
+- **Outputs**  
+	- **result** *: ( bool )*  
+---
+#### **Inverse**
+- **Inputs**  
+	- **Matrix** *: ( mat4 ) - default = mat4(1)*  
+- **Outputs**  
+	- **result** *: ( mat4 )*  
+---
+#### **Multiply**
+- **Inputs**  
+	- **A** *: ( mat4 ) - default = mat4(1)*  
+	- **B** *: ( mat4 ) - default = mat4(1)*  
+- **Outputs**  
+	- **result** *: ( mat4 )*  
+---
+### **Boolean Logic**
+---
+#### **And**
+- **Inputs**  
+	- **A** *: ( bool )*  
+	- **B** *: ( bool )*  
+- **Outputs**  
+	- **result** *: ( bool )*  
+---
+#### **Or**
+- **Inputs**  
+	- **A** *: ( bool )*  
+	- **B** *: ( bool )*  
+- **Outputs**  
+	- **result** *: ( bool )*  
+---
+#### **Not**
+- **Inputs**  
+	- **B** *: ( bool )*  
+- **Outputs**  
+	- **result** *: ( bool )*  
+---
+#### **Equal**
+- **Inputs**  
+	- **A** *: ( bool )*  
+	- **B** *: ( bool )*  
+- **Outputs**  
+	- **result** *: ( bool )*  
+---
+#### **Not Equal**
+- **Inputs**  
+	- **A** *: ( bool )*  
+	- **B** *: ( bool )*  
+- **Outputs**  
+	- **result** *: ( bool )*  
+---
+#### **If Else**
+- **Inputs**  
+	- **Condition** *: ( bool )*  
+	- **If True** *: ( bool )*  
+	- **If False** *: ( bool )*  
+- **Outputs**  
+	- **result** *: ( bool )*  
+---
+### **Float**
+---
+#### **Add**
+- **Inputs**  
+	- **A** *: ( float )*  
+	- **B** *: ( float )*  
+- **Outputs**  
+	- **result** *: ( float )*  
+---
+#### **Subtract**
+- **Inputs**  
+	- **A** *: ( float )*  
+	- **B** *: ( float )*  
+- **Outputs**  
+	- **result** *: ( float )*  
+---
+#### **Multiply**
+- **Inputs**  
+	- **A** *: ( float )*  
+	- **B** *: ( float )*  
+- **Outputs**  
+	- **result** *: ( float )*  
+---
+#### **Divide**
+- **Inputs**  
+	- **A** *: ( float )*  
+	- **B** *: ( float )*  
+- **Outputs**  
+	- **result** *: ( float )*  
+---
+#### **Map Range**
+- **Inputs**  
+	- **Clamped** *: ( bool ) - default = True*  
+	- **Value** *: ( float ) - default = 0.5*  
+	- **From Min** *: ( float )*  
+	- **From Max** *: ( float ) - default = 1.0*  
+	- **To Min** *: ( float )*  
+	- **To Max** *: ( float ) - default = 1.0*  
+- **Outputs**  
+	- **result** *: ( float )*  
+---
+#### **Modulo**
+- **Inputs**  
+	- **A** *: ( float )*  
+	- **B** *: ( float )*  
+- **Outputs**  
+	- **result** *: ( float )*  
+---
+#### **Power**
+- **Inputs**  
+	- **A** *: ( float )*  
+	- **B** *: ( float )*  
+- **Outputs**  
+	- **result** *: ( float )*  
+---
+#### **Square Root**
+- **Inputs**  
+	- **A** *: ( float )*  
+- **Outputs**  
+	- **result** *: ( float )*  
+---
+#### **Round**
+- **Inputs**  
+	- **A** *: ( float )*  
+- **Outputs**  
+	- **result** *: ( float )*  
+---
+#### **Fractional Part**
+- **Inputs**  
+	- **A** *: ( float )*  
+- **Outputs**  
+	- **result** *: ( float )*  
+---
+#### **Floor**
+- **Inputs**  
+	- **A** *: ( float )*  
+- **Outputs**  
+	- **result** *: ( float )*  
+---
+#### **Ceil**
+- **Inputs**  
+	- **A** *: ( float )*  
+- **Outputs**  
+	- **result** *: ( float )*  
+---
+#### **Clamp**
+- **Inputs**  
+	- **A** *: ( float )*  
+	- **Min** *: ( float )*  
+	- **Max** *: ( float )*  
+- **Outputs**  
+	- **result** *: ( float )*  
+---
+#### **Sign**
+- **Inputs**  
+	- **A** *: ( float )*  
+- **Outputs**  
+	- **result** *: ( float )*  
+---
+#### **Absolute**
+- **Inputs**  
+	- **A** *: ( float )*  
+- **Outputs**  
+	- **result** *: ( float )*  
+---
+#### **Minimum**
+- **Inputs**  
+	- **A** *: ( float )*  
+	- **B** *: ( float )*  
+- **Outputs**  
+	- **result** *: ( float )*  
+---
+#### **Maximum**
+- **Inputs**  
+	- **A** *: ( float )*  
+	- **B** *: ( float )*  
+- **Outputs**  
+	- **result** *: ( float )*  
+---
+#### **Mix**
+- **Inputs**  
+	- **A** *: ( float )*  
+	- **B** *: ( float )*  
+	- **Fac** *: ( float )*  
+- **Outputs**  
+	- **result** *: ( float )*  
+---
+#### **Sine**
+- **Inputs**  
+	- **A** *: ( float )*  
+- **Outputs**  
+	- **result** *: ( float )*  
+---
+#### **Cosine**
+- **Inputs**  
+	- **A** *: ( float )*  
+- **Outputs**  
+	- **result** *: ( float )*  
+---
+#### **Tangent**
+- **Inputs**  
+	- **A** *: ( float )*  
+- **Outputs**  
+	- **result** *: ( float )*  
+---
+#### **Arcsine**
+- **Inputs**  
+	- **A** *: ( float )*  
+- **Outputs**  
+	- **result** *: ( float )*  
+---
+#### **Arcosine**
+- **Inputs**  
+	- **A** *: ( float )*  
+- **Outputs**  
+	- **result** *: ( float )*  
+---
+#### **Arctangent**
+- **Inputs**  
+	- **A** *: ( float )*  
+- **Outputs**  
+	- **result** *: ( float )*  
+---
+#### **Radians to Degrees**
+- **Inputs**  
+	- **A** *: ( float )*  
+- **Outputs**  
+	- **result** *: ( float )*  
+---
+#### **Degrees to Radians**
+- **Inputs**  
+	- **A** *: ( float )*  
+- **Outputs**  
+	- **result** *: ( float )*  
+---
+#### **Equal**
+- **Inputs**  
+	- **A** *: ( float )*  
+	- **B** *: ( float )*  
+	- **E** *: ( float ) - default = 0.1*  
+- **Outputs**  
+	- **result** *: ( bool )*  
+---
+#### **Not Equal**
+- **Inputs**  
+	- **A** *: ( float )*  
+	- **B** *: ( float )*  
+	- **E** *: ( float ) - default = 0.1*  
+- **Outputs**  
+	- **result** *: ( bool )*  
+---
+#### **Greater**
+- **Inputs**  
+	- **A** *: ( float )*  
+	- **B** *: ( float )*  
+- **Outputs**  
+	- **result** *: ( bool )*  
+---
+#### **Greater or Equal**
+- **Inputs**  
+	- **A** *: ( float )*  
+	- **B** *: ( float )*  
+- **Outputs**  
+	- **result** *: ( bool )*  
+---
+#### **Less**
+- **Inputs**  
+	- **A** *: ( float )*  
+	- **B** *: ( float )*  
+- **Outputs**  
+	- **result** *: ( bool )*  
+---
+#### **Less or Equal**
+- **Inputs**  
+	- **A** *: ( float )*  
+	- **B** *: ( float )*  
+- **Outputs**  
+	- **result** *: ( bool )*  
+---
+#### **If Else**
+- **Inputs**  
+	- **Condition** *: ( bool )*  
+	- **If True** *: ( float )*  
+	- **If False** *: ( float )*  
+- **Outputs**  
+	- **result** *: ( float )*  
+---
+### **Integer**
+---
+#### **Add**
+- **Inputs**  
+	- **A** *: ( int )*  
+	- **B** *: ( int )*  
+- **Outputs**  
+	- **result** *: ( int )*  
+---
+#### **Subtract**
+- **Inputs**  
+	- **A** *: ( int )*  
+	- **B** *: ( int )*  
+- **Outputs**  
+	- **result** *: ( int )*  
+---
+#### **Multiply**
+- **Inputs**  
+	- **A** *: ( int )*  
+	- **B** *: ( int )*  
+- **Outputs**  
+	- **result** *: ( int )*  
+---
+#### **Divide**
+- **Inputs**  
+	- **A** *: ( int )*  
+	- **B** *: ( int )*  
+- **Outputs**  
+	- **result** *: ( int )*  
+---
+#### **Modulo**
+- **Inputs**  
+	- **A** *: ( int )*  
+	- **B** *: ( int )*  
+- **Outputs**  
+	- **result** *: ( int )*  
+---
+#### **Clamp**
+- **Inputs**  
+	- **A** *: ( int )*  
+	- **Min** *: ( int )*  
+	- **Max** *: ( int )*  
+- **Outputs**  
+	- **result** *: ( int )*  
+---
+#### **Sign**
+- **Inputs**  
+	- **A** *: ( int )*  
+- **Outputs**  
+	- **result** *: ( int )*  
+---
+#### **Absolute**
+- **Inputs**  
+	- **A** *: ( int )*  
+- **Outputs**  
+	- **result** *: ( int )*  
+---
+#### **Minimum**
+- **Inputs**  
+	- **A** *: ( int )*  
+	- **B** *: ( int )*  
+- **Outputs**  
+	- **result** *: ( int )*  
+---
+#### **Maximum**
+- **Inputs**  
+	- **A** *: ( int )*  
+	- **B** *: ( int )*  
+- **Outputs**  
+	- **result** *: ( int )*  
+---
+#### **Equal**
+- **Inputs**  
+	- **A** *: ( int )*  
+	- **B** *: ( int )*  
+- **Outputs**  
+	- **result** *: ( bool )*  
+---
+#### **Not Equal**
+- **Inputs**  
+	- **A** *: ( int )*  
+	- **B** *: ( int )*  
+- **Outputs**  
+	- **result** *: ( bool )*  
+---
+#### **Greater**
+- **Inputs**  
+	- **A** *: ( int )*  
+	- **B** *: ( int )*  
+- **Outputs**  
+	- **result** *: ( bool )*  
+---
+#### **Greater or Equal**
+- **Inputs**  
+	- **A** *: ( int )*  
+	- **B** *: ( int )*  
+- **Outputs**  
+	- **result** *: ( bool )*  
+---
+#### **Less**
+- **Inputs**  
+	- **A** *: ( int )*  
+	- **B** *: ( int )*  
+- **Outputs**  
+	- **result** *: ( bool )*  
+---
+#### **Less or Equal**
+- **Inputs**  
+	- **A** *: ( int )*  
+	- **B** *: ( int )*  
+- **Outputs**  
+	- **result** *: ( bool )*  
+---
+#### **If Else**
+- **Inputs**  
+	- **Condition** *: ( bool )*  
+	- **If True** *: ( int )*  
+	- **If False** *: ( int )*  
+- **Outputs**  
+	- **result** *: ( int )*  
+---
+### **Vector 2D**
+---
+#### **Add**
+- **Inputs**  
+	- **A** *: ( vec2 )*  
+	- **B** *: ( vec2 )*  
+- **Outputs**  
+	- **result** *: ( vec2 )*  
+---
+#### **Subtract**
+- **Inputs**  
+	- **A** *: ( vec2 )*  
+	- **B** *: ( vec2 )*  
+- **Outputs**  
+	- **result** *: ( vec2 )*  
+---
+#### **Multiply**
+- **Inputs**  
+	- **A** *: ( vec2 )*  
+	- **B** *: ( vec2 )*  
+- **Outputs**  
+	- **result** *: ( vec2 )*  
+---
+#### **Divide**
+- **Inputs**  
+	- **A** *: ( vec2 )*  
+	- **B** *: ( vec2 )*  
+- **Outputs**  
+	- **result** *: ( vec2 )*  
+---
+#### **Scale**
+- **Inputs**  
+	- **A** *: ( vec2 )*  
+	- **Fac** *: ( float )*  
+- **Outputs**  
+	- **result** *: ( vec2 )*  
+---
+#### **Map Range**
+- **Inputs**  
+	- **Clamped** *: ( bool ) - default = True*  
+	- **UV** *: ( vec2 ) - default = vec2(0.5)*  
+	- **From Min** *: ( vec2 ) - default = (0.0, 0.0)*  
+	- **From Max** *: ( vec2 ) - default = (1.0, 1.0)*  
+	- **To Min** *: ( vec2 ) - default = (0.0, 0.0)*  
+	- **To Max** *: ( vec2 ) - default = (1.0, 1.0)*  
+- **Outputs**  
+	- **result** *: ( vec2 )*  
+---
+#### **Modulo**
+- **Inputs**  
+	- **A** *: ( vec2 )*  
+	- **B** *: ( vec2 )*  
+- **Outputs**  
+	- **result** *: ( vec2 )*  
+---
+#### **Power**
+- **Inputs**  
+	- **A** *: ( vec2 )*  
+	- **B** *: ( vec2 )*  
+- **Outputs**  
+	- **result** *: ( vec2 )*  
+---
+#### **Square Root**
+- **Inputs**  
+	- **A** *: ( vec2 )*  
+- **Outputs**  
+	- **result** *: ( vec2 )*  
+---
+#### **Distort**
+- **Inputs**  
+	- **A** *: ( vec2 )*  
+	- **B** *: ( vec2 )*  
+	- **Fac** *: ( float )*  
+- **Outputs**  
+	- **result** *: ( vec2 )*  
+---
+#### **Round**
+- **Inputs**  
+	- **A** *: ( vec2 )*  
+- **Outputs**  
+	- **result** *: ( vec2 )*  
+---
+#### **Fraction**
+- **Inputs**  
+	- **A** *: ( vec2 )*  
+- **Outputs**  
+	- **result** *: ( vec2 )*  
+---
+#### **Floor**
+- **Inputs**  
+	- **A** *: ( vec2 )*  
+- **Outputs**  
+	- **result** *: ( vec2 )*  
+---
+#### **Ceil**
+- **Inputs**  
+	- **A** *: ( vec2 )*  
+- **Outputs**  
+	- **result** *: ( vec2 )*  
+---
+#### **Snap**
+- **Inputs**  
+	- **A** *: ( vec2 )*  
+	- **B** *: ( vec2 )*  
+- **Outputs**  
+	- **result** *: ( vec2 )*  
+---
+#### **Clamp**
+- **Inputs**  
+	- **A** *: ( vec2 )*  
+	- **Min** *: ( vec2 )*  
+	- **Max** *: ( vec2 )*  
+- **Outputs**  
+	- **result** *: ( vec2 )*  
+---
+#### **Sign**
+- **Inputs**  
+	- **A** *: ( vec2 )*  
+- **Outputs**  
+	- **result** *: ( vec2 )*  
+---
+#### **Absolute**
+- **Inputs**  
+	- **A** *: ( vec2 )*  
+- **Outputs**  
+	- **result** *: ( vec2 )*  
+---
+#### **Min**
+- **Inputs**  
+	- **A** *: ( vec2 )*  
+	- **B** *: ( vec2 )*  
+- **Outputs**  
+	- **result** *: ( vec2 )*  
+---
+#### **Max**
+- **Inputs**  
+	- **A** *: ( vec2 )*  
+	- **B** *: ( vec2 )*  
+- **Outputs**  
+	- **result** *: ( vec2 )*  
+---
+#### **Mix 2D**
+- **Inputs**  
+	- **A** *: ( vec2 )*  
+	- **B** *: ( vec2 )*  
+	- **Factor** *: ( vec2 )*  
+- **Outputs**  
+	- **result** *: ( vec2 )*  
+---
+#### **Mix**
+- **Inputs**  
+	- **A** *: ( vec2 )*  
+	- **B** *: ( vec2 )*  
+	- **Fac** *: ( float )*  
+- **Outputs**  
+	- **result** *: ( vec2 )*  
+---
+#### **Normalize**
+- **Inputs**  
+	- **A** *: ( vec2 )*  
+- **Outputs**  
+	- **result** *: ( vec2 )*  
+---
+#### **Length**
+- **Inputs**  
+	- **A** *: ( vec2 )*  
+- **Outputs**  
+	- **result** *: ( float )*  
+---
+#### **Distance**
+- **Inputs**  
+	- **A** *: ( vec2 )*  
+	- **B** *: ( vec2 )*  
+- **Outputs**  
+	- **result** *: ( float )*  
+---
+#### **Dot Product**
+- **Inputs**  
+	- **A** *: ( vec2 )*  
+	- **B** *: ( vec2 )*  
+- **Outputs**  
+	- **result** *: ( float )*  
+---
+#### **Sine**
+- **Inputs**  
+	- **A** *: ( vec2 )*  
+- **Outputs**  
+	- **result** *: ( vec2 )*  
+---
+#### **Cosine**
+- **Inputs**  
+	- **A** *: ( vec2 )*  
+- **Outputs**  
+	- **result** *: ( vec2 )*  
+---
+#### **Tangent**
+- **Inputs**  
+	- **A** *: ( vec2 )*  
+- **Outputs**  
+	- **result** *: ( vec2 )*  
+---
+#### **Rotate**
+- **Inputs**  
+	- **A** *: ( vec2 )*  
+	- **Angle** *: ( float )*  
+- **Outputs**  
+	- **result** *: ( vec2 )*  
+---
+#### **Angle**
+- **Inputs**  
+	- **A** *: ( vec2 )*  
+	- **B** *: ( vec2 )*  
+- **Outputs**  
+	- **result** *: ( float )*  
+---
+#### **Equal**
+- **Inputs**  
+	- **A** *: ( vec2 )*  
+	- **B** *: ( vec2 )*  
+- **Outputs**  
+	- **result** *: ( bool )*  
+---
+#### **Not Equal**
+- **Inputs**  
+	- **A** *: ( vec2 )*  
+	- **B** *: ( vec2 )*  
+- **Outputs**  
+	- **result** *: ( bool )*  
+---
+#### **If Else**
+- **Inputs**  
+	- **Condition** *: ( bool )*  
+	- **If True** *: ( vec2 )*  
+	- **If False** *: ( vec2 )*  
+- **Outputs**  
+	- **result** *: ( vec2 )*  
+---
+#### **Combine**
+- **Inputs**  
+	- **X** *: ( float )*  
+	- **Y** *: ( float )*  
+- **Outputs**  
+	- **result** *: ( vec2 )*  
+---
+#### **Separate**
+- **Inputs**  
+	- **A** *: ( vec2 )*  
+- **Outputs**  
+	- **X** *: ( float )*  
+	- **Y** *: ( float )*  
+---
+### **Vector 3D**
+---
+#### **Add**
+- **Inputs**  
+	- **A** *: ( vec3 | Vector )*  
+	- **B** *: ( vec3 | Vector )*  
+- **Outputs**  
+	- **result** *: ( vec3 )*  
+---
+#### **Subtract**
+- **Inputs**  
+	- **A** *: ( vec3 | Vector )*  
+	- **B** *: ( vec3 | Vector )*  
+- **Outputs**  
+	- **result** *: ( vec3 )*  
+---
+#### **Multiply**
+- **Inputs**  
+	- **A** *: ( vec3 | Vector )*  
+	- **B** *: ( vec3 | Vector )*  
+- **Outputs**  
+	- **result** *: ( vec3 )*  
+---
+#### **Divide**
+- **Inputs**  
+	- **A** *: ( vec3 | Vector )*  
+	- **B** *: ( vec3 | Vector )*  
+- **Outputs**  
+	- **result** *: ( vec3 )*  
+---
+#### **Scale**
+- **Inputs**  
+	- **A** *: ( vec3 | Vector )*  
+	- **Fac** *: ( float )*  
+- **Outputs**  
+	- **result** *: ( vec3 )*  
+---
+#### **Map Range**
+- **Inputs**  
+	- **Clamped** *: ( bool ) - default = True*  
+	- **Vector** *: ( vec3 ) - default = vec3(0.5)*  
+	- **From Min** *: ( vec3 | Vector ) - default = (0.0, 0.0, 0.0)*  
+	- **From Max** *: ( vec3 | Vector ) - default = (1.0, 1.0, 1.0)*  
+	- **To Min** *: ( vec3 | Vector ) - default = (0.0, 0.0, 0.0)*  
+	- **To Max** *: ( vec3 | Vector ) - default = (1.0, 1.0, 1.0)*  
+- **Outputs**  
+	- **result** *: ( vec3 )*  
+---
+#### **Modulo**
+- **Inputs**  
+	- **A** *: ( vec3 | Vector )*  
+	- **B** *: ( vec3 | Vector )*  
+- **Outputs**  
+	- **result** *: ( vec3 )*  
+---
+#### **Power**
+- **Inputs**  
+	- **A** *: ( vec3 | Vector )*  
+	- **B** *: ( vec3 | Vector )*  
+- **Outputs**  
+	- **result** *: ( vec3 )*  
+---
+#### **Square Root**
+- **Inputs**  
+	- **A** *: ( vec3 | Vector )*  
+- **Outputs**  
+	- **result** *: ( vec3 )*  
+---
+#### **Distort**
+- **Inputs**  
+	- **A** *: ( vec3 | Vector )*  
+	- **B** *: ( vec3 | Vector )*  
+	- **Fac** *: ( float )*  
+- **Outputs**  
+	- **result** *: ( vec3 )*  
+---
+#### **Round**
+- **Inputs**  
+	- **A** *: ( vec3 | Vector )*  
+- **Outputs**  
+	- **result** *: ( vec3 )*  
+---
+#### **Fraction**
+- **Inputs**  
+	- **A** *: ( vec3 | Vector )*  
+- **Outputs**  
+	- **result** *: ( vec3 )*  
+---
+#### **Floor**
+- **Inputs**  
+	- **A** *: ( vec3 | Vector )*  
+- **Outputs**  
+	- **result** *: ( vec3 )*  
+---
+#### **Ceil**
+- **Inputs**  
+	- **A** *: ( vec3 | Vector )*  
+- **Outputs**  
+	- **result** *: ( vec3 )*  
+---
+#### **Snap**
+- **Inputs**  
+	- **A** *: ( vec3 | Vector )*  
+	- **B** *: ( vec3 | Vector )*  
+- **Outputs**  
+	- **result** *: ( vec3 )*  
+---
+#### **Clamp**
+- **Inputs**  
+	- **A** *: ( vec3 | Vector )*  
+	- **Min** *: ( vec3 | Vector )*  
+	- **Max** *: ( vec3 | Vector )*  
+- **Outputs**  
+	- **result** *: ( vec3 )*  
+---
+#### **Sign**
+- **Inputs**  
+	- **A** *: ( vec3 | Vector )*  
+- **Outputs**  
+	- **result** *: ( vec3 )*  
+---
+#### **Absolute**
+- **Inputs**  
+	- **A** *: ( vec3 | Vector )*  
+- **Outputs**  
+	- **result** *: ( vec3 )*  
+---
+#### **Min**
+- **Inputs**  
+	- **A** *: ( vec3 | Vector )*  
+	- **B** *: ( vec3 | Vector )*  
+- **Outputs**  
+	- **result** *: ( vec3 )*  
+---
+#### **Max**
+- **Inputs**  
+	- **A** *: ( vec3 | Vector )*  
+	- **B** *: ( vec3 | Vector )*  
+- **Outputs**  
+	- **result** *: ( vec3 )*  
+---
+#### **Mix 3D**
+- **Inputs**  
+	- **A** *: ( vec3 | Vector )*  
+	- **B** *: ( vec3 | Vector )*  
+	- **Factor** *: ( vec3 | Vector )*  
+- **Outputs**  
+	- **result** *: ( vec3 )*  
+---
+#### **Mix**
+- **Inputs**  
+	- **A** *: ( vec3 | Vector )*  
+	- **B** *: ( vec3 | Vector )*  
+	- **Fac** *: ( float )*  
+- **Outputs**  
+	- **result** *: ( vec3 )*  
+---
+#### **Normalize**
+- **Inputs**  
+	- **A** *: ( vec3 | Vector )*  
+- **Outputs**  
+	- **result** *: ( vec3 )*  
+---
+#### **Length**
+- **Inputs**  
+	- **A** *: ( vec3 | Vector )*  
+- **Outputs**  
+	- **result** *: ( float )*  
+---
+#### **Distance**
+- **Inputs**  
+	- **A** *: ( vec3 | Vector )*  
+	- **B** *: ( vec3 | Vector )*  
+- **Outputs**  
+	- **result** *: ( float )*  
+---
+#### **Dot Product**
+- **Inputs**  
+	- **A** *: ( vec3 | Vector )*  
+	- **B** *: ( vec3 | Vector )*  
+- **Outputs**  
+	- **result** *: ( float )*  
+---
+#### **Cross Product**
+- **Inputs**  
+	- **A** *: ( vec3 | Vector )*  
+	- **B** *: ( vec3 | Vector )*  
+- **Outputs**  
+	- **result** *: ( vec3 )*  
+---
+#### **Reflect**
+- **Inputs**  
+	- **A** *: ( vec3 | Vector )*  
+	- **B** *: ( vec3 | Vector )*  
+- **Outputs**  
+	- **result** *: ( vec3 )*  
+---
+#### **Refract**
+- **Inputs**  
+	- **A** *: ( vec3 | Vector )*  
+	- **B** *: ( vec3 | Vector )*  
+	- **Ior** *: ( float )*  
+- **Outputs**  
+	- **result** *: ( vec3 )*  
+---
+#### **Faceforward**
+- **Inputs**  
+	- **A** *: ( vec3 | Vector )*  
+	- **B** *: ( vec3 | Vector )*  
+	- **C** *: ( vec3 | Vector )*  
+- **Outputs**  
+	- **result** *: ( vec3 )*  
+---
+#### **Sine**
+- **Inputs**  
+	- **A** *: ( vec3 | Vector )*  
+- **Outputs**  
+	- **result** *: ( vec3 )*  
+---
+#### **Cosine**
+- **Inputs**  
+	- **A** *: ( vec3 | Vector )*  
+- **Outputs**  
+	- **result** *: ( vec3 )*  
+---
+#### **Tangent**
+- **Inputs**  
+	- **A** *: ( vec3 | Vector )*  
+- **Outputs**  
+	- **result** *: ( vec3 )*  
+---
+#### **Rotate Euler**
+- **Inputs**  
+	- **A** *: ( vec3 | Vector )*  
+	- **Euler** *: ( vec3 | Euler )*  
+	- **Invert** *: ( bool )*  
+- **Outputs**  
+	- **result** *: ( vec3 )*  
+---
+#### **Rotate Axis Angle**
+- **Inputs**  
+	- **A** *: ( vec3 | Vector )*  
+	- **Axis** *: ( vec3 | Vector ) - default = (0.0, 0.0, 1.0)*  
+	- **Angle** *: ( float )*  
+- **Outputs**  
+	- **result** *: ( vec3 )*  
+---
+#### **Angle**
+- **Inputs**  
+	- **A** *: ( vec3 | Vector )*  
+	- **B** *: ( vec3 | Vector )*  
+- **Outputs**  
+	- **result** *: ( float )*  
+---
+#### **Equal**
+- **Inputs**  
+	- **A** *: ( vec3 | Vector )*  
+	- **B** *: ( vec3 | Vector )*  
+- **Outputs**  
+	- **result** *: ( bool )*  
+---
+#### **Not Equal**
+- **Inputs**  
+	- **A** *: ( vec3 | Vector )*  
+	- **B** *: ( vec3 | Vector )*  
+- **Outputs**  
+	- **result** *: ( bool )*  
+---
+#### **If Else**
+- **Inputs**  
+	- **Condition** *: ( bool )*  
+	- **If True** *: ( vec3 | Vector )*  
+	- **If False** *: ( vec3 | Vector )*  
+- **Outputs**  
+	- **result** *: ( vec3 )*  
+---
+#### **Combine**
+- **Inputs**  
+	- **X** *: ( float )*  
+	- **Y** *: ( float )*  
+	- **Z** *: ( float )*  
+- **Outputs**  
+	- **result** *: ( vec3 )*  
+---
+#### **Separate**
+- **Inputs**  
+	- **A** *: ( vec3 | Vector )*  
+- **Outputs**  
+	- **X** *: ( float )*  
+	- **Y** *: ( float )*  
+	- **Z** *: ( float )*  
+---
+### **Vector 4D**
+---
+#### **Add**
+- **Inputs**  
+	- **A** *: ( vec4 | Vector )*  
+	- **B** *: ( vec4 | Vector )*  
+- **Outputs**  
+	- **result** *: ( vec4 )*  
+---
+#### **Subtract**
+- **Inputs**  
+	- **A** *: ( vec4 | Vector )*  
+	- **B** *: ( vec4 | Vector )*  
+- **Outputs**  
+	- **result** *: ( vec4 )*  
+---
+#### **Multiply**
+- **Inputs**  
+	- **A** *: ( vec4 | Vector )*  
+	- **B** *: ( vec4 | Vector )*  
+- **Outputs**  
+	- **result** *: ( vec4 )*  
+---
+#### **Divide**
+- **Inputs**  
+	- **A** *: ( vec4 | Vector )*  
+	- **B** *: ( vec4 | Vector )*  
+- **Outputs**  
+	- **result** *: ( vec4 )*  
+---
+#### **Scale**
+- **Inputs**  
+	- **A** *: ( vec4 | Vector )*  
+	- **Fac** *: ( float )*  
+- **Outputs**  
+	- **result** *: ( vec4 )*  
+---
+#### **Map Range**
+- **Inputs**  
+	- **Clamped** *: ( bool ) - default = True*  
+	- **Vector** *: ( vec4 ) - default = vec4(0.5)*  
+	- **From Min** *: ( vec4 | Vector ) - default = (0.0, 0.0, 0.0, 0.0)*  
+	- **From Max** *: ( vec4 | Vector ) - default = (1.0, 1.0, 1.0, 1.0)*  
+	- **To Min** *: ( vec4 | Vector ) - default = (0.0, 0.0, 0.0, 0.0)*  
+	- **To Max** *: ( vec4 | Vector ) - default = (1.0, 1.0, 1.0, 1.0)*  
+- **Outputs**  
+	- **result** *: ( vec4 )*  
+---
+#### **Modulo**
+- **Inputs**  
+	- **A** *: ( vec4 | Vector )*  
+	- **B** *: ( vec4 | Vector )*  
+- **Outputs**  
+	- **result** *: ( vec4 )*  
+---
+#### **Power**
+- **Inputs**  
+	- **A** *: ( vec4 | Vector )*  
+	- **B** *: ( vec4 | Vector )*  
+- **Outputs**  
+	- **result** *: ( vec4 )*  
+---
+#### **Square Root**
+- **Inputs**  
+	- **A** *: ( vec4 | Vector )*  
+- **Outputs**  
+	- **result** *: ( vec4 )*  
+---
+#### **Distort**
+- **Inputs**  
+	- **A** *: ( vec4 | Vector )*  
+	- **B** *: ( vec4 | Vector )*  
+	- **Fac** *: ( float )*  
+- **Outputs**  
+	- **result** *: ( vec4 )*  
+---
+#### **Round**
+- **Inputs**  
+	- **A** *: ( vec4 | Vector )*  
+- **Outputs**  
+	- **result** *: ( vec4 )*  
+---
+#### **Fraction**
+- **Inputs**  
+	- **A** *: ( vec4 | Vector )*  
+- **Outputs**  
+	- **result** *: ( vec4 )*  
+---
+#### **Floor**
+- **Inputs**  
+	- **A** *: ( vec4 | Vector )*  
+- **Outputs**  
+	- **result** *: ( vec4 )*  
+---
+#### **Ceil**
+- **Inputs**  
+	- **A** *: ( vec4 | Vector )*  
+- **Outputs**  
+	- **result** *: ( vec4 )*  
+---
+#### **Clamp**
+- **Inputs**  
+	- **A** *: ( vec4 | Vector )*  
+	- **Min** *: ( vec4 | Vector )*  
+	- **Max** *: ( vec4 | Vector )*  
+- **Outputs**  
+	- **result** *: ( vec4 )*  
+---
+#### **Sign**
+- **Inputs**  
+	- **A** *: ( vec4 | Vector )*  
+- **Outputs**  
+	- **result** *: ( vec4 )*  
+---
+#### **Absolute**
+- **Inputs**  
+	- **A** *: ( vec4 | Vector )*  
+- **Outputs**  
+	- **result** *: ( vec4 )*  
+---
+#### **Min**
+- **Inputs**  
+	- **A** *: ( vec4 | Vector )*  
+	- **B** *: ( vec4 | Vector )*  
+- **Outputs**  
+	- **result** *: ( vec4 )*  
+---
+#### **Max**
+- **Inputs**  
+	- **A** *: ( vec4 | Vector )*  
+	- **B** *: ( vec4 | Vector )*  
+- **Outputs**  
+	- **result** *: ( vec4 )*  
+---
+#### **Mix 4D**
+- **Inputs**  
+	- **A** *: ( vec4 | Vector )*  
+	- **B** *: ( vec4 | Vector )*  
+	- **Factor** *: ( vec4 | Vector )*  
+- **Outputs**  
+	- **result** *: ( vec4 )*  
+---
+#### **Mix**
+- **Inputs**  
+	- **A** *: ( vec4 | Vector )*  
+	- **B** *: ( vec4 | Vector )*  
+	- **Fac** *: ( float )*  
+- **Outputs**  
+	- **result** *: ( vec4 )*  
+---
+#### **Normalize**
+- **Inputs**  
+	- **A** *: ( vec4 | Vector )*  
+- **Outputs**  
+	- **result** *: ( vec4 )*  
+---
+#### **Length**
+- **Inputs**  
+	- **A** *: ( vec4 | Vector )*  
+- **Outputs**  
+	- **result** *: ( float )*  
+---
+#### **Distance**
+- **Inputs**  
+	- **A** *: ( vec4 | Vector )*  
+	- **B** *: ( vec4 | Vector )*  
+- **Outputs**  
+	- **result** *: ( float )*  
+---
+#### **Dot Product**
+- **Inputs**  
+	- **A** *: ( vec4 | Vector )*  
+	- **B** *: ( vec4 | Vector )*  
+- **Outputs**  
+	- **result** *: ( float )*  
+---
+#### **Sine**
+- **Inputs**  
+	- **A** *: ( vec4 | Vector )*  
+- **Outputs**  
+	- **result** *: ( vec4 )*  
+---
+#### **Cosine**
+- **Inputs**  
+	- **A** *: ( vec4 | Vector )*  
+- **Outputs**  
+	- **result** *: ( vec4 )*  
+---
+#### **Tangent**
+- **Inputs**  
+	- **A** *: ( vec4 | Vector )*  
+- **Outputs**  
+	- **result** *: ( vec4 )*  
+---
+#### **Angle**
+- **Inputs**  
+	- **A** *: ( vec4 | Vector )*  
+	- **B** *: ( vec4 | Vector )*  
+- **Outputs**  
+	- **result** *: ( float )*  
+---
+#### **Equal**
+- **Inputs**  
+	- **A** *: ( vec4 | Vector )*  
+	- **B** *: ( vec4 | Vector )*  
+- **Outputs**  
+	- **result** *: ( bool )*  
+---
+#### **Not Equal**
+- **Inputs**  
+	- **A** *: ( vec4 | Vector )*  
+	- **B** *: ( vec4 | Vector )*  
+- **Outputs**  
+	- **result** *: ( bool )*  
+---
+#### **Vec4 If Else**
+- **Inputs**  
+	- **Condition** *: ( bool )*  
+	- **If True** *: ( vec4 | Vector )*  
+	- **If False** *: ( vec4 | Vector )*  
+- **Outputs**  
+	- **result** *: ( vec4 )*  
+---
+#### **Combine**
+- **Inputs**  
+	- **R** *: ( float )*  
+	- **G** *: ( float )*  
+	- **B** *: ( float )*  
+	- **A** *: ( float )*  
+- **Outputs**  
+	- **result** *: ( vec4 )*  
+---
+#### **Combine Color**
+- **Inputs**  
+	- **C** *: ( vec3 | Color )*  
+	- **A** *: ( float | Slider ) - default = 1.0*  
+- **Outputs**  
+	- **result** *: ( vec4 )*  
+---
+#### **Separate**
+- **Inputs**  
+	- **A** *: ( vec4 | Vector )*  
+- **Outputs**  
+	- **R** *: ( float )*  
+	- **G** *: ( float )*  
+	- **B** *: ( float )*  
+	- **A** *: ( float )*  
+---
+#### **Separate Color**
+- **Inputs**  
+	- **A** *: ( vec4 | Color )*  
+- **Outputs**  
+	- **C** *: ( vec3 )*  
+	- **A** *: ( float )*  
+---
+## Vector
+---
+### **Surface Gradient From Normal**
+- **Inputs**  
+	- **Base Normal** *: ( vec3 | Normal ) - default = NORMAL*  
+	- **Custom Normal** *: ( vec3 | Normal ) - default = NORMAL*  
+- **Outputs**  
+	- **result** *: ( vec3 )*  
+---
+### **Normal From Surface Gradient**
+- **Inputs**  
+	- **Base Normal** *: ( vec3 | Normal ) - default = NORMAL*  
+	- **Surface Gradient** *: ( vec3 | Vector ) - default = (0.0, 0.0, 0.0)*  
+- **Outputs**  
+	- **result** *: ( vec3 )*  
+---
+### **Matrix**
+---
+#### **Transform Point**
+- **Inputs**  
+	- **Matrix** *: ( mat4 ) - default = mat4(1)*  
+	- **Point** *: ( vec3 | Vector )*  
+- **Outputs**  
+	- **result** *: ( vec3 )*  
+---
+#### **Project Point**
+- **Inputs**  
+	- **Matrix** *: ( mat4 ) - default = mat4(1)*  
+	- **Point** *: ( vec3 | Vector )*  
+- **Outputs**  
+	- **result** *: ( vec3 )*  
+---
+#### **Project Point To Screen Coordinates**
+- **Inputs**  
+	- **Matrix** *: ( mat4 ) - default = mat4(1)*  
+	- **Point** *: ( vec3 | Vector )*  
+- **Outputs**  
+	- **result** *: ( vec3 )*  
+---
+#### **Transform Direction**
+- **Inputs**  
+	- **Matrix** *: ( mat4 ) - default = mat4(1)*  
+	- **Direction** *: ( vec3 | Vector )*  
+- **Outputs**  
+	- **result** *: ( vec3 )*  
+---
+#### **Transform Normal**
+- **Inputs**  
+	- **Matrix** *: ( mat4 ) - default = mat4(1)*  
+	- **Normal** *: ( vec3 | Normal )*  
+- **Outputs**  
+	- **result** *: ( vec3 )*  
+---
+### **Pixel Size in World Space**
+- **Inputs**  
+	- **Depth** *: ( float ) - default = pixel_depth()*  
+- **Outputs**  
+	- **result** *: ( float )*  
+---
+### **Bevel**
+---
+#### **Soft Bevel**
+- **Inputs**  
+	- **Samples** *: ( int ) - default = 32*  
+	- **Radius** *: ( float ) - default = 0.02*  
+	- **Distribution Exponent** *: ( float ) - default = 2.0*  
+	- **Only Self** *: ( bool )*  
+- **Outputs**  
+	- **result** *: ( vec3 )*  
+---
+#### **Hard Bevel**
+- **Inputs**  
+	- **Samples** *: ( int ) - default = 32*  
+	- **Radius** *: ( float ) - default = 0.01*  
+	- **Max Dot** *: ( float ) - default = 0.75*  
+	- **Only Self** *: ( bool )*  
+- **Outputs**  
+	- **result** *: ( vec3 )*  
+---
+### **Transform**
+- **Inputs**  
+	- **Type** *: ( int | ENUM(Point,Vector,Normal) )*  
+	- **From** *: ( int | ENUM(Object,World,Camera) )*  
+	- **To** *: ( int | ENUM(Object,World,Camera,Screen) )*  
+	- **Vector** *: ( vec3 | Vector )*  
+- **Outputs**  
+	- **Vector** *: ( vec3 | Vector )*  
+---
+### **Mapping**
+---
+#### **Point**
+- **Inputs**  
+	- **Vector** *: ( vec3 | Vector ) - default = vec3(0.0)*  
+	- **Location** *: ( vec3 | Vector )*  
+	- **Rotation** *: ( vec3 | Euler )*  
+	- **Scale** *: ( vec3 | Vector ) - default = (1.0, 1.0, 1.0)*  
+- **Outputs**  
+	- **result** *: ( vec3 )*  
+---
+#### **Texture**
+- **Inputs**  
+	- **Vector** *: ( vec3 | Vector ) - default = vec3(0.0)*  
+	- **Location** *: ( vec3 | Vector )*  
+	- **Rotation** *: ( vec3 | Euler )*  
+	- **Scale** *: ( vec3 | Vector ) - default = (1.0, 1.0, 1.0)*  
+- **Outputs**  
+	- **result** *: ( vec3 )*  
+---
+#### **Vector**
+- **Inputs**  
+	- **Vector** *: ( vec3 | Vector ) - default = vec3(0.0)*  
+	- **Rotation** *: ( vec3 | Euler )*  
+	- **Scale** *: ( vec3 | Vector ) - default = (1.0, 1.0, 1.0)*  
+- **Outputs**  
+	- **result** *: ( vec3 )*  
+---
+#### **Normal**
+- **Inputs**  
+	- **Vector** *: ( vec3 | Vector ) - default = vec3(0.0)*  
+	- **Rotation** *: ( vec3 | Euler )*  
+	- **Scale** *: ( vec3 | Vector ) - default = (1.0, 1.0, 1.0)*  
+- **Outputs**  
+	- **result** *: ( vec3 )*  
+---
+## Color
+---
+### **Alpha Blend**
 Blends the blend color as a layer over the base color.
 
 - **Inputs**  
-	- **base** *: ( vec4 )*  
-	- **blend** *: ( vec4 ) - default = (0.0, 0.0, 0.0, 0.0)*  
+	- **Base** *: ( vec4 )*  
+	- **Blend** *: ( vec4 ) - default = (0.0, 0.0, 0.0, 0.0)*  
 	>The blend color.
 - **Outputs**  
 	- **result** *: ( vec4 )*  
 ---
-### **relative_luminance**
->float relative_luminance(vec3 color)
-
+### **Grayscale**
 - **Inputs**  
-	- **color** *: ( vec3 )*  
+	- **Color** *: ( vec3 )*  
 - **Outputs**  
 	- **result** *: ( float )*  
 ---
-### **luma**
->float luma(vec3 color)
-
+### **Linear To sRGB**
 - **Inputs**  
-	- **color** *: ( vec3 )*  
+	- **Linear** *: ( vec3 )*  
+- **Outputs**  
+	- **result** *: ( vec3 )*  
+---
+### **sRGB To Linear**
+- **Inputs**  
+	- **Srgb** *: ( vec3 )*  
+- **Outputs**  
+	- **result** *: ( vec3 )*  
+---
+### **RGB To HSV**
+- **Inputs**  
+	- **Rgb** *: ( vec3 )*  
+- **Outputs**  
+	- **result** *: ( vec3 )*  
+---
+### **HSV To RGB**
+- **Inputs**  
+	- **Hsv** *: ( vec3 | HSV )*  
+- **Outputs**  
+	- **result** *: ( vec3 )*  
+---
+### **HSV Edit**
+- **Inputs**  
+	- **Color** *: ( vec4 )*  
+	- **Hue** *: ( float )*  
+	- **Saturation** *: ( float )*  
+	- **Value** *: ( float )*  
+- **Outputs**  
+	- **result** *: ( vec4 )*  
+---
+### **Bright/Contrast**
+- **Inputs**  
+	- **Color** *: ( vec4 )*  
+	- **Brightness** *: ( float )*  
+	- **Contrast** *: ( float )*  
+- **Outputs**  
+	- **result** *: ( vec4 )*  
+---
+### **Gamma**
+- **Inputs**  
+	- **Color** *: ( vec4 )*  
+	- **Gamma** *: ( float ) - default = 1.0*  
+- **Outputs**  
+	- **result** *: ( vec4 )*  
+---
+### **Invert**
+- **Inputs**  
+	- **Color** *: ( vec4 )*  
+	- **Fac** *: ( float | Slider )*  
+- **Outputs**  
+	- **result** *: ( vec4 )*  
+---
+### **Color Gradient**
+---
+#### **Gradient**
+- **Inputs**  
+	- **Color Ramp** *: ( sampler1D )*  
+	- **U** *: ( float | Slider )*  
+- **Outputs**  
+	- **result** *: ( vec4 )*  
+---
+#### **RGB Gradient**
+- **Inputs**  
+	- **Color Ramp** *: ( sampler1D )*  
+	- **UVW** *: ( vec3 | Slider )*  
+- **Outputs**  
+	- **result** *: ( vec3 )*  
+---
+#### **RGBA Gradient**
+- **Inputs**  
+	- **Color Ramp** *: ( sampler1D )*  
+	- **UVWX** *: ( vec4 | Slider )*  
+- **Outputs**  
+	- **result** *: ( vec4 )*  
+---
+### **Layer Blend**
+---
+#### **Normal**
+- **Inputs**  
+	- **Opacity** *: ( float | Slider ) - default = 1.0*  
+	- **Base** *: ( vec4 )*  
+	- **Blend** *: ( vec4 ) - default = (0.0, 0.0, 0.0, 0.0)*  
+	- **Mode** *: ( int | ENUM(Linear,Linear Clamp,sRGB,sRGB Clamp) )*  
+- **Outputs**  
+	- **result** *: ( vec4 )*  
+---
+#### **Add**
+- **Inputs**  
+	- **Opacity** *: ( float | Slider ) - default = 1.0*  
+	- **Base** *: ( vec4 )*  
+	- **Blend** *: ( vec4 ) - default = (0.0, 0.0, 0.0, 0.0)*  
+	- **Mode** *: ( int | ENUM(Linear,Linear Clamp,sRGB,sRGB Clamp) )*  
+- **Outputs**  
+	- **result** *: ( vec4 )*  
+---
+#### **Multiply**
+- **Inputs**  
+	- **Opacity** *: ( float | Slider ) - default = 1.0*  
+	- **Base** *: ( vec4 )*  
+	- **Blend** *: ( vec4 ) - default = (0.0, 0.0, 0.0, 0.0)*  
+	- **Mode** *: ( int | ENUM(Linear,Linear Clamp,sRGB,sRGB Clamp) )*  
+- **Outputs**  
+	- **result** *: ( vec4 )*  
+---
+#### **Overlay**
+- **Inputs**  
+	- **Opacity** *: ( float | Slider ) - default = 1.0*  
+	- **Base** *: ( vec4 )*  
+	- **Blend** *: ( vec4 ) - default = (0.0, 0.0, 0.0, 0.0)*  
+	- **Mode** *: ( int | ENUM(Linear,Linear Clamp,sRGB,sRGB Clamp) )*  
+- **Outputs**  
+	- **result** *: ( vec4 )*  
+---
+#### **Screen**
+- **Inputs**  
+	- **Opacity** *: ( float | Slider ) - default = 1.0*  
+	- **Base** *: ( vec4 )*  
+	- **Blend** *: ( vec4 ) - default = (0.0, 0.0, 0.0, 0.0)*  
+	- **Mode** *: ( int | ENUM(Linear,Linear Clamp,sRGB,sRGB Clamp) )*  
+- **Outputs**  
+	- **result** *: ( vec4 )*  
+---
+#### **Darken**
+- **Inputs**  
+	- **Opacity** *: ( float | Slider ) - default = 1.0*  
+	- **Base** *: ( vec4 )*  
+	- **Blend** *: ( vec4 ) - default = (0.0, 0.0, 0.0, 0.0)*  
+	- **Mode** *: ( int | ENUM(Linear,Linear Clamp,sRGB,sRGB Clamp) )*  
+- **Outputs**  
+	- **result** *: ( vec4 )*  
+---
+#### **Lighten**
+- **Inputs**  
+	- **Opacity** *: ( float | Slider ) - default = 1.0*  
+	- **Base** *: ( vec4 )*  
+	- **Blend** *: ( vec4 ) - default = (0.0, 0.0, 0.0, 0.0)*  
+	- **Mode** *: ( int | ENUM(Linear,Linear Clamp,sRGB,sRGB Clamp) )*  
+- **Outputs**  
+	- **result** *: ( vec4 )*  
+---
+#### **Soft Light**
+- **Inputs**  
+	- **Opacity** *: ( float | Slider ) - default = 1.0*  
+	- **Base** *: ( vec4 )*  
+	- **Blend** *: ( vec4 ) - default = (0.0, 0.0, 0.0, 0.0)*  
+	- **Mode** *: ( int | ENUM(Linear,Linear Clamp,sRGB,sRGB Clamp) )*  
+- **Outputs**  
+	- **result** *: ( vec4 )*  
+---
+#### **Hard Light**
+- **Inputs**  
+	- **Opacity** *: ( float | Slider ) - default = 1.0*  
+	- **Base** *: ( vec4 )*  
+	- **Blend** *: ( vec4 ) - default = (0.0, 0.0, 0.0, 0.0)*  
+	- **Mode** *: ( int | ENUM(Linear,Linear Clamp,sRGB,sRGB Clamp) )*  
+- **Outputs**  
+	- **result** *: ( vec4 )*  
+---
+#### **Linear Light**
+- **Inputs**  
+	- **Opacity** *: ( float | Slider ) - default = 1.0*  
+	- **Base** *: ( vec4 )*  
+	- **Blend** *: ( vec4 ) - default = (0.0, 0.0, 0.0, 0.0)*  
+	- **Mode** *: ( int | ENUM(Linear,Linear Clamp,sRGB,sRGB Clamp) )*  
+- **Outputs**  
+	- **result** *: ( vec4 )*  
+---
+#### **Dodge**
+- **Inputs**  
+	- **Opacity** *: ( float | Slider ) - default = 1.0*  
+	- **Base** *: ( vec4 )*  
+	- **Blend** *: ( vec4 ) - default = (0.0, 0.0, 0.0, 0.0)*  
+	- **Mode** *: ( int | ENUM(Linear,Linear Clamp,sRGB,sRGB Clamp) )*  
+- **Outputs**  
+	- **result** *: ( vec4 )*  
+---
+#### **Burn**
+- **Inputs**  
+	- **Opacity** *: ( float | Slider ) - default = 1.0*  
+	- **Base** *: ( vec4 )*  
+	- **Blend** *: ( vec4 ) - default = (0.0, 0.0, 0.0, 0.0)*  
+	- **Mode** *: ( int | ENUM(Linear,Linear Clamp,sRGB,sRGB Clamp) )*  
+- **Outputs**  
+	- **result** *: ( vec4 )*  
+---
+#### **Subtract**
+- **Inputs**  
+	- **Opacity** *: ( float | Slider ) - default = 1.0*  
+	- **Base** *: ( vec4 )*  
+	- **Blend** *: ( vec4 ) - default = (0.0, 0.0, 0.0, 0.0)*  
+	- **Mode** *: ( int | ENUM(Linear,Linear Clamp,sRGB,sRGB Clamp) )*  
+- **Outputs**  
+	- **result** *: ( vec4 )*  
+---
+#### **Difference**
+- **Inputs**  
+	- **Opacity** *: ( float | Slider ) - default = 1.0*  
+	- **Base** *: ( vec4 )*  
+	- **Blend** *: ( vec4 ) - default = (0.0, 0.0, 0.0, 0.0)*  
+	- **Mode** *: ( int | ENUM(Linear,Linear Clamp,sRGB,sRGB Clamp) )*  
+- **Outputs**  
+	- **result** *: ( vec4 )*  
+---
+#### **Divide**
+- **Inputs**  
+	- **Opacity** *: ( float | Slider ) - default = 1.0*  
+	- **Base** *: ( vec4 )*  
+	- **Blend** *: ( vec4 ) - default = (0.0, 0.0, 0.0, 0.0)*  
+	- **Mode** *: ( int | ENUM(Linear,Linear Clamp,sRGB,sRGB Clamp) )*  
+- **Outputs**  
+	- **result** *: ( vec4 )*  
+---
+#### **Hue**
+- **Inputs**  
+	- **Opacity** *: ( float | Slider ) - default = 1.0*  
+	- **Base** *: ( vec4 )*  
+	- **Blend** *: ( vec4 ) - default = (0.0, 0.0, 0.0, 0.0)*  
+	- **Mode** *: ( int | ENUM(Linear,Linear Clamp,sRGB,sRGB Clamp) )*  
+- **Outputs**  
+	- **result** *: ( vec4 )*  
+---
+#### **Saturation**
+- **Inputs**  
+	- **Opacity** *: ( float | Slider ) - default = 1.0*  
+	- **Base** *: ( vec4 )*  
+	- **Blend** *: ( vec4 ) - default = (0.0, 0.0, 0.0, 0.0)*  
+	- **Mode** *: ( int | ENUM(Linear,Linear Clamp,sRGB,sRGB Clamp) )*  
+- **Outputs**  
+	- **result** *: ( vec4 )*  
+---
+#### **Value**
+- **Inputs**  
+	- **Opacity** *: ( float | Slider ) - default = 1.0*  
+	- **Base** *: ( vec4 )*  
+	- **Blend** *: ( vec4 ) - default = (0.0, 0.0, 0.0, 0.0)*  
+	- **Mode** *: ( int | ENUM(Linear,Linear Clamp,sRGB,sRGB Clamp) )*  
+- **Outputs**  
+	- **result** *: ( vec4 )*  
+---
+#### **Color**
+- **Inputs**  
+	- **Opacity** *: ( float | Slider ) - default = 1.0*  
+	- **Base** *: ( vec4 )*  
+	- **Blend** *: ( vec4 ) - default = (0.0, 0.0, 0.0, 0.0)*  
+	- **Mode** *: ( int | ENUM(Linear,Linear Clamp,sRGB,sRGB Clamp) )*  
+- **Outputs**  
+	- **result** *: ( vec4 )*  
+---
+## Texturing
+---
+### **Image**
+- **Inputs**  
+	- **Image** *: ( sampler2D )*  
+	- **UV** *: ( vec2 ) - default = UV[0]*  
+	- **Smooth Interpolation** *: ( bool ) - default = True*  
+- **Outputs**  
+	- **Color** *: ( vec4 )*  
+	- **Resolution** *: ( vec2 )*  
+---
+### **Normal Map**
+- **Inputs**  
+	- **Texture** *: ( sampler2D )*  
+	- **UV** *: ( vec2 ) - default = UV[0]*  
+	- **UV Index** *: ( int )*  
+- **Outputs**  
+	- **Normal** *: ( vec3 )*  
+---
+### **Flipbook**
+- **Inputs**  
+	- **Texture** *: ( sampler2D )*  
+	- **UV** *: ( vec2 ) - default = UV[0]*  
+	- **Dimensions** *: ( ivec2 )*  
+	- **Page** *: ( float )*  
+- **Outputs**  
+	- **result** *: ( vec4 )*  
+---
+### **Flowmap**
+- **Inputs**  
+	- **Texture** *: ( sampler2D )*  
+	- **UV** *: ( vec2 ) - default = UV[0]*  
+	- **Flow** *: ( vec2 ) - default = vec2(0.0)*  
+	- **Progression** *: ( float )*  
+	- **Samples** *: ( int ) - default = 2*  
+- **Outputs**  
+	- **result** *: ( vec4 )*  
+---
+### **Matcap**
+- **Inputs**  
+	- **Matcap** *: ( sampler2D )*  
+	- **Normal** *: ( vec3 | Normal ) - default = NORMAL*  
+- **Outputs**  
+	- **Color** *: ( vec4 )*  
+	- **Uv** *: ( vec2 )*  
+---
+### **HDRI**
+- **Inputs**  
+	- **Hdri** *: ( sampler2D )*  
+	- **Normal** *: ( vec3 | Normal ) - default = NORMAL*  
+- **Outputs**  
+	- **Color** *: ( vec4 )*  
+	- **Uv** *: ( vec2 )*  
+---
+### **Noise**
+---
+#### **Infinite**
+- **Inputs**  
+	- **Coord** *: ( vec3 | Vector ) - default = POSITION*  
+	- **Seed** *: ( float )*  
+	- **Scale** *: ( float ) - default = 5.0*  
+	- **Detail** *: ( float ) - default = 3.0*  
+	- **Balance** *: ( float | Slider ) - default = 0.5*  
+- **Outputs**  
+	- **result** *: ( vec4 )*  
+---
+#### **Tiled**
+- **Inputs**  
+	- **Coord** *: ( vec3 | Vector ) - default = POSITION*  
+	- **Seed** *: ( float )*  
+	- **Scale** *: ( float ) - default = 5.0*  
+	- **Detail** *: ( float ) - default = 3.0*  
+	- **Balance** *: ( float | Slider ) - default = 0.5*  
+	- **Tile Size** *: ( ivec4 | Vector ) - default = (5, 5, 5, 5)*  
+- **Outputs**  
+	- **result** *: ( vec4 )*  
+---
+### **Voronoi**
+---
+#### **Infinite**
+- **Inputs**  
+	- **Coord** *: ( vec3 | Vector ) - default = POSITION*  
+	- **Seed** *: ( float )*  
+	- **Scale** *: ( float ) - default = 5.0*  
+- **Outputs**  
+	- **Cell Color** *: ( vec4 )*  
+	- **Cell Position** *: ( vec4 )*  
+	- **Cell Distance** *: ( float )*  
+---
+#### **Tiled**
+- **Inputs**  
+	- **Coord** *: ( vec3 | Vector ) - default = POSITION*  
+	- **Seed** *: ( float )*  
+	- **Scale** *: ( float ) - default = 5.0*  
+	- **Tile Size** *: ( ivec4 | Vector ) - default = (5, 5, 5, 5)*  
+- **Outputs**  
+	- **Cell Color** *: ( vec4 )*  
+	- **Cell Position** *: ( vec4 )*  
+	- **Cell Distance** *: ( float )*  
+---
+### **Bayer Pattern**
+- **Inputs**  
+	- **Size** *: ( int | ENUM(2x2,3x3,4x4,8x8) ) - default = 2*  
+	- **Texel** *: ( vec2 ) - default = vec2(screen_pixel())*  
 - **Outputs**  
 	- **result** *: ( float )*  
 ---
-### **linear_to_srgb**
->vec3 linear_to_srgb(vec3 linear)
-
+### **Gradient**
+---
+#### **Linear**
 - **Inputs**  
-	- **linear** *: ( vec3 )*  
-- **Outputs**  
-	- **result** *: ( vec3 )*  
----
-### **srgb_to_linear**
->vec3 srgb_to_linear(vec3 srgb)
-
-- **Inputs**  
-	- **srgb** *: ( vec3 )*  
-- **Outputs**  
-	- **result** *: ( vec3 )*  
----
-### **rgb_to_hsv**
->vec3 rgb_to_hsv(vec3 rgb)
-
-- **Inputs**  
-	- **rgb** *: ( vec3 )*  
-- **Outputs**  
-	- **result** *: ( vec3 )*  
----
-### **hsv_to_rgb**
->vec3 hsv_to_rgb(vec3 hsv)
-
-- **Inputs**  
-	- **hsv** *: ( vec3 | HSV )*  
-- **Outputs**  
-	- **result** *: ( vec3 )*  
----
-### **hsv_edit**
->vec4 hsv_edit(vec4 color, float hue, float saturation, float value)
-
-- **Inputs**  
-	- **color** *: ( vec4 )*  
-	- **hue** *: ( float )*  
-	- **saturation** *: ( float )*  
-	- **value** *: ( float )*  
-- **Outputs**  
-	- **result** *: ( vec4 )*  
----
-### **rgb_gradient**
->vec3 rgb_gradient(sampler1D gradient, vec3 uvw)
-
-- **Inputs**  
-	- **gradient** *: ( sampler1D )*  
-	- **uvw** *: ( vec3 )*  
-- **Outputs**  
-	- **result** *: ( vec3 )*  
----
-### **rgba_gradient**
->vec4 rgba_gradient(sampler1D gradient, vec4 uvw)
-
-- **Inputs**  
-	- **gradient** *: ( sampler1D )*  
-	- **uvw** *: ( vec4 )*  
-- **Outputs**  
-	- **result** *: ( vec4 )*  
----
-## Common - Hash - hash
----
-### **hash**
->vec4 hash(float v)
-
-- **Inputs**  
-	- **v** *: ( float )*  
-- **Outputs**  
-	- **result** *: ( vec4 )*  
----
-### **hash**
->vec4 hash(vec2 v)
-
-- **Inputs**  
-	- **v** *: ( vec2 )*  
-- **Outputs**  
-	- **result** *: ( vec4 )*  
----
-### **hash**
->vec4 hash(vec3 v)
-
-- **Inputs**  
-	- **v** *: ( vec3 | Data )*  
-- **Outputs**  
-	- **result** *: ( vec4 )*  
----
-### **hash**
->vec4 hash(vec4 v)
-
-- **Inputs**  
-	- **v** *: ( vec4 | Data )*  
-- **Outputs**  
-	- **result** *: ( vec4 )*  
----
-## Common - Mapping
----
-### **matcap_uv**
->vec2 matcap_uv(vec3 normal)
-
-- **Inputs**  
-	- **normal** *: ( vec3 | Normal ) - default = NORMAL*  
-- **Outputs**  
-	- **result** *: ( vec2 )*  
----
-### **sample_matcap**
->vec4 sample_matcap(sampler2D matcap, vec3 normal)
-
-- **Inputs**  
-	- **matcap** *: ( sampler2D )*  
-	- **normal** *: ( vec3 | Normal ) - default = NORMAL*  
-- **Outputs**  
-	- **result** *: ( vec4 )*  
----
-### **hdri_uv**
->vec2 hdri_uv(vec3 normal)
-
-- **Inputs**  
-	- **normal** *: ( vec3 | Normal ) - default = NORMAL*  
-- **Outputs**  
-	- **result** *: ( vec2 )*  
----
-### **sample_hdri**
->vec4 sample_hdri(sampler2D hdri, vec3 normal)
-
-- **Inputs**  
-	- **hdri** *: ( sampler2D )*  
-	- **normal** *: ( vec3 | Normal ) - default = NORMAL*  
-- **Outputs**  
-	- **result** *: ( vec4 )*  
----
-## Common - Math
----
-### **random_per_sample**
->vec4 random_per_sample(float seed)
-
-- **Inputs**  
-	- **seed** *: ( float )*  
-- **Outputs**  
-	- **result** *: ( vec4 )*  
----
-### **random_per_pixel**
->vec4 random_per_pixel(float seed)
-
-- **Inputs**  
-	- **seed** *: ( float )*  
-- **Outputs**  
-	- **result** *: ( vec4 )*  
----
-## Common - Quaternion
----
-### **quaternion_from_axis_angle**
->vec4 quaternion_from_axis_angle(vec3 axis, float angle)
-
-- **Inputs**  
-	- **axis** *: ( vec3 | Normal )*  
-	- **angle** *: ( float | Angle )*  
-- **Outputs**  
-	- **result** *: ( vec4 )*  
----
-### **quaternion_from_vector_delta**
->vec4 quaternion_from_vector_delta(vec3 from, vec3 to)
-
-- **Inputs**  
-	- **from** *: ( vec3 | Normal )*  
-	- **to** *: ( vec3 | Normal )*  
-- **Outputs**  
-	- **result** *: ( vec4 )*  
----
-### **quaternion_inverted**
->vec4 quaternion_inverted(vec4 quaternion)
-
-- **Inputs**  
-	- **quaternion** *: ( vec4 | Quaternion ) - default = (0.0, 0.0, 0.0, 1.0)*  
-- **Outputs**  
-	- **result** *: ( vec4 )*  
----
-### **quaternion_multiply**
->vec4 quaternion_multiply(vec4 a, vec4 b)
-
-- **Inputs**  
-	- **a** *: ( vec4 | Quaternion ) - default = (0.0, 0.0, 0.0, 1.0)*  
-	- **b** *: ( vec4 | Quaternion ) - default = (0.0, 0.0, 0.0, 1.0)*  
-- **Outputs**  
-	- **result** *: ( vec4 )*  
----
-### **quaternion_transform**
->vec3 quaternion_transform(vec4 quaternion, vec3 vector)
-
-- **Inputs**  
-	- **quaternion** *: ( vec4 | Quaternion ) - default = (0.0, 0.0, 0.0, 1.0)*  
-	- **vector** *: ( vec3 | Vector ) - default = (0.0, 0.0, 0.0)*  
-- **Outputs**  
-	- **result** *: ( vec3 )*  
----
-### **quaternion_mix**
->vec4 quaternion_mix(vec4 a, vec4 b, float factor)
-
-- **Inputs**  
-	- **a** *: ( vec4 | Quaternion ) - default = (0.0, 0.0, 0.0, 1.0)*  
-	- **b** *: ( vec4 | Quaternion ) - default = (0.0, 0.0, 0.0, 1.0)*  
-	- **factor** *: ( float | Slider ) - default = 0.5*  
-- **Outputs**  
-	- **result** *: ( vec4 )*  
----
-## Common - Matrix
----
-### **mat4_translation**
->mat4 mat4_translation(vec3 t)
-
-- **Inputs**  
-	- **t** *: ( vec3 | Vector )*  
-- **Outputs**  
-	- **result** *: ( mat4 )*  
----
-### **mat4_rotation_from_quaternion**
->mat4 mat4_rotation_from_quaternion(vec4 q)
-
-- **Inputs**  
-	- **q** *: ( vec4 | Quaternion ) - default = (0.0, 0.0, 0.0, 1.0)*  
-- **Outputs**  
-	- **result** *: ( mat4 )*  
----
-### **mat4_rotation_from_euler**
->mat4 mat4_rotation_from_euler(vec3 e)
-
-- **Inputs**  
-	- **e** *: ( vec3 | Euler )*  
-- **Outputs**  
-	- **result** *: ( mat4 )*  
----
-### **mat4_scale**
->mat4 mat4_scale(vec3 s)
-
-- **Inputs**  
-	- **s** *: ( vec3 | Vector ) - default = (1.0, 1.0, 1.0)*  
-- **Outputs**  
-	- **result** *: ( mat4 )*  
----
-### **is_ortho**
->bool is_ortho(mat4 matrix)
-
-- **Inputs**  
-	- **matrix** *: ( mat4 ) - default = mat4(1)*  
-- **Outputs**  
-	- **result** *: ( bool )*  
----
-## Common - Normal
----
-### **true_normal**
->vec3 true_normal()
-
-- **Outputs**  
-	- **result** *: ( vec3 )*  
----
-### **facing**
->float facing()
-
+	- **Value** *: ( float ) - default = UV[0].x*  
 - **Outputs**  
 	- **result** *: ( float )*  
 ---
-### **is_front_facing**
->bool is_front_facing()
-
-- **Outputs**  
-	- **result** *: ( bool )*  
----
-### **compute_tangent**
->vec4 compute_tangent(vec2 uv)
-
+#### **Quadratic**
 - **Inputs**  
-	- **uv** *: ( vec2 )*  
+	- **Value** *: ( float ) - default = UV[0].x*  
+- **Outputs**  
+	- **result** *: ( float )*  
+---
+#### **Easing**
+- **Inputs**  
+	- **Value** *: ( float ) - default = UV[0].x*  
+- **Outputs**  
+	- **result** *: ( float )*  
+---
+#### **Diagonal**
+- **Inputs**  
+	- **UV** *: ( vec2 ) - default = UV[0]*  
+- **Outputs**  
+	- **result** *: ( float )*  
+---
+#### **Spherical**
+- **Inputs**  
+	- **Vector** *: ( vec3 | Vector ) - default = POSITION*  
+- **Outputs**  
+	- **result** *: ( float )*  
+---
+#### **Quadratic Sphere**
+- **Inputs**  
+	- **Vector** *: ( vec3 | Vector ) - default = POSITION*  
+- **Outputs**  
+	- **result** *: ( float )*  
+---
+#### **Radial**
+- **Inputs**  
+	- **UV** *: ( vec2 ) - default = UV[0]*  
+- **Outputs**  
+	- **result** *: ( float )*  
+---
+### **Wave**
+- **Inputs**  
+	- **Mode** *: ( int | ENUM(Sine,Saw,Triangle) )*  
+	- **Coord** *: ( float ) - default = UV[0].x*  
+	- **Scale** *: ( float ) - default = 5.0*  
+	- **Phase** *: ( float )*  
+- **Outputs**  
+	- **result** *: ( float )*  
+---
+## Shading
+---
+### **Ambient Occlusion**
+- **Inputs**  
+	- **Samples** *: ( int ) - default = 32*  
+	- **Radius** *: ( float ) - default = 1.0*  
+	- **Distribution Exponent** *: ( float ) - default = 5.0*  
+	- **Contrast** *: ( float | Slider ) - default = 0.1*  
+	- **Bias** *: ( float | Slider ) - default = 0.01*  
+- **Outputs**  
+	- **result** *: ( float )*  
+---
+### **Curvature**
+---
+#### **Curvature**
+- **Outputs**  
+	- **result** *: ( float )*  
+---
+#### **Surface Curvature**
+- **Inputs**  
+	- **Depth Range** *: ( float ) - default = 0.1*  
+- **Outputs**  
+	- **result** *: ( float )*  
+---
+### **Line Detection**
+- **Outputs**  
+	- **Delta Distance** *: ( float )*  
+	- **Delta Angle** *: ( float )*  
+	- **Is ID Boundary** *: ( vec4 )*  
+---
+### **Line Width**
+- **Inputs**  
+	- **Width Scale** *: ( float ) - default = 4.0*  
+	- **Width Units** *: ( int | ENUM(Pixel,Screen,World) )*  
+	- **Depth Width** *: ( float | Slider ) - default = 1.0*  
+	- **Depth Threshold** *: ( float | Slider ) - default = 0.1*  
+	- **Depth Threshold Range** *: ( float | Slider )*  
+	- **Normal Width** *: ( float | Slider ) - default = 1.0*  
+	- **Normal Threshold** *: ( float | Slider ) - default = 0.5*  
+	- **Normal Threshold Range** *: ( float | Slider )*  
+	- **Id Boundary Width** *: ( vec4 | Slider ) - default = (1.0, 1.0, 1.0, 1.0)*  
+- **Outputs**  
+	- **result** *: ( float )*  
+---
+### **Rim Light**
+- **Inputs**  
+	- **Normal** *: ( vec3 | Normal ) - default = NORMAL*  
+	- **Angle** *: ( float )*  
+	- **Rim Length** *: ( float ) - default = 2.0*  
+	- **Length Falloff** *: ( float )*  
+	- **Thickness** *: ( float ) - default = 0.1*  
+	- **Thickness Falloff** *: ( float )*  
+- **Outputs**  
+	- **result** *: ( float )*  
+---
+### **NPR Diffuse**
+---
+#### **Color Ramp**
+- **Inputs**  
+	- **Base Color** *: ( vec3 ) - default = (0.0, 0.0, 0.0)*  
+	- **Color** *: ( vec3 ) - default = (1.0, 1.0, 1.0)*  
+	- **Gradient** *: ( sampler1D )*  
+	- **Offset** *: ( float | Slider )*  
+	- **Full Range** *: ( bool )*  
+	- **Max Contribution** *: ( bool )*  
+	- **Shadows** *: ( int | ENUM(Enable Shadows,Disable Self-Shadows,Disable Shadows) )*  
+	- **Light Groups** *: ( ivec4 ) - default = (1, 0, 0, 0)*  
+	- **Position** *: ( vec3 | Vector ) - default = POSITION*  
+	- **Normal** *: ( vec3 | Normal ) - default = NORMAL*  
+- **Outputs**  
+	- **result** *: ( vec3 )*  
+---
+#### **Color Layer**
+- **Inputs**  
+	- **Base Color** *: ( vec3 ) - default = (0.0, 0.0, 0.0)*  
+	- **Color** *: ( vec3 ) - default = (1.0, 1.0, 1.0)*  
+	- **Size** *: ( float | Slider ) - default = 1.0*  
+	- **Gradient Size** *: ( float | Slider ) - default = 0.1*  
+	- **Offset** *: ( float | Slider )*  
+	- **Full Range** *: ( bool )*  
+	- **Max Contribution** *: ( bool )*  
+	- **Shadows** *: ( int | ENUM(Enable Shadows,Disable Self-Shadows,Disable Shadows) )*  
+	- **Light Groups** *: ( ivec4 ) - default = (1, 0, 0, 0)*  
+	- **Position** *: ( vec3 | Vector ) - default = POSITION*  
+	- **Normal** *: ( vec3 | Normal ) - default = NORMAL*  
+- **Outputs**  
+	- **result** *: ( vec3 )*  
+---
+### **NPR Specular**
+---
+#### **Color Ramp**
+- **Inputs**  
+	- **Base Color** *: ( vec3 ) - default = (0.0, 0.0, 0.0)*  
+	- **Color** *: ( vec3 ) - default = (1.0, 1.0, 1.0)*  
+	- **Gradient** *: ( sampler1D )*  
+	- **Offset** *: ( float | Slider )*  
+	- **Roughness** *: ( float | Slider ) - default = 0.5*  
+	- **Anisotropy** *: ( float | Slider ) - default = 0.5*  
+	- **Max Contribution** *: ( bool )*  
+	- **Shadows** *: ( int | ENUM(Enable Shadows,Disable Self-Shadows,Disable Shadows) )*  
+	- **Light Groups** *: ( ivec4 ) - default = (1, 0, 0, 0)*  
+	- **Position** *: ( vec3 | Vector ) - default = POSITION*  
+	- **Normal** *: ( vec3 | Normal ) - default = NORMAL*  
+	- **Tangent** *: ( vec3 | Normal ) - default = radial_tangent(NORMAL, vec3(0,0,1))*  
+- **Outputs**  
+	- **result** *: ( vec3 )*  
+---
+#### **Color Layer**
+- **Inputs**  
+	- **Base Color** *: ( vec3 ) - default = (0.0, 0.0, 0.0)*  
+	- **Color** *: ( vec3 ) - default = (1.0, 1.0, 1.0)*  
+	- **Size** *: ( float | Slider ) - default = 1.0*  
+	- **Gradient Size** *: ( float | Slider ) - default = 0.1*  
+	- **Offset** *: ( float | Slider )*  
+	- **Roughness** *: ( float | Slider ) - default = 0.5*  
+	- **Anisotropy** *: ( float | Slider ) - default = 0.5*  
+	- **Max Contribution** *: ( bool )*  
+	- **Shadows** *: ( int | ENUM(Enable Shadows,Disable Self-Shadows,Disable Shadows) )*  
+	- **Light Groups** *: ( ivec4 ) - default = (1, 0, 0, 0)*  
+	- **Position** *: ( vec3 | Vector ) - default = POSITION*  
+	- **Normal** *: ( vec3 | Normal ) - default = NORMAL*  
+	- **Tangent** *: ( vec3 | Normal ) - default = radial_tangent(NORMAL, vec3(0,0,1))*  
+- **Outputs**  
+	- **result** *: ( vec3 )*  
+---
+## Filter
+---
+### **Curvature**
+- **Inputs**  
+	- **Normal Texture** *: ( sampler2D )*  
+	- **UV** *: ( vec2 ) - default = UV[0]*  
+	- **Width** *: ( float ) - default = 1.0*  
+	- **X** *: ( vec3 | Normal ) - default = (1.0, 0.0, 0.0)*  
+	- **Y** *: ( vec3 | Normal ) - default = (0.0, 1.0, 0.0)*  
+- **Outputs**  
+	- **result** *: ( float )*  
+---
+### **Blur**
+---
+#### **Box Blur**
+- **Inputs**  
+	- **Texture** *: ( sampler2D )*  
+	- **UV** *: ( vec2 ) - default = UV[0]*  
+	- **Radius** *: ( float ) - default = 5.0*  
+	- **Circular** *: ( bool )*  
 - **Outputs**  
 	- **result** *: ( vec4 )*  
 ---
-### **get_tangent**
->vec3 get_tangent(int uv_index)
-
+#### **Gaussian Blur**
 - **Inputs**  
-	- **uv_index** *: ( int )*  
-- **Outputs**  
-	- **result** *: ( vec3 )*  
----
-### **get_bitangent**
->vec3 get_bitangent(int uv_index)
-
-- **Inputs**  
-	- **uv_index** *: ( int )*  
-- **Outputs**  
-	- **result** *: ( vec3 )*  
----
-### **get_TBN**
->mat3 get_TBN(int uv_index)
-
-- **Inputs**  
-	- **uv_index** *: ( int )*  
-- **Outputs**  
-	- **result** *: ( mat3 )*  
----
-### **sample_normal_map_ex**
->vec3 sample_normal_map_ex(sampler2D normal_texture, mat3 TBN, vec2 uv)
-
-- **Inputs**  
-	- **normal_texture** *: ( sampler2D )*  
-	- **TBN** *: ( mat3 )*  
-	- **uv** *: ( vec2 )*  
-- **Outputs**  
-	- **result** *: ( vec3 )*  
----
-### **sample_normal_map**
->vec3 sample_normal_map(sampler2D normal_texture, int uv_index, vec2 uv)
-
-- **Inputs**  
-	- **normal_texture** *: ( sampler2D )*  
-	- **uv_index** *: ( int )*  
-	- **uv** *: ( vec2 )*  
-- **Outputs**  
-	- **result** *: ( vec3 )*  
----
-### **radial_tangent**
->vec3 radial_tangent(vec3 normal, vec3 axis)
-
-- **Inputs**  
-	- **normal** *: ( vec3 | Normal ) - default = NORMAL*  
-	- **axis** *: ( vec3 | Normal ) - default = (0, 0, 1)*  
-- **Outputs**  
-	- **result** *: ( vec3 )*  
----
-### **surface_gradient_from_normal**
->vec3 surface_gradient_from_normal(vec3 custom_normal)
-
-- **Inputs**  
-	- **custom_normal** *: ( vec3 | Normal ) - default = NORMAL*  
-- **Outputs**  
-	- **result** *: ( vec3 )*  
----
-### **normal_from_surface_gradient**
->vec3 normal_from_surface_gradient(vec3 surface_gradient)
-
-- **Inputs**  
-	- **surface_gradient** *: ( vec3 | Vector ) - default = (0.0, 0.0, 0.0)*  
-- **Outputs**  
-	- **result** *: ( vec3 )*  
----
-## Common - Transform
----
-### **transform_point**
->vec3 transform_point(mat4 matrix, vec3 point)
-
-- **Inputs**  
-	- **matrix** *: ( mat4 ) - default = mat4(1)*  
-	- **point** *: ( vec3 | Vector )*  
-- **Outputs**  
-	- **result** *: ( vec3 )*  
----
-### **project_point**
->vec3 project_point(mat4 matrix, vec3 point)
-
-- **Inputs**  
-	- **matrix** *: ( mat4 ) - default = mat4(1)*  
-	- **point** *: ( vec3 | Vector )*  
-- **Outputs**  
-	- **result** *: ( vec3 )*  
----
-### **transform_direction**
->vec3 transform_direction(mat4 matrix, vec3 direction)
-
-- **Inputs**  
-	- **matrix** *: ( mat4 ) - default = mat4(1)*  
-	- **direction** *: ( vec3 | Vector )*  
-- **Outputs**  
-	- **result** *: ( vec3 )*  
----
-### **transform_normal**
->vec3 transform_normal(mat4 matrix, vec3 normal)
-
-- **Inputs**  
-	- **matrix** *: ( mat4 ) - default = mat4(1)*  
-	- **normal** *: ( vec3 | Normal )*  
-- **Outputs**  
-	- **result** *: ( vec3 )*  
----
-### **camera_position**
->vec3 camera_position()
-
-- **Outputs**  
-	- **result** *: ( vec3 )*  
----
-### **model_position**
->vec3 model_position()
-
-- **Outputs**  
-	- **result** *: ( vec3 )*  
----
-### **screen_uv**
->vec2 screen_uv()
-
-- **Outputs**  
-	- **result** *: ( vec2 )*  
----
-### **screen_pixel**
->ivec2 screen_pixel()
-
-- **Outputs**  
-	- **result** *: ( ivec2 )*  
----
-### **screen_to_camera**
->vec3 screen_to_camera(vec2 uv, float depth)
-
-- **Inputs**  
-	- **uv** *: ( vec2 )*  
-	- **depth** *: ( float )*  
-- **Outputs**  
-	- **result** *: ( vec3 )*  
----
-### **view_direction**
->vec3 view_direction()
-
-- **Outputs**  
-	- **result** *: ( vec3 )*  
----
-### **pixel_depth**
->float pixel_depth()
-
-- **Outputs**  
-	- **result** *: ( float )*  
----
-### **depth_to_z**
->float depth_to_z(float depth)
-
-- **Inputs**  
-	- **depth** *: ( float )*  
-- **Outputs**  
-	- **result** *: ( float )*  
----
-### **pixel_world_size_at**
->float pixel_world_size_at(float depth)
-
-- **Inputs**  
-	- **depth** *: ( float )*  
-- **Outputs**  
-	- **result** *: ( float )*  
----
-### **pixel_world_size**
->float pixel_world_size()
-
-- **Outputs**  
-	- **result** *: ( float )*  
----
-### **reconstruct_normal**
->vec3 reconstruct_normal(sampler2D depth_texture, int depth_channel, ivec2 texel)
-
-- **Inputs**  
-	- **depth_texture** *: ( sampler2D )*  
-	- **depth_channel** *: ( int )*  
-	- **texel** *: ( ivec2 )*  
-- **Outputs**  
-	- **result** *: ( vec3 )*  
----
-### **ray_plane_intersection**
->float ray_plane_intersection(vec3 ray_origin, vec3 ray_direction, vec3 plane_position, vec3 plane_normal)
-
-- **Inputs**  
-	- **ray_origin** *: ( vec3 | Vector )*  
-	- **ray_direction** *: ( vec3 | Vector )*  
-	- **plane_position** *: ( vec3 | Vector )*  
-	- **plane_normal** *: ( vec3 | Normal )*  
-- **Outputs**  
-	- **result** *: ( float )*  
----
-### **rotate_2d**
->vec2 rotate_2d(vec2 p, float angle)
-
-- **Inputs**  
-	- **p** *: ( vec2 )*  
-	- **angle** *: ( float )*  
-- **Outputs**  
-	- **result** *: ( vec2 )*  
----
-## Filters - Curvature
----
-### **curvature**
->float curvature(sampler2D normal_texture, vec2 uv, float width, vec3 x, vec3 y)
-
-- **Inputs**  
-	- **normal_texture** *: ( sampler2D )*  
-	- **uv** *: ( vec2 )*  
-	- **width** *: ( float )*  
-	- **x** *: ( vec3 )*  
-	- **y** *: ( vec3 )*  
-- **Outputs**  
-	- **result** *: ( float )*  
----
-## NPR_Pipeline - NPR_Filters
----
-### **ao**
->float ao(int samples, float radius, float distribution_exponent, float bias)
-
-- **Inputs**  
-	- **samples** *: ( int ) - default = 32*  
-	- **radius** *: ( float ) - default = 1.0*  
-	- **distribution_exponent** *: ( float ) - default = 5.0*  
-	- **bias** *: ( float ) - default = 0.01*  
-- **Outputs**  
-	- **result** *: ( float )*  
----
-### **curvature**
->float curvature()
-
-- **Outputs**  
-	- **result** *: ( float )*  
----
-### **surface_curvature**
->float surface_curvature(float depth_range)
-
-- **Inputs**  
-	- **depth_range** *: ( float ) - default = 0.1*  
-- **Outputs**  
-	- **result** *: ( float )*  
----
-### **soft_bevel**
->vec3 soft_bevel(int samples, float radius, float distribution_exponent, bool only_self)
-
-- **Inputs**  
-	- **samples** *: ( int ) - default = 32*  
-	- **radius** *: ( float ) - default = 0.02*  
-	- **distribution_exponent** *: ( float ) - default = 2.0*  
-	- **only_self** *: ( bool )*  
-- **Outputs**  
-	- **result** *: ( vec3 )*  
----
-### **hard_bevel**
->vec3 hard_bevel(int samples, float radius, float max_dot, bool only_self)
-
-- **Inputs**  
-	- **samples** *: ( int ) - default = 32*  
-	- **radius** *: ( float ) - default = 0.01*  
-	- **max_dot** *: ( float ) - default = 0.75*  
-	- **only_self** *: ( bool )*  
-- **Outputs**  
-	- **result** *: ( vec3 )*  
----
-### **line_detection**
->LineDetectionOutput line_detection()
-
-- **Outputs**  
-	- **result** *: ( LineDetectionOutput )*  
----
-### **line_width**
->float line_width( float line_width_scale, vec4 id_boundary_width, float depth_width, float depth_width_range, float depth_threshold, float depth_threshold_range, float normal_width, float normal_width_range, float normal_threshold, float normal_threshold_range )
-
-- **Inputs**  
-	- **line_width_scale** *: ( float ) - default = 2.0*  
-	- **id_boundary_width** *: ( vec4 | Data ) - default = (1.0, 1.0, 1.0, 1.0)*  
-	- **depth_width** *: ( float ) - default = 1.0*  
-	- **depth_width_range** *: ( float )*  
-	- **depth_threshold** *: ( float ) - default = 0.5*  
-	- **depth_threshold_range** *: ( float )*  
-	- **normal_width** *: ( float ) - default = 1.0*  
-	- **normal_width_range** *: ( float )*  
-	- **normal_threshold** *: ( float ) - default = 0.5*  
-	- **normal_threshold_range** *: ( float )*  
-- **Outputs**  
-	- **result** *: ( float )*  
----
-## Shading - ShadingModels
----
-### **rim_light**
->float rim_light(vec3 normal, float angle, float rim_length, float length_falloff, float thickness, float thickness_falloff)
-
-- **Inputs**  
-	- **normal** *: ( vec3 | Normal ) - default = NORMAL*  
-	- **angle** *: ( float )*  
-	- **rim_length** *: ( float ) - default = 2.0*  
-	- **length_falloff** *: ( float )*  
-	- **thickness** *: ( float ) - default = 0.1*  
-	- **thickness_falloff** *: ( float )*  
-- **Outputs**  
-	- **result** *: ( float )*  
----
-## NPR_Pipeline - NPR_Shading
----
-### **diffuse_shading**
->vec3 diffuse_shading(vec3 position, vec3 normal, int light_group, bool shadows, bool self_shadows)
-
-- **Inputs**  
-	- **position** *: ( vec3 | Vector ) - default = POSITION*  
-	- **normal** *: ( vec3 | Normal ) - default = NORMAL*  
-	- **light_group** *: ( int ) - default = 1*  
-	- **shadows** *: ( bool ) - default = True*  
-	- **self_shadows** *: ( bool ) - default = True*  
-- **Outputs**  
-	- **result** *: ( vec3 )*  
----
-### **diffuse_half_shading**
->vec3 diffuse_half_shading(vec3 position, vec3 normal, int light_group, bool shadows, bool self_shadows)
-
-- **Inputs**  
-	- **position** *: ( vec3 | Vector ) - default = POSITION*  
-	- **normal** *: ( vec3 | Normal ) - default = NORMAL*  
-	- **light_group** *: ( int ) - default = 1*  
-	- **shadows** *: ( bool ) - default = True*  
-	- **self_shadows** *: ( bool ) - default = True*  
-- **Outputs**  
-	- **result** *: ( vec3 )*  
----
-### **diffuse_gradient_shading**
->vec3 diffuse_gradient_shading(vec3 position, vec3 normal, sampler1D gradient, int light_group, bool shadows, bool self_shadows)
-
-- **Inputs**  
-	- **position** *: ( vec3 | Vector ) - default = POSITION*  
-	- **normal** *: ( vec3 | Normal ) - default = NORMAL*  
-	- **gradient** *: ( sampler1D )*  
-	- **light_group** *: ( int ) - default = 1*  
-	- **shadows** *: ( bool ) - default = True*  
-	- **self_shadows** *: ( bool ) - default = True*  
-- **Outputs**  
-	- **result** *: ( vec3 )*  
----
-### **specular_shading**
->vec3 specular_shading(vec3 position, vec3 normal, float roughness, int light_group, bool shadows, bool self_shadows)
-
-- **Inputs**  
-	- **position** *: ( vec3 | Vector ) - default = POSITION*  
-	- **normal** *: ( vec3 | Normal ) - default = NORMAL*  
-	- **roughness** *: ( float ) - default = 0.5*  
-	- **light_group** *: ( int ) - default = 1*  
-	- **shadows** *: ( bool ) - default = True*  
-	- **self_shadows** *: ( bool ) - default = True*  
-- **Outputs**  
-	- **result** *: ( vec3 )*  
----
-### **specular_gradient_shading**
->vec3 specular_gradient_shading(vec3 position, vec3 normal, float roughness, sampler1D gradient, int light_group, bool shadows, bool self_shadows)
-
-- **Inputs**  
-	- **position** *: ( vec3 | Vector ) - default = POSITION*  
-	- **normal** *: ( vec3 | Normal ) - default = NORMAL*  
-	- **roughness** *: ( float ) - default = 0.5*  
-	- **gradient** *: ( sampler1D )*  
-	- **light_group** *: ( int ) - default = 1*  
-	- **shadows** *: ( bool ) - default = True*  
-	- **self_shadows** *: ( bool ) - default = True*  
-- **Outputs**  
-	- **result** *: ( vec3 )*  
----
-### **specular_anisotropic_shading**
->vec3 specular_anisotropic_shading(vec3 position, vec3 normal, vec3 tangent, float anisotropy, float roughness, int light_group, bool shadows, bool self_shadows)
-
-- **Inputs**  
-	- **position** *: ( vec3 | Vector ) - default = POSITION*  
-	- **normal** *: ( vec3 | Normal ) - default = NORMAL*  
-	- **tangent** *: ( vec3 | Normal ) - default = radial_tangent(NORMAL, vec3(0,0,1))*  
-	- **anisotropy** *: ( float ) - default = 0.5*  
-	- **roughness** *: ( float ) - default = 0.5*  
-	- **light_group** *: ( int ) - default = 1*  
-	- **shadows** *: ( bool ) - default = True*  
-	- **self_shadows** *: ( bool ) - default = True*  
-- **Outputs**  
-	- **result** *: ( vec3 )*  
----
-### **specular_anisotropic_gradient_shading**
->vec3 specular_anisotropic_gradient_shading(vec3 position, vec3 normal, vec3 tangent, float anisotropy, float roughness, sampler1D gradient, int light_group, bool shadows, bool self_shadows)
-
-- **Inputs**  
-	- **position** *: ( vec3 | Vector ) - default = POSITION*  
-	- **normal** *: ( vec3 | Normal ) - default = NORMAL*  
-	- **tangent** *: ( vec3 | Normal ) - default = radial_tangent(NORMAL, vec3(0,0,1))*  
-	- **anisotropy** *: ( float ) - default = 0.5*  
-	- **roughness** *: ( float ) - default = 0.5*  
-	- **gradient** *: ( sampler1D )*  
-	- **light_group** *: ( int ) - default = 1*  
-	- **shadows** *: ( bool ) - default = True*  
-	- **self_shadows** *: ( bool ) - default = True*  
-- **Outputs**  
-	- **result** *: ( vec3 )*  
----
-### **toon_shading**
->vec3 toon_shading(vec3 position, vec3 normal, float size, float gradient_size, float specularity, float offset, int light_group, bool shadows, bool self_shadows)
-
-- **Inputs**  
-	- **position** *: ( vec3 | Vector ) - default = POSITION*  
-	- **normal** *: ( vec3 | Normal ) - default = NORMAL*  
-	- **size** *: ( float ) - default = 0.49*  
-	- **gradient_size** *: ( float )*  
-	- **specularity** *: ( float )*  
-	- **offset** *: ( float )*  
-	- **light_group** *: ( int ) - default = 1*  
-	- **shadows** *: ( bool ) - default = True*  
-	- **self_shadows** *: ( bool ) - default = True*  
-- **Outputs**  
-	- **result** *: ( vec3 )*  
----
-## Node Utils - common
----
-### **surface_position**
->vec3 surface_position()
-
-- **Outputs**  
-	- **result** *: ( vec3 )*  
----
-### **surface_normal**
->vec3 surface_normal()
-
-- **Outputs**  
-	- **result** *: ( vec3 )*  
----
-### **surface_tangent**
->vec3 surface_tangent(int index)
-
-- **Inputs**  
-	- **index** *: ( int )*  
-- **Outputs**  
-	- **result** *: ( vec3 )*  
----
-### **surface_bitangent**
->vec3 surface_bitangent(int index)
-
-- **Inputs**  
-	- **index** *: ( int )*  
-- **Outputs**  
-	- **result** *: ( vec3 )*  
----
-### **surface_uv**
->vec2 surface_uv(int index)
-
-- **Inputs**  
-	- **index** *: ( int )*  
-- **Outputs**  
-	- **result** *: ( vec2 )*  
----
-### **surface_vertex_color**
->vec4 surface_vertex_color(int index)
-
-- **Inputs**  
-	- **index** *: ( int )*  
+	- **Texture** *: ( sampler2D )*  
+	- **UV** *: ( vec2 ) - default = UV[0]*  
+	- **Radius** *: ( float ) - default = 5.0*  
+	- **Sigma** *: ( float ) - default = 1.0*  
 - **Outputs**  
 	- **result** *: ( vec4 )*  
 ---
-### **surface_original_position**
->vec3 surface_original_position()
-
-- **Outputs**  
-	- **result** *: ( vec3 )*  
----
-### **surface_original_normal**
->vec3 surface_original_normal()
-
-- **Outputs**  
-	- **result** *: ( vec3 )*  
----
-### **object_id**
->uvec4 object_id()
-
-- **Outputs**  
-	- **result** *: ( uvec4 )*  
----
-### **object_original_id**
->uvec4 object_original_id()
-
-- **Outputs**  
-	- **result** *: ( uvec4 )*  
----
-### **model_matrix**
->mat4 model_matrix()
-
-- **Outputs**  
-	- **result** *: ( mat4 )*  
----
-### **camera_matrix**
->mat4 camera_matrix()
-
-- **Outputs**  
-	- **result** *: ( mat4 )*  
----
-### **projection_matrix**
->mat4 projection_matrix()
-
-- **Outputs**  
-	- **result** *: ( mat4 )*  
----
-### **render_resolution**
->vec2 render_resolution()
-
-- **Outputs**  
-	- **result** *: ( vec2 )*  
----
-### **sample_offset**
->vec2 sample_offset()
-
-- **Outputs**  
-	- **result** *: ( vec2 )*  
----
-### **sample_count**
->int sample_count()
-
-- **Outputs**  
-	- **result** *: ( int )*  
----
-### **current_frame**
->int current_frame()
-
-- **Outputs**  
-	- **result** *: ( int )*  
----
-### **current_time**
->float current_time()
-
-- **Outputs**  
-	- **result** *: ( float )*  
----
-## Node Utils - bool
----
-### **bool_and**
->bool bool_and(bool a, bool b)
-
+#### **Jitter Blur**
 - **Inputs**  
-	- **a** *: ( bool )*  
-	- **b** *: ( bool )*  
-- **Outputs**  
-	- **result** *: ( bool )*  
----
-### **bool_or**
->bool bool_or(bool a, bool b)
-
-- **Inputs**  
-	- **a** *: ( bool )*  
-	- **b** *: ( bool )*  
-- **Outputs**  
-	- **result** *: ( bool )*  
----
-### **bool_not**
->bool bool_not(bool b)
-
-- **Inputs**  
-	- **b** *: ( bool )*  
-- **Outputs**  
-	- **result** *: ( bool )*  
----
-### **bool_equal**
->bool bool_equal(bool a, bool b)
-
-- **Inputs**  
-	- **a** *: ( bool )*  
-	- **b** *: ( bool )*  
-- **Outputs**  
-	- **result** *: ( bool )*  
----
-### **bool_not_equal**
->bool bool_not_equal(bool a, bool b)
-
-- **Inputs**  
-	- **a** *: ( bool )*  
-	- **b** *: ( bool )*  
-- **Outputs**  
-	- **result** *: ( bool )*  
----
-### **if_else**
->bool if_else(bool condition, bool if_true, bool if_false)
-
-- **Inputs**  
-	- **condition** *: ( bool )*  
-	- **if_true** *: ( bool )*  
-	- **if_false** *: ( bool )*  
-- **Outputs**  
-	- **result** *: ( bool )*  
----
-## Node Utils - float
----
-### **float_add**
->float float_add(float a, float b)
-
-- **Inputs**  
-	- **a** *: ( float )*  
-	- **b** *: ( float )*  
-- **Outputs**  
-	- **result** *: ( float )*  
----
-### **float_subtract**
->float float_subtract(float a, float b)
-
-- **Inputs**  
-	- **a** *: ( float )*  
-	- **b** *: ( float )*  
-- **Outputs**  
-	- **result** *: ( float )*  
----
-### **float_multiply**
->float float_multiply(float a, float b)
-
-- **Inputs**  
-	- **a** *: ( float )*  
-	- **b** *: ( float )*  
-- **Outputs**  
-	- **result** *: ( float )*  
----
-### **float_divide**
->float float_divide(float a, float b)
-
-- **Inputs**  
-	- **a** *: ( float )*  
-	- **b** *: ( float )*  
-- **Outputs**  
-	- **result** *: ( float )*  
----
-### **float_modulo**
->float float_modulo(float a, float b)
-
-- **Inputs**  
-	- **a** *: ( float )*  
-	- **b** *: ( float )*  
-- **Outputs**  
-	- **result** *: ( float )*  
----
-### **float_pow**
->float float_pow(float f, float e)
-
-- **Inputs**  
-	- **f** *: ( float )*  
-	- **e** *: ( float )*  
-- **Outputs**  
-	- **result** *: ( float )*  
----
-### **float_sqrt**
->float float_sqrt(float f)
-
-- **Inputs**  
-	- **f** *: ( float )*  
-- **Outputs**  
-	- **result** *: ( float )*  
----
-### **float_round**
->float float_round(float f)
-
-- **Inputs**  
-	- **f** *: ( float )*  
-- **Outputs**  
-	- **result** *: ( float )*  
----
-### **float_fract**
->float float_fract(float f)
-
-- **Inputs**  
-	- **f** *: ( float )*  
-- **Outputs**  
-	- **result** *: ( float )*  
----
-### **float_floor**
->float float_floor(float f)
-
-- **Inputs**  
-	- **f** *: ( float )*  
-- **Outputs**  
-	- **result** *: ( float )*  
----
-### **float_ceil**
->float float_ceil(float f)
-
-- **Inputs**  
-	- **f** *: ( float )*  
-- **Outputs**  
-	- **result** *: ( float )*  
----
-### **float_clamp**
->float float_clamp(float f, float min, float max)
-
-- **Inputs**  
-	- **f** *: ( float )*  
-	- **min** *: ( float )*  
-	- **max** *: ( float )*  
-- **Outputs**  
-	- **result** *: ( float )*  
----
-### **float_sign**
->float float_sign(float f)
-
-- **Inputs**  
-	- **f** *: ( float )*  
-- **Outputs**  
-	- **result** *: ( float )*  
----
-### **float_abs**
->float float_abs(float f)
-
-- **Inputs**  
-	- **f** *: ( float )*  
-- **Outputs**  
-	- **result** *: ( float )*  
----
-### **float_min**
->float float_min(float a, float b)
-
-- **Inputs**  
-	- **a** *: ( float )*  
-	- **b** *: ( float )*  
-- **Outputs**  
-	- **result** *: ( float )*  
----
-### **float_max**
->float float_max(float a, float b)
-
-- **Inputs**  
-	- **a** *: ( float )*  
-	- **b** *: ( float )*  
-- **Outputs**  
-	- **result** *: ( float )*  
----
-### **float_mix**
->float float_mix(float a, float b, float factor)
-
-- **Inputs**  
-	- **a** *: ( float )*  
-	- **b** *: ( float )*  
-	- **factor** *: ( float )*  
-- **Outputs**  
-	- **result** *: ( float )*  
----
-### **float_sin**
->float float_sin(float f)
-
-- **Inputs**  
-	- **f** *: ( float )*  
-- **Outputs**  
-	- **result** *: ( float )*  
----
-### **float_cos**
->float float_cos(float f)
-
-- **Inputs**  
-	- **f** *: ( float )*  
-- **Outputs**  
-	- **result** *: ( float )*  
----
-### **float_tan**
->float float_tan(float f)
-
-- **Inputs**  
-	- **f** *: ( float )*  
-- **Outputs**  
-	- **result** *: ( float )*  
----
-### **float_asin**
->float float_asin(float f)
-
-- **Inputs**  
-	- **f** *: ( float )*  
-- **Outputs**  
-	- **result** *: ( float )*  
----
-### **float_acos**
->float float_acos(float f)
-
-- **Inputs**  
-	- **f** *: ( float )*  
-- **Outputs**  
-	- **result** *: ( float )*  
----
-### **float_atan**
->float float_atan(float f)
-
-- **Inputs**  
-	- **f** *: ( float )*  
-- **Outputs**  
-	- **result** *: ( float )*  
----
-### **float_degrees**
->float float_degrees(float r)
-
-- **Inputs**  
-	- **r** *: ( float )*  
-- **Outputs**  
-	- **result** *: ( float )*  
----
-### **float_radians**
->float float_radians(float d)
-
-- **Inputs**  
-	- **d** *: ( float )*  
-- **Outputs**  
-	- **result** *: ( float )*  
----
-### **float_equal**
->bool float_equal(float a, float b)
-
-- **Inputs**  
-	- **a** *: ( float )*  
-	- **b** *: ( float )*  
-- **Outputs**  
-	- **result** *: ( bool )*  
----
-### **float_not_equal**
->bool float_not_equal(float a, float b)
-
-- **Inputs**  
-	- **a** *: ( float )*  
-	- **b** *: ( float )*  
-- **Outputs**  
-	- **result** *: ( bool )*  
----
-### **float_greater**
->bool float_greater(float a, float b)
-
-- **Inputs**  
-	- **a** *: ( float )*  
-	- **b** *: ( float )*  
-- **Outputs**  
-	- **result** *: ( bool )*  
----
-### **float_greater_or_equal**
->bool float_greater_or_equal(float a, float b)
-
-- **Inputs**  
-	- **a** *: ( float )*  
-	- **b** *: ( float )*  
-- **Outputs**  
-	- **result** *: ( bool )*  
----
-### **float_less**
->bool float_less(float a, float b)
-
-- **Inputs**  
-	- **a** *: ( float )*  
-	- **b** *: ( float )*  
-- **Outputs**  
-	- **result** *: ( bool )*  
----
-### **float_less_or_equal**
->bool float_less_or_equal(float a, float b)
-
-- **Inputs**  
-	- **a** *: ( float )*  
-	- **b** *: ( float )*  
-- **Outputs**  
-	- **result** *: ( bool )*  
----
-### **float_if_else**
->float float_if_else(bool condition, float if_true, float if_false)
-
-- **Inputs**  
-	- **condition** *: ( bool )*  
-	- **if_true** *: ( float )*  
-	- **if_false** *: ( float )*  
-- **Outputs**  
-	- **result** *: ( float )*  
----
-## Node Utils - int
----
-### **int_add**
->int int_add(int a, int b)
-
-- **Inputs**  
-	- **a** *: ( int )*  
-	- **b** *: ( int )*  
-- **Outputs**  
-	- **result** *: ( int )*  
----
-### **int_subtract**
->int int_subtract(int a, int b)
-
-- **Inputs**  
-	- **a** *: ( int )*  
-	- **b** *: ( int )*  
-- **Outputs**  
-	- **result** *: ( int )*  
----
-### **int_multiply**
->int int_multiply(int a, int b)
-
-- **Inputs**  
-	- **a** *: ( int )*  
-	- **b** *: ( int )*  
-- **Outputs**  
-	- **result** *: ( int )*  
----
-### **int_divide**
->int int_divide(int a, int b)
-
-- **Inputs**  
-	- **a** *: ( int )*  
-	- **b** *: ( int )*  
-- **Outputs**  
-	- **result** *: ( int )*  
----
-### **int_modulo**
->int int_modulo(int a, int b)
-
-- **Inputs**  
-	- **a** *: ( int )*  
-	- **b** *: ( int )*  
-- **Outputs**  
-	- **result** *: ( int )*  
----
-### **int_clamp**
->int int_clamp(int i, int min, int max)
-
-- **Inputs**  
-	- **i** *: ( int )*  
-	- **min** *: ( int )*  
-	- **max** *: ( int )*  
-- **Outputs**  
-	- **result** *: ( int )*  
----
-### **int_sign**
->int int_sign(int i)
-
-- **Inputs**  
-	- **i** *: ( int )*  
-- **Outputs**  
-	- **result** *: ( int )*  
----
-### **int_abs**
->int int_abs(int i)
-
-- **Inputs**  
-	- **i** *: ( int )*  
-- **Outputs**  
-	- **result** *: ( int )*  
----
-### **int_min**
->int int_min(int a, int b)
-
-- **Inputs**  
-	- **a** *: ( int )*  
-	- **b** *: ( int )*  
-- **Outputs**  
-	- **result** *: ( int )*  
----
-### **int_max**
->int int_max(int a, int b)
-
-- **Inputs**  
-	- **a** *: ( int )*  
-	- **b** *: ( int )*  
-- **Outputs**  
-	- **result** *: ( int )*  
----
-### **int_equal**
->bool int_equal(int a, int b)
-
-- **Inputs**  
-	- **a** *: ( int )*  
-	- **b** *: ( int )*  
-- **Outputs**  
-	- **result** *: ( bool )*  
----
-### **int_not_equal**
->bool int_not_equal(int a, int b)
-
-- **Inputs**  
-	- **a** *: ( int )*  
-	- **b** *: ( int )*  
-- **Outputs**  
-	- **result** *: ( bool )*  
----
-### **int_greater**
->bool int_greater(int a, int b)
-
-- **Inputs**  
-	- **a** *: ( int )*  
-	- **b** *: ( int )*  
-- **Outputs**  
-	- **result** *: ( bool )*  
----
-### **int_greater_or_equal**
->bool int_greater_or_equal(int a, int b)
-
-- **Inputs**  
-	- **a** *: ( int )*  
-	- **b** *: ( int )*  
-- **Outputs**  
-	- **result** *: ( bool )*  
----
-### **int_less**
->bool int_less(int a, int b)
-
-- **Inputs**  
-	- **a** *: ( int )*  
-	- **b** *: ( int )*  
-- **Outputs**  
-	- **result** *: ( bool )*  
----
-### **int_less_or_equal**
->bool int_less_or_equal(int a, int b)
-
-- **Inputs**  
-	- **a** *: ( int )*  
-	- **b** *: ( int )*  
-- **Outputs**  
-	- **result** *: ( bool )*  
----
-### **int_if_else**
->int int_if_else(bool condition, int if_true, int if_false)
-
-- **Inputs**  
-	- **condition** *: ( bool )*  
-	- **if_true** *: ( int )*  
-	- **if_false** *: ( int )*  
-- **Outputs**  
-	- **result** *: ( int )*  
----
-## Node Utils - packing
----
-### **pack_8bit**
->uvec4 pack_8bit(vec4 a, vec4 b, vec4 c, vec4 d)
-
-- **Inputs**  
-	- **a** *: ( vec4 )*  
-	- **b** *: ( vec4 )*  
-	- **c** *: ( vec4 )*  
-	- **d** *: ( vec4 )*  
-- **Outputs**  
-	- **result** *: ( uvec4 )*  
----
-### **unpack_8bit**
->void unpack_8bit(uvec4 packed_vector, out vec4 a, out vec4 b, out vec4 c, out vec4 d)
-
-- **Inputs**  
-	- **packed_vector** *: ( uvec4 )*  
-- **Outputs**  
-	- **a** *: ( vec4 )*  
-	- **b** *: ( vec4 )*  
-	- **c** *: ( vec4 )*  
-	- **d** *: ( vec4 )*  
----
-## Node Utils - properties
----
-### **bool_property**
->bool bool_property(bool b)
-
-- **Inputs**  
-	- **b** *: ( bool )*  
-- **Outputs**  
-	- **result** *: ( bool )*  
----
-### **float_property**
->float float_property(float f)
-
-- **Inputs**  
-	- **f** *: ( float )*  
-- **Outputs**  
-	- **result** *: ( float )*  
----
-### **int_property**
->int int_property(int i)
-
-- **Inputs**  
-	- **i** *: ( int )*  
-- **Outputs**  
-	- **result** *: ( int )*  
----
-### **vec2_property**
->vec2 vec2_property(vec2 v)
-
-- **Inputs**  
-	- **v** *: ( vec2 )*  
-- **Outputs**  
-	- **result** *: ( vec2 )*  
----
-### **vec3_property**
->vec3 vec3_property(vec3 v)
-
-- **Inputs**  
-	- **v** *: ( vec3 | Vector )*  
-- **Outputs**  
-	- **result** *: ( vec3 )*  
----
-### **vec4_property**
->vec4 vec4_property(vec4 v)
-
-- **Inputs**  
-	- **v** *: ( vec4 | Vector )*  
+	- **Texture** *: ( sampler2D )*  
+	- **UV** *: ( vec2 ) - default = UV[0]*  
+	- **Radius** *: ( float ) - default = 5.0*  
+	- **Distribution Exponent** *: ( float ) - default = 5.0*  
+	- **Samples** *: ( int ) - default = 8*  
 - **Outputs**  
 	- **result** *: ( vec4 )*  
 ---
-### **vec3_color_property**
->vec3 vec3_color_property(vec3 v)
-
+#### **Bilateral**
 - **Inputs**  
-	- **v** *: ( vec3 )*  
-- **Outputs**  
-	- **result** *: ( vec3 )*  
----
-### **vec4_color_property**
->vec4 vec4_color_property(vec4 v)
-
-- **Inputs**  
-	- **v** *: ( vec4 )*  
+	- **Input Texture** *: ( sampler2D )*  
+	- **UV** *: ( vec2 ) - default = UV[0]*  
+	- **Radius** *: ( float ) - default = 5*  
+	- **Sigma** *: ( float ) - default = 10.0*  
+	- **BSigma** *: ( float ) - default = 0.1*  
 - **Outputs**  
 	- **result** *: ( vec4 )*  
 ---
-## Node Utils - sampler
----
-### **sampler1D_sample**
->vec4 sampler1D_sample(sampler1D t, float u)
-
+#### **Orientation-Aligned Bilateral**
 - **Inputs**  
-	- **t** *: ( sampler1D )*  
-	- **u** *: ( float )*  
+	- **Input Texture** *: ( sampler2D )*  
+	- **UV** *: ( vec2 ) - default = UV[0]*  
+	- **Flow** *: ( vec2 ) - default = vec2(0)*  
+	- **Radius** *: ( float ) - default = 6.0*  
+	- **Smoothness** *: ( float ) - default = 0.55*  
 - **Outputs**  
 	- **result** *: ( vec4 )*  
 ---
-### **sampler1D_size**
->int sampler1D_size(sampler1D t)
-
-- **Inputs**  
-	- **t** *: ( sampler1D )*  
-- **Outputs**  
-	- **result** *: ( int )*  
+### **Sharpen**
 ---
-### **sampler1D_textel_fetch**
->vec4 sampler1D_textel_fetch(sampler1D t, int u)
-
+#### **Box**
 - **Inputs**  
-	- **t** *: ( sampler1D )*  
-	- **u** *: ( int )*  
+	- **Texture** *: ( sampler2D )*  
+	- **UV** *: ( vec2 ) - default = UV[0]*  
+	- **Radius** *: ( float ) - default = 1.0*  
+	- **Circular** *: ( bool )*  
+	- **Sharpness** *: ( float ) - default = 0.3*  
 - **Outputs**  
 	- **result** *: ( vec4 )*  
 ---
-### **sampler2D_sample**
->vec4 sampler2D_sample(sampler2D t, vec2 uv)
-
+#### **Gaussian**
 - **Inputs**  
-	- **t** *: ( sampler2D )*  
-	- **uv** *: ( vec2 ) - default = UV[0]*  
+	- **Texture** *: ( sampler2D )*  
+	- **UV** *: ( vec2 ) - default = UV[0]*  
+	- **Radius** *: ( float ) - default = 1.0*  
+	- **Sigma** *: ( float ) - default = 1.0*  
+	- **Sharpness** *: ( float ) - default = 0.3*  
 - **Outputs**  
 	- **result** *: ( vec4 )*  
 ---
-### **sampler2D_sample_nearest**
->vec4 sampler2D_sample_nearest(sampler2D t, vec2 uv)
-
+#### **Jitter**
 - **Inputs**  
-	- **t** *: ( sampler2D )*  
-	- **uv** *: ( vec2 ) - default = UV[0]*  
+	- **Texture** *: ( sampler2D )*  
+	- **UV** *: ( vec2 ) - default = UV[0]*  
+	- **Radius** *: ( float ) - default = 1.0*  
+	- **Distribution Exponent** *: ( float ) - default = 5.0*  
+	- **Samples** *: ( int ) - default = 8*  
+	- **Sharpness** *: ( float ) - default = 0.3*  
 - **Outputs**  
 	- **result** *: ( vec4 )*  
 ---
-### **sampler2D_size**
->ivec2 sampler2D_size(sampler2D t)
-
-- **Inputs**  
-	- **t** *: ( sampler2D )*  
-- **Outputs**  
-	- **result** *: ( ivec2 )*  
+### **Kuwahara**
 ---
-### **sampler2D_textel_fetch**
->vec4 sampler2D_textel_fetch(sampler2D t, ivec2 uv)
-
+#### **Isotropic**
 - **Inputs**  
-	- **t** *: ( sampler2D )*  
-	- **uv** *: ( ivec2 )*  
+	- **Texture** *: ( sampler2D )*  
+	- **UV** *: ( vec2 ) - default = UV[0]*  
+	- **Size** *: ( int ) - default = 5*  
 - **Outputs**  
 	- **result** *: ( vec4 )*  
 ---
-## Node Utils - vec2
----
-### **vec2_add**
->vec2 vec2_add(vec2 a, vec2 b)
-
-- **Inputs**  
-	- **a** *: ( vec2 )*  
-	- **b** *: ( vec2 )*  
-- **Outputs**  
-	- **result** *: ( vec2 )*  
----
-### **vec2_subtract**
->vec2 vec2_subtract(vec2 a, vec2 b)
-
-- **Inputs**  
-	- **a** *: ( vec2 )*  
-	- **b** *: ( vec2 )*  
-- **Outputs**  
-	- **result** *: ( vec2 )*  
----
-### **vec2_multiply**
->vec2 vec2_multiply(vec2 a, vec2 b)
-
-- **Inputs**  
-	- **a** *: ( vec2 )*  
-	- **b** *: ( vec2 )*  
-- **Outputs**  
-	- **result** *: ( vec2 )*  
----
-### **vec2_divide**
->vec2 vec2_divide(vec2 a, vec2 b)
-
-- **Inputs**  
-	- **a** *: ( vec2 )*  
-	- **b** *: ( vec2 )*  
-- **Outputs**  
-	- **result** *: ( vec2 )*  
----
-### **vec2_scale**
->vec2 vec2_scale(vec2 v, float s)
-
-- **Inputs**  
-	- **v** *: ( vec2 )*  
-	- **s** *: ( float )*  
-- **Outputs**  
-	- **result** *: ( vec2 )*  
----
-### **vec2_modulo**
->vec2 vec2_modulo(vec2 a, vec2 b)
-
-- **Inputs**  
-	- **a** *: ( vec2 )*  
-	- **b** *: ( vec2 )*  
-- **Outputs**  
-	- **result** *: ( vec2 )*  
----
-### **vec2_pow**
->vec2 vec2_pow(vec2 v, vec2 e)
-
-- **Inputs**  
-	- **v** *: ( vec2 )*  
-	- **e** *: ( vec2 )*  
-- **Outputs**  
-	- **result** *: ( vec2 )*  
----
-### **vec2_sqrt**
->vec2 vec2_sqrt(vec2 v)
-
-- **Inputs**  
-	- **v** *: ( vec2 )*  
-- **Outputs**  
-	- **result** *: ( vec2 )*  
----
-### **vec2_round**
->vec2 vec2_round(vec2 v)
-
-- **Inputs**  
-	- **v** *: ( vec2 )*  
-- **Outputs**  
-	- **result** *: ( vec2 )*  
----
-### **vec2_fract**
->vec2 vec2_fract(vec2 v)
-
-- **Inputs**  
-	- **v** *: ( vec2 )*  
-- **Outputs**  
-	- **result** *: ( vec2 )*  
----
-### **vec2_floor**
->vec2 vec2_floor(vec2 v)
-
-- **Inputs**  
-	- **v** *: ( vec2 )*  
-- **Outputs**  
-	- **result** *: ( vec2 )*  
----
-### **vec2_ceil**
->vec2 vec2_ceil(vec2 v)
-
-- **Inputs**  
-	- **v** *: ( vec2 )*  
-- **Outputs**  
-	- **result** *: ( vec2 )*  
----
-### **vec2_clamp**
->vec2 vec2_clamp(vec2 v, vec2 min, vec2 max)
-
-- **Inputs**  
-	- **v** *: ( vec2 )*  
-	- **min** *: ( vec2 )*  
-	- **max** *: ( vec2 )*  
-- **Outputs**  
-	- **result** *: ( vec2 )*  
----
-### **vec2_sign**
->vec2 vec2_sign(vec2 v)
-
-- **Inputs**  
-	- **v** *: ( vec2 )*  
-- **Outputs**  
-	- **result** *: ( vec2 )*  
----
-### **vec2_abs**
->vec2 vec2_abs(vec2 v)
-
-- **Inputs**  
-	- **v** *: ( vec2 )*  
-- **Outputs**  
-	- **result** *: ( vec2 )*  
----
-### **vec2_min**
->vec2 vec2_min(vec2 a, vec2 b)
-
-- **Inputs**  
-	- **a** *: ( vec2 )*  
-	- **b** *: ( vec2 )*  
-- **Outputs**  
-	- **result** *: ( vec2 )*  
----
-### **vec2_max**
->vec2 vec2_max(vec2 a, vec2 b)
-
-- **Inputs**  
-	- **a** *: ( vec2 )*  
-	- **b** *: ( vec2 )*  
-- **Outputs**  
-	- **result** *: ( vec2 )*  
----
-### **vec2_mix**
->vec2 vec2_mix(vec2 a, vec2 b, vec2 factor)
-
-- **Inputs**  
-	- **a** *: ( vec2 )*  
-	- **b** *: ( vec2 )*  
-	- **factor** *: ( vec2 )*  
-- **Outputs**  
-	- **result** *: ( vec2 )*  
----
-### **vec2_mix_float**
->vec2 vec2_mix_float(vec2 a, vec2 b, float factor)
-
-- **Inputs**  
-	- **a** *: ( vec2 )*  
-	- **b** *: ( vec2 )*  
-	- **factor** *: ( float )*  
-- **Outputs**  
-	- **result** *: ( vec2 )*  
----
-### **vec2_normalize**
->vec2 vec2_normalize(vec2 v)
-
-- **Inputs**  
-	- **v** *: ( vec2 )*  
-- **Outputs**  
-	- **result** *: ( vec2 )*  
----
-### **vec2_length**
->float vec2_length(vec2 v)
-
-- **Inputs**  
-	- **v** *: ( vec2 )*  
-- **Outputs**  
-	- **result** *: ( float )*  
----
-### **vec2_distance**
->float vec2_distance(vec2 a, vec2 b)
-
-- **Inputs**  
-	- **a** *: ( vec2 )*  
-	- **b** *: ( vec2 )*  
-- **Outputs**  
-	- **result** *: ( float )*  
----
-### **vec2_dot_product**
->float vec2_dot_product(vec2 a, vec2 b)
-
-- **Inputs**  
-	- **a** *: ( vec2 )*  
-	- **b** *: ( vec2 )*  
-- **Outputs**  
-	- **result** *: ( float )*  
----
-### **vec2_equal**
->bool vec2_equal(vec2 a, vec2 b)
-
-- **Inputs**  
-	- **a** *: ( vec2 )*  
-	- **b** *: ( vec2 )*  
-- **Outputs**  
-	- **result** *: ( bool )*  
----
-### **vec2_not_equal**
->bool vec2_not_equal(vec2 a, vec2 b)
-
-- **Inputs**  
-	- **a** *: ( vec2 )*  
-	- **b** *: ( vec2 )*  
-- **Outputs**  
-	- **result** *: ( bool )*  
----
-### **vec2_if_else**
->vec2 vec2_if_else(bool condition, vec2 if_true, vec2 if_false)
-
-- **Inputs**  
-	- **condition** *: ( bool )*  
-	- **if_true** *: ( vec2 )*  
-	- **if_false** *: ( vec2 )*  
-- **Outputs**  
-	- **result** *: ( vec2 )*  
----
-### **vec2_join**
->vec2 vec2_join(float x, float y)
-
-- **Inputs**  
-	- **x** *: ( float )*  
-	- **y** *: ( float )*  
-- **Outputs**  
-	- **result** *: ( vec2 )*  
----
-### **vec2_split**
->void vec2_split(vec2 v, out float x, out float y)
-
-- **Inputs**  
-	- **v** *: ( vec2 )*  
-- **Outputs**  
-	- **x** *: ( float )*  
-	- **y** *: ( float )*  
----
-## Node Utils - vec3
----
-### **vec3_add**
->vec3 vec3_add(vec3 a, vec3 b)
-
-- **Inputs**  
-	- **a** *: ( vec3 | Vector )*  
-	- **b** *: ( vec3 | Vector )*  
-- **Outputs**  
-	- **result** *: ( vec3 )*  
----
-### **vec3_subtract**
->vec3 vec3_subtract(vec3 a, vec3 b)
-
-- **Inputs**  
-	- **a** *: ( vec3 | Vector )*  
-	- **b** *: ( vec3 | Vector )*  
-- **Outputs**  
-	- **result** *: ( vec3 )*  
----
-### **vec3_multiply**
->vec3 vec3_multiply(vec3 a, vec3 b)
-
-- **Inputs**  
-	- **a** *: ( vec3 | Vector )*  
-	- **b** *: ( vec3 | Vector )*  
-- **Outputs**  
-	- **result** *: ( vec3 )*  
----
-### **vec3_divide**
->vec3 vec3_divide(vec3 a, vec3 b)
-
-- **Inputs**  
-	- **a** *: ( vec3 | Vector )*  
-	- **b** *: ( vec3 | Vector )*  
-- **Outputs**  
-	- **result** *: ( vec3 )*  
----
-### **vec3_scale**
->vec3 vec3_scale(vec3 v, float s)
-
-- **Inputs**  
-	- **v** *: ( vec3 | Vector )*  
-	- **s** *: ( float )*  
-- **Outputs**  
-	- **result** *: ( vec3 )*  
----
-### **vec3_modulo**
->vec3 vec3_modulo(vec3 a, vec3 b)
-
-- **Inputs**  
-	- **a** *: ( vec3 | Vector )*  
-	- **b** *: ( vec3 | Vector )*  
-- **Outputs**  
-	- **result** *: ( vec3 )*  
----
-### **vec3_pow**
->vec3 vec3_pow(vec3 v, vec3 e)
-
-- **Inputs**  
-	- **v** *: ( vec3 | Vector )*  
-	- **e** *: ( vec3 | Vector )*  
-- **Outputs**  
-	- **result** *: ( vec3 )*  
----
-### **vec3_sqrt**
->vec3 vec3_sqrt(vec3 v)
-
-- **Inputs**  
-	- **v** *: ( vec3 | Vector )*  
-- **Outputs**  
-	- **result** *: ( vec3 )*  
----
-### **vec3_round**
->vec3 vec3_round(vec3 v)
-
-- **Inputs**  
-	- **v** *: ( vec3 | Vector )*  
-- **Outputs**  
-	- **result** *: ( vec3 )*  
----
-### **vec3_fract**
->vec3 vec3_fract(vec3 v)
-
-- **Inputs**  
-	- **v** *: ( vec3 | Vector )*  
-- **Outputs**  
-	- **result** *: ( vec3 )*  
----
-### **vec3_floor**
->vec3 vec3_floor(vec3 v)
-
-- **Inputs**  
-	- **v** *: ( vec3 | Vector )*  
-- **Outputs**  
-	- **result** *: ( vec3 )*  
----
-### **vec3_ceil**
->vec3 vec3_ceil(vec3 v)
-
-- **Inputs**  
-	- **v** *: ( vec3 | Vector )*  
-- **Outputs**  
-	- **result** *: ( vec3 )*  
----
-### **vec3_clamp**
->vec3 vec3_clamp(vec3 v, vec3 min, vec3 max)
-
-- **Inputs**  
-	- **v** *: ( vec3 | Vector )*  
-	- **min** *: ( vec3 | Vector )*  
-	- **max** *: ( vec3 | Vector )*  
-- **Outputs**  
-	- **result** *: ( vec3 )*  
----
-### **vec3_sign**
->vec3 vec3_sign(vec3 v)
-
-- **Inputs**  
-	- **v** *: ( vec3 | Vector )*  
-- **Outputs**  
-	- **result** *: ( vec3 )*  
----
-### **vec3_abs**
->vec3 vec3_abs(vec3 v)
-
-- **Inputs**  
-	- **v** *: ( vec3 | Vector )*  
-- **Outputs**  
-	- **result** *: ( vec3 )*  
----
-### **vec3_min**
->vec3 vec3_min(vec3 a, vec3 b)
-
-- **Inputs**  
-	- **a** *: ( vec3 | Vector )*  
-	- **b** *: ( vec3 | Vector )*  
-- **Outputs**  
-	- **result** *: ( vec3 )*  
----
-### **vec3_max**
->vec3 vec3_max(vec3 a, vec3 b)
-
-- **Inputs**  
-	- **a** *: ( vec3 | Vector )*  
-	- **b** *: ( vec3 | Vector )*  
-- **Outputs**  
-	- **result** *: ( vec3 )*  
----
-### **vec3_mix**
->vec3 vec3_mix(vec3 a, vec3 b, vec3 factor)
-
-- **Inputs**  
-	- **a** *: ( vec3 | Vector )*  
-	- **b** *: ( vec3 | Vector )*  
-	- **factor** *: ( vec3 | Vector )*  
-- **Outputs**  
-	- **result** *: ( vec3 )*  
----
-### **vec3_mix_float**
->vec3 vec3_mix_float(vec3 a, vec3 b, float factor)
-
-- **Inputs**  
-	- **a** *: ( vec3 | Vector )*  
-	- **b** *: ( vec3 | Vector )*  
-	- **factor** *: ( float )*  
-- **Outputs**  
-	- **result** *: ( vec3 )*  
----
-### **vec3_normalize**
->vec3 vec3_normalize(vec3 v)
-
-- **Inputs**  
-	- **v** *: ( vec3 | Vector )*  
-- **Outputs**  
-	- **result** *: ( vec3 )*  
----
-### **vec3_length**
->float vec3_length(vec3 v)
-
-- **Inputs**  
-	- **v** *: ( vec3 | Vector )*  
-- **Outputs**  
-	- **result** *: ( float )*  
----
-### **vec3_distance**
->float vec3_distance(vec3 a, vec3 b)
-
-- **Inputs**  
-	- **a** *: ( vec3 | Vector )*  
-	- **b** *: ( vec3 | Vector )*  
-- **Outputs**  
-	- **result** *: ( float )*  
----
-### **vec3_dot_product**
->float vec3_dot_product(vec3 a, vec3 b)
-
-- **Inputs**  
-	- **a** *: ( vec3 | Vector )*  
-	- **b** *: ( vec3 | Vector )*  
-- **Outputs**  
-	- **result** *: ( float )*  
----
-### **vec3_cross_product**
->vec3 vec3_cross_product(vec3 a, vec3 b)
-
-- **Inputs**  
-	- **a** *: ( vec3 | Vector )*  
-	- **b** *: ( vec3 | Vector )*  
-- **Outputs**  
-	- **result** *: ( vec3 )*  
----
-### **vec3_equal**
->bool vec3_equal(vec3 a, vec3 b)
-
-- **Inputs**  
-	- **a** *: ( vec3 | Vector )*  
-	- **b** *: ( vec3 | Vector )*  
-- **Outputs**  
-	- **result** *: ( bool )*  
----
-### **vec3_not_equal**
->bool vec3_not_equal(vec3 a, vec3 b)
-
-- **Inputs**  
-	- **a** *: ( vec3 | Vector )*  
-	- **b** *: ( vec3 | Vector )*  
-- **Outputs**  
-	- **result** *: ( bool )*  
----
-### **vec3_if_else**
->vec3 vec3_if_else(bool condition, vec3 if_true, vec3 if_false)
-
-- **Inputs**  
-	- **condition** *: ( bool )*  
-	- **if_true** *: ( vec3 | Vector )*  
-	- **if_false** *: ( vec3 | Vector )*  
-- **Outputs**  
-	- **result** *: ( vec3 )*  
----
-### **vec3_join**
->vec3 vec3_join(float x, float y, float z)
-
-- **Inputs**  
-	- **x** *: ( float )*  
-	- **y** *: ( float )*  
-	- **z** *: ( float )*  
-- **Outputs**  
-	- **result** *: ( vec3 )*  
----
-### **vec3_split**
->void vec3_split(vec3 v, out float x, out float y, out float z)
-
-- **Inputs**  
-	- **v** *: ( vec3 | Vector )*  
-- **Outputs**  
-	- **x** *: ( float )*  
-	- **y** *: ( float )*  
-	- **z** *: ( float )*  
----
-## Node Utils - vec4
----
-### **vec4_add**
->vec4 vec4_add(vec4 a, vec4 b)
-
-- **Inputs**  
-	- **a** *: ( vec4 | Vector )*  
-	- **b** *: ( vec4 | Vector )*  
-- **Outputs**  
-	- **result** *: ( vec4 )*  
----
-### **vec4_subtract**
->vec4 vec4_subtract(vec4 a, vec4 b)
-
-- **Inputs**  
-	- **a** *: ( vec4 | Vector )*  
-	- **b** *: ( vec4 | Vector )*  
-- **Outputs**  
-	- **result** *: ( vec4 )*  
----
-### **vec4_multiply**
->vec4 vec4_multiply(vec4 a, vec4 b)
-
-- **Inputs**  
-	- **a** *: ( vec4 | Vector )*  
-	- **b** *: ( vec4 | Vector )*  
-- **Outputs**  
-	- **result** *: ( vec4 )*  
----
-### **vec4_divide**
->vec4 vec4_divide(vec4 a, vec4 b)
-
-- **Inputs**  
-	- **a** *: ( vec4 | Vector )*  
-	- **b** *: ( vec4 | Vector )*  
-- **Outputs**  
-	- **result** *: ( vec4 )*  
----
-### **vec4_scale**
->vec4 vec4_scale(vec4 v, float s)
-
-- **Inputs**  
-	- **v** *: ( vec4 | Vector )*  
-	- **s** *: ( float )*  
-- **Outputs**  
-	- **result** *: ( vec4 )*  
----
-### **vec4_modulo**
->vec4 vec4_modulo(vec4 a, vec4 b)
-
-- **Inputs**  
-	- **a** *: ( vec4 | Vector )*  
-	- **b** *: ( vec4 | Vector )*  
-- **Outputs**  
-	- **result** *: ( vec4 )*  
----
-### **vec4_pow**
->vec4 vec4_pow(vec4 v, vec4 e)
-
-- **Inputs**  
-	- **v** *: ( vec4 | Vector )*  
-	- **e** *: ( vec4 | Vector )*  
-- **Outputs**  
-	- **result** *: ( vec4 )*  
----
-### **vec4_sqrt**
->vec4 vec4_sqrt(vec4 v)
-
-- **Inputs**  
-	- **v** *: ( vec4 | Vector )*  
-- **Outputs**  
-	- **result** *: ( vec4 )*  
----
-### **vec4_round**
->vec4 vec4_round(vec4 v)
-
-- **Inputs**  
-	- **v** *: ( vec4 | Vector )*  
-- **Outputs**  
-	- **result** *: ( vec4 )*  
----
-### **vec4_fract**
->vec4 vec4_fract(vec4 v)
-
-- **Inputs**  
-	- **v** *: ( vec4 | Vector )*  
-- **Outputs**  
-	- **result** *: ( vec4 )*  
----
-### **vec4_floor**
->vec4 vec4_floor(vec4 v)
-
-- **Inputs**  
-	- **v** *: ( vec4 | Vector )*  
-- **Outputs**  
-	- **result** *: ( vec4 )*  
----
-### **vec4_ceil**
->vec4 vec4_ceil(vec4 v)
-
-- **Inputs**  
-	- **v** *: ( vec4 | Vector )*  
-- **Outputs**  
-	- **result** *: ( vec4 )*  
----
-### **vec4_clamp**
->vec4 vec4_clamp(vec4 v, vec4 min, vec4 max)
-
-- **Inputs**  
-	- **v** *: ( vec4 | Vector )*  
-	- **min** *: ( vec4 | Vector )*  
-	- **max** *: ( vec4 | Vector )*  
-- **Outputs**  
-	- **result** *: ( vec4 )*  
----
-### **vec4_sign**
->vec4 vec4_sign(vec4 v)
-
-- **Inputs**  
-	- **v** *: ( vec4 | Vector )*  
-- **Outputs**  
-	- **result** *: ( vec4 )*  
----
-### **vec4_abs**
->vec4 vec4_abs(vec4 v)
-
-- **Inputs**  
-	- **v** *: ( vec4 | Vector )*  
-- **Outputs**  
-	- **result** *: ( vec4 )*  
----
-### **vec4_min**
->vec4 vec4_min(vec4 a, vec4 b)
-
-- **Inputs**  
-	- **a** *: ( vec4 | Vector )*  
-	- **b** *: ( vec4 | Vector )*  
-- **Outputs**  
-	- **result** *: ( vec4 )*  
----
-### **vec4_max**
->vec4 vec4_max(vec4 a, vec4 b)
-
-- **Inputs**  
-	- **a** *: ( vec4 | Vector )*  
-	- **b** *: ( vec4 | Vector )*  
-- **Outputs**  
-	- **result** *: ( vec4 )*  
----
-### **vec4_mix**
->vec4 vec4_mix(vec4 a, vec4 b, vec4 factor)
-
-- **Inputs**  
-	- **a** *: ( vec4 | Vector )*  
-	- **b** *: ( vec4 | Vector )*  
-	- **factor** *: ( vec4 | Vector )*  
-- **Outputs**  
-	- **result** *: ( vec4 )*  
----
-### **vec4_mix_float**
->vec4 vec4_mix_float(vec4 a, vec4 b, float factor)
-
-- **Inputs**  
-	- **a** *: ( vec4 | Vector )*  
-	- **b** *: ( vec4 | Vector )*  
-	- **factor** *: ( float )*  
-- **Outputs**  
-	- **result** *: ( vec4 )*  
----
-### **vec4_normalize**
->vec4 vec4_normalize(vec4 v)
-
-- **Inputs**  
-	- **v** *: ( vec4 | Vector )*  
-- **Outputs**  
-	- **result** *: ( vec4 )*  
----
-### **vec4_length**
->float vec4_length(vec4 v)
-
-- **Inputs**  
-	- **v** *: ( vec4 | Vector )*  
-- **Outputs**  
-	- **result** *: ( float )*  
----
-### **vec4_distance**
->float vec4_distance(vec4 a, vec4 b)
-
-- **Inputs**  
-	- **a** *: ( vec4 | Vector )*  
-	- **b** *: ( vec4 | Vector )*  
-- **Outputs**  
-	- **result** *: ( float )*  
----
-### **vec4_dot_product**
->float vec4_dot_product(vec4 a, vec4 b)
-
-- **Inputs**  
-	- **a** *: ( vec4 | Vector )*  
-	- **b** *: ( vec4 | Vector )*  
-- **Outputs**  
-	- **result** *: ( float )*  
----
-### **vec4_equal**
->bool vec4_equal(vec4 a, vec4 b)
-
-- **Inputs**  
-	- **a** *: ( vec4 | Vector )*  
-	- **b** *: ( vec4 | Vector )*  
-- **Outputs**  
-	- **result** *: ( bool )*  
----
-### **vec4_not_equal**
->bool vec4_not_equal(vec4 a, vec4 b)
-
-- **Inputs**  
-	- **a** *: ( vec4 | Vector )*  
-	- **b** *: ( vec4 | Vector )*  
-- **Outputs**  
-	- **result** *: ( bool )*  
----
-### **vec4_if_else**
->vec4 vec4_if_else(bool condition, vec4 if_true, vec4 if_false)
-
-- **Inputs**  
-	- **condition** *: ( bool )*  
-	- **if_true** *: ( vec4 | Vector )*  
-	- **if_false** *: ( vec4 | Vector )*  
-- **Outputs**  
-	- **result** *: ( vec4 )*  
----
-### **vec4_join**
->vec4 vec4_join(float r, float g, float b, float a)
-
-- **Inputs**  
-	- **r** *: ( float )*  
-	- **g** *: ( float )*  
-	- **b** *: ( float )*  
-	- **a** *: ( float )*  
-- **Outputs**  
-	- **result** *: ( vec4 )*  
----
-### **vec4_split**
->void vec4_split(vec4 v, out float r, out float g, out float b, out float a)
-
-- **Inputs**  
-	- **v** *: ( vec4 | Vector )*  
-- **Outputs**  
-	- **r** *: ( float )*  
-	- **g** *: ( float )*  
-	- **b** *: ( float )*  
-	- **a** *: ( float )*  
----
-## Filters - Blur
----
-### **box_blur**
->vec4 box_blur(sampler2D input_texture, vec2 uv, float radius, bool circular)
-
-- **Inputs**  
-	- **input_texture** *: ( sampler2D )*  
-	- **uv** *: ( vec2 ) - default = screen_uv()*  
-	- **radius** *: ( float ) - default = 5.0*  
-	- **circular** *: ( bool )*  
-- **Outputs**  
-	- **result** *: ( vec4 )*  
----
-### **gaussian_blur**
->vec4 gaussian_blur(sampler2D input_texture, vec2 uv, float radius, float sigma)
-
-- **Inputs**  
-	- **input_texture** *: ( sampler2D )*  
-	- **uv** *: ( vec2 ) - default = screen_uv()*  
-	- **radius** *: ( float ) - default = 5.0*  
-	- **sigma** *: ( float ) - default = 1.0*  
-- **Outputs**  
-	- **result** *: ( vec4 )*  
----
-### **jitter_blur**
->vec4 jitter_blur(sampler2D input_texture, vec2 uv, float radius, float distribution_exponent, int samples)
-
-- **Inputs**  
-	- **input_texture** *: ( sampler2D )*  
-	- **uv** *: ( vec2 ) - default = screen_uv()*  
-	- **radius** *: ( float ) - default = 5.0*  
-	- **distribution_exponent** *: ( float ) - default = 5.0*  
-	- **samples** *: ( int ) - default = 8*  
-- **Outputs**  
-	- **result** *: ( vec4 )*  
----
-## Procedural - Noise
----
-### **noise_ex**
->vec4 noise_ex(vec4 coord, bool tile, vec4 tile_size)
-
-- **Inputs**  
-	- **coord** *: ( vec4 | Vector ) - default = vec4(POSITION,0)*  
-	- **tile** *: ( bool )*  
-	- **tile_size** *: ( vec4 | Vector ) - default = (1.0, 1.0, 1.0, 1.0)*  
-- **Outputs**  
-	- **result** *: ( vec4 )*  
----
-### **noise**
->vec4 noise(vec4 coord)
-
-- **Inputs**  
-	- **coord** *: ( vec4 | Vector ) - default = vec4(POSITION,0)*  
-- **Outputs**  
-	- **result** *: ( vec4 )*  
----
-## Procedural - Cell_Noise
----
-### **cell_noise_ex**
->CellNoiseResult cell_noise_ex(vec4 coord, bool tile, vec4 tile_size)
-
-- **Inputs**  
-	- **coord** *: ( vec4 | Vector ) - default = vec4(POSITION,0)*  
-	- **tile** *: ( bool )*  
-	- **tile_size** *: ( vec4 | Vector ) - default = (1.0, 1.0, 1.0, 1.0)*  
-- **Outputs**  
-	- **result** *: ( CellNoiseResult )*  
----
-### **cell_noise**
->CellNoiseResult cell_noise(vec4 coord)
-
-- **Inputs**  
-	- **coord** *: ( vec4 | Vector ) - default = vec4(POSITION,0)*  
-- **Outputs**  
-	- **result** *: ( CellNoiseResult )*  
----
-## Procedural - Fractal_Noise
----
-### **fractal_noise_ex**
->vec4 fractal_noise_ex(vec4 coord, int octaves, bool tile, vec4 tile_size)
-
-- **Inputs**  
-	- **coord** *: ( vec4 | Vector ) - default = vec4(POSITION,0)*  
-	- **octaves** *: ( int ) - default = 3*  
-	- **tile** *: ( bool )*  
-	- **tile_size** *: ( vec4 | Vector ) - default = (1.0, 1.0, 1.0, 1.0)*  
-- **Outputs**  
-	- **result** *: ( vec4 )*  
----
-### **fractal_noise**
->vec4 fractal_noise(vec4 coord, int octaves)
-
-- **Inputs**  
-	- **coord** *: ( vec4 | Vector ) - default = vec4(POSITION,0)*  
-	- **octaves** *: ( int ) - default = 3*  
+#### **Anisotropic**
+- **Inputs**  
+	- **Texture** *: ( sampler2D )*  
+	- **UV** *: ( vec2 ) - default = UV[0]*  
+	- **Direction** *: ( vec2 ) - default = vec2(0.0, 0.0)*  
+	- **Size** *: ( float ) - default = 2.0*  
+	- **Samples** *: ( int ) - default = 50*  
 - **Outputs**  
 	- **result** *: ( vec4 )*  
