@@ -2,7 +2,6 @@
 #define NODE_UTILS_GLSL
 
 #include "Node Utils/common.glsl"
-#include "Node Utils/conversion.glsl"
 #include "Node Utils/bool.glsl"
 #include "Node Utils/float.glsl"
 #include "Node Utils/int.glsl"

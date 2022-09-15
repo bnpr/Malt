@@ -3,18 +3,14 @@ import bpy
 from BlenderMalt.MaltNodes.MaltNode import MaltNode
 
 
-class MaltFunctionNode(bpy.types.Node, MaltNode):
-    
-    bl_label = "Function Node"
-    
-    def malt_setup(self):
+class MaltFunctionNodeBase(MaltNode):
+        
+    def malt_setup(self, copy=None):
         pass_type = self.get_pass_type()
         if pass_type != '':
             self.pass_graph_type, self.pass_graph_io_type = pass_type.split('.')
 
         function = self.get_function(skip_overrides=False, find_replacement=True)
-        if self.first_setup:
-            self.name = function['name']
 
         inputs = {}
         outputs = {}
@@ -27,7 +23,9 @@ class MaltFunctionNode(bpy.types.Node, MaltNode):
             if parameter['io'] in ['','in','inout']:
                 inputs[parameter['name']] = parameter
         
-        self.setup_sockets(inputs, outputs)
+        show_in_material_panel = function['meta'].get('category', '') == 'Parameters'
+        
+        self.setup_sockets(inputs, outputs, show_in_material_panel=show_in_material_panel, copy=copy)
         
         if self.pass_graph_type != '':
             graph = self.id_data.get_pipeline_graph(self.pass_graph_type)
@@ -40,7 +38,7 @@ class MaltFunctionNode(bpy.types.Node, MaltNode):
                     )
                 else:
                     self.malt_parameters.setup(
-                        {'PASS_MATERIAL': MaterialParameter(None, graph.file_extension)},
+                        {'PASS_MATERIAL': MaterialParameter(None, graph.file_extension, self.pass_graph_type)},
                         replace_parameters=False,
                         skip_private=False
                     )
@@ -53,11 +51,19 @@ class MaltFunctionNode(bpy.types.Node, MaltNode):
         options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
 
     def get_parameters(self, overrides, resources):
-        parameters = MaltNode.get_parameters(self, overrides, resources)
+        parameters = super().get_parameters(overrides, resources)
         parameters['CUSTOM_IO'] = self.get_custom_io()
+        if 'PASS_GRAPH' in self.malt_parameters.graphs.keys():
+            try: parameters['PASS_GRAPH'] = self.malt_parameters.get_parameter('PASS_GRAPH', overrides, resources)
+            except: pass
+        if 'PASS_MATERIAL' in self.malt_parameters.materials.keys():
+            try: parameters['PASS_MATERIAL'] = self.malt_parameters.get_parameter('PASS_MATERIAL', overrides, resources)
+            except: pass
         return parameters
     
     def find_replacement_function(self):
+        print(f'Try to find replacement function for "{self.name}"')
+        print(f'Current function is "{self.function_type}"')
         library = self.id_data.get_full_library()['functions']
         for key, function in library.items():
             try:
@@ -85,9 +91,12 @@ class MaltFunctionNode(bpy.types.Node, MaltNode):
                     total_parameters = len(_function['parameters'])
                     key = _key
                     function = _function
-        if _key:
+        if key:
+            print(f'Found replacement function: "{key}"')
             self.function_type = key
             return function
+        else:
+            self.select = True
 
     def get_function(self, skip_overrides=True, find_replacement=False):
         graph = self.id_data.get_pipeline_graph()
@@ -214,7 +223,11 @@ class MaltFunctionNode(bpy.types.Node, MaltNode):
                     self.malt_parameters.draw_parameter(layout, 'PASS_GRAPH', None, is_node_socket=True)
                 else:
                     self.malt_parameters.draw_parameter(layout, 'PASS_MATERIAL', None, is_node_socket=True)
-    
+
+
+class MaltFunctionNode(bpy.types.Node, MaltFunctionNodeBase):
+    bl_label = "Function Node"
+
 classes = [
     MaltFunctionNode,
 ]

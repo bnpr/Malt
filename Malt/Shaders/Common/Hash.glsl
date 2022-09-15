@@ -1,6 +1,10 @@
 #ifndef COMMON_HASH_GLSL
 #define COMMON_HASH_GLSL
 
+/*  META GLOBAL
+    @meta: category=Math; internal=True;
+*/
+
 uvec4 _pcg4d(uvec4 v)
 {
     //http://www.jcgt.org/published/0009/03/02/
@@ -17,9 +21,6 @@ uvec4 _pcg4d(uvec4 v)
     return v;
 }
 
-/*  META
-    @v:subtype=Data;
-*/
 vec4 _pcg4d(vec4 v)
 {
     uvec4 u = _pcg4d(floatBitsToUint(v));
@@ -28,13 +29,8 @@ vec4 _pcg4d(vec4 v)
 
 vec4 hash(float v){ return _pcg4d(vec4(v,0,0,0)); }
 vec4 hash(vec2  v){ return _pcg4d(vec4(v,0,0)); }
-/*  META
-    @v:subtype=Data;
-*/
 vec4 hash(vec3  v){ return _pcg4d(vec4(v,0)); }
-/*  META
-    @v:subtype=Data;
-*/
+/* META @meta: internal=false; @v:subtype=Data; */
 vec4 hash(vec4  v){ return _pcg4d(v); }
 
 #endif // COMMON_HASH_GLSL

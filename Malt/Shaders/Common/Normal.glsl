@@ -3,6 +3,13 @@
 
 #include "Common.glsl"
 
+/*  META GLOBAL
+    @meta: category=Vector; internal=true;
+*/
+
+/* META
+    @meta: category=Input;
+*/
 vec3 true_normal()
 {
     #ifndef CUSTOM_TRUE_NORMAL
@@ -22,11 +29,17 @@ vec3 true_normal()
     #endif //CUSTOM_TRUE_NORMAL
 }
 
+/* META
+    @meta: category=Input;
+*/
 float facing()
 {
     return dot(NORMAL, -view_direction());
 }
 
+/* META
+    @meta: category=Input;
+*/
 bool is_front_facing()
 {
     #ifdef PIXEL_SHADER
@@ -37,6 +50,7 @@ bool is_front_facing()
     return facing() > 0;
 }
 
+/* META @meta: subcategory=Tangent; */
 vec4 compute_tangent(vec2 uv)
 {
     // Copyright (c) 2020 mmikk. MIT License
@@ -76,12 +90,14 @@ vec4 compute_tangent(vec2 uv)
     return vec4(0);
 }
 
+/* META @meta: subcategory=Tangent; */
 vec3 get_tangent(int uv_index)
 {
     if(PRECOMPUTED_TANGENTS && uv_index == 0) return TANGENT;
     return compute_tangent(UV[uv_index]).xyz;
 }
 
+/* META @meta: subcategory=Tangent; */
 vec3 get_bitangent(int uv_index)
 {
     if(PRECOMPUTED_TANGENTS && uv_index == 0) return BITANGENT;
@@ -89,35 +105,45 @@ vec3 get_bitangent(int uv_index)
     return normalize(cross(NORMAL, T.xyz) * T.w);
 }
 
+/* META @meta: subcategory=Tangent; */
 mat3 get_TBN(int uv_index)
 {
-    mat3 TBN = mat3(get_tangent(uv_index), get_bitangent(uv_index), NORMAL);
-    #ifdef PIXEL_SHADER
-    {
-        if(!gl_FrontFacing)
-        {
-            TBN[2] *= -1;
-        }
-    }
-    #endif //PIXEL_SHADER
-    return TBN;
+    return mat3(get_tangent(uv_index), get_bitangent(uv_index), NORMAL);
 }
 
+/* META 
+    @tangent_normal: subtype=Vector; default='vec3(0.5, 0.5, 1.0)'; 
+    @TBN: label=TBN; default=get_TBN(0);
+*/
+vec3 tangent_to_world_normal(vec3 tangent_normal, mat3 TBN)
+{
+    return normalize(TBN * (tangent_normal * 2 - 1));
+}
+
+/* META 
+    @meta: category=Texturing;
+    @TBN: default=get_TBN(0);
+    @uv: default=UV[0]; label=UV;
+*/
 vec3 sample_normal_map_ex(sampler2D normal_texture, mat3 TBN, vec2 uv)
 {
-    vec3 tangent = texture(normal_texture, uv).xyz;
-    tangent = tangent * 2.0 - 1.0;
-    return normalize(TBN * tangent);
+    return tangent_to_world_normal(texture(normal_texture, uv).rgb, TBN);
 }
 
+/* META 
+    @meta: category=Texturing; label=Normal Map; 
+    @uv_index: min=0; max=3;
+    @uv: default=UV[0];
+*/
 vec3 sample_normal_map(sampler2D normal_texture, int uv_index, vec2 uv)
 {
     return sample_normal_map_ex(normal_texture, get_TBN(uv_index), uv);
 }
 
 /*  META
+    @meta: category=Vector; subcategory=Tangent;
     @normal: subtype=Normal; default=NORMAL;
-    @axis: subtype=Normal; default=(0,0,1);
+    @axis: subtype=Normal; default=(0.0,0.0,1.0);
 */
 vec3 radial_tangent(vec3 normal, vec3 axis)
 {
@@ -125,25 +151,39 @@ vec3 radial_tangent(vec3 normal, vec3 axis)
 }
 
 /*  META
+    @meta: internal=false;
+    @base_normal: subtype=Normal; default=NORMAL;
     @custom_normal: subtype=Normal; default=NORMAL;
 */
-vec3 surface_gradient_from_normal(vec3 custom_normal)
+vec3 surface_gradient_from_normal(vec3 base_normal, vec3 custom_normal)
 {
     // Copyright (c) 2020 mmikk. MIT License
     // http://jcgt.org/published/0009/03/04/
     const float epsilon = 1.192092896e-07f;
-    float NoC = dot(NORMAL, custom_normal);
-    return (NoC * NORMAL - custom_normal) / max(epsilon, abs(NoC));
+    float NoC = dot(base_normal, custom_normal);
+    return (NoC * base_normal - custom_normal) / max(epsilon, abs(NoC));
+}
+
+vec3 surface_gradient_from_normal(vec3 custom_normal)
+{
+    return surface_gradient_from_normal(NORMAL, custom_normal);
 }
 
 /*  META
+    @meta: internal=false;
+    @base_normal: subtype=Normal; default=NORMAL;
     @surface_gradient: subtype=Vector; default=vec3(0);
 */
-vec3 normal_from_surface_gradient(vec3 surface_gradient)
+vec3 normal_from_surface_gradient(vec3 base_normal, vec3 surface_gradient)
 {
     // Copyright (c) 2020 mmikk. MIT License
     // http://jcgt.org/published/0009/03/04/
-    return normalize(NORMAL - surface_gradient);
+    return normalize(base_normal - surface_gradient);
+}
+
+vec3 normal_from_surface_gradient(vec3 surface_gradient)
+{
+    return normal_from_surface_gradient(NORMAL, surface_gradient);
 }
 
 #endif //COMMON_NORMAL_GLSL

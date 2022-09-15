@@ -48,20 +48,17 @@ class Preferences(bpy.types.AddonPreferences):
     
     render_fps_cap : bpy.props.IntProperty(name="Max Viewport Render Framerate", default=30)
     
-    def update_show_sockets(self, context):
-        from BlenderMalt.MaltNodes.MaltSocket import MaltSocket
-        MaltSocket.show_in_material_panel = bpy.props.BoolProperty(default=self.show_sockets,
-            options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
-    
-    show_sockets : bpy.props.BoolProperty(name="Show sockets in Material Panel", default=True,
-        update=update_show_sockets, description="Show node socket properties in the Material Panel by default")
-    
     def update_debug_mode(self, context):
         if context.scene.render.engine == 'MALT':
             context.scene.world.malt.update_pipeline(context)
 
     debug_mode : bpy.props.BoolProperty(name="Debug Mode", default=False, update=update_debug_mode,
         description="Developers only. Do not touch !!!")
+
+    #Drawn in NODE_PT_overlay
+    show_socket_types : bpy.props.BoolProperty(name='Show Socket Types', default=True)
+    show_internal_nodes : bpy.props.BoolProperty(name='Show Internal Nodes', default=False)
+    use_subfunction_cycling: bpy.props.BoolProperty(name='Use Subfunction Cycling', default=True)
 
     def draw(self, context):
         layout = self.layout
@@ -78,14 +75,19 @@ class Preferences(bpy.types.AddonPreferences):
             row.operator('wm.path_open', text="Open Session Log")
 
         layout.prop(self, "plugins_dir")
-        layout.prop(self, "show_sockets")
         layout.prop(self, "render_fps_cap")
         layout.prop(self, "setup_vs_code")
         layout.prop(self, "renderdoc_path")
         layout.label(text='Developer Settings :')
         layout.prop(self, "debug_mode")
         layout.prop(self, "docs_path")
-
+    
+def draw_node_tree_overlays(self:bpy.types.Menu, context: bpy.types.Context):
+    preferences = bpy.context.preferences.addons['BlenderMalt'].preferences
+    self.layout.label(text='Malt')
+    self.layout.prop(preferences, 'show_socket_types')
+    self.layout.prop(preferences, 'show_internal_nodes')
+    self.layout.prop(preferences, 'use_subfunction_cycling')
 
 _VS_CODE_SETTINGS = '''
 {{
@@ -183,6 +185,7 @@ class OT_MaltReloadPlugins(bpy.types.Operator):
 
     def execute(self, context):
         unregister_plugins()
+        bpy.ops.wm.malt_reload_pipeline()
         register_plugins()
         return{"FINISHED"}
 
@@ -219,6 +222,8 @@ def register():
 
     bpy.app.handlers.save_post.append(setup_vs_code)
 
+    bpy.types.NODE_PT_overlay.append(draw_node_tree_overlays)
+
 def unregister():
     for _class in reversed(classes): bpy.utils.unregister_class(_class)
     
@@ -231,3 +236,5 @@ def unregister():
         module.unregister()
     
     bpy.app.handlers.save_post.remove(setup_vs_code)
+
+    bpy.types.NODE_PT_overlay.remove(draw_node_tree_overlays)

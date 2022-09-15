@@ -1,12 +1,11 @@
 import os, time
-from itertools import chain
 from Malt.SourceTranspiler import GLSLTranspiler, PythonTranspiler
 import bpy
 from BlenderMalt.MaltProperties import MaltPropertyGroup
 from BlenderMalt import MaltPipeline
 from BlenderMalt.MaltUtils import malt_path_setter, malt_path_getter
 
-from . MaltNode import MaltNode
+from BlenderMalt.MaltNodes.MaltNode import MaltNode
 
 def get_pipeline_graph(context):
     if context is None or context.space_data is None or context.space_data.edit_tree is None:
@@ -18,6 +17,13 @@ class MaltTree(bpy.types.NodeTree):
     bl_label = "Malt Node Tree"
     bl_icon = 'NODETREE'
 
+    def get_copy(self):
+        copy = self.copy()
+        copy.subscribed = False
+        copy.reload_nodes()
+        copy.update_ext(force_update=True)
+        return copy
+    
     type : bpy.props.EnumProperty(name = 'Type', items = [("MALT", "Malt", "Malt")],
         options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
 
@@ -28,9 +34,29 @@ class MaltTree(bpy.types.NodeTree):
     def poll_material(self, material):
         return material.malt.shader_nodes is self
     
-    graph_type: bpy.props.StringProperty(name='Type',
+    def update_graph_type(self, context):
+        graph = self.get_pipeline_graph()
+        if graph and graph.default_graph_path and len(self.nodes) == 0:
+            blend_path, tree_name = graph.default_graph_path
+            blend_path += '.blend'
+            if tree_name not in bpy.data.node_groups:
+                internal_dir = 'NodeTree'
+                bpy.ops.wm.append(
+                    filepath=os.path.join(blend_path, internal_dir, tree_name),
+                    directory=os.path.join(blend_path, internal_dir),
+                    filename=tree_name
+                )
+                bpy.data.node_groups[tree_name].reload_nodes()
+            name = self.name
+            copy = bpy.data.node_groups[tree_name].get_copy()
+            self.user_remap(copy)
+            bpy.data.node_groups.remove(self)
+            copy.name = name
+    
+    graph_type: bpy.props.StringProperty(name='Type', update=update_graph_type,
         options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
 
+    #deprecated
     library_source : bpy.props.StringProperty(name="Local Library", subtype='FILE_PATH',
         options={'LIBRARY_EDITABLE'},
         override={'LIBRARY_OVERRIDABLE'},
@@ -43,7 +69,10 @@ class MaltTree(bpy.types.NodeTree):
         options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
     
     subscribed : bpy.props.BoolProperty(name="Subscribed", default=False,
-        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
+        options={'SKIP_SAVE','LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
+    
+    links_hash : bpy.props.StringProperty(options={'SKIP_SAVE','LIBRARY_EDITABLE'},
+        override={'LIBRARY_OVERRIDABLE'})
 
     def is_active(self):
         return self.get_pipeline_graph() is not None
@@ -64,6 +93,7 @@ class MaltTree(bpy.types.NodeTree):
                 return src_path
         return None
     
+    #deprecated
     def get_library(self):
         library_path = self.get_library_path()
         if library_path:
@@ -73,12 +103,22 @@ class MaltTree(bpy.types.NodeTree):
     
     def get_full_library(self):
         #TODO: Cache
-        result = get_empty_library()
-        result['functions'].update(self.get_pipeline_graph().functions)
-        result['structs'].update(self.get_pipeline_graph().structs)
-        result['functions'].update(self.get_library()['functions'])
-        result['structs'].update(self.get_library()['structs'])
-        return result
+        graph = self.get_pipeline_graph()
+        library = self.get_library()
+        if library:
+            result = get_empty_library()
+            result['functions'].update(graph.functions)
+            result['structs'].update(graph.structs)
+            result['subcategories'].update(graph.subcategories)
+            result['functions'].update(library['functions'])
+            result['structs'].update(library['structs'])
+            return result
+        else:
+            return {
+                'functions' : graph.functions,
+                'structs' : graph.structs,
+                'subcategories' : graph.subcategories,
+            }
     
     def get_pipeline_graph(self, graph_type=None):
         if graph_type is None: 
@@ -87,6 +127,15 @@ class MaltTree(bpy.types.NodeTree):
         if bridge and graph_type in bridge.graphs:
             return bridge.graphs[graph_type]
         return None
+    
+    def get_unique_node_id(self, base_name):
+        if 'NODE_NAMES' not in self.keys():
+            self['NODE_NAMES'] = {}
+        if base_name not in self['NODE_NAMES'].keys():
+            self['NODE_NAMES'][base_name] = 1
+        else:
+            self['NODE_NAMES'][base_name] += 1
+        return base_name + str(self['NODE_NAMES'][base_name])
     
     def get_custom_io(self, io_type):
         params = []
@@ -170,7 +219,7 @@ class MaltTree(bpy.types.NodeTree):
             add_node_inputs(output, nodes, output.io_type)
             code = ''
             for node in nodes:
-                if isinstance(node, MaltNode):
+                if hasattr(node, 'get_source_code'):
                     code += node.get_source_code(transpiler) + '\n'
             code += output.get_source_code(transpiler)
             return code
@@ -183,7 +232,7 @@ class MaltTree(bpy.types.NodeTree):
         if library_path:
             shader['GLOBAL'] += '#include "{}"\n'.format(library_path)
         for node in linked_nodes:
-            if isinstance(node, MaltNode):
+            if hasattr(node, 'get_source_global_parameters'):
                 shader['GLOBAL'] += node.get_source_global_parameters(transpiler)
         self['source'] = pipeline_graph.generate_source(shader)
         return self['source']
@@ -192,10 +241,10 @@ class MaltTree(bpy.types.NodeTree):
         self.disable_updates = True
         try:
             for node in self.nodes:
-                if isinstance(node, MaltNode):
+                if hasattr(node, 'setup'):
                     node.setup()
             for node in self.nodes:
-                if isinstance(node, MaltNode):
+                if hasattr(node, 'update'):
                     node.update()
         except:
             import traceback
@@ -206,7 +255,7 @@ class MaltTree(bpy.types.NodeTree):
         if self.is_active():
             self.update_ext()
     
-    def update_ext(self, force_track_shader_changes=True):
+    def update_ext(self, force_track_shader_changes=True, force_update=False):
         if self.disable_updates:
             return
 
@@ -215,19 +264,34 @@ class MaltTree(bpy.types.NodeTree):
         
         if self.subscribed == False:
             bpy.msgbus.subscribe_rna(key=self.path_resolve('name', False),
-                owner=self, args=(None,), notify=lambda _ : self.update())
+                owner=self, args=(None,), notify=lambda _ : self.update_ext(force_update=True))
             self.subscribed = True
+        
+        links_str = ''
+        for link in self.links:
+            try:
+                b = link.to_socket
+                a = b.get_linked(ignore_muted=False)
+                links_str += str(a) + str(b)
+            except:
+                pass #Reroute Node
+        links_hash = str(hash(links_str))
+        if force_update == False and links_hash == self.links_hash:
+            return
+        self.links_hash = links_hash
 
         self.disable_updates = True
         try:
             for link in self.links:
                 try:
                     b = link.to_socket
-                    a = b.get_linked()
+                    a = b.get_linked(ignore_muted=False)
                     if (a.array_size != b.array_size or 
                         (a.data_type != b.data_type and
                         self.cast(a.data_type, b.data_type) is None)):
                         link.is_muted = True
+                    else:
+                        link.is_muted = False
                 except:
                     pass
             
@@ -251,28 +315,30 @@ class MaltTree(bpy.types.NodeTree):
         self.update_tag()
 
 
-def reset_subscriptions():
-    for tree in bpy.data.node_groups:
-        if tree.bl_idname == 'MaltTree':
-            tree.subscribed = False
-            for node in tree.nodes:
-                if isinstance(node, MaltNode):
-                    node.subscribed = False
-
 def setup_node_trees():
     graphs = MaltPipeline.get_bridge().graphs
 
     for name, graph in graphs.items():
-        preload_menus(graph.structs, graph.functions)
+        preload_menus(graph.structs, graph.functions, graph)
     
     track_library_changes(force_update=True, is_initial_setup=True)
     
     for tree in bpy.data.node_groups:
         if tree.bl_idname == 'MaltTree' and tree.is_active():
             tree.reload_nodes()
-            tree.update_ext(force_track_shader_changes=False)
+            tree.update_ext(force_track_shader_changes=False, force_update=True)
     from BlenderMalt import MaltMaterial
     MaltMaterial.track_shader_changes()
+
+#SKIP_SAVE doesn't work
+def manual_skip_save():
+    for tree in bpy.data.node_groups:
+        if tree.bl_idname == 'MaltTree':
+            tree.subscribed = False
+            tree.links_hash = ''
+            for node in tree.nodes:
+                if hasattr(node, 'subscribed'):
+                    node.subscribed = False
 
 __LIBRARIES = {}    
 def get_libraries():
@@ -281,6 +347,7 @@ def get_empty_library():
     return {
         'structs':{},
         'functions':{},
+        'subcategories':{},
         'paths':[],
     }
 __TIMESTAMP = time.time()
@@ -301,7 +368,7 @@ def track_library_changes(force_update=False, is_initial_setup=False):
             bridge.reload_graphs(updated_graphs)
             for graph_name in updated_graphs:
                 graph = graphs[graph_name]
-                preload_menus(graph.structs, graph.functions)
+                preload_menus(graph.structs, graph.functions, graphs[graph_name])
 
     global __LIBRARIES
     global __TIMESTAMP
@@ -310,7 +377,7 @@ def track_library_changes(force_update=False, is_initial_setup=False):
     #purge unused libraries
     new_dic = {}
     for tree in bpy.data.node_groups:
-        if isinstance(tree, MaltTree) and tree.is_active():
+        if tree.bl_idname == 'MaltTree' and tree.is_active():
             src_path = tree.get_library_path()
             if src_path:
                 if src_path in __LIBRARIES:
@@ -342,11 +409,11 @@ def track_library_changes(force_update=False, is_initial_setup=False):
         
     if is_initial_setup == False and max(len(needs_update), len(updated_graphs)) > 0:
         for tree in bpy.data.node_groups:
-            if isinstance(tree, MaltTree) and tree.is_active():
+            if tree.bl_idname == 'MaltTree' and tree.is_active():
                 src_path = tree.get_library_path()
                 if tree.graph_type in updated_graphs or (src_path and src_path in needs_update):
                     tree.reload_nodes()
-                    tree.update_ext(force_track_shader_changes=False)
+                    tree.update_ext(force_track_shader_changes=False, force_update=True)
         from BlenderMalt import MaltMaterial
         MaltMaterial.track_shader_changes()
     
@@ -370,204 +437,240 @@ class NODE_PT_MaltNodeTree(bpy.types.Panel):
         #layout.prop(context.space_data.node_tree, 'generated_source')
 
 
-def preload_menus(structs, functions):
-    files = set()
-    for name, struct in structs.items():
-        files.add(struct['file'])
-    for file in files:
-        get_structs_menu(file)
+def preload_menus(structs, functions, graph=None):
+    if graph is None:
+        return
+
+    from nodeitems_utils import NodeCategory, NodeItem, register_node_categories, unregister_node_categories
+    from collections import OrderedDict
+
+    # Uses copied code from the <nodeitems_utils> module. Manual check for updates required.
+    class MaltNodeItem(NodeItem):
+
+        def __init__(self, nodetype, category, *, label=None, settings=None, poll=None, draw=None, item_params=None):
+            if settings is None:
+                settings = {}
+
+            self.nodetype = nodetype
+            self._label = f'{category} - {label}'
+            self.button_label = label
+            self.settings = settings
+            self.poll = poll
+            self.item_params = item_params
+            
+            def draw_default(self, layout, _context):
+                props = layout.operator("node.add_node", text=self.button_label, text_ctxt=self.translation_context)
+                props.type = self.nodetype
+                props.use_transform = True
+
+                for setting in self.settings.items():
+                    ops = props.settings.add()
+                    ops.name = setting[0]
+                    ops.value = setting[1]
+
+            self.draw = staticmethod(draw) if draw else staticmethod(draw_default)
     
-    files = set()
-    for name, function in functions.items():
-        files.add(function['file'])
-    for file in files:
-        get_functions_menu(file)
-        
+    class MaltSearchMenuItem(MaltNodeItem):
 
-def insert_node(layout, type, label, settings = {}):
-    operator = layout.operator("node.add_node", text=label)
-    operator.type = type
-    operator.use_transform = True
-    for name, value in settings.items():
-        item = operator.settings.add()
-        item.name = name
-        item.value = value
-    return operator
+        def __init__(self, nodetype, category, *, label=None, settings=None, poll=None):
+            def draw_nothing(self, layout, _context):
+                return
+            super().__init__(nodetype, category, label=label, settings=settings, poll=poll, draw=draw_nothing)
 
-__FUNCTION_MENUES = {}
 
-def get_functions_menu(file):
-    global __FUNCTION_MENUES
+    category_id = f'BLENDERMALT_{graph.name.upper()}'
 
-    if file not in __FUNCTION_MENUES.keys():
-        file_to_label = file.replace('\\', '/').replace('/', ' - ').replace('.glsl', '').replace('_',' ')
-        class_name = 'MALT_MT_functions_' + str(len(__FUNCTION_MENUES))
-        
-        def draw(self, context):
-            graph = get_pipeline_graph(context)
-            if graph:
-                library_functions = context.space_data.node_tree.get_library()['functions']
-                functions = {}
-                overloads = {}
-                for name, function in chain(graph.functions.items(), library_functions.items()):
-                    if function['file'] != file:
-                        continue
-                    if function['meta'].get('internal'):
-                        continue
-                    functions[name] = function
-                    if function['name'] not in overloads.keys():
-                        overloads[function['name']] = 0
-                    overloads[function['name']] += 1
-                for name, function in functions.items():
-                    label = function['name']
-                    if overloads[function['name']] > 1:
-                        label = function['signature']
-                    label = label.replace('_', ' ')
-                    insert_node(self.layout, "MaltFunctionNode", label, settings={
-                        'function_type' : repr(name)
-                    })
+    try:
+        unregister_node_categories(category_id) # you could also check the hidden <nodeitems_utils._node_categories>
+    except:
+        pass #First run
 
-        menu_type = type(class_name, (bpy.types.Menu,), {
-            "bl_space_type": 'NODE_EDITOR',
-            "bl_label": file_to_label,
-            "draw": draw,
-        })
-        bpy.utils.register_class(menu_type)
+    categories = {
+        'Input' : [],
+        'Parameters' : [],
+        'Math' : [],
+        'Vector' : [],
+        'Color' : [],
+        'Texturing' : [],
+        'Shading' : [],
+        'Filter' : [],
+        'Other' : [],
+        'Node Tree' : [],
+        'Internal' : [],
+    }
 
-        __FUNCTION_MENUES[file] = class_name
+    for name in graph.graph_io:
+        label = name.replace('_',' ')
+        categories['Node Tree'].append(NodeItem('MaltIONode', label=f'{label} Input', settings=OrderedDict({
+            'name' : repr(f'{label} Input'),
+            'is_output' : repr(False),
+            'io_type' : repr(name),
+        })))
+        categories['Node Tree'].append(NodeItem('MaltIONode', label=f'{label} Output', settings=OrderedDict({
+            'name' : repr(f'{label} Output'),
+            'is_output' : repr(True),
+            'io_type' : repr(name),
+        })))
     
-    return __FUNCTION_MENUES[file]
+    if graph.language == 'GLSL':
+        categories['Other'].append(NodeItem('MaltInlineNode', label='Inline Code', settings={
+            'name' : repr('Inline Code')
+        }))
+        categories['Other'].append(NodeItem('MaltArrayIndexNode', label='Array Element', settings={
+            'name' : repr('Array Element')
+        }))
 
-__STRUCT_MENUES = {}
-
-def get_structs_menu(file):
-    global __STRUCT_MENUES
-
-    if file not in __STRUCT_MENUES:
-        file_to_label = file.replace('\\', '/').replace('/', ' - ').replace('.glsl', '').replace('_',' ')
-        class_name = 'MALT_MT_structs_' + str(len(__STRUCT_MENUES))
-
-        def draw(self, context):
-            graph = get_pipeline_graph(context)
-            if graph:
-                library_structs = context.space_data.node_tree.get_library()['structs']
-                for name, struct in chain(graph.structs.items(), library_structs.items()):
-                    if struct['meta'].get('internal'):
-                        continue
-                    if struct['file'] == file:
-                        insert_node(self.layout, "MaltStructNode", name.replace('_', ' '), settings={
-                            'struct_type' : repr(name)
-                        })
-
-        menu_type = type(class_name, (bpy.types.Menu,), {
-            "bl_space_type": 'NODE_EDITOR',
-            "bl_label": file_to_label,
-            "draw": draw,
-        })
-        bpy.utils.register_class(menu_type)
-
-        __STRUCT_MENUES[file] = class_name
+    subcategories = set()
     
-    return __STRUCT_MENUES[file]
+    def add_to_category(dic, node_type):
+        for k,v in dic.items():
+            if (is_internal := v['meta'].get('internal')):
+                category = 'Internal'
+            else:
+                category = v['meta'].get('category')
+            if category is None:
+                category = v['file'].replace('\\', '/').replace('/', ' - ').replace('.glsl', '').replace('_',' ')
+            if category not in categories:
+                categories[category] = []
 
-
-class MALT_MT_NodeFunctions(bpy.types.Menu):
-    
-    bl_label = "Malt Node Functions Menu"
-
-    def draw(self, context):
-        graph = get_pipeline_graph(context)
-        if graph:
-            files = set()
-            library_functions = context.space_data.node_tree.get_library()['functions']
-            for name, function in chain(library_functions.items(), graph.functions.items()):
-                if function['meta'].get('internal'):
-                    continue
-                files.add(function['file'])
-            for file in sorted(files):
-                self.layout.menu(get_functions_menu(file))
-
-class MALT_MT_NodeStructs(bpy.types.Menu):
-    
-    bl_label = "Malt Node Structs Menu"
-
-    def draw(self, context):
-        graph = get_pipeline_graph(context)
-        if graph:
-            files = set()
-            library_structs = context.space_data.node_tree.get_library()['structs']
-            for name, struct in chain(library_structs.items(), graph.structs.items()):
-                if struct['meta'].get('internal'):
-                    continue
-                files.add(struct['file'])
-            for file in sorted(files):
-                self.layout.menu(get_structs_menu(file))
-
-class MALT_MT_NodeInputs(bpy.types.Menu):
-    
-    bl_label = "Malt Node Inputs Menu"
-
-    def draw(self, context):
-        graph = get_pipeline_graph(context)
-        if graph:
-            for name in sorted(graph.graph_io):
-                insert_node(self.layout, "MaltIONode", name + ' Input', settings={
-                    'is_output' : repr(False),
-                    'io_type' : repr(name),
+            _node_type = node_type
+            label = v['meta'].get('label', v['name'])
+            subcategory = v['meta'].get('subcategory')
+            
+            settings = OrderedDict({
+                'name': repr(label),
+                'malt_label': repr(label)
             })
+            
+            if subcategory and not is_internal:
+                _node_type = 'MaltFunctionSubCategoryNode'
+                label = subcategory
+                settings.update({
+                    'name' : repr(label),
+                    'malt_label': repr(label),
+                    'subcategory': repr(subcategory),
+                    'function_enum': repr(k),
+                })
+                func_label = v['meta']['label']
 
-class MALT_MT_NodeOutputs(bpy.types.Menu):
-    
-    bl_label = "Malt Node Outputs Menu"
+                def draw_subcategory_item(self: MaltNodeItem, layout, _context):
+                    props = layout.operator('node.add_subcategory_node', text=self.button_label)
+                    props.settings = repr(self.settings)
+                
+                #add subcategory functions to the search menu but not to the regular menus
+                categories['Node Tree'].append(MaltSearchMenuItem(_node_type, category, label=f'{subcategory}: {func_label}', settings=settings))
+                if subcategory in subcategories:
+                    continue
+                subcategories.add(subcategory)
+                node_item = MaltNodeItem(_node_type, category, label=label, settings=settings, draw=draw_subcategory_item)
+            else:
+                if node_type == 'MaltFunctionNode':
+                    settings['function_type'] = repr(k)
+                elif node_type == 'MaltStructNode':
+                    settings['struct_type'] = repr(k)
+                node_item = MaltNodeItem(_node_type, category, label=label, settings=settings)
+            
+            categories[category].append(node_item)
 
-    def draw(self, context):
-        graph = get_pipeline_graph(context)
-        if graph:
-            for name in sorted(graph.graph_io):
-                insert_node(self.layout, "MaltIONode", name + ' Ouput', settings={
-                    'is_output' : repr(True),
-                    'io_type' : repr(name),
-            })
+    add_to_category(functions, 'MaltFunctionNode')
+    add_to_category(structs, 'MaltStructNode')
 
-class MALT_MT_NodeOther(bpy.types.Menu):
-    
-    bl_label = "Malt Node Other Menu"
+    def poll(cls, context):
+        tree = context.space_data.edit_tree
+        return tree and tree.bl_idname == 'MaltTree' and tree.graph_type == graph.name
 
-    def draw(self, context):
-        graph = get_pipeline_graph(context)
-        if graph:
-            insert_node(self.layout, "MaltInlineNode", 'Inline Code')
-            insert_node(self.layout, "MaltArrayIndexNode", 'Array Index')
+    def poll_internal(cls, context):
+        preferences = bpy.context.preferences.addons['BlenderMalt'].preferences
+        return poll(cls, context) and preferences.show_internal_nodes
 
-def add_node_ui(self, context):
-    if context.space_data.tree_type != 'MaltTree':
-        return
-    if context.space_data.node_tree is None:
-        self.layout.label(text='No active node tree')
-        return
-    if context.space_data.node_tree.graph_type == '':
-        self.layout.label(text='No graph type selected')
-        return
-    graph = get_pipeline_graph(context)
-    if graph:
-        self.layout.menu("MALT_MT_NodeFunctions", text='Functions')
-        self.layout.menu("MALT_MT_NodeStructs", text='Structs')
-        self.layout.menu("MALT_MT_NodeInputs", text='Inputs')
-        self.layout.menu("MALT_MT_NodeOutputs", text='Outputs')
-        self.layout.menu("MALT_MT_NodeOther", text='Other')
+    category_type = type(category_id, (NodeCategory,), 
+    {
+        'poll': classmethod(poll),
+    })
+    category_internal_type = type(f'{category_id}_INTERNAL', (category_type,),
+    {
+        'poll': classmethod(poll_internal),
+    })
+
+    from BlenderMalt import _PLUGINS
+    for plugin in _PLUGINS:
+        try:
+            for category, nodeitems in plugin.blendermalt_register_nodeitems(MaltNodeItem).items():
+                if category not in categories.keys():
+                    categories[category] = []
+                categories[category].extend(nodeitems)
+        except:
+            import traceback
+            traceback.print_exc()
+            
+    category_list = []
+    for category_name, node_items in categories.items():
+        if not len(node_items):
+            continue
+        bl_id = f'{category_id}_{category_name}'
+        bl_id = ''.join(c for c in bl_id if c.isalnum())
+        if len(bl_id) > 64:
+            bl_id = bl_id[:64]
+        if category_name == 'Internal':
+            category_list.append(category_internal_type(bl_id, category_name, items=node_items))
+        else:
+            category_list.append(category_type(bl_id, category_name, items=node_items))
+
+    register_node_categories(category_id, category_list)
+
 
 def node_header_ui(self, context):
     node_tree = context.space_data.edit_tree
     if context.space_data.tree_type != 'MaltTree' or node_tree is None:
         return
     def duplicate():
-        context.space_data.node_tree = node_tree.copy()
+        context.space_data.node_tree = node_tree.get_copy()
     self.layout.operator('wm.malt_callback', text='', icon='DUPLICATE').callback.set(duplicate, 'Duplicate')
     def recompile():
-        node_tree.update()
+        node_tree.update_ext(force_update=True)
     self.layout.operator("wm.malt_callback", text='', icon='FILE_REFRESH').callback.set(recompile, 'Recompile')
-    self.layout.prop(node_tree, 'library_source',text='')
     self.layout.prop_search(node_tree, 'graph_type', context.scene.world.malt, 'graph_types',text='')
+    
+
+def get_node_spaces(context):
+    spaces = []
+    locked_spaces = []
+    for window in context.window_manager.windows:
+        for area in window.screen.areas:
+            if area.type == 'NODE_EDITOR':
+                for space in area.spaces:
+                    if space.type == 'NODE_EDITOR' and space.tree_type == 'MaltTree':
+                        if space.pin == False or space.node_tree is None:
+                            spaces.append(space)
+                        else:
+                            locked_spaces.append(space)
+    return spaces, locked_spaces
+
+
+def set_node_tree(context, node_tree, node = None):
+    if context.space_data.type == 'NODE_EDITOR' and context.area.ui_type == 'MaltTree':
+        context.space_data.path.append(node_tree, node = node)
+    else:
+        spaces, locked_spaces = get_node_spaces(context)
+        if len(spaces) > 0:
+            spaces[0].node_tree = node_tree
+        elif len(locked_spaces) > 0:
+            locked_spaces[0].node_tree = node_tree
+
+
+def active_material_update(dummy=None):
+    try:
+        material = bpy.context.object.active_material
+        node_tree = material.malt.shader_nodes
+    except:
+        node_tree = None
+    if node_tree:
+        spaces, locked_spaces = get_node_spaces(bpy.context)
+        for space in spaces:
+            if space.node_tree is None or space.node_tree.graph_type == 'Mesh':
+                space.node_tree = node_tree
+                return
+
 
 @bpy.app.handlers.persistent
 def depsgraph_update(scene, depsgraph):
@@ -581,135 +684,42 @@ def depsgraph_update(scene, depsgraph):
             scene_updated = True
     if scene_updated == False:
         return
-    node_tree = None
-    try:
-        material = bpy.context.object.active_material
-        node_tree = material.malt.shader_nodes
-    except:
-        pass
-    if node_tree:
-        spaces, locked_spaces = get_node_spaces(bpy.context)
-        for space in spaces:
-            if space.node_tree.graph_type == 'Mesh':
-                space.node_tree = node_tree
-                return
+    active_material_update()
 
-def get_node_spaces(context):
-    spaces = []
-    locked_spaces = []
-    for area in context.screen.areas:
-        if area.type == 'NODE_EDITOR':
-            for space in area.spaces:
-                if space.type == 'NODE_EDITOR' and space.tree_type == 'MaltTree':
-                    if space.pin == False or space.node_tree is None:
-                        spaces.append(space)
-                    else:
-                        locked_spaces.append(space)
-    return spaces, locked_spaces
-
-def set_node_tree(context, node_tree, node = None):
-    if context.space_data.type == 'NODE_EDITOR' and context.area.ui_type == 'MaltTree':
-        context.space_data.path.append(node_tree, node = node)
-    else:
-        spaces, locked_spaces = get_node_spaces(context)
-        if len(spaces) > 0:
-            spaces[0].node_tree = node_tree
-        elif len(locked_spaces) > 0:
-            locked_spaces[0].node_tree = node_tree
-
-class OT_MaltEditNodeTree( bpy.types.Operator ):
-    bl_idname = 'wm.malt_edit_node_tree'
-    bl_label = 'Edit Node Tree'
-
-    @classmethod
-    def poll( cls, context ):
-        return context.area.ui_type == 'MaltTree' and context.space_data.type == 'NODE_EDITOR'
-            
-    def execute( self, context ):
-        node = context.active_node
-        space_path = context.space_data.path
-        node_tree = None
-        if node and hasattr(node, 'get_pass_node_tree'):
-            node_tree = node.get_pass_node_tree()
-        if node_tree:
-            space_path.append(node_tree, node = node)
-        else:
-            space_path.pop()
-        return{ 'FINISHED' }
-    
-keymaps = []
-def register_node_tree_edit_shortcut( register ):
-    wm = bpy.context.window_manager
-    kc = wm.keyconfigs.addon
-    if kc:
-        if register:
-            km = kc.keymaps.new( name = 'Node Editor', space_type = 'NODE_EDITOR' )
-            kmi = km.keymap_items.new( OT_MaltEditNodeTree.bl_idname, type = 'TAB', value = 'PRESS' )
-            keymaps.append(( km, kmi ))
-        else:
-            for km, kmi in keymaps:
-                km.keymap_items.remove( kmi )
-            keymaps.clear( )
+@bpy.app.handlers.persistent
+def load_post(dummy=None):
+    #msgbus subscriptions can't be persistent across file loads :(
+    bpy.msgbus.subscribe_rna(
+        key=(bpy.types.Object, "active_material_index"),
+        owner=__msgbus_owner,
+        args=(None,),
+        notify=active_material_update
+    )
 
 classes = [
     MaltTree,
     NODE_PT_MaltNodeTree,
-    MALT_MT_NodeFunctions,
-    MALT_MT_NodeStructs,
-    MALT_MT_NodeInputs,
-    MALT_MT_NodeOutputs,
-    MALT_MT_NodeOther,
-    OT_MaltEditNodeTree,
 ]
+__msgbus_owner = object()
+
 
 def register():
     for _class in classes: bpy.utils.register_class(_class)
 
-    bpy.types.NODE_MT_add.append(add_node_ui)
     bpy.types.NODE_HT_header.append(node_header_ui)
 
     bpy.app.timers.register(track_library_changes, persistent=True)
     bpy.app.handlers.depsgraph_update_post.append(depsgraph_update)
-
-    def context_path_ui_callback():
-        import blf
-        font_id = 0
-        context = bpy.context
-        space = context.space_data
-        area = context.area
-        if not area.ui_type == 'MaltTree':
-            return
-        if not space.overlay.show_context_path:
-            return
-        path = space.path
-        text = ' > '.join(x.node_tree.name for x in path)
-        preferences = context.preferences
-        ui_scale = preferences.view.ui_scale
-        dpi = preferences.system.dpi
-        size = preferences.ui_styles[0].widget.points * ui_scale
-        color = preferences.themes[0].node_editor.space.text
-        blf.size(font_id, size, dpi)
-        blf.position(font_id, 10, 10, 0)
-        blf.color(font_id, *color, 1)
-        blf.draw(font_id, text)
-
-    global CONTEXT_PATH_DRAW_HANDLER
-    CONTEXT_PATH_DRAW_HANDLER = bpy.types.SpaceNodeEditor.draw_handler_add(context_path_ui_callback, (), 'WINDOW', 'POST_PIXEL')
-
-    register_node_tree_edit_shortcut(True)
+    bpy.app.handlers.load_post.append(load_post)
+    
 
 def unregister():
-    register_node_tree_edit_shortcut(False)
-    
-    global CONTEXT_PATH_DRAW_HANDLER
-    bpy.types.SpaceNodeEditor.draw_handler_remove(CONTEXT_PATH_DRAW_HANDLER, 'WINDOW')
+    bpy.msgbus.clear_by_owner(__msgbus_owner)
 
+    bpy.app.handlers.load_post.remove(load_post)
     bpy.app.handlers.depsgraph_update_post.remove(depsgraph_update)
     bpy.app.timers.unregister(track_library_changes)
     
-    bpy.types.NODE_MT_add.remove(add_node_ui)
     bpy.types.NODE_HT_header.remove(node_header_ui)
 
     for _class in reversed(classes): bpy.utils.unregister_class(_class)
-
-

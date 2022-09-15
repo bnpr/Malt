@@ -10,11 +10,9 @@ class MaltArrayIndexNode(bpy.types.Node, MaltNode):
     def malt_init(self):
         self.setup()
         
-    def malt_setup(self):
-        if self.first_setup:
-            self.name = 'Array Index'
+    def malt_setup(self, copy=None):
         self.setup_sockets({ 'array' : {'type': '', 'size': 1}, 'index' : {'type': Parameter(0, Type.INT) }},
-            {'element' : {'type': ''} })
+            {'element' : {'type': ''} }, copy=copy)
         
     def malt_update(self):
         inputs = { 

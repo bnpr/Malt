@@ -1,6 +1,10 @@
 #ifndef BOOL_GLSL
 #define BOOL_GLSL
 
+/*  META GLOBAL
+    @meta: internal = true;
+*/
+
 bool bool_and(bool a, bool b) { return a && b; }
 bool bool_or(bool a, bool b) { return a || b; }
 bool bool_not(bool b) { return !b; }

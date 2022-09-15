@@ -14,7 +14,7 @@ class Type():
     INT=1
     FLOAT=2
     STRING=3
-    #ENUM=4 #TODO
+    ENUM=4
     OTHER=5
     TEXTURE=6
     GRADIENT=7
@@ -24,7 +24,8 @@ class Type():
 
     @classmethod
     def string_list(cls):
-        return ['Bool', 'Int', 'Float', 'String', 'Other', 'Enum', 'Texture', 'Gradient', 'Material', 'RenderTarget', 'Graph']
+        return ['Bool', 'Int', 'Float', 'String', 'Other', 'Enum', 'Texture', 'Gradient',
+            'Material', 'RenderTarget', 'Graph']
     @classmethod
     def to_string(cls, type):
         return cls.string_list()[type]
@@ -59,50 +60,70 @@ class Parameter():
         return Parameter(value, type, size)
     
     @classmethod
-    def from_glsl_type(cls, glsl_type, subtype=None):
+    def from_glsl_type(cls, glsl_type, subtype=None, default_value=None):
         type, size = glsl_type_to_malt_type(glsl_type)
-        value = None
-        if type is Type.INT:
-            value = tuple([0] * size)
-        if type is Type.FLOAT:
-            value = tuple([0.0] * size)
-        if type is Type.BOOL:
-            value = tuple([False] * size)
-        if value and len(value) == 1:
-            value = value[0]
-        overrides = {
-            ('vec3',None):(0.5,0.5,0.5),
-            ('vec4',None):(0.5,0.5,0.5,1.0),
-            ('vec3','Color'):(0.5,0.5,0.5),
-            ('vec4','Color'):(0.5,0.5,0.5,1.0),
-            ('vec3','Normal'):(1.0,0.0,0.0),
-            ('vec4','Quaternion'):(0.0,0.0,0.0,1.0),
-            ('mat3',None):(
-                1.0,0.0,0.0,
-                0.0,1.0,0.0,
-                0.0,0.0,1.0,
-            ),
-            ('mat4',None):(
-                1.0,0.0,0.0,0.0,
-                0.0,1.0,0.0,0.0,
-                0.0,0.0,1.0,0.0,
-                0.0,0.0,0.0,1.0,
-            ),
-        }
-        override = overrides.get((glsl_type, subtype))
-        if override is not None:
-            value = override
-        return Parameter(value, type, size, subtype=subtype)
+        if subtype and subtype.startswith('ENUM'):
+            try:
+                enum_options = subtype.split('ENUM(')[1][:-1]
+                enum_options = enum_options.split(',')
+                if isinstance(default_value, int):
+                    default_value = enum_options[default_value]
+                if default_value is None:
+                    default_value = enum_options[0]
+                return EnumParameter(enum_options, default_value)
+            except:
+                pass
+        if default_value is None:
+            if type is Type.INT:
+                default_value = tuple([0] * size)
+            if type is Type.FLOAT:
+                default_value = tuple([0.0] * size)
+            if type is Type.BOOL:
+                default_value = tuple([False] * size)
+            if default_value and len(default_value) == 1:
+                default_value = default_value[0]
+            overrides = {
+                ('vec3',None):(0.5,0.5,0.5),
+                ('vec4',None):(0.5,0.5,0.5,1.0),
+                ('vec3','Color'):(0.5,0.5,0.5),
+                ('vec4','Color'):(0.5,0.5,0.5,1.0),
+                ('vec3','Normal'):(1.0,0.0,0.0),
+                ('vec4','Quaternion'):(0.0,0.0,0.0,1.0),
+                ('mat3',None):(
+                    1.0,0.0,0.0,
+                    0.0,1.0,0.0,
+                    0.0,0.0,1.0,
+                ),
+                ('mat4',None):(
+                    1.0,0.0,0.0,0.0,
+                    0.0,1.0,0.0,0.0,
+                    0.0,0.0,1.0,0.0,
+                    0.0,0.0,0.0,1.0,
+                ),
+            }
+            override = overrides.get((glsl_type, subtype))
+            if override is not None:
+                default_value = override
+        return Parameter(default_value, type, size, subtype=subtype)
 
 class MaterialParameter(Parameter):
-    def __init__(self, default_path, extension, filter=None, doc=None):
+    def __init__(self, default_path, extension, graph_type=None, filter=None, doc=None):
         super().__init__(default_path, Type.MATERIAL, 1, filter, extension, doc)
         self.extension = extension
+        self.graph_type = graph_type
 
 class GraphParameter(Parameter):
     def __init__(self, default_path, graph_type, filter=None, doc=None):
         super().__init__(default_path, Type.GRAPH, 1, filter, graph_type, doc)
         self.graph_type = graph_type
+
+class EnumParameter(Parameter):
+    def __init__(self, options, default_option, filter=None, doc=None):
+        self.enum_options = options
+        super().__init__(default_option, Type.ENUM, 1, filter, None, doc)
+    
+    def from_index(self, index):
+        return self.enum_options[index]
 
 def gl_type_to_malt_type(gl_type):
     from Malt.GL import GL

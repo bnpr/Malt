@@ -510,21 +510,46 @@ def glsl_reflection(code, root_paths=[]):
     
     reflection = json.loads(json_string)
 
+    def patch_meta(dic):
+        for e in dic.values():
+            path = e['file']
+            if path in reflection['meta globals']:
+                for k, v in reflection['meta globals'][path].items():
+                    if k not in e['meta'].keys():
+                        e['meta'][k] = v
+    
+    patch_meta(reflection['functions'])
+    patch_meta(reflection['structs'])
+    
     from Malt.GL.GLSLEval import glsl_eval
 
-    for function in reflection['functions'].values():
-        for parameter in function['parameters']:
+    def eval_meta(dict):
+        meta_dict = dict['meta']
+        for k, v in meta_dict.items():
             try:
-                parameter['meta']['default'] = glsl_eval(parameter['meta']['default'])
+                meta_dict[k] = glsl_eval(v)
             except:
                 pass
     
+    def meta_label(dict):
+        label = dict['meta'].get('label')
+        if label is None:
+            label = dict['name'].replace('_',' ').title()
+        dict['meta']['label'] = label
+
+    for function in reflection['functions'].values():
+        eval_meta(function)
+        meta_label(function)
+        for parameter in function['parameters']:
+            eval_meta(parameter)
+            meta_label(parameter)
+            
     for struct in reflection['structs'].values():
+        eval_meta(struct)
+        meta_label(struct)
         for member in struct['members']:
-            try:
-                member['meta']['default'] = glsl_eval(member['meta']['default'])
-            except:
-                pass
+            eval_meta(member)
+            meta_label(member)
 
     def handle_paths(dic):
         for e in dic.values():
@@ -560,6 +585,14 @@ def glsl_reflection(code, root_paths=[]):
             for function in functions:
                 new_key = key + ' - ' + function['signature']
                 reflection['functions'][new_key] = function
+    
+    reflection['subcategories'] = {}
+    for key, function in reflection['functions'].items():
+        subcategory = function['meta'].get('subcategory')
+        if subcategory:
+            if subcategory not in reflection['subcategories'].keys():
+                reflection['subcategories'][subcategory] = []
+            reflection['subcategories'][subcategory].append(key)
     
     return reflection
 

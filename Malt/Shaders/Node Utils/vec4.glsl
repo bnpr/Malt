@@ -1,6 +1,10 @@
 #ifndef VEC4_GLSL
 #define VEC4_GLSL
 
+/*  META GLOBAL
+    @meta: internal = true;
+*/
+
 /*META @a: subtype=Vector; @b: subtype=Vector;*/
 vec4 vec4_add(vec4 a, vec4 b){ return a+b; }
 /*META @a: subtype=Vector; @b: subtype=Vector;*/

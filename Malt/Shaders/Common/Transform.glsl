@@ -1,9 +1,14 @@
 #ifndef COMMON_TRANSFORM_GLSL
 #define COMMON_TRANSFORM_GLSL
 
+/*  META GLOBAL
+    @meta: category=Vector; internal=true;
+*/
+
 #include "Common.glsl"
 
 /*  META
+    @meta: subcategory=Matrix; internal=false;
     @matrix: default=mat4(1);
     @point: subtype=Vector;
 */
@@ -13,6 +18,7 @@ vec3 transform_point(mat4 matrix, vec3 point)
 }
 
 /*  META
+    @meta: subcategory=Matrix; internal=false;
     @matrix: default=mat4(1);
     @point: subtype=Vector;
 */
@@ -23,6 +29,18 @@ vec3 project_point(mat4 matrix, vec3 point)
 }
 
 /*  META
+    @meta: subcategory=Matrix; internal=false;
+    @matrix: default=mat4(1);
+    @point: subtype=Vector;
+*/
+vec3 project_point_to_screen_coordinates(mat4 matrix, vec3 point)
+{
+    //Assumes gl_DepthRange is 0...1
+    return map_range(project_point(matrix, point), vec3(-1), vec3(1), vec3(0), vec3(1));
+}
+
+/*  META
+    @meta: subcategory=Matrix; internal=false;
     @matrix: default=mat4(1);
     @direction: subtype=Vector;
 */
@@ -32,6 +50,7 @@ vec3 transform_direction(mat4 matrix, vec3 direction)
 }
 
 /*  META
+    @meta: subcategory=Matrix; internal=false;
     @matrix: default=mat4(1);
     @normal: subtype=Normal;
 */
@@ -41,16 +60,40 @@ vec3 transform_normal(mat4 matrix, vec3 normal)
     return normalize(m * normal);
 }
 
+vec3 screen_to_camera(vec2 uv, float depth);
+
+vec3 camera_direction_to_screen_space(vec3 vector)
+{
+    vec3 N = normalize(vector);
+    vec3 I = -normalize(screen_to_camera(screen_uv(), 1));
+    vec3 x = vec3(1,0,0);
+	vec3 tangent = normalize(x - I * dot(x, I));
+	vec3 y = vec3(0,1,0);
+	vec3 bitangent = normalize(y - I * dot(y, I));
+	
+	vec3 screen_normal = vec3
+	(
+		dot(N, tangent),
+		dot(N, bitangent),
+		dot(N, I)
+	);
+
+	return normalize(screen_normal) * length(vector);
+}
+
+/* META @meta: category=Input; */
 vec3 camera_position()
 {
     return transform_point(inverse(CAMERA), vec3(0,0,0));
 }
 
+/* META @meta: category=Input; */
 vec3 model_position()
 {
     return transform_point(MODEL, vec3(0,0,0));
 }
 
+/* META @meta: category=Input; */
 vec2 screen_uv()
 {
     #ifdef PIXEL_SHADER
@@ -76,7 +119,9 @@ ivec2 screen_pixel()
     }
     #endif
 }
-
+/* META
+    @uv: default=UV[0];
+*/
 vec3 screen_to_camera(vec2 uv, float depth)
 {
     vec3 clip_position = vec3(uv, depth) * 2.0 - 1.0;
@@ -86,6 +131,7 @@ vec3 screen_to_camera(vec2 uv, float depth)
     return camera_position.xyz;
 }
 
+/* META @meta: category=Input; */
 vec3 view_direction()
 {
     return transform_normal(inverse(CAMERA), screen_to_camera(screen_uv(), 1));
@@ -107,6 +153,10 @@ float depth_to_z(float depth)
     return screen_to_camera(vec2(0,0), depth).z;
 }
 
+/*  META
+    @meta: label=Pixel Size in World Space; internal=false;
+    @depth: default=pixel_depth();
+*/
 float pixel_world_size_at(float depth)
 {
     vec2 uv = screen_uv();
@@ -148,7 +198,9 @@ vec3 reconstruct_normal(sampler2D depth_texture, int depth_channel, ivec2 texel)
     vec3 y = distance(y1.z, t0.z) < distance(y2.z, t0.z) ? y1 : y2;
 
     vec3 n = normalize(cross(x - t0, y - t0));
-    n = dot(n, t0) < 0 ? n : -n;
+    
+    vec3 view_direction = screen_to_camera(screen_uv(), 1);
+    n = dot(n, view_direction) < 0 ? n : -n;
 
     return transform_normal(inverse(CAMERA), n);
 }
@@ -170,14 +222,8 @@ float ray_plane_intersection(vec3 ray_origin, vec3 ray_direction, vec3 plane_pos
 
 vec2 rotate_2d(vec2 p, float angle)
 {
-    float c = cos(angle);
-    float s = sin(angle);
-
-    return vec2
-    (
-        p.x * c - p.y * s, 
-        p.x * s + p.y * c
-    );
+    mat2 rot = mat2(cos(angle), -sin(angle), sin(angle), cos(angle));
+    return rot * p;
 }
 
 #endif //COMMON_TRANSFORM_GLSL

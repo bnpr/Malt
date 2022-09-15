@@ -13,16 +13,19 @@ from Malt.Render import Sampling
 
 _SCREEN_SHADER_HEADER='''
 #include "NPR_ScreenShader.glsl"
+#include "Node Utils 2/node_utils_2.glsl"
 #include "Node Utils/node_utils.glsl"
 '''
 
 _MESH_SHADER_HEADER='''
 #include "NPR_MeshShader.glsl"
+#include "Node Utils 2/node_utils_2.glsl"
 #include "Node Utils/node_utils.glsl"
 '''
 
 _LIGHT_SHADER_HEADER='''
 #include "NPR_LightShader.glsl"
+#include "Node Utils 2/node_utils_2.glsl"
 #include "Node Utils/node_utils.glsl"
 '''
 
@@ -60,6 +63,8 @@ void MAIN_PASS_PIXEL_SHADER()
 }
 '''
 
+DEFAULTS_PATH = os.path.join(os.path.dirname(__file__), 'Defaults', 'defaults')
+
 class NPR_Pipeline(Pipeline):
 
     def __init__(self, plugins=[]):
@@ -83,20 +88,19 @@ class NPR_Pipeline(Pipeline):
             The width (and height) of the sampling grid. 
             Larger values will result in smoother/blurrier images while lower values will result in sharper/more aliased ones. 
             Keep it withing the 1-2 range for best results.""")
-        
-        defaults_path = os.path.join(os.path.dirname(__file__), 'Defaults', 'defaults')
-        
-        self.parameters.world['Material.Default'] = MaterialParameter((defaults_path, 'Malt - Default Mesh Material'), '.mesh.glsl',
+                
+        self.parameters.world['Material.Default'] = MaterialParameter((DEFAULTS_PATH, 'Malt - Default Mesh Material'),
+            '.mesh.glsl', 'Mesh',
             doc = self.parameters.world['Material.Default'].doc)
         
-        self.parameters.world['Render'] = GraphParameter((defaults_path, 'Default Render'), 'Render', doc="""
+        self.parameters.world['Render'] = GraphParameter((DEFAULTS_PATH, 'Default Render'), 'Render', doc="""
             The *Render Node Tree* used to render the scene. 
             See [Render & Render Layers](#Render & Render Layers) for more info.""")
         
         self.parameters.light['Light Group'] = Parameter(1, Type.INT, doc=
             "Lights only affect materials with a matching *Light Group* value.")
         
-        self.parameters.light['Shader'] = MaterialParameter('', '.light.glsl', doc=
+        self.parameters.light['Shader'] = MaterialParameter('', '.light.glsl', 'Light', doc=
             "When set, the *Material* with a custom *Light Shader* or *Light Node Tree* that will be used to render this light.")
         
         self.parameters.material['Light Groups.Light'] = Parameter([1,0,0,0], Type.INT, 4, '.mesh.glsl', doc=
@@ -114,6 +118,7 @@ class NPR_Pipeline(Pipeline):
             default_global_scope=_MESH_SHADER_HEADER,
             default_shader_src=_DEFAULT_SHADER_SRC,
             shaders=['PRE_PASS', 'MAIN_PASS', 'SHADOW_PASS'],
+            default_graph_path=(DEFAULTS_PATH, 'Mesh Node Tree Base'),
             graph_io=[
                 GLSLGraphIO(
                     name='PRE_PASS_PIXEL_SHADER',
@@ -159,6 +164,7 @@ class NPR_Pipeline(Pipeline):
             graph_type=GLSLPipelineGraph.GLOBAL_GRAPH,
             default_global_scope=_SCREEN_SHADER_HEADER,
             default_shader_src="void SCREEN_SHADER(){ }",
+            default_graph_path=(DEFAULTS_PATH, 'Screen Node Tree Base'),
             graph_io=[ 
                 GLSLGraphIO(
                     name='SCREEN_SHADER',
@@ -178,6 +184,7 @@ class NPR_Pipeline(Pipeline):
             graph_type=GLSLPipelineGraph.INTERNAL_GRAPH,
             default_global_scope=_LIGHT_SHADER_HEADER,
             default_shader_src="void LIGHT_SHADER(vec3 relative_coordinates, vec3 uvw, inout vec3 color, inout float attenuation) { }",
+            default_graph_path=(DEFAULTS_PATH, 'Light Node Tree Base'),
             graph_io=[ 
                 GLSLGraphIO(
                     name='LIGHT_SHADER',
@@ -189,6 +196,7 @@ class NPR_Pipeline(Pipeline):
         
         render_layer = PythonPipelineGraph(
             name='Render Layer',
+            default_graph_path=(DEFAULTS_PATH, 'Default Render Layer'),
             graph_io = [
                 PythonGraphIO(
                     name = 'Render Layer',
@@ -212,6 +220,7 @@ class NPR_Pipeline(Pipeline):
 
         render = PythonPipelineGraph(
             name='Render',
+            default_graph_path=(DEFAULTS_PATH, 'Default Render'),
             graph_io = [
                 PythonGraphIO(
                     name = 'Render',

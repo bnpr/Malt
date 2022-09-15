@@ -1,3 +1,7 @@
+#define NO_UV_INPUT
+#define NO_VERTEX_COLOR_INPUT
+#define NO_MODEL_INPUT
+
 #include "NPR_Intellisense.glsl"
 
 #ifdef PIXEL_SHADER
@@ -48,3 +52,4 @@ void main()
 
 #include "NPR_Pipeline/NPR_Filters.glsl"
 #include "NPR_Pipeline/NPR_Shading.glsl"
+#include "NPR_Pipeline/NPR_Shading2.glsl"

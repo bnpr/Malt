@@ -56,10 +56,10 @@ class Pipeline():
             It's disabled by default since it slows down mesh loading in Blender.  
             When disabled, the *tangents* are calculated on the fly from the *pixel shader*.""")
         
-        self.parameters.world['Material.Default'] = MaterialParameter('', '.mesh.glsl', doc=
+        self.parameters.world['Material.Default'] = MaterialParameter('', '.mesh.glsl', 'Mesh', doc=
             "The default material, used for objects with no material assigned.")
         
-        self.parameters.world['Material.Override'] = MaterialParameter('', '.mesh.glsl', doc=
+        self.parameters.world['Material.Override'] = MaterialParameter('', '.mesh.glsl', 'Mesh', doc=
             "When set, overrides all scene materials with this one.")
         
         self.parameters.world['Viewport.Resolution Scale'] = Parameter(1.0 , Type.FLOAT, doc="""
@@ -229,6 +229,7 @@ class Pipeline():
                 if color:
                     if colors[i]._ctype == ctypes.c_uint8:
                         bind_VBO(color, color0_index + i, 4, GL_UNSIGNED_BYTE, GL_TRUE)
+                        result.color_is_srgb[i] = True
                     if colors[i]._ctype == ctypes.c_float:
                         bind_VBO(color, color0_index + i, 4, GL_FLOAT)
 
@@ -347,6 +348,7 @@ class Pipeline():
             precomputed_tangents_uniform = shader.uniforms.get('PRECOMPUTED_TANGENTS')
             _precomputed_tangents = None
             _scale_group = None
+            _color_is_srgb = None
             
             meshes = scene_batches[material]
             for mesh in meshes.keys():
@@ -359,7 +361,13 @@ class Pipeline():
                         glDisable(GL_CULL_FACE)
                     else:
                         glEnable(GL_CULL_FACE)
-                        glCullFace(GL_BACK)  
+                        glCullFace(GL_BACK)
+                
+                color_is_srgb = tuple(mesh.mesh.color_is_srgb)
+                if color_is_srgb != _color_is_srgb :
+                    if 'COLOR_IS_SRGB' in shader.uniforms:
+                        shader.uniforms['COLOR_IS_SRGB'].bind(color_is_srgb)
+                        _color_is_srgb = color_is_srgb
 
                 if precomputed_tangents_uniform:
                     precomputed_tangents = mesh.parameters['precomputed_tangents']
