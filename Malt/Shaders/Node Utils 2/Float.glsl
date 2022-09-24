@@ -60,6 +60,7 @@ float Float_abs(float a){ return abs(a); }
 float Float_min(float a, float b){ return min(a,b); }
 /*META @meta: label=Maximum;*/
 float Float_max(float a, float b){ return max(a,b); }
+/*META @meta: label=Smooth Minimum; @s: min=0.0; */
 
 /*META @meta: label=Mix;*/
 float Float_mix(float a, float b, float fac){ return mix(a,b,fac); }

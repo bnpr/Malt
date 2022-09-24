@@ -12,6 +12,10 @@
 */
 vec4 box_blur(sampler2D input_texture, vec2 uv, float radius, bool circular)
 {
+    if(radius <= 1.0)
+    {
+        return texture(input_texture, uv);
+    }
     vec2 resolution = textureSize(input_texture, 0);
 
     vec4 result = vec4(0);
@@ -60,6 +64,10 @@ float _gaussian_weight_3d(vec3 v, float sigma)
 */
 vec4 gaussian_blur(sampler2D input_texture, vec2 uv, float radius, float sigma)
 {
+    if(radius <= 1.0 || sigma <= 0.0)
+    {
+        return texture(input_texture, uv);
+    }
     vec2 resolution = textureSize(input_texture, 0);
 
     vec4 result = vec4(0);
@@ -90,6 +98,10 @@ vec4 gaussian_blur(sampler2D input_texture, vec2 uv, float radius, float sigma)
 */
 vec4 jitter_blur(sampler2D input_texture, vec2 uv, float radius, float distribution_exponent, int samples)
 {
+    if(samples <= 0 || radius <= 0.0)
+    {
+        return texture(input_texture, uv);
+    }
     vec2 resolution = textureSize(input_texture, 0);
     vec4 result = vec4(0);
 

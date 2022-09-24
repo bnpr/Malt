@@ -272,8 +272,8 @@ class MaltRenderEngine(bpy.types.RenderEngine):
             buffer_name = key
             if key == 'Combined': buffer_name = 'COLOR'
             if key == 'Depth': buffer_name = 'DEPTH'
-            rect_ptr = CBlenderMalt.get_rect_ptr(value.as_pointer())
-            if hasattr(buffers[buffer_name], 'buffer'):
+            if buffer_name in buffers and hasattr(buffers[buffer_name], 'buffer'):
+                rect_ptr = CBlenderMalt.get_rect_ptr(value.as_pointer())
                 ctypes.memmove(rect_ptr, buffers[buffer_name].buffer(), size*4*value.channels)
         
         self.end_result(result)
