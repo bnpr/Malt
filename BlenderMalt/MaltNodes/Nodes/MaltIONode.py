@@ -109,7 +109,10 @@ class MaltIONode(bpy.types.Node, MaltNode):
         if self.is_custom_socket(socket) and self.id_data.is_group() == False:
             return transpiler.custom_io_reference(io, self.io_type, socket.name)
         else:
-            return transpiler.io_parameter_reference(socket.name, io)
+            if socket.is_struct_member():
+                return socket.name #Keep the dot. Should be OK for GLSL (hackish)
+            else:
+                return transpiler.io_parameter_reference(socket.name, io)
     
     def get_source_code(self, transpiler):
         code = ''
