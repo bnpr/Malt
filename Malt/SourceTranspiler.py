@@ -45,7 +45,7 @@ class SourceTranspiler():
 
     @classmethod
     def io_parameter_reference(self, parameter_name, io_type):
-        pass
+        return parameter_name
 
     @classmethod
     def is_instantiable_type(self, type):
@@ -86,10 +86,6 @@ class GLSLTranspiler(SourceTranspiler):
     @classmethod
     def custom_io_reference(self, io, graph_io_type, name):
         return f"{io.upper()}_{graph_io_type.upper()}_{''.join(char.upper() for char in name if char.isalnum())}"
-    
-    @classmethod
-    def io_parameter_reference(self, parameter_name, io_type):
-        return self.get_source_name(parameter_name, '')
     
     @classmethod
     def preprocessor_wrap(self, define, content):
