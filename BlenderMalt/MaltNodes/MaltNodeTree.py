@@ -312,6 +312,16 @@ class MaltTree(bpy.types.NodeTree):
             import traceback
             traceback.print_exc()
         self.disable_updates = False
+    
+    def on_name_change(self, old_src_name):
+        if self.is_group():
+            new_src_name = self.get_group_source_name()
+            for key in list(self.malt_parameters.get_rna().keys()):
+                if old_src_name in key:
+                    self.malt_parameters.rename_property(key, key.replace(old_src_name, new_src_name))
+            bpy.msgbus.clear_by_owner(self)
+            self.subscribed = False
+        self.update_ext(force_update=True)
 
     def update(self):
         if self.is_active():
@@ -326,7 +336,7 @@ class MaltTree(bpy.types.NodeTree):
         
         if self.subscribed == False:
             bpy.msgbus.subscribe_rna(key=self.path_resolve('name', False),
-                owner=self, args=(None,), notify=lambda _ : self.update_ext(force_update=True))
+                owner=self, args=(self.get_group_source_name(),), notify=lambda arg : self.on_name_change(arg))
             self.subscribed = True
         
         links_str = ''
