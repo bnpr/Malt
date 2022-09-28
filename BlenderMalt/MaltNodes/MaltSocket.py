@@ -109,7 +109,7 @@ class MaltSocket(bpy.types.NodeSocket):
 
     def get_linked(self, ignore_muted=True):
         def get_linked_internal(socket):
-            if socket.is_linked == False:
+            if socket.is_linked == False and ignore_muted:
                 return None
             else:
                 try: link = socket.links[0]
