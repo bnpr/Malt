@@ -124,11 +124,10 @@ class Bridge():
             graph.name = name
             from Malt.PipelineGraph import GLSLGraphIO
             output_types = [
-                'bool','float','int','uint',
-                'vec2','vec3','vec4',
-                'ivec2','ivec3','ivec4',
-                'uvec2','uvec3','uvec4',
-                'mat4',
+                'float','vec2','vec3','vec4',
+                'int','ivec2','ivec3','ivec4',
+                'uint','uvec2','uvec3','uvec4',
+                'bool','mat4',
             ]
             input_types = [*output_types] + ['sampler1D','sampler2D']
             graph.graph_io={
