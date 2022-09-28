@@ -208,6 +208,17 @@ class MaltIONode(bpy.types.Node, MaltNode):
                 def remove_custom_socket():
                     parameters.remove(index)
                 col.operator("wm.malt_callback", text='', icon='REMOVE').callback.set(remove_custom_socket, 'Remove')
+                def move_up():
+                    if index > 0:
+                        parameters.move(index, index - 1)
+                        setattr(owner, index_key, index - 1)
+                col.operator("wm.malt_callback", text='', icon='TRIA_UP').callback.set(move_up, 'Move Up')
+                def move_down():
+                    if index < len(parameters) - 1:
+                        parameters.move(index, index + 1)
+                        setattr(owner, index_key, index + 1)
+                col.operator("wm.malt_callback", text='', icon='TRIA_DOWN').callback.set(move_down, 'Move Down')
+
             if self.allow_custom_pass:
                 draw_parameters_list(self.get_custom_pass_io(), 'outputs' if self.is_output else 'inputs')
             else:
