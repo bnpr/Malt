@@ -32,9 +32,10 @@ class MaltGroupNode(bpy.types.Node, MaltFunctionNodeBase):
         from BlenderMalt.MaltNodes.MaltNodeTree import set_node_tree
         row = layout.row(align=True)
         row.prop(self, 'group', text='')
-        row.operator('wm.malt_callback', text = '', icon = 'GREASEPENCIL').callback.set(
-            lambda: set_node_tree(context, self.group, self)
-        )
+        if self.group is not None:
+            row.operator('wm.malt_callback', text = '', icon = 'GREASEPENCIL').callback.set(
+                lambda: set_node_tree(context, self.group, self)
+            )
     
 classes = [
     MaltGroupNode,
