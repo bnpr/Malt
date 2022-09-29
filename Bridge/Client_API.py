@@ -117,6 +117,8 @@ class Bridge():
         import copy
         group_graphs = {}
         for name, graph in self.graphs.items():
+            if '(Group)' in name:
+                continue
             if graph.language == 'GLSL':
                 group_graphs[f'{name} (Group)'] = copy.deepcopy(graph)
         
@@ -220,6 +222,7 @@ class Bridge():
             'graph_types': graph_types
         })
         self.graphs.update(self.connections['REFLECTION'].recv())
+        self.generate_group_graphs()
     
     @bridge_method
     def get_shared_buffer(self, ctype, size):

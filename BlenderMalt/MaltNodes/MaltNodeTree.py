@@ -456,6 +456,8 @@ def track_library_changes(force_update=False, is_initial_setup=False):
     updated_graphs = []
     if is_initial_setup == False:
         for name, graph in graphs.items():
+            if '(Group)' in name:
+                continue
             if graph.needs_reload():
                 updated_graphs.append(name)
         if len(updated_graphs) > 0:        
