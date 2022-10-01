@@ -290,6 +290,7 @@ class MaltTree(bpy.types.NodeTree):
             if hasattr(node, 'get_source_global_parameters'):
                 shader['GLOBAL'] += node.get_source_global_parameters(transpiler)
         if self.is_group():
+            shader['SKIP INCLUDES'] = True
             shader['INCLUDE GUARD'] = self.get_group_source_name() + '_GLSL'
         source = pipeline_graph.generate_source(shader)
         if self.is_group():

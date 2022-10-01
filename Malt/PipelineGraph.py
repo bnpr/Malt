@@ -152,8 +152,9 @@ class GLSLPipelineGraph(PipelineGraph):
             if graph_io.name in parameters.keys() and graph_io.define:
                 code += '#define {}\n'.format(graph_io.define)
         code += '\n\n' + self.default_global_scope + '\n\n'
-        for file in self.lib_files:
-            code += f'#include "{file}"\n'
+        if parameters.get('SKIP INCLUDES', False) == False:
+            for file in self.lib_files:
+                code += f'#include "{file}"\n'
         code += '\n\n' + parameters['GLOBAL'] + '\n\n'
         for graph_io in self.graph_io.values():
             if graph_io.name in parameters.keys():
