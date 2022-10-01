@@ -255,6 +255,9 @@ class OT_MaltCycleSubCategories(bpy.types.Operator):
         node: bpy.types.Node = operator.node
         font_id = 0
 
+        if context.space_data.path[-1].node_tree != node.id_data:
+            return
+
         prefs = context.preferences
         label_style = prefs.ui_styles[0].widget_label
         zoom = MaltNodeDrawCallbacks.get_view_zoom(context)
