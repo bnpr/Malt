@@ -87,7 +87,7 @@ class MaltTree(bpy.types.NodeTree):
         return self.is_group_type
     
     def get_group_source_name(self):
-        name = self.get_transpiler().get_source_name(self.name_full, prefix='').upper()
+        name = self.get_transpiler().get_source_name(self.name, prefix='').upper()
         return name
 
     def get_group_function(self, force_update=False):
