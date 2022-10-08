@@ -385,6 +385,9 @@ class OT_MaltNodesToGroup(bpy.types.Operator):
         from mathutils import Vector
         sd: bpy.types.SpaceNodeEditor = context.space_data
         initial_tree = sd.edit_tree
+        for n in context.selected_nodes:
+            if n.bl_idname == 'MaltIONode':
+                n.select = False
         selected: list[bpy.types.Node] = context.selected_nodes
         avg_loc = Vector((0.0, 0.0))
         for node in selected:
