@@ -184,6 +184,7 @@ class MaltTree(bpy.types.NodeTree):
         return None
     
     def get_unique_node_id(self, base_name):
+        base_name = base_name.lower() # Avoid ALL CAPS uniforms, since they are considered private
         if 'NODE_NAMES' not in self.keys():
             self['NODE_NAMES'] = {}
         if base_name not in self['NODE_NAMES'].keys():
