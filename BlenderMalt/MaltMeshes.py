@@ -151,4 +151,3 @@ def unregister():
     del bpy.types.Mesh.malt_vertex_color_override_1
     del bpy.types.Mesh.malt_vertex_color_override_2
     del bpy.types.Mesh.malt_vertex_color_override_3
-

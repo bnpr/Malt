@@ -186,4 +186,3 @@ def glsl_type_to_malt_type(glsl_type):
             return (type, 1)
     
     return None
-  

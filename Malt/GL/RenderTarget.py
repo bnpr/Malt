@@ -99,4 +99,3 @@ class ArrayLayerTarget(TargetBase):
     
     def attach(self, attachment):
         glFramebufferTextureLayer(GL_FRAMEBUFFER, attachment, self.texture_array, 0, self.layer)
-

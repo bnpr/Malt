@@ -48,4 +48,3 @@ EXPORT void capture_end()
     init();
     if (API) API->EndFrameCapture(NULL, NULL);
 }
-

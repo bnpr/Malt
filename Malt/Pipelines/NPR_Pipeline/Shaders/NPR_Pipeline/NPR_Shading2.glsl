@@ -450,4 +450,3 @@ vec3 NPR_specular_layer(
 }
 
 #endif //NPR_SHADING2_GLSL
-

@@ -29,4 +29,3 @@ with zipfile.ZipFile(zip_file) as z:
 os.chmod(target_path, os.stat(target_path).st_mode | stat.S_IEXEC)
 
 os.remove(zip_file)
-

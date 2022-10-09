@@ -33,5 +33,3 @@ def register():
 def unregister():
     for module in reversed(get_modules()):
         module.unregister()
-
-        

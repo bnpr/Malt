@@ -508,4 +508,3 @@ def main(pipeline_path, viewport_bit_depth, connection_addresses,
                 repeated_exception += 1
 
     glfw.terminate()
-

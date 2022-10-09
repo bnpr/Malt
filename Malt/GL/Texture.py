@@ -242,7 +242,3 @@ def format_channels(format):
     if format in table.keys():
         return table[format]
     return 1
-
-    
-
-

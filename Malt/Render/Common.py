@@ -51,5 +51,3 @@ class CommonBuffer():
     def shader_callback(self, shader):
         if 'COMMON_UNIFORMS' in shader.uniform_blocks:
             self.bind(shader.uniform_blocks['COMMON_UNIFORMS'])
-
-

@@ -314,5 +314,3 @@ class Bridge():
             return self.render_buffers[viewport_id], finished, read_resolution
         else:
             return None, finished, read_resolution
-
-

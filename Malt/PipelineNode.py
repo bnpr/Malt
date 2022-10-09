@@ -66,5 +66,3 @@ class PipelineNode():
     
     def execute(self, parameters):
         pass
-    
-

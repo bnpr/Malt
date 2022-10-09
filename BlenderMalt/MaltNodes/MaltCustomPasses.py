@@ -132,4 +132,3 @@ def register():
 def unregister():
     del bpy.types.World.malt_graph_types
     for _class in reversed(classes): bpy.utils.unregister_class(_class)
-

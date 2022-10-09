@@ -324,4 +324,3 @@ LineExpandOutput line_expand(vec2 uv, int max_width,
 }
 
 #endif //LINE_GLSL
-

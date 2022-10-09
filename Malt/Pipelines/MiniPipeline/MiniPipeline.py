@@ -64,4 +64,3 @@ class MiniPipeline(Pipeline):
 
 
 PIPELINE = MiniPipeline
-    

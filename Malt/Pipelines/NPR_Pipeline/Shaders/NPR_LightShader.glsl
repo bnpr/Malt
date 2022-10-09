@@ -83,4 +83,3 @@ void main()
 }
 
 #endif //PIXEL_SHADER
-

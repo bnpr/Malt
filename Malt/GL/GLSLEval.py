@@ -36,4 +36,3 @@ def glsl_eval(str):
     true = True
     false = False
     return eval(str)
-

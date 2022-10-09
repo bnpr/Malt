@@ -466,4 +466,3 @@ def unregister():
     for panel in get_panels():
         if 'MALT' in panel.COMPAT_ENGINES:
             panel.COMPAT_ENGINES.remove('MALT')
-

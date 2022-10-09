@@ -125,4 +125,3 @@ vec3 toon_shading(vec3 position, vec3 normal, float size, float gradient_size, f
 }
 
 #endif //NPR_SHADING_GLSL
-

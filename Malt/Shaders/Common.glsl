@@ -154,4 +154,3 @@ void PIXEL_SETUP_INPUT()
 #endif //PIXEL_SHADER
 
 #endif //COMMON_GLSL
-

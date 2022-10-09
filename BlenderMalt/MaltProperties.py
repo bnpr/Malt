@@ -952,5 +952,3 @@ def unregister():
     del bpy.types.Mesh.malt_parameters
     del bpy.types.Curve.malt_parameters
     del bpy.types.Light.malt_parameters
-
-

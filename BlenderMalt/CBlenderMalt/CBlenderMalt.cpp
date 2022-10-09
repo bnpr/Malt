@@ -159,4 +159,3 @@ EXPORT float* get_rect_ptr(void* render_pass_ptr)
 {
     return ((RenderPass*)render_pass_ptr)->rect;
 }
-

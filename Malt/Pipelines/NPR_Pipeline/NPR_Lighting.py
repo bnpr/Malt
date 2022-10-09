@@ -123,5 +123,3 @@ class NPR_TransparentShadowMaps(NPR_ShadowMaps):
         shader.textures['TRANSPARENT_SHADOWMAPS_COLOR_SPOT'] = self.spot_color_t
         shader.textures['TRANSPARENT_SHADOWMAPS_COLOR_SUN'] = self.sun_color_t
         shader.textures['TRANSPARENT_SHADOWMAPS_COLOR_POINT'] = self.point_color_t
-        
-

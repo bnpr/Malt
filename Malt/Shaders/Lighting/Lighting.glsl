@@ -224,4 +224,3 @@ ShadowData point_shadow(vec3 position, Light light, samplerCubeArray shadowmap, 
 }
 
 #endif //COMMON_LIGHTING_GLSL
-

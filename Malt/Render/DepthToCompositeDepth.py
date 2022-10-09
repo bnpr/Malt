@@ -31,8 +31,3 @@ class CompositeDepth():
         common_buffer.shader_callback(self.shader)
         pipeline.draw_screen_pass(self.shader, self.fbo)
         return self.t
-
-        
-
-
-

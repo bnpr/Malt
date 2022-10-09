@@ -632,4 +632,3 @@ def glslang_validator(source, stage):
         return '{} SHADER VALIDATION :\n{}'.format(stages[stage], out)
     else:
         return ''
-

@@ -49,4 +49,3 @@ vec4 jump_flood(sampler2D input_texture, vec2 uv, float width, bool third_channe
 
 
 #endif //JUMP_FLOOD_GLSL
-

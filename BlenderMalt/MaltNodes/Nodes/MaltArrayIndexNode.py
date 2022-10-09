@@ -52,4 +52,3 @@ def register():
     
 def unregister():
     for _class in reversed(classes): bpy.utils.unregister_class(_class)
-

@@ -140,4 +140,3 @@ LitSurface npr_lit_surface(vec3 position, vec3 normal, uint id, Light light, int
 }
 
 #endif //NPR_LIGHTING_GLSL
-
