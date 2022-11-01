@@ -456,7 +456,7 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
         parameter.min = main_prop.get('min')
         parameter.max = main_prop.get('max')
         property[new_name] = parameter
-        self.setup(property, replace_parameters= False)
+        self.setup(property, replace_parameters= False, skip_private=False)
     
     def remove_override(self, property):
         rna = self.get_rna()
