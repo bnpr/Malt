@@ -760,7 +760,11 @@ def set_node_tree(context, node_tree, node = None):
             locked_spaces[0].node_tree = node_tree
 
 
+SKIP_MATERIAL_UPDATE = False
 def active_material_update(dummy=None):
+    global SKIP_MATERIAL_UPDATE
+    if SKIP_MATERIAL_UPDATE:
+        return
     try:
         material = bpy.context.object.active_material
         node_tree = material.malt.shader_nodes

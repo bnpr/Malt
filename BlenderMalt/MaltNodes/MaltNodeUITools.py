@@ -382,7 +382,9 @@ class OT_MaltNodesToGroup(bpy.types.Operator):
     def execute(self, context: bpy.types.Context):
         from BlenderMalt.MaltNodes.Nodes.MaltGroupNode import MaltGroupNode
         from BlenderMalt.MaltNodes.MaltNodeTree import set_node_tree
+        from BlenderMalt.MaltNodes import MaltNodeTree
         from mathutils import Vector
+        MaltNodeTree.SKIP_MATERIAL_UPDATE = True
         sd: bpy.types.SpaceNodeEditor = context.space_data
         initial_tree = sd.edit_tree
         for n in context.selected_nodes:
@@ -407,6 +409,7 @@ class OT_MaltNodesToGroup(bpy.types.Operator):
             n.location = Vector(n.location) - avg_loc
         for n in selected:
             initial_tree.nodes.remove(n)
+        MaltNodeTree.SKIP_MATERIAL_UPDATE = False
         return {'FINISHED'}
 
 def get_absolute_node_position(node: bpy.types.Node):
