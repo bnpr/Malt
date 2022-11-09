@@ -443,7 +443,7 @@ def uniform_type_set_function(uniform_type):
         GL_DOUBLE : 'dv',
         GL_INT : 'iv',
         GL_UNSIGNED_INT : 'uiv',
-        GL_BOOL : 'iv',
+        GL_BOOL : 'uiv',
     }
     gl_size = {
         1 : '1',
@@ -459,6 +459,11 @@ def uniform_type_set_function(uniform_type):
         def set_matrix_wrapper(location, count, value):
             function(location, count, GL_FALSE, value)
         return set_matrix_wrapper
+    elif base_type == GL_BOOL and size > 1:
+        function = globals()[f'glUniform{gl_size[size]}ui'] #uiv doesn't work on AMD (See #439)
+        def bool_wrapper(location, count, value):
+            function(location, *value)
+        return bool_wrapper
     else:
         return function
 
