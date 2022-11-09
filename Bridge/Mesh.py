@@ -12,4 +12,3 @@ def load_mesh(pipeline, msg):
         uvs = data['uvs'],
         colors = data['colors']
     )
-

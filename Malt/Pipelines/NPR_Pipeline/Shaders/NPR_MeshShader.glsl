@@ -1,7 +1,9 @@
 #include "NPR_Intellisense.glsl"
 #include "Common.glsl"
 
-/* META @meta: internal=true; */
+/* META GLOBAL
+    @meta: internal=true; 
+*/
 struct NPR_Settings
 {
     // Global material settings. Can be modified in the material panel UI
@@ -27,6 +29,11 @@ struct Vertex
     vec4 color[4];
 };
 
+/*  META
+    @id: label=ID;
+    @opacity: label=Opacity Mask;
+    @transparent_shadowmap_color: label=Transparent Shadow Color;
+*/
 struct PrePassOutput
 {
     vec3 normal;
@@ -215,8 +222,7 @@ void main()
         
         vec3 position = POSITION + view_direction() * depth_offset;
 
-        depth = project_point(PROJECTION * CAMERA, position).z;
-        depth = map_range(depth, -1.0, 1.0, gl_DepthRange.near, gl_DepthRange.far);
+        depth = project_point_to_screen_coordinates(PROJECTION * CAMERA, position).z;
         gl_FragDepth = depth;
 
         if(offset_position) POSITION = position;
@@ -285,3 +291,4 @@ void main()
 #endif //PIXEL_SHADER
 
 #include "NPR_Pipeline/NPR_Mesh.glsl"
+#include "NPR_Pipeline/NPR_Shading2.glsl"

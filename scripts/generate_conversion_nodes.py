@@ -52,5 +52,3 @@ for to_vector_type in vector_types:
 
 
 print(result)
-
-

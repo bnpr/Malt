@@ -254,8 +254,12 @@ class Bridge():
         assert(viewport_id in self.viewport_ids or viewport_id == 0)
 
         new_buffers = None
-        if viewport_id not in self.render_buffers.keys() or self.render_buffers[viewport_id]['__resolution'] != resolution:
-            self.render_buffers[viewport_id] = {'__resolution' : resolution}
+        buffers = self.render_buffers.get(viewport_id)
+        if buffers is None or buffers['__resolution'] != resolution or buffers['__AOVs'] != AOVs:
+            self.render_buffers[viewport_id] = {
+                '__resolution' : resolution,
+                '__AOVs' : AOVs
+            }
             from itertools import chain
             for key, texture_format in chain(self.render_outputs.items(), AOVs.items()):
                 buffer_type = ctypes.c_float
@@ -310,5 +314,3 @@ class Bridge():
             return self.render_buffers[viewport_id], finished, read_resolution
         else:
             return None, finished, read_resolution
-
-

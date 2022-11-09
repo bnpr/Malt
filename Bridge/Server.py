@@ -45,7 +45,12 @@ def log_system_info():
 
     def log_format_prop(format, prop):
         read = glGetInternalformativ(GL_TEXTURE_2D, format, prop, 1)
-        LOG.info('{} {}: {}'.format(GL_ENUMS[format], GL_ENUMS[prop], GL_ENUMS[read]))
+        try:
+            LOG.info('{} {}: {}'.format(GL_ENUMS[format], GL_ENUMS[prop], GL_ENUMS[read]))
+        except:
+            #Some returned formats are not present in GL_ENUMS? See #393
+            import traceback
+            traceback.print_exc()
 
     def log_format_props(format):
         log_format_prop(format, GL_READ_PIXELS)
@@ -128,6 +133,7 @@ class Viewport():
         self.read_resolution = None
         self.scene = None
         self.bit_depth = bit_depth
+        self.target_format = None
         self.final_texture = None
         self.final_target = None
         self.pbos_active = []
@@ -159,21 +165,23 @@ class Viewport():
             self.pbos_active = []
             assert(new_buffers is not None)
             if self.bit_depth == 8:
-                optimal_format = GL_UNSIGNED_BYTE
+                self.target_format = GL_UNSIGNED_BYTE
                 if glGetInternalformativ(GL_TEXTURE_2D, GL_RGBA8, GL_READ_PIXELS, 1) != GL_ZERO:
-                    optimal_format = glGetInternalformativ(GL_TEXTURE_2D, GL_RGBA8, GL_TEXTURE_IMAGE_TYPE, 1)
+                    self.target_format = glGetInternalformativ(GL_TEXTURE_2D, GL_RGBA8, GL_TEXTURE_IMAGE_TYPE, 1)
                 try:
-                    self.final_texture = Texture(resolution, GL_RGBA8, optimal_format, pixel_format=GL_RGBA)
+                    self.final_texture = Texture(resolution, GL_RGBA8, self.target_format, pixel_format=GL_RGBA)
                 except:
                     # Fallback to unsigned byte, just in case
-                    self.final_texture = Texture(resolution, GL_RGBA8, GL_UNSIGNED_BYTE, pixel_format=GL_RGBA)
+                    self.target_format = GL_UNSIGNED_BYTE
+                    self.final_texture = Texture(resolution, GL_RGBA8, self.target_format)
                 self.final_texture.channel_size = 1
                 self.final_target = RenderTarget([self.final_texture])
-            elif self.bit_depth == 16:
-                self.final_texture = Texture(resolution, GL_RGBA16F)
-                self.final_target = RenderTarget([self.final_texture])
-            elif self.bit_depth == 32:
-                self.final_texture = Texture(resolution, GL_RGBA32F)
+            else:
+                if self.bit_depth == 16:
+                    self.target_format = GL_RGBA16F
+                elif self.bit_depth == 32:
+                    self.target_format = GL_RGBA32F
+                self.final_texture = Texture(resolution, self.target_format)
                 self.final_target = RenderTarget([self.final_texture])
         
         if new_buffers:
@@ -201,6 +209,27 @@ class Viewport():
             self.scene.time = scene.time
             self.scene.frame = scene.frame
     
+    TO_SRGB_SHADER = None
+    def to_srgb(self, texture, target):
+        if Viewport.TO_SRGB_SHADER is None:
+            source='#include "Passes/sRGBConversion.glsl"'
+            Viewport.TO_SRGB_SHADER = self.pipeline.compile_shader_from_source(source)
+        Viewport.TO_SRGB_SHADER.uniforms["to_srgb"].set_value(True)
+        Viewport.TO_SRGB_SHADER.textures["input_texture"] = texture
+        self.pipeline.draw_screen_pass(Viewport.TO_SRGB_SHADER, target)   
+    def ensure_correct_format(self, key, texture):
+        format = GL_R32F if key == 'DEPTH' else self.target_format
+        if texture.format == format and texture.resolution == self.resolution:
+            return texture
+        target = self.final_target
+        if key != 'COLOR': #Create on the fly, since final render targets can be large
+            target = RenderTarget([Texture(self.resolution, format)])
+        if self.bit_depth == 8 and key != 'DEPTH':
+            self.to_srgb(texture, target)
+        else:
+            self.pipeline.copy_textures(target, [texture])
+        return target.targets[0]
+    
     def render(self):
         from . import renderdoc
         if self.renderdoc_capture:
@@ -208,26 +237,20 @@ class Viewport():
 
         if self.needs_more_samples:
             result = self.pipeline.render(self.resolution, self.scene, self.is_final_render, self.is_new_frame)
-            if self.final_texture.internal_format != result['COLOR'].internal_format:
-                self.pipeline.copy_textures(self.final_target, [result['COLOR']])
-                result = { 'COLOR' : self.final_texture }
             self.is_new_frame = False
             self.needs_more_samples = self.pipeline.needs_more_samples()
-            
             if self.is_final_render == False or self.needs_more_samples == False:
                 pbos = None
-                
                 if len(self.pbos_inactive) > 0:
                     pbos = self.pbos_inactive.pop()
                 else:
                     pbos = {}
-                
                 for key, texture in result.items():
                     if texture and key in self.buffers.keys():
                         if key not in pbos.keys():
                             pbos[key] = PBO()
+                        texture = self.ensure_correct_format(key, texture)
                         pbos[key].setup(texture, self.buffers[key])
-                
                 self.pbos_active.append(pbos)
             
         if len(self.pbos_active) > 0:
@@ -485,4 +508,3 @@ def main(pipeline_path, viewport_bit_depth, connection_addresses,
                 repeated_exception += 1
 
     glfw.terminate()
-

@@ -11,7 +11,10 @@
 #define LIGHT_POINT 2
 #define LIGHT_SPOT 3
 
-/* META @meta: internal=true; */
+/* META GLOBAL
+    @meta: internal=true;
+*/
+
 struct Light
 {
     vec3 color;
@@ -28,7 +31,6 @@ struct Light
 #define MAX_SUNS 64
 #define MAX_POINTS 64
 
-/* META @meta: internal=true; */
 struct SceneLights
 {
     Light lights[MAX_LIGHTS];
@@ -48,7 +50,6 @@ uniform sampler2DArray SHADOWMAPS_DEPTH_SPOT;
 uniform sampler2DArray SHADOWMAPS_DEPTH_SUN;
 uniform samplerCubeArray SHADOWMAPS_DEPTH_POINT;
 
-/* META @meta: internal=true; */
 struct LitSurface
 {
     vec3 N;// Surface normal
@@ -64,7 +65,6 @@ struct LitSurface
     vec3 light_color;
 };
 
-/* META @meta: internal=true; */
 struct ShadowData
 {
     vec3 light_uv;
@@ -78,7 +78,6 @@ ShadowData sun_shadow(vec3 position, Light light, sampler2DArray shadowmap, floa
 ShadowData point_shadow(vec3 position, Light light, samplerCubeArray shadowmap, float bias);
 
 /*  META
-    @meta: internal=true;
     @position: subtype=Vector; default=POSITION;
     @normal: subtype=Normal; default=NORMAL;
 */
@@ -158,7 +157,6 @@ LitSurface lit_surface(vec3 position, vec3 normal, Light light, bool shadows)
     return S;
 }
 
-/* META @meta: internal=true; */
 ShadowData spot_shadow(vec3 position, Light light, sampler2DArray shadowmap, float bias)
 {
     vec2 shadowmap_size = vec2(textureSize(shadowmap, 0));
@@ -175,7 +173,6 @@ ShadowData spot_shadow(vec3 position, Light light, sampler2DArray shadowmap, flo
     return S;
 }
 
-/* META @meta: internal=true; */
 ShadowData sun_shadow(vec3 position, Light light, sampler2DArray shadowmap, float bias, out int cascade)
 {
     vec2 shadowmap_size = vec2(textureSize(shadowmap, 0));
@@ -204,7 +201,6 @@ ShadowData sun_shadow(vec3 position, Light light, sampler2DArray shadowmap, floa
     return S;
 }
 
-/* META @meta: internal=true; */
 ShadowData point_shadow(vec3 position, Light light, samplerCubeArray shadowmap, float bias)
 {
     vec2 shadowmap_size = vec2(textureSize(shadowmap, 0));
@@ -228,4 +224,3 @@ ShadowData point_shadow(vec3 position, Light light, samplerCubeArray shadowmap, 
 }
 
 #endif //COMMON_LIGHTING_GLSL
-

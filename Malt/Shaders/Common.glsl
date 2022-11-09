@@ -31,6 +31,8 @@ layout(std140) uniform COMMON_UNIFORMS
 uniform bool MIRROR_SCALE = false;
 uniform bool PRECOMPUTED_TANGENTS = false;
 
+uniform bvec4 COLOR_IS_SRGB = bvec4(false);
+
 #ifndef MAX_BATCH_SIZE
     // Assume at least 64kb of UBO storage (d3d11 requirement) and max element size of mat4
     #define MAX_BATCH_SIZE 1000
@@ -116,6 +118,14 @@ void DEFAULT_VERTEX_SHADER()
     COLOR[2]=in_color2;
     COLOR[3]=in_color3;
 
+    for(int i = 0; i < 4; i++)
+    {
+        if(COLOR_IS_SRGB[i])
+        {
+            COLOR[i].rgb = srgb_to_linear(COLOR[i].rgb);
+        }
+    }
+
     VERTEX_SETUP_OUTPUT();
 }
 
@@ -144,4 +154,3 @@ void PIXEL_SETUP_INPUT()
 #endif //PIXEL_SHADER
 
 #endif //COMMON_GLSL
-

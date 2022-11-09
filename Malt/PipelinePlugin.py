@@ -26,6 +26,11 @@ class PipelinePlugin():
     def blendermalt_unregister(self):
         pass
 
+    @classmethod
+    def blendermalt_register_nodeitems(self, MaltNodeItemClass):
+        # Should return a dictionary where keys are category names and values are arrays of MaltNodeItems
+        return {}
+
 def load_plugins_from_dir(dir):
     import sys, os, importlib
     if dir not in sys.path:

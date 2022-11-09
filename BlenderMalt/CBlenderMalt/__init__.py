@@ -40,4 +40,3 @@ has_flat_polys.restype = ctypes.c_bool
 get_rect_ptr = CBlenderMalt['get_rect_ptr']
 get_rect_ptr.argtypes = [ctypes.c_void_p]
 get_rect_ptr.restype = ctypes.POINTER(ctypes.c_float)
-

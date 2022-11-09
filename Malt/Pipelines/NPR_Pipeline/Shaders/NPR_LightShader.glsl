@@ -1,3 +1,9 @@
+#define NO_NORMAL_INPUT
+#define NO_UV_INPUT
+#define NO_VERTEX_COLOR_INPUT
+#define NO_MODEL_INPUT
+#define NO_ID_INPUT
+
 #include "NPR_Intellisense.glsl"
 #include "Common.glsl"
 #include "Lighting/Lighting.glsl"
@@ -77,4 +83,3 @@ void main()
 }
 
 #endif //PIXEL_SHADER
-

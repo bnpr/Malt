@@ -62,5 +62,3 @@ class NPR_LightShaders():
         if 'LIGHTS_CUSTOM_SHADING' in shader.uniform_blocks:
             self.UBO.bind(shader.uniform_blocks['LIGHTS_CUSTOM_SHADING'])
         shader.textures['IN_LIGHT_CUSTOM_SHADING'] = self.texture
-
-

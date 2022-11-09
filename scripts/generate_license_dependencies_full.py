@@ -21,4 +21,3 @@ for dependency in dependencies.split('\n\n'):
     result+='\n'
 
 open(os.path.join(TOP_DIR, 'LICENSE - DEPENDENCIES (FULL TEXT)'), 'w').write(result)
-    

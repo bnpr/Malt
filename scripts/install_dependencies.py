@@ -38,4 +38,3 @@ for e in os.listdir(malt_dependencies_path):
 
 
 #subprocess.check_call([sys.executable, os.path.join(current_dir, 'get_glslang.py')])
-

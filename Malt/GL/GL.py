@@ -88,5 +88,3 @@ def buffer_to_string(buffer):
             break
         chars.append(chr(char))
     return ''.join(chars)
-
-

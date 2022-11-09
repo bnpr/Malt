@@ -1,6 +1,10 @@
 #ifndef SAMPLER_GLSL
 #define SAMPLER_GLSL
 
+/*  META GLOBAL
+    @meta: internal = true;
+*/
+
 vec4 sampler1D_sample(sampler1D t, float u) { return texture(t, u); }
 int sampler1D_size(sampler1D t) { return textureSize(t, 0); }
 vec4 sampler1D_textel_fetch(sampler1D t, int u) { return texelFetch(t, u, 0); }

@@ -1,5 +1,7 @@
 # Render Layer Graph Reference
 ---
+## Render
+---
 ### **LineRender**
 Expands the line up to the width especified in the *Line Width* texture
 and composites it on top of the *Color* texture.

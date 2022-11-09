@@ -21,7 +21,8 @@ struct line_comment : seq<STRING("//"), until<eol, any>> {};
 struct multiline_comment : seq<STRING("/*"), until<STRING("*/"), any>> {};
 struct preprocessor_directive : seq<STRING("#"), until<eol, any>> {};
 struct META;
-struct _s_ : star<not_at<META>, sor<line_comment, multiline_comment, preprocessor_directive, space>> {};
+struct META_GLOBAL;
+struct _s_ : star<not_at<sor<META, META_GLOBAL>>, sor<line_comment, multiline_comment, preprocessor_directive, space>> {};
 
 struct LPAREN : one<'('> {};
 struct RPAREN : one<')'> {};
@@ -51,6 +52,8 @@ struct META_MEMBER : seq<one<'@'>, _ms_, IDENTIFIER, _ms_, one<':'>, META_PROPS>
 struct META_MEMBERS : plus<seq<_ms_, META_MEMBER, _ms_>> {};
 struct META : seq<STRING("/*"), _ms_, STRING("META"), _ms_, META_MEMBERS, _ms_, STRING("*/")> {};
 
+struct META_GLOBAL : seq<STRING("/*"), _ms_, STRING("META GLOBAL"), _ms_, META_MEMBERS, _ms_, STRING("*/")> {};
+
 struct MEMBER : seq<opt<PRECISION>, _s_, TYPE, _s_, IDENTIFIER, _s_, opt<ARRAY_SIZE>, _s_, END> {};
 struct MEMBERS : plus<seq<_s_, MEMBER, _s_>> {};
 struct STRUCT_DEF : seq<opt<META, _ms_>, STRUCT, _s_, IDENTIFIER, _s_, LBRACE, _s_, opt<MEMBERS>, _s_, RBRACE> {};
@@ -60,7 +63,7 @@ struct PARAMETERS : list<seq<_s_, PARAMETER, _s_>, seq<_s_, COMMA, _s_>> {};
 struct FUNCTION_SIG : seq<TYPE, _s_, IDENTIFIER, _s_, LPAREN, _s_, opt<PARAMETERS>, _s_, RPAREN> {}; 
 struct FUNCTION_DEC : seq<opt<META, _ms_>, FUNCTION_SIG, _s_, LBRACE> {}; 
 
-struct GLSL_GRAMMAR : star<sor<LINE_DIRECTIVE, STRUCT_DEF, FUNCTION_DEC, any>> {};
+struct GLSL_GRAMMAR : star<sor<LINE_DIRECTIVE, META_GLOBAL, STRUCT_DEF, FUNCTION_DEC, any>> {};
 
 template<typename Rule>
 using selector = parse_tree::selector
@@ -79,6 +82,7 @@ using selector = parse_tree::selector
         META_PROP,
         META_MEMBER,
         META,
+        META_GLOBAL,
         MEMBER,
         MEMBERS,
         STRUCT_DEF,
@@ -198,6 +202,8 @@ int main(int argc, char* argv[])
 
     Document json;
     json.Parse("{}");
+    json.AddMember("meta globals", Value(kObjectType), json.GetAllocator());
+    Value& metal_globals = json["meta globals"];
     json.AddMember("structs", Value(kObjectType), json.GetAllocator());
     Value& structs = json["structs"];
     json.AddMember("functions", Value(kObjectType), json.GetAllocator());
@@ -210,6 +216,14 @@ int main(int argc, char* argv[])
         if(child->is_type<FILE_PATH>())
         {
             current_file = std::string(child->string_view());
+        }
+        else if(child->is_type<META_GLOBAL>())
+        {
+            auto meta_dict = get_meta_dict(child.get(), json.GetAllocator());
+            if(meta_dict.count("meta"))
+            {
+                metal_globals.AddMember(Value(current_file.c_str(), json.GetAllocator()), meta_dict["meta"], json.GetAllocator());
+            }
         }
         else if(child->is_type<STRUCT_DEF>())
         {
@@ -354,4 +368,3 @@ int main(int argc, char* argv[])
 
     return 0;
 }
-

@@ -1,6 +1,10 @@
 #ifndef NODE_UTILS_COMMON_GLSL
 #define NODE_UTILS_COMMON_GLSL
 
+/*  META GLOBAL
+    @meta: internal = true;
+*/
+
 vec3 surface_position() { return POSITION; }
 vec3 surface_normal() { return NORMAL; }
 vec3 surface_tangent(int index) { return get_tangent(index); }

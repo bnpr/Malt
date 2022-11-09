@@ -67,26 +67,24 @@ def load_mesh(object, name):
             ctypes.memmove(tangents_buffer.buffer(), tangents, tangents_buffer.size_in_bytes())
     
     colors_list = [None]*4
-    for i, vertex_color in enumerate(m.vertex_colors):
-        if i >= 4: break
-        color = (ctypes.c_uint8 * (loop_count * 4)).from_address(vertex_color.data[0].as_pointer())
-        color_buffer = get_load_buffer('colors'+str(i), ctypes.c_uint8, loop_count*4)
-        ctypes.memmove(color_buffer.buffer(), color, color_buffer.size_in_bytes())
-        colors_list[i] = color_buffer
-    
     if object.type == 'MESH':
         for i in range(4):
-            try:
-                override = getattr(object.original.data, f'malt_vertex_color_override_{i}')
-                attribute = m.attributes.get(override)
-                if attribute and attribute.domain == 'CORNER' and attribute.data_type == 'FLOAT_COLOR':
-                    color = (ctypes.c_float * (loop_count * 4)).from_address(attribute.data[0].as_pointer())
-                    color_buffer = get_load_buffer('colors_override'+str(i), ctypes.c_float, loop_count*4)
-                    ctypes.memmove(color_buffer.buffer(), color, color_buffer.size_in_bytes())
-                    colors_list[i] = color_buffer
-            except:
-                import traceback
-                traceback.print_exc()
+            override = getattr(object.original.data, f'malt_vertex_color_override_{i}')
+            attribute = m.color_attributes.get(override)
+            #if attribute is None and i < len(m.color_attributes):
+            #    attribute = m.color_attributes[i]
+            if attribute and attribute.domain == 'CORNER':
+                type = None
+                if attribute.data_type == 'BYTE_COLOR':
+                    type = ctypes.c_uint8
+                elif attribute.data_type == 'FLOAT_COLOR':
+                    type = ctypes.c_float
+                else:
+                    continue
+                color = (type * (loop_count * 4)).from_address(attribute.data[0].as_pointer())
+                color_buffer = get_load_buffer('colors'+str(i), type, loop_count*4)
+                ctypes.memmove(color_buffer.buffer(), color, color_buffer.size_in_bytes())
+                colors_list[i] = color_buffer
 
     #TODO: Optimize. Create load buffers from bytearrays and retrieve them later
     mesh_data = {
@@ -115,33 +113,25 @@ def reset_meshes():
     global MESHES
     MESHES = {}
 
-class MALT_PT_Attributes(bpy.types.Panel):
-    bl_space_type = 'PROPERTIES'
-    bl_region_type = 'WINDOW'
-    bl_context = "data"
+def draw_vertex_color_overrides(self, context):
+    if context.scene.render.engine != 'MALT':
+        return
+    mesh = context.object.data
+    self.layout.use_property_split = True
+    self.layout.label(text='Malt Vertex Colors')
+    def draw_color_override(key):
+        value = getattr(mesh, key)
+        layout = self.layout
+        if value in mesh.color_attributes and mesh.color_attributes[value].domain != 'CORNER':
+            layout = self.layout.box()
+            layout.label(text='Only Face Corner attributes are supported', icon='ERROR')
+        layout.prop_search(mesh, key, mesh, 'color_attributes')    
 
-    bl_label = "Malt Vertex Color Overrides"
-    COMPAT_ENGINES = {'MALT'}
+    draw_color_override('malt_vertex_color_override_0')
+    draw_color_override('malt_vertex_color_override_1')
+    draw_color_override('malt_vertex_color_override_2')
+    draw_color_override('malt_vertex_color_override_3')
 
-    @classmethod
-    def get_malt_property_owner(cls, context):
-        if context.object and context.object.data and context.object.type == 'MESH':
-            return context.object.data
-    
-    @classmethod
-    def poll(cls, context):
-        return context.scene.render.engine == 'MALT' and cls.get_malt_property_owner(context)
-    
-    def draw(self, context):
-        owner = self.get_malt_property_owner(context)
-        if owner:
-            self.layout.use_property_split = True
-            self.layout.use_property_decorate = False  # No animation.
-            self.layout.active = owner.library is None #Only local data can be edited
-            self.layout.prop(owner, 'malt_vertex_color_override_0')    
-            self.layout.prop(owner, 'malt_vertex_color_override_1')    
-            self.layout.prop(owner, 'malt_vertex_color_override_2')    
-            self.layout.prop(owner, 'malt_vertex_color_override_3')    
 
 def register():
     bpy.types.Mesh.malt_vertex_color_override_0 = bpy.props.StringProperty(name='0',
@@ -152,13 +142,12 @@ def register():
         options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
     bpy.types.Mesh.malt_vertex_color_override_3 = bpy.props.StringProperty(name='3',
         options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
-    bpy.utils.register_class(MALT_PT_Attributes)
+    bpy.types.DATA_PT_vertex_colors.append(draw_vertex_color_overrides)
 
 
 def unregister():
-    bpy.utils.unregister_class(MALT_PT_Attributes)
+    bpy.types.DATA_PT_vertex_colors.remove(draw_vertex_color_overrides)
     del bpy.types.Mesh.malt_vertex_color_override_0
     del bpy.types.Mesh.malt_vertex_color_override_1
     del bpy.types.Mesh.malt_vertex_color_override_2
     del bpy.types.Mesh.malt_vertex_color_override_3
-

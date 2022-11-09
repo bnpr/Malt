@@ -10,6 +10,7 @@ class Mesh():
         self.tangent = None
         self.uvs = []
         self.colors = []
+        self.color_is_srgb = [False]*4
 
         self.index_count = len(index)
 
@@ -116,10 +117,9 @@ class MeshCustomLoad(Mesh):
         self.tangent = None
         self.uvs = []
         self.colors = []
+        self.color_is_srgb = [False]*4
 
         self.index_count = 0
 
         self.VAO = None
         self.EBO = None
-    
-

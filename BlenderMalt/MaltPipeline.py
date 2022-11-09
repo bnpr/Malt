@@ -118,6 +118,9 @@ class MaltPipeline(bpy.types.PropertyGroup):
     graph_types : bpy.props.CollectionProperty(type=bpy.types.PropertyGroup,
         options={'LIBRARY_EDITABLE'},
         override={'LIBRARY_OVERRIDABLE', 'USE_INSERTION'})
+    material_types : bpy.props.CollectionProperty(type=bpy.types.PropertyGroup,
+        options={'LIBRARY_EDITABLE'},
+        override={'LIBRARY_OVERRIDABLE', 'USE_INSERTION'})
     overrides : bpy.props.StringProperty(name='Pipeline Overrides', default='Preview,Final Render',
         options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
 
@@ -200,10 +203,20 @@ def setup_parameters(ids):
     for bid in ids:
         if isinstance(bid, bpy.types.World):
             bid.malt.graph_types.clear()
-            for graph in get_bridge().graphs.keys():
-                bid.malt.graph_types.add().name = graph
+            bid.malt.material_types.clear()
+            for graph in get_bridge().graphs.values():
+                bid.malt.graph_types.add().name = graph.name
+                if graph.language == 'GLSL':
+                    bid.malt.material_types.add().name = graph.name
             from BlenderMalt.MaltNodes import MaltCustomPasses
             MaltCustomPasses.setup_default_passes(get_bridge().graphs, bid)
+        if isinstance(bid, bpy.types.Material):
+            #Patch material types
+            if bid.malt.material_type == '':
+                if bid.malt.shader_nodes:
+                    bid.malt.material_type = bid.malt.shader_nodes.graph_type
+                else:
+                    bid.malt.material_type = 'Mesh'
         for cls, parameters in class_parameters_map.items():
             if isinstance(bid, cls):
                 bid.malt_parameters.setup(parameters)
@@ -264,7 +277,7 @@ def depsgraph_update(scene, depsgraph):
             elif isinstance(update.id, bpy.types.Texture):
                 MaltTextures.unload_gradients(update.id)
                 redraw = True
-            elif isinstance(update.id, MaltTree):
+            elif update.id.__class__.__name__ == 'MaltTree':
                 redraw = True
         if redraw:
             for screen in bpy.data.screens:
@@ -283,8 +296,8 @@ def load_scene(dummy1=None,dummy2=None):
 
 @bpy.app.handlers.persistent
 def load_scene_post(dummy1=None,dummy2=None):
-    from BlenderMalt.MaltNodes.MaltNodeTree import reset_subscriptions
-    reset_subscriptions()
+    from BlenderMalt.MaltNodes.MaltNodeTree import manual_skip_save
+    manual_skip_save()
     if is_malt_active():
         bpy.context.scene.world.malt.update_pipeline(bpy.context)
 
@@ -336,4 +349,3 @@ def unregister():
     bpy.app.handlers.save_pre.remove(save_pre)
     bpy.app.handlers.save_post.remove(save_post)
     bpy.app.timers.unregister(track_pipeline_changes)
-

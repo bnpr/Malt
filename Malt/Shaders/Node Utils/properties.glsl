@@ -1,6 +1,10 @@
 #ifndef PROPERTIES_GLSL
 #define PROPERTIES_GLSL
 
+/*  META GLOBAL
+    @meta: internal = true;
+*/
+
 bool bool_property(bool b) { return b; }
 
 float float_property(float f) { return f; }

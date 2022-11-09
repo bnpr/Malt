@@ -18,6 +18,11 @@ float ao(sampler2D depth_texture, int depth_channel, vec3 position, vec3 normal,
     //Loosely based on https://learnopengl.com/Advanced-Lighting/SSAO
     float occlusion = 0;
 
+    if(samples <= 0 || radius <= 0.0)
+    {
+        return 1.0;
+    }
+    
     for(int i = 0; i < samples; i++)
     {
         // Generate a random TBN matrix
@@ -37,8 +42,7 @@ float ao(sampler2D depth_texture, int depth_channel, vec3 position, vec3 normal,
         vec3 sample_offset = TBN * random_offset;
         vec3 sample_position = transform_point(CAMERA, position) + sample_offset;
 
-        vec3 sample_uv = project_point(PROJECTION, sample_position);
-        sample_uv.xy = sample_uv.xy * 0.5 + 0.5;
+        vec3 sample_uv = project_point_to_screen_coordinates(PROJECTION, sample_position);
 
         float sampled_depth = texture(depth_texture, sample_uv.xy)[depth_channel];
         sampled_depth = screen_to_camera(sample_uv.xy, sampled_depth).z;
@@ -52,4 +56,3 @@ float ao(sampler2D depth_texture, int depth_channel, vec3 position, vec3 normal,
 }
 
 #endif //AO_GLSL
-
