@@ -61,4 +61,3 @@ float surface_curvature(sampler2D normal_texture, sampler2D depth_texture, int d
 }
 
 #endif //CURVATURE_GLSL
-

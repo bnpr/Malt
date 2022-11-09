@@ -60,4 +60,3 @@ if ARGS.scripts_folder:
     addons_folder = os.path.join(ARGS.scripts_folder, 'addons')
     ensure_dir(addons_folder)
     make_link(os.path.join(addons_folder, 'BlenderMalt'), blender_malt_folder)
-

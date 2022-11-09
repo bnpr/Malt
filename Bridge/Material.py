@@ -50,7 +50,3 @@ def get_shader(path, parameters):
                 pass_shader_copy.uniforms[name].set_value(parameter)
     
     return new_shader
-
-
-
-

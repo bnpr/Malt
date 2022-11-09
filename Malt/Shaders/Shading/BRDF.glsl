@@ -179,4 +179,3 @@ float F_cook_torrance(float VoNH, float F0)
 }
 
 #endif //BRDF_GLSL
-

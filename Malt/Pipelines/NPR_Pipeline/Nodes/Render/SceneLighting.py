@@ -138,4 +138,3 @@ class SceneLighting(PipelineNode):
 
 
 NODE = SceneLighting
-

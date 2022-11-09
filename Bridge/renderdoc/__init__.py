@@ -17,4 +17,3 @@ capture_start.restype = None
 
 capture_end = renderdoc['capture_end']
 capture_end.restype = None
-

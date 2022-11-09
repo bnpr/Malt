@@ -68,6 +68,3 @@ class TextureShaderResource():
     def shader_callback(self, shader):
         if self.name in shader.textures.keys():
             shader.textures[self.name] = self.texture
-
-        
-

@@ -5,4 +5,3 @@ vec4 instance_random_color()
 {
     return hash(ID[0]);
 }
-

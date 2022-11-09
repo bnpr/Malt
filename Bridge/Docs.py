@@ -151,8 +151,3 @@ def build_docs(pipeline, docs_path):
                             draw_function(subcategory_function, 4)
         
             open(os.path.join(output_path, f'{graph.name}-graph.md'), 'w').write(result)
-
-                
-                
-
-

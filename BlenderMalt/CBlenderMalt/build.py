@@ -16,4 +16,3 @@ else: #Single-config generators
     subprocess.check_call(['cmake', '--build', '.'], cwd=build_dir)
 
 subprocess.check_call(['cmake', '--install', '.'], cwd=build_dir)
-

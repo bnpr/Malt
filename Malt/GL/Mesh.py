@@ -123,5 +123,3 @@ class MeshCustomLoad(Mesh):
 
         self.VAO = None
         self.EBO = None
-    
-

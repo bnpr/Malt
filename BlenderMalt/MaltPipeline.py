@@ -350,4 +350,3 @@ def unregister():
     bpy.app.handlers.save_pre.remove(save_pre)
     bpy.app.handlers.save_post.remove(save_post)
     bpy.app.timers.unregister(track_pipeline_changes)
-

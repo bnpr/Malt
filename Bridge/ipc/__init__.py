@@ -101,5 +101,3 @@ class SharedBuffer(IBuffer):
             ctypes.memmove(ctypes.addressof(flag_copy), ctypes.addressof(self._release_flag), ctypes.sizeof(C_SharedMemory))
             self._GARBAGE.append((buffer_copy, flag_copy))
             self.GC()
-
-

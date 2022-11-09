@@ -91,4 +91,3 @@ class IBuffer():
     def as_np_array(self):
         import numpy as np
         return np.array(self.as_array_interface(), copy=False)
-

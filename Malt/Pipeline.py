@@ -415,4 +415,3 @@ class Pipeline():
 
     def do_render(self, resolution, scene, is_final_render, is_new_frame):
         return {}
-

@@ -62,4 +62,3 @@ def get_random_samples(grid_size, width=1.0):
         samples = [(0,0)]
     
     return samples
-

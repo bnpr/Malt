@@ -227,4 +227,3 @@ vec2 rotate_2d(vec2 p, float angle)
 }
 
 #endif //COMMON_TRANSFORM_GLSL
-

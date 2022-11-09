@@ -39,5 +39,3 @@ GRADIENTS = {}
 
 def load_gradient(name, pixels, nearest):
     GRADIENTS[name] = Texture.Gradient(pixels, len(pixels)/4, nearest_interpolation=nearest)
-
-

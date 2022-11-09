@@ -232,4 +232,3 @@ vec4 OAB_blur(sampler2D input_texture, vec2 uv, vec2 flow, float radius, float s
 }
 
 #endif //BLUR_GLSL
-

@@ -370,4 +370,3 @@ def sun_shadowmap_matrix(sun_from_world_matrix, view_from_world_matrix, near, fa
     ]
 
     return flatten_matrix(matrix.inverse), screen
-

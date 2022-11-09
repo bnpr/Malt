@@ -56,4 +56,3 @@ float ao(sampler2D depth_texture, int depth_channel, vec3 position, vec3 normal,
 }
 
 #endif //AO_GLSL
-

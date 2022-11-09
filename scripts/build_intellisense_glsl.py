@@ -163,4 +163,3 @@ FINAL_FILE = f'''
 
 with open('intellisense.glsl', 'w') as f:
     f.write(FINAL_FILE)
-
