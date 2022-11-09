@@ -37,20 +37,22 @@ void Normal_Map(sampler2D Texture, vec2 UV, int UV_Index, out vec3 Normal)
 /* META
     @tex: label=Texture;
     @uv: label=UV; default=UV[0];
+    @dimensions: default=(1,1);
     @page: min=0.0;
+    @origin: subtype=ENUM(Top Left,Bottom Left);
 */
-vec4 Flipbook(sampler2D tex, vec2 uv, ivec2 dimensions, float page)
+vec4 Flipbook(sampler2D tex, vec2 uv, ivec2 dimensions, float page, int origin)
 {   
     int f = int(floor(page));
     float frac = fract(page);
-    vec4 c = sample_flipbook(tex, uv, dimensions, f);
+    vec4 c = sample_flipbook(tex, uv, dimensions, f, origin == 0 ? true : false);
     if(frac == 0.0)
     {
         return c;
     }
     return mix(
         c,
-        sample_flipbook(tex, uv, dimensions, f + 1),
+        sample_flipbook(tex, uv, dimensions, f + 1, origin == 0 ? true : false),
         fract(page)
     );
 }

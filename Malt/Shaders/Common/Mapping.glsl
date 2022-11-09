@@ -73,13 +73,13 @@ vec2 curve_view_mapping(vec2 uv, vec3 normal, vec3 tangent, vec3 incoming)
 	return vec2(uv.x, (y_grad + 1) * 0.5);
 }
 
-vec4 sample_flipbook(sampler2D tex, vec2 uv, ivec2 dimensions, int page)
+vec4 sample_flipbook(sampler2D tex, vec2 uv, ivec2 dimensions, int page, bool top_left)
 {
     int page_count = dimensions.x * dimensions.y;
     page = int(mod(page, page_count));
     vec2 offset = vec2(
         mod(page, dimensions.x),
-        floor(page / dimensions.y)
+        floor(top_left ? dimensions.y - 1 - (page / dimensions.y) : (page / dimensions.y))
     );
     uv = (uv + offset) / vec2(dimensions);
     return texture(tex, uv);
