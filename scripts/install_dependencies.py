@@ -12,7 +12,7 @@ except:
 
 py_version = str(sys.version_info[0])+str(sys.version_info[1])
 malt_dependencies_path = os.path.join(malt_folder, '.Dependencies-{}'.format(py_version))
-dependencies = ['glfw', 'PyOpenGL', 'PyOpenGL_accelerate', 'Pyrr', 'psutil', 'xxhash']
+dependencies = ['glfw', 'PyOpenGL', 'PyOpenGL_accelerate', 'Pyrr', 'psutil==5.9.3', 'xxhash']
 for dependency in dependencies:
     try:
         subprocess.check_call([sys.executable, '-m', 'pip', 'install', '--upgrade', dependency, '--target', malt_dependencies_path])
