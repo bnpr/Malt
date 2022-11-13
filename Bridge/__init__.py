@@ -6,11 +6,14 @@ def reload():
 
 def start_server(pipeline_path, viewport_bit_depth, connection_addresses, 
     shared_dic, lock, log_path, debug_mode, renderdoc_path, plugins_paths, docs_path):
-    import os, sys
-    # Trying to change process prioriy in Linux seems to hang Malt for some users
+    import os, sys, ctypes
     if sys.platform == 'win32':
-        import psutil
-        psutil.Process().nice(psutil.REALTIME_PRIORITY_CLASS)
+        win = ctypes.windll.kernel32
+        HIGH_PRIORITY_CLASS = 0x00000080
+        PROCESS_SET_INFORMATION = 0x0200
+        process = win.OpenProcess(PROCESS_SET_INFORMATION, 0, win.GetCurrentProcessId())
+        win.SetPriorityClass(process, HIGH_PRIORITY_CLASS)
+        win.CloseHandle(process)
     if renderdoc_path and os.path.exists(renderdoc_path):
         import subprocess
         subprocess.call([renderdoc_path, 'inject', '--PID={}'.format(os.getpid())])
