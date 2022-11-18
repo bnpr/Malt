@@ -77,6 +77,8 @@ float Float_asin(float a) { return asin(a); }
 float Float_acos(float a) { return acos(a); }
 /*META @meta: label=Arctangent;*/
 float Float_atan(float a) { return atan(a); }
+/*META @meta: label=Arctangent 2;*/
+float Float_atan2(float a, float b) { return atan(a, b); }
 
 /*META @meta: label=Radians to Degrees;*/
 float Float_degrees(float a) { return degrees(a); }
