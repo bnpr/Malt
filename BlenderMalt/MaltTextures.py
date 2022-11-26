@@ -16,7 +16,7 @@ def __load_texture(texture):
     size = w*h*channels
     sRGB = texture.colorspace_settings.name == 'sRGB' and texture.is_float == False
     if size == 0:
-        return True
+        return False
 
     buffer = MaltPipeline.get_bridge().get_shared_buffer(ctypes.c_float, size)
     texture.pixels.foreach_get(buffer.as_np_array())
