@@ -296,7 +296,6 @@ class MaltTree(bpy.types.NodeTree):
         source = pipeline_graph.generate_source(shader)
         if self.is_group():
             source = source.replace('void NODE_GROUP_FUNCTION()', self.get_group_function()['signature'])
-            source = source.replace('NODE_GROUP_FUNCTION', self.get_group_source_name())
         self['source'] = source
         return self['source']
     
