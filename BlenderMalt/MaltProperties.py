@@ -512,7 +512,10 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
             if texture:
                 texture_key = ('texture', texture.name_full)
                 if texture_key not in proxys.keys():
-                    proxys[texture_key] = MaltTextures.get_texture(texture)
+                    if proxy := MaltTextures.get_texture(texture):
+                        proxys[texture_key] = proxy
+                    else:
+                        return None
                 return proxys[texture_key]
             else:
                 return None
