@@ -14,7 +14,7 @@ CBlenderMalt = ctypes.CDLL(os.path.join(src_dir, library))
 
 retrieve_mesh_data = CBlenderMalt['retrieve_mesh_data']
 retrieve_mesh_data.argtypes = [
-    ctypes.c_void_p, 
+    ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p,
     ctypes.c_void_p, ctypes.c_int,
     ctypes.POINTER(ctypes.c_float), ctypes.POINTER(ctypes.c_float), 
     ctypes.POINTER(ctypes.c_void_p), ctypes.POINTER(ctypes.c_uint32)
