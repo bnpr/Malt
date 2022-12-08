@@ -296,11 +296,13 @@ def compile_gl_program(vertex, fragment):
             LOG.error(f"Failed to load cached program binary: {shader_hash} ({format})")
 
     def compile_shader (source, shader_type):
-        bindless_setup = ''
+        bindless_setup = '''
+            #define OPTIONALLY_BINDLESS
+        '''
         if hasGLExtension('GL_ARB_bindless_texture'):
             bindless_setup = '''
             #extension GL_ARB_bindless_texture : enable
-            layout(bindless_sampler) uniform;
+            #define OPTIONALLY_BINDLESS layout(bindless_sampler)
             '''
         import textwrap
         source = textwrap.dedent(f'''

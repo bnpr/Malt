@@ -44,6 +44,7 @@ vec3 Vec3_color_property(vec3 v) { return v; }
 */
 vec4 Vec4_color_property(vec4 v) { return v; }
 
+#ifdef RETURN_SAMPLER_SUPPORT
 /*  META
     @meta: label=Color Ramp;
 */
@@ -52,5 +53,6 @@ sampler1D Sampler1D_property(sampler1D color_ramp) { return color_ramp; }
     @meta: label=Image;
 */
 sampler2D Sampler2D_property(sampler2D image) { return image; }
+#endif
 
 #endif //NODE_UTILS_2_PARAMETERS_GLSL
