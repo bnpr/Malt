@@ -28,7 +28,7 @@ Malt is software agnostic, but Blender is the only integration planned right now
 ## Requirements
 
 - OpenGL 4.1+
-- Blender 3.3
+- Blender 3.4
 - Windows or Linux
 
 > A dedicated Nvidia or AMD graphics card is highly recomended.  
@@ -59,4 +59,3 @@ The [Q&A section](https://github.com/bnpr/Malt/discussions/categories/q-a) is fu
 
 Developer documentation is best viewed directly in [Github](https://github.com/bnpr/Malt/tree/Development#developer-documentation), most folders in the source code have relevant documentation.  
 The [Malt folder documentation](Malt#malt) is a good starting point.
-
