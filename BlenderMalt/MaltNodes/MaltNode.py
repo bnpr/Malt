@@ -91,6 +91,10 @@ class MaltNode():
             node = None
         self.subscribed = False #TODO: Is this needed???
         self.internal_name = ''
+        #Since Blender 3.4, node is None for copied sockets
+        #Clear them so they're re-created
+        self.inputs.clear()
+        self.outputs.clear()
         self.setup_implementation(copy=node)
     
     def free(self):
