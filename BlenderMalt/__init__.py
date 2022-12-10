@@ -3,7 +3,7 @@ bl_info = {
     "description" : "Extensible Python Render Engine",
     "author" : "Miguel Pozo",
     "version": (1,0,0,'beta.3','Release'),
-    "blender" : (3, 3, 0),
+    "blender" : (3, 4, 0),
     "doc_url": "https://malt3d.com",
     "tracker_url": "https://github.com/bnpr/Malt/issues/new/choose",
     "category": "Render"

@@ -29,6 +29,9 @@ def load_mesh(object, name):
     m.calc_normals_split()
     
     mesh_ptr = ctypes.c_void_p(m.as_pointer())
+    verts_ptr = ctypes.c_void_p(m.vertices[0].as_pointer())
+    loops_ptr = ctypes.c_void_p(m.loops[0].as_pointer())
+    polys_ptr = ctypes.c_void_p(m.polygons[0].as_pointer())
     loop_tris_ptr = ctypes.c_void_p(m.loop_triangles[0].as_pointer())
 
     loop_count = len(m.loops)
@@ -45,7 +48,8 @@ def load_mesh(object, name):
     
     indices_lengths = (ctypes.c_uint32 * material_count)()
 
-    CBlenderMalt.retrieve_mesh_data(mesh_ptr, loop_tris_ptr, loop_tri_count,
+    CBlenderMalt.retrieve_mesh_data(mesh_ptr, verts_ptr, loops_ptr, polys_ptr,
+        loop_tris_ptr, loop_tri_count,
         positions.buffer(), normals.buffer(), indices_ptrs, indices_lengths)
     
     for i in range(material_count):

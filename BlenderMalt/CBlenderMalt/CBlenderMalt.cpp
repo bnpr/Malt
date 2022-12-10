@@ -1,3 +1,6 @@
+#include "stdio.h"
+#include "string.h"
+
 #ifdef _WIN32
 #define EXPORT extern "C" __declspec( dllexport )
 #else
@@ -46,6 +49,31 @@ int CustomData_get_layer_index_n(const struct CustomData *data, int type, int n)
 	return i;
 }
 
+#define STREQ(a, b) (strcmp(a, b) == 0)
+
+int CustomData_get_named_layer_index(const CustomData *data, const int type, const char *name)
+{
+  for (int i = 0; i < data->totlayer; i++) {
+    if (data->layers[i].type == type) {
+      if (STREQ(data->layers[i].name, name)) {
+        return i;
+      }
+    }
+  }
+
+  return -1;
+}
+
+void *CustomData_get_layer_named(const CustomData *data, const int type, const char *name)
+{
+  int layer_index = CustomData_get_named_layer_index(data, type, name);
+  if (layer_index == -1) {
+    return nullptr;
+  }
+
+  return data->layers[layer_index].data;
+}
+
 void *CustomData_get_layer_n(const CustomData *data, int type, int n)
 {
 	/* get the layer index of the active layer of type */
@@ -57,18 +85,21 @@ void *CustomData_get_layer_n(const CustomData *data, int type, int n)
 	return data->layers[layer_index].data;
 }
 
-#include "stdio.h"
-#include "string.h"
+// CBlenderMalt API
 
-EXPORT void retrieve_mesh_data(void* in_mesh, void* in_loop_tris, int loop_tri_count,
-                        float* out_positions, float* out_normals, unsigned int** out_indices, unsigned int* out_index_lengths)
+EXPORT void retrieve_mesh_data(void* in_mesh, void* in_verts, void* in_loops, void* in_polys,
+    void* in_loop_tris, int loop_tri_count,
+    float* out_positions, float* out_normals, unsigned int** out_indices, unsigned int* out_index_lengths)
 {
 	Mesh* mesh = (Mesh*)in_mesh;
-    MVert* verts = mesh->mvert;
-    MLoop* loops = mesh->mloop;
+    MVert* verts = (MVert*)in_verts;
+    MLoop* loops = (MLoop*)in_loops;
+    MPoly* polys = (MPoly*)in_polys;
     MLoopTri* loop_tris = (MLoopTri*)in_loop_tris;
-    MPoly* polys = mesh->mpoly;
+
 	float* normals = (float*)CustomData_get_layer(&mesh->ldata, CD_NORMAL);
+    int* mat_indices = (int*)CustomData_get_layer_named(&mesh->pdata, CD_PROP_INT32, "material_index");
+    
     if(normals)
     {
         memcpy(out_normals, normals, mesh->totloop * sizeof(float) * 3);
@@ -87,7 +118,7 @@ EXPORT void retrieve_mesh_data(void* in_mesh, void* in_loop_tris, int loop_tri_c
 
     for(int i = 0; i < loop_tri_count; i++)
     {
-        short mat = polys[loop_tris[i].poly].mat_nr;
+        int mat = mat_indices ? mat_indices[loop_tris[i].poly] : 0;
         out_indices[mat][mat_i[mat]++] = loop_tris[i].tri[0];
         out_indices[mat][mat_i[mat]++] = loop_tris[i].tri[1];
         out_indices[mat][mat_i[mat]++] = loop_tris[i].tri[2];
