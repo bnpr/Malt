@@ -285,7 +285,7 @@ def compile_gl_program(vertex, fragment):
     program = glCreateProgram()
     error = ""
 
-    if cache:
+    if False and cache:
         try:
             glProgramBinary(program, format, cache, len(cache))
             glGetProgramiv(program, GL_LINK_STATUS, status)
