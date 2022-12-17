@@ -49,7 +49,7 @@ class MaltTree(bpy.types.NodeTree):
                 )
                 bpy.data.node_groups[tree_name].reload_nodes()
             name = self.name
-            copy = bpy.data.node_groups[tree_name].get_copy()
+            copy = bpy.data.node_groups[tree_name]#.get_copy() Workaround crash in 3.4
             self.user_remap(copy)
             bpy.data.node_groups.remove(self)
             copy.name = name
