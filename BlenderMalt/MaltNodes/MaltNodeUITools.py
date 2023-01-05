@@ -342,6 +342,95 @@ class NODE_OT_add_malt_subcategory_node(bpy.types.Operator):
             bpy.ops.wm.malt_cycle_sub_categories('INVOKE_DEFAULT')
         return{'FINISHED'}
 
+
+# Blender 3.4 changed the way add_search works and broke NodeItems searches
+# See https://developer.blender.org/T103108
+# This is a copy of the 3.3 NODE_OT_add_search operator so we can get the functionality back
+from bl_operators.node import *
+class NODE_OT_malt_add_search(NodeAddOperator, Operator):
+    '''Add a node to the active tree'''
+    bl_idname = "node.malt_add_search"
+    bl_label = "Search and Add Node"
+    bl_options = {'REGISTER', 'UNDO'}
+    bl_property = "node_item"
+
+    @classmethod
+    def poll(cls, context):
+        return is_malt_tree_context(context)
+
+    _enum_item_hack = []
+
+    # Create an enum list from node items
+    def node_enum_items(self, context):
+        import nodeitems_utils
+
+        enum_items = NODE_OT_malt_add_search._enum_item_hack
+        enum_items.clear()
+
+        for index, item in enumerate(nodeitems_utils.node_items_iter(context)):
+            if isinstance(item, nodeitems_utils.NodeItem):
+                enum_items.append(
+                    (str(index),
+                     item.label,
+                     "",
+                     index,
+                     ))
+        return enum_items
+
+    # Look up the item based on index
+    def find_node_item(self, context):
+        import nodeitems_utils
+
+        node_item = int(self.node_item)
+        for index, item in enumerate(nodeitems_utils.node_items_iter(context)):
+            if index == node_item:
+                return item
+        return None
+
+    node_item: EnumProperty(
+        name="Node Type",
+        description="Node type",
+        items=node_enum_items,
+    )
+
+    def execute(self, context):
+        item = self.find_node_item(context)
+
+        # no need to keep
+        self._enum_item_hack.clear()
+
+        if item:
+            # apply settings from the node item
+            for setting in item.settings.items():
+                ops = self.settings.add()
+                ops.name = setting[0]
+                ops.value = setting[1]
+
+            self.create_node(context, item.nodetype)
+
+            if self.use_transform:
+                bpy.ops.node.translate_attach_remove_on_cancel(
+                    'INVOKE_DEFAULT')
+
+            return {'FINISHED'}
+        else:
+            return {'CANCELLED'}
+
+    def invoke(self, context, event):
+        self.store_mouse_cursor(context, event)
+        # Delayed execution in the search popup
+        context.window_manager.invoke_search_popup(self)
+        return {'CANCELLED'}
+
+def draw_malt_add_search_menu(menu, context):
+    if is_malt_tree_context(context) == False:
+        return
+    row = menu.layout.row()
+    row.operator_context = "INVOKE_DEFAULT"
+    operator = row.operator("node.malt_add_search", text="Search... (Malt)", icon='VIEW_ZOOM')
+    operator.use_transform = True
+
+
 classes = [
     NodeTreePreview,
     OT_MaltEditNodeTree,
@@ -349,6 +438,7 @@ classes = [
     OT_MaltConnectTreePreview,
     OT_MaltCycleSubCategories,
     NODE_OT_add_malt_subcategory_node,
+    NODE_OT_malt_add_search,
 ]
 
 class MaltNodeDrawCallbacks:
@@ -455,9 +545,13 @@ def register():
 
     NodeTree.tree_preview = PointerProperty(type=NodeTreePreview, name='Node Tree Preview',
         options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
+    
+    bpy.types.NODE_MT_add.prepend(draw_malt_add_search_menu)
 
 
 def unregister():
+    bpy.types.NODE_MT_add.remove(draw_malt_add_search_menu)
+    
     del NodeTree.tree_preview
 
     for km, kmi in keymaps:
