@@ -458,6 +458,11 @@ def main(pipeline_path, viewport_bit_depth, connection_addresses,
                     viewports[viewport_id].setup(new_buffers, resolution, scene, scene_update, renderdoc_capture)
                     shared_dic[(viewport_id, 'FINISHED')] = False
                     shared_dic[(viewport_id, 'SETUP')] = True
+
+                    if viewport_id == 0: # Final Render
+                        # Render all samples at once to ensure render is done with the correct state
+                        while viewports[0].render() == False:
+                            continue
             
             active_viewports = {}
             render_finished = True
