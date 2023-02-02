@@ -15,12 +15,6 @@ import Bridge.Mesh, Bridge.Material, Bridge.Texture
 from . import ipc as ipc
 
 from Malt.Utils import LOG
-def setup_logging(log_path, log_level):
-    LOG.basicConfig(filename=log_path, level=log_level, format='Malt > %(message)s')
-    console_logger = LOG.StreamHandler()
-    console_logger.setLevel(LOG.WARNING)
-    LOG.getLogger().addHandler(console_logger)
-
 
 def log_system_info():
     import sys, platform
@@ -281,8 +275,6 @@ PROFILE = False
 
 def main(pipeline_path, viewport_bit_depth, connection_addresses,
     shared_dic, lock, log_path, debug_mode, plugins_paths, docs_path):
-    log_level = LOG.DEBUG if debug_mode else LOG.INFO
-    setup_logging(log_path, log_level)
     LOG.info('DEBUG MODE: {}'.format(debug_mode))
 
     LOG.info('CONNECTIONS:')
@@ -358,8 +350,6 @@ def main(pipeline_path, viewport_bit_depth, connection_addresses,
         })
 
     viewports = {}
-    last_exception = ''
-    repeated_exception = 0
 
     while glfw.window_should_close(window) == False:
         
@@ -458,6 +448,11 @@ def main(pipeline_path, viewport_bit_depth, connection_addresses,
                     viewports[viewport_id].setup(new_buffers, resolution, scene, scene_update, renderdoc_capture)
                     shared_dic[(viewport_id, 'FINISHED')] = False
                     shared_dic[(viewport_id, 'SETUP')] = True
+
+                    if viewport_id == 0: # Final Render
+                        # Render all samples at once to ensure render is done with the correct state
+                        while viewports[0].render() == False:
+                            continue
             
             active_viewports = {}
             render_finished = True
@@ -497,14 +492,6 @@ def main(pipeline_path, viewport_bit_depth, connection_addresses,
             break
         except:
             import traceback
-            exception = traceback.format_exc()
-            if exception != last_exception:
-                LOG.error(exception)
-                repeated_exception = 0
-                last_exception = exception
-            else:
-                if repeated_exception in (1,10,100,1000,10000,100000):
-                    LOG.error('(Repeated {}+ times)'.format(repeated_exception))
-                repeated_exception += 1
+            LOG.error(traceback.format_exc())
 
     glfw.terminate()

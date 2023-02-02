@@ -1,4 +1,42 @@
-import logging as LOG
+import logging
+
+class MaltLogger():
+
+    def __init__(self):
+        self.last_msg = None
+        self.repeated_msg = 0
+    
+    def log(self, level, *args):
+        if level < logging.root.level:
+            return
+        args = [str(arg) for arg in args]
+        msg = ' '.join(args)
+        if msg != self.last_msg:
+            self.last_msg = msg
+            self.repeated_msg = 0
+            logging.log(level, msg)
+        else:
+            self.repeated_msg += 1
+            if self.repeated_msg in (1, 10, 100, 1000):
+                logging.log(level, '(Repeated {}+ times)'.format(self.repeated_msg))
+
+    def debug(self, *args):
+        self.log(logging.DEBUG, *args)
+
+    def info(self, *args):
+        self.log(logging.INFO, *args)
+
+    def warning(self, *args):
+        self.log(logging.WARNING, *args)
+
+    def error(self, *args):
+        self.log(logging.ERROR, *args)
+
+    def critical(self, *args):
+        self.log(logging.CRITICAL, *args)
+
+LOG = MaltLogger()
+        
 
 def dump_function(function):
     import textwrap, inspect
