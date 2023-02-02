@@ -6,6 +6,13 @@ def reload():
 
 def start_server(pipeline_path, viewport_bit_depth, connection_addresses, 
     shared_dic, lock, log_path, debug_mode, renderdoc_path, plugins_paths, docs_path):
+    import logging
+    log_level = logging.DEBUG if debug_mode else logging.INFO
+    logging.basicConfig(filename=log_path, level=log_level, format='Malt > %(message)s')
+    console_logger = logging.StreamHandler()
+    console_logger.setLevel(logging.WARNING)
+    logging.getLogger().addHandler(console_logger)
+    
     import os, sys, ctypes
     if sys.platform == 'win32':
         win = ctypes.windll.kernel32
@@ -23,5 +30,5 @@ def start_server(pipeline_path, viewport_bit_depth, connection_addresses,
         Server.main(pipeline_path, viewport_bit_depth, connection_addresses,
             shared_dic, lock, log_path, debug_mode, plugins_paths, docs_path)
     except:
-        import traceback, logging as LOG
-        LOG.error(traceback.format_exc())
+        import traceback
+        logging.error(traceback.format_exc())

@@ -1,4 +1,4 @@
-from Malt.Utils import scan_dirs
+from Malt.Utils import scan_dirs, LOG
 
 
 class PipelineGraphIO():
@@ -210,8 +210,7 @@ class PythonPipelineGraph(PipelineGraph):
                 nodes.append(module.NODE)
             except:
                 import traceback
-                traceback.print_exc()
-                print('FILEPATH : ', file)
+                LOG.error('FILEPATH : ', file, '\n', traceback.format_exc())
         self.functions = {}
         self.structs = {}
         for node_class in nodes:
@@ -236,9 +235,16 @@ class PythonPipelineGraph(PipelineGraph):
                 self.node_instances[node_name].execute(parameters)
             exec(source)
         except:
-            import traceback
-            traceback.print_exc()
-            print('SOURCE:\n', source)
-            print('PARAMETERS: ', PARAMETERS)
-            print('IN: ', IN)
-            print('OUT: ', OUT)
+            raise MaltGraphExecutionException(source, PARAMETERS, IN, OUT)
+
+class MaltGraphExecutionException(Exception):
+    def __init__(self, source, parameters, inputs, outputs):
+        import pprint
+
+        self.message = "\n".join(("",
+        "IN:", pprint.pformat(inputs),
+        "OUT:", pprint.pformat(outputs),
+        "SOURCE:", source,
+        "PARAMETERS:", pprint.pformat(parameters)))
+
+        super().__init__(self.message)
