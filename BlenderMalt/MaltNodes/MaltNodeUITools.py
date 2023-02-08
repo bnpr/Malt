@@ -98,10 +98,11 @@ class NodeTreePreview(bpy.types.PropertyGroup):
         return True
 
 def is_malt_tree_context(context: bpy.types.Context) -> bool:
-    return context.area.ui_type == 'MaltTree' and context.space_data.type == 'NODE_EDITOR' and context.space_data.edit_tree
+    return (context.area.ui_type == 'MaltTree' and context.space_data.type == 'NODE_EDITOR' and
+        context.space_data.edit_tree is not None)
 
 def is_malt_node_context(context: bpy.types.Context) -> bool:
-    return is_malt_tree_context(context) and context.active_node
+    return is_malt_tree_context(context) and context.active_node is not None
 
 class OT_MaltEditNodeTree(bpy.types.Operator):
     bl_idname = 'wm.malt_edit_node_tree'
@@ -497,12 +498,16 @@ class NODE_OT_malt_add_search(NodeAddOperator, Operator):
         return {'CANCELLED'}
 
 def draw_malt_add_search_menu(menu, context):
+    layout = menu.layout
     if is_malt_tree_context(context) == False:
-        return
-    row = menu.layout.row()
-    row.operator_context = "INVOKE_DEFAULT"
-    operator = row.operator("node.malt_add_search", text="Search... (Malt)", icon='VIEW_ZOOM')
-    operator.use_transform = True
+        layout.label(text="No node tree selected", icon='ERROR')
+    elif context.space_data.edit_tree.graph_type == '':
+        layout.label(text="No node tree type selected", icon='ERROR')
+    else:
+        row = layout.row()
+        row.operator_context = "INVOKE_DEFAULT"
+        operator = row.operator("node.malt_add_search", text="Search... (Malt)", icon='VIEW_ZOOM')
+        operator.use_transform = True
 
 
 classes = [
