@@ -91,10 +91,11 @@ class MaltNode():
             node = None
         self.subscribed = False #TODO: Is this needed???
         self.internal_name = ''
-        #Since Blender 3.4, node is None for copied sockets
-        #Clear them so they're re-created
-        self.inputs.clear()
-        self.outputs.clear()
+        if bpy.app.version == (3,4,0):
+            #In Blender 3.4.0, node is None for copied sockets
+            #Clear them so they're re-created
+            self.inputs.clear()
+            self.outputs.clear()
         self.setup_implementation(copy=node)
     
     def free(self):
@@ -143,7 +144,8 @@ class MaltNode():
                     continue #Skip overrides
                 type = dic['type']
                 size = dic['size'] if 'size' in dic else 0
-                if name not in current:
+                is_new_socket = name not in current
+                if is_new_socket:
                     current.new('MaltSocket', name)
                     current[name].show_in_material_panel = show_in_material_panel
                 if isinstance(type, Parameter):
@@ -164,6 +166,8 @@ class MaltNode():
                         current[name].default_initialization = default
                 except:
                     pass
+                if is_new_socket:
+                    current[name].setup_shape()
                 if current.find(name) != socket_index:
                     current.move(current.find(name), socket_index)
                 socket_index += 1
@@ -228,7 +232,6 @@ class MaltNode():
         for input in self.inputs:
             #Sync old nodes with the new system
             input.show_in_material_panel_update()
-        self.setup_socket_shapes()
         if self.first_setup:
             self.setup_width()
     

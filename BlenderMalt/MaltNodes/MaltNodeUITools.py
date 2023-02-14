@@ -498,6 +498,8 @@ class NODE_OT_malt_add_search(NodeAddOperator, Operator):
         return {'CANCELLED'}
 
 def draw_malt_add_search_menu(menu, context):
+    if context.area.ui_type != 'MaltTree':
+        return
     layout = menu.layout
     if is_malt_tree_context(context) == False:
         layout.label(text="No node tree selected", icon='ERROR')
