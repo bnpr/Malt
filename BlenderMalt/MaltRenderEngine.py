@@ -132,6 +132,8 @@ class MaltRenderEngine(bpy.types.RenderEngine):
 
                 obj_parameters = obj.malt_parameters.get_parameters(overrides, scene.proxys)
                 obj_parameters['ID'] = id
+
+                tags = set(collection.name for collection in obj.original.users_collection)
                 
                 if len(obj.material_slots) > 0:
                     for i, slot in enumerate(obj.material_slots):
@@ -147,12 +149,12 @@ class MaltRenderEngine(bpy.types.RenderEngine):
                                 scene.proxys[material_key]  = MaterialProxy(path, shader_parameters, material_parameters)
                             material = scene.proxys[material_key]
                         if override_material: material = override_material
-                        result = Scene.Object(matrix, mesh[i], material, obj_parameters, mirror_scale)
+                        result = Scene.Object(matrix, mesh[i], material, obj_parameters, mirror_scale, tags)
                         scene.objects.append(result)
                 else:
                     material = default_material
                     if override_material: material = override_material
-                    result = Scene.Object(matrix, mesh[0], material, obj_parameters, mirror_scale)
+                    result = Scene.Object(matrix, mesh[0], material, obj_parameters, mirror_scale, tags)
                     scene.objects.append(result)
            
             elif obj.type == 'LIGHT':

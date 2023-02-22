@@ -19,12 +19,13 @@ class Mesh():
 
 class Object():
 
-    def __init__(self, matrix, mesh, material, parameters={}, mirror_scale=False):
+    def __init__(self, matrix, mesh, material, parameters={}, mirror_scale=False, tags=[]):
         self.matrix = matrix
         self.mesh = mesh
         self.material = material
         self.parameters = parameters
         self.mirror_scale = mirror_scale
+        self.tags = tags
 
 class Light():
 
