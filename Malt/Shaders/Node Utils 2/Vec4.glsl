@@ -71,12 +71,12 @@ vec4 Vec4_mix(vec4 a, vec4 b, vec4 c){ return mix(a,b,c); }
 vec4 Vec4_mix_float(vec4 a, vec4 b, float fac){ return mix(a,b,fac); }
 
 /*META @meta: label=Normalize; @a: subtype=Vector;*/
-vec4 Vec4_normalize(vec4 a){ return normalize(a); }
+vec4 Vec4_normalize(vec4 a){ return a != vec4(0) ? normalize(a) : vec4(0); }
 
 /*META @meta: label=Length; @a: subtype=Vector;*/
-float Vec4_length(vec4 a){ return length(a); }
+float Vec4_length(vec4 a){ return a != vec4(0) ? length(a) : 0; }
 /*META @meta: label=Distance; @a: subtype=Vector; @b: subtype=Vector;*/
-float Vec4_distance(vec4 a, vec4 b){ return distance(a,b); }
+float Vec4_distance(vec4 a, vec4 b){ return a != b ? distance(a,b) : 0; }
 /*META @meta: label=Dot Product; @a: subtype=Vector; @b: subtype=Vector;*/
 float Vec4_dot_product(vec4 a, vec4 b){ return dot(a,b); }
 
