@@ -38,7 +38,13 @@ class MainPass(PipelineNode):
         self.custom_targets = {}
         for io in custom_io:
             if io['io'] == 'out' and io['type'] == 'Texture':#TODO
-                self.custom_targets[io['name']] = Texture(resolution, GL.GL_RGBA16F)
+                formats = {
+                    'float' : GL.GL_R16F,
+                    'vec2' : GL.GL_RG16F,
+                    'vec3' : GL.GL_RGB16F,
+                    'vec4' : GL.GL_RGBA16F,
+                }
+                self.custom_targets[io['name']] = Texture(resolution, formats[io['subtype']])
         self.t_depth = t_depth
         self.fbo = RenderTarget([*self.custom_targets.values()], self.t_depth)
 
