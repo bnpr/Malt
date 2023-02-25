@@ -158,6 +158,7 @@ class MaltFunctionNodeBase(MaltNode):
                         result.append({
                             'name': parameter.name,
                             'type': 'Texture', #TODO
+                            'subtype': parameter.parameter,
                             'size': 0,
                             'io': 'in',
                         })
@@ -165,6 +166,7 @@ class MaltFunctionNodeBase(MaltNode):
                         result.append({
                             'name': parameter.name,
                             'type': 'Texture', #TODO
+                            'subtype': parameter.parameter,
                             'size': 0,
                             'io': 'out',
                         })
