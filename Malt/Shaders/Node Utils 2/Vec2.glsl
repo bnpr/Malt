@@ -68,9 +68,9 @@ vec2 Vec2_min(vec2 a, vec2 b){ return min(a,b); }
 vec2 Vec2_max(vec2 a, vec2 b){ return max(a,b); }
 
 /* META @meta: label=Mix 2D; @c: label=Factor; */
-vec2 Vec2_mix(vec2 a, vec2 b, vec2 c){ return mix(a,b,c); }
+vec2 Vec2_mix(vec2 a, vec2 b, vec2 c){ return safe_mix(a,b,c); }
 /* META @meta: label=Mix; */
-vec2 Vec2_mix_float(vec2 a, vec2 b, float fac){ return mix(a,b,fac); }
+vec2 Vec2_mix_float(vec2 a, vec2 b, float fac){ return safe_mix(a,b,fac); }
 
 /* META @meta: label=Normalize; */
 vec2 Vec2_normalize(vec2 a){ return a != vec2(0) ? normalize(a) : vec2(0); }
