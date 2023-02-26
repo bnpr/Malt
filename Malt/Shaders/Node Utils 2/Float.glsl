@@ -63,7 +63,7 @@ float Float_max(float a, float b){ return max(a,b); }
 /*META @meta: label=Smooth Minimum; @s: min=0.0; */
 
 /*META @meta: label=Mix;*/
-float Float_mix(float a, float b, float fac){ return mix(a,b,fac); }
+float Float_mix(float a, float b, float fac){ return safe_mix(a,b,fac); }
 
 /*META @meta: label=Sine;*/
 float Float_sin(float a) { return sin(a); }

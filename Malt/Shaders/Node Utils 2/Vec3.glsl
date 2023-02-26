@@ -68,9 +68,9 @@ vec3 Vec3_min(vec3 a, vec3 b){ return min(a,b); }
 vec3 Vec3_max(vec3 a, vec3 b){ return max(a,b); }
 
 /*META @meta: label=Mix 3D; @a: subtype=Vector; @b: subtype=Vector; @c: label=Factor; subtype=Vector;*/
-vec3 Vec3_mix(vec3 a, vec3 b, vec3 c){ return mix(a,b,c); }
+vec3 Vec3_mix(vec3 a, vec3 b, vec3 c){ return safe_mix(a,b,c); }
 /*META @meta: label=Mix; @a: subtype=Vector; @b: subtype=Vector;*/
-vec3 Vec3_mix_float(vec3 a, vec3 b, float fac){ return mix(a,b,fac); }
+vec3 Vec3_mix_float(vec3 a, vec3 b, float fac){ return safe_mix(a,b,fac); }
 
 /*META @meta: label=Normalize; @a: subtype=Vector;*/
 vec3 Vec3_normalize(vec3 a){ return a != 0 ? normalize(a) : vec3(0); }
