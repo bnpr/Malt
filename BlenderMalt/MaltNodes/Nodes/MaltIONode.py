@@ -143,8 +143,7 @@ class MaltIONode(bpy.types.Node, MaltNode):
             return src
         custom_outputs = ''
         graph_io = self.id_data.get_pipeline_graph().graph_io[self.io_type]
-        try: index = graph_io.custom_output_start_index
-        except: index = 0
+        index = graph_io.custom_output_start_index
         for key, parameter in self.get_custom_parameters().items():
             if parameter.is_output:
                 socket = self.inputs[key]
@@ -204,7 +203,13 @@ class MaltIONode(bpy.types.Node, MaltNode):
                     while f'{name} {i}' in parameters.keys():
                         i += 1
                     new_param.name = f'{name} {i}'
-                col.operator("wm.malt_callback", text='', icon='ADD').callback.set(add_custom_socket, 'Add')
+                add_row = col.row()
+                graph = self.id_data.get_pipeline_graph()
+                if (self.is_output and graph.language == 'GLSL' and
+                len(parameters) >= (8 - graph.graph_io[self.io_type].custom_output_start_index) and
+                self.id_data.graph_type.endswith("(Group)") == False): 
+                    add_row.enabled = False
+                add_row.operator("wm.malt_callback", text='', icon='ADD').callback.set(add_custom_socket, 'Add')
                 def remove_custom_socket():
                     parameters.remove(index)
                 col.operator("wm.malt_callback", text='', icon='REMOVE').callback.set(remove_custom_socket, 'Remove')

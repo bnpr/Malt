@@ -11,6 +11,7 @@ class PipelineGraphIO():
         self.default_dynamic_inputs = default_dynamic_inputs
         self.default_dynamic_outputs = default_dynamic_outputs
         self.function = function
+        self.custom_output_start_index = 0
 
 class PipelineGraph():
 
