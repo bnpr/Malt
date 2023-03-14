@@ -156,6 +156,9 @@ class UBO():
 
 def shader_preprocessor(shader_source, include_directories=[], definitions=[]):
     import tempfile, subprocess, sys, platform
+
+    if hasGLExtension('GL_ARB_bindless_texture'):
+        definitions.append('GL_ARB_bindless_texture')
     
     shader_source = shader_source + '\n'
     tmp = tempfile.NamedTemporaryFile(delete=False)

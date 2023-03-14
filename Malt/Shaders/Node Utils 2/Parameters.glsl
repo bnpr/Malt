@@ -44,7 +44,7 @@ vec3 Vec3_color_property(vec3 v) { return v; }
 */
 vec4 Vec4_color_property(vec4 v) { return v; }
 
-#ifdef RETURN_SAMPLER_SUPPORT
+#ifdef GL_ARB_bindless_texture
 /*  META
     @meta: label=Color Ramp;
 */
