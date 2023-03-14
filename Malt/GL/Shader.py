@@ -309,7 +309,7 @@ def compile_gl_program(vertex, fragment):
             '''
         import textwrap
         source = textwrap.dedent(f'''
-        #version 410 core
+        #version 450 core
         #extension GL_ARB_shading_language_include : enable
         {bindless_setup}
         #line 1 "src"
