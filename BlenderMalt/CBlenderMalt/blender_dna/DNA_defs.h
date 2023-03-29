@@ -60,7 +60,7 @@
  *     DNA_DEFINE_CXX_METHODS(Object)
  *   } Object;
  */
-#ifndef __cplusplus
+#ifndef UNDEFINED
 #  define DNA_DEFINE_CXX_METHODS(class_name)
 #else
 

@@ -87,32 +87,25 @@ void *CustomData_get_layer_n(const CustomData *data, int type, int n)
 
 // CBlenderMalt API
 
-EXPORT void retrieve_mesh_data(void* in_mesh, void* in_verts, void* in_loops, void* in_polys,
-    void* in_loop_tris, int loop_tri_count,
+EXPORT void retrieve_mesh_data(void* in_mesh, void* in_loop_tris, int loop_tri_count,
     float* out_positions, float* out_normals, unsigned int** out_indices, unsigned int* out_index_lengths)
 {
 	Mesh* mesh = (Mesh*)in_mesh;
-    MVert* verts = (MVert*)in_verts;
-    MLoop* loops = (MLoop*)in_loops;
-    MPoly* polys = (MPoly*)in_polys;
     MLoopTri* loop_tris = (MLoopTri*)in_loop_tris;
+    MLoop* loops = (MLoop*)CustomData_get_layer(&mesh->ldata, CD_MLOOP);
 
+    float* positions = (float*)CustomData_get_layer_named(&mesh->vdata, CD_PROP_FLOAT3, "position");
 	float* normals = (float*)CustomData_get_layer(&mesh->ldata, CD_NORMAL);
     int* mat_indices = (int*)CustomData_get_layer_named(&mesh->pdata, CD_PROP_INT32, "material_index");
-    
-    if(normals)
-    {
-        memcpy(out_normals, normals, mesh->totloop * sizeof(float) * 3);
-    }
-
-    int p = 0, n = 0;
 
     for(int i = 0; i < mesh->totloop; i++)
     {
-        out_positions[p++] = verts[loops[i].v].co[0];
-        out_positions[p++] = verts[loops[i].v].co[1];
-        out_positions[p++] = verts[loops[i].v].co[2];
+        out_positions[i*3+0] = positions[loops[i].v*3+0];
+        out_positions[i*3+1] = positions[loops[i].v*3+1];
+        out_positions[i*3+2] = positions[loops[i].v*3+2];
     }
+
+    memcpy(out_normals, normals, mesh->totloop * sizeof(float) * 3);
 
     unsigned int* mat_i = out_index_lengths;
 
@@ -122,19 +115,6 @@ EXPORT void retrieve_mesh_data(void* in_mesh, void* in_verts, void* in_loops, vo
         out_indices[mat][mat_i[mat]++] = loop_tris[i].tri[0];
         out_indices[mat][mat_i[mat]++] = loop_tris[i].tri[1];
         out_indices[mat][mat_i[mat]++] = loop_tris[i].tri[2];
-    }
-}
-
-EXPORT void retrieve_mesh_uv(void* in_uvs, int loop_count, float* out_uvs)
-{
-    MLoopUV* uvs = (MLoopUV*)in_uvs;
-
-    int uv = 0;
-
-    for(int i = 0; i < loop_count; i++)
-    {
-        out_uvs[uv++] = uvs[i].uv[0];
-        out_uvs[uv++] = uvs[i].uv[1];
     }
 }
 

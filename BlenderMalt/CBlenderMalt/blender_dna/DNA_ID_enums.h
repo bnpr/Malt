@@ -7,7 +7,7 @@
 
 #pragma once
 
-#ifdef __cplusplus
+#ifdef UNDEFINED
 extern "C" {
 #endif
 
@@ -46,7 +46,7 @@ typedef enum ID_Type {
   ID_LI = MAKE_ID2('L', 'I'),        /* Library */
   ID_OB = MAKE_ID2('O', 'B'),        /* Object */
   ID_ME = MAKE_ID2('M', 'E'),        /* Mesh */
-  ID_CU_LEGACY = MAKE_ID2('C', 'U'), /* Curve. ID_CV should be used in the future (see T95355). */
+  ID_CU_LEGACY = MAKE_ID2('C', 'U'), /* Curve. ID_CV should be used in the future (see #95355). */
   ID_MB = MAKE_ID2('M', 'B'),        /* MetaBall */
   ID_MA = MAKE_ID2('M', 'A'),        /* Material */
   ID_TE = MAKE_ID2('T', 'E'),        /* Tex (Texture) */
@@ -101,6 +101,6 @@ typedef enum ID_Type {
 /* fluidsim Ipo */
 #define ID_FLUIDSIM MAKE_ID2('F', 'S')
 
-#ifdef __cplusplus
+#ifdef UNDEFINED
 }
 #endif
