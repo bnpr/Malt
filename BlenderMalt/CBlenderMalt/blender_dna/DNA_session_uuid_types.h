@@ -8,7 +8,7 @@
 
 #include "BLI_sys_types.h"
 
-#ifdef __cplusplus
+#ifdef UNDEFINED
 extern "C" {
 #endif
 
@@ -24,6 +24,6 @@ typedef struct SessionUUID {
   uint64_t uuid_;
 } SessionUUID;
 
-#ifdef __cplusplus
+#ifdef UNDEFINED
 }
 #endif

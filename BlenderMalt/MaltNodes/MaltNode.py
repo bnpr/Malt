@@ -80,6 +80,8 @@ class MaltNode():
         self._disable_updates_wrapper(self.malt_update)
     
     def copy(self, node):
+        if self.id_data.on_copy:
+            return
         #Find the node from its node tree so we have access to the node id_data
         for tree in bpy.data.node_groups:
             if node.name in tree.nodes:
@@ -91,11 +93,6 @@ class MaltNode():
             node = None
         self.subscribed = False #TODO: Is this needed???
         self.internal_name = ''
-        if bpy.app.version == (3,4,0):
-            #In Blender 3.4.0, node is None for copied sockets
-            #Clear them so they're re-created
-            self.inputs.clear()
-            self.outputs.clear()
         self.setup_implementation(copy=node)
     
     def free(self):

@@ -11,7 +11,7 @@
 
 #pragma once
 
-#ifdef __cplusplus
+#ifdef UNDEFINED
 extern "C" {
 #endif
 
@@ -33,6 +33,6 @@ typedef struct ListBase {
 
 /* 8 byte alignment! */
 
-#ifdef __cplusplus
+#ifdef UNDEFINED
 }
 #endif

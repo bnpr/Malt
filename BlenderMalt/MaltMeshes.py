@@ -29,9 +29,6 @@ def load_mesh(object, name):
     m.calc_normals_split()
     
     mesh_ptr = ctypes.c_void_p(m.as_pointer())
-    verts_ptr = ctypes.c_void_p(m.vertices[0].as_pointer())
-    loops_ptr = ctypes.c_void_p(m.loops[0].as_pointer())
-    polys_ptr = ctypes.c_void_p(m.polygons[0].as_pointer())
     loop_tris_ptr = ctypes.c_void_p(m.loop_triangles[0].as_pointer())
 
     loop_count = len(m.loops)
@@ -48,8 +45,7 @@ def load_mesh(object, name):
     
     indices_lengths = (ctypes.c_uint32 * material_count)()
 
-    CBlenderMalt.retrieve_mesh_data(mesh_ptr, verts_ptr, loops_ptr, polys_ptr,
-        loop_tris_ptr, loop_tri_count,
+    CBlenderMalt.retrieve_mesh_data(mesh_ptr, loop_tris_ptr, loop_tri_count,
         positions.buffer(), normals.buffer(), indices_ptrs, indices_lengths)
     
     for i in range(material_count):
@@ -59,10 +55,10 @@ def load_mesh(object, name):
     tangents_buffer = None
     for i, uv_layer in enumerate(m.uv_layers):
         if i >= 4: break
-        uv_ptr = ctypes.c_void_p(uv_layer.data[0].as_pointer())
-        uv = get_load_buffer('uv'+str(i), ctypes.c_float, loop_count * 2)
-        CBlenderMalt.retrieve_mesh_uv(uv_ptr, loop_count, uv.buffer())
-        uvs_list.append(uv)
+        uvs = (ctypes.c_float * (loop_count * 2)).from_address(uv_layer.data[0].as_pointer())
+        uv_buffer = get_load_buffer('uv'+str(i), ctypes.c_float, loop_count * 2)
+        ctypes.memmove(uv_buffer.buffer(), uvs, uv_buffer.size_in_bytes())
+        uvs_list.append(uv_buffer)
         if i == 0 and object.original.data.malt_parameters.bools['precomputed_tangents'].boolean:
             m.calc_tangents(uvmap=uv_layer.name)
             tangents_ptr = CBlenderMalt.mesh_tangents_ptr(ctypes.c_void_p(m.as_pointer()))

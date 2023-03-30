@@ -17,7 +17,7 @@
 
 #pragma once
 
-#ifdef __cplusplus
+#ifdef UNDEFINED
 extern "C" {
 #endif
 
@@ -55,7 +55,7 @@ typedef uint64_t u_int64_t;
 #include <stdbool.h>
 #include <stddef.h> /* size_t define */
 
-#ifndef __cplusplus
+#ifndef UNDEFINED
 /* The <uchar.h> standard header is missing on some systems. */
 #  if defined(__APPLE__) || defined(__NetBSD__)
 typedef unsigned int char32_t;
@@ -69,6 +69,6 @@ typedef unsigned short ushort;
 typedef unsigned long ulong;
 typedef unsigned char uchar;
 
-#ifdef __cplusplus
+#ifdef UNDEFINED
 }
 #endif
