@@ -463,6 +463,10 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
         if property in rna:
             rna[property]['active'] = False
             self.id_data.update_tag()
+    
+    def handle_duplication(self):
+        for gradient in self.gradients.values():
+            gradient.texture = gradient.texture.copy()
 
     def get_parameters(self, overrides, proxys):
         if '_RNA_UI' not in self.keys():

@@ -17,9 +17,16 @@ class MaltTree(bpy.types.NodeTree):
     bl_label = "Malt Node Tree"
     bl_icon = 'NODETREE'
 
+    on_copy : bpy.props.BoolProperty(name="On Copy", default=False,
+        options={'SKIP_SAVE','LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
+
     def get_copy(self):
+        self.on_copy = True
         copy = self.copy()
+        self.on_copy = False
+        copy.on_copy = False
         copy.subscribed = False
+        copy.malt_parameters.handle_duplication()
         copy.reload_nodes()
         copy.update_ext(force_update=True)
         return copy
