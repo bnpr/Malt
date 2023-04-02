@@ -29,7 +29,13 @@
 
 #define saturate(value) clamp((value), 0, 1)
 
-#define safe_mix(a, b, f) (f == 0 ? a : (f == 1 ? b : mix(a, b, f)))
+float safe_mix(float a, float b, float f) {return f == 0.0 ? a : f == 1.0 ? b : mix(a, b, f);}
+vec2 safe_mix(vec2 a, vec2 b, vec2 f) {return f == vec2(0) ? a : f == vec2(1) ? b : mix(a, b, f);}
+vec2 safe_mix(vec2 a, vec2 b, float f) {return f == 0.0 ? a : f == 1.0 ? b : mix(a, b, f);}
+vec3 safe_mix(vec3 a, vec3 b, vec3 f) {return f == vec3(0) ? a : f == vec3(1) ? b : mix(a, b, f);}
+vec3 safe_mix(vec3 a, vec3 b, float f) {return f == 0.0 ? a : f == 1.0 ? b : mix(a, b, f);}
+vec4 safe_mix(vec4 a, vec4 b, vec4 f) {return f == vec4(0) ? a : f == vec4(1) ? b : mix(a, b, f);}
+vec4 safe_mix(vec4 a, vec4 b, float f) {return f == 0.0 ? a : f == 1.0 ? b : mix(a, b, f);}
 
 #define map_range(value, from_min, from_max, to_min, to_max) (safe_mix((to_min), (to_max), ((value) - (from_min)) / ((from_max) - (from_min))))
 #define map_range_clamped(value, from_min, from_max, to_min, to_max) clamp(map_range(value, from_min, from_max, to_min, to_max), min(to_min, to_max), max(to_max, to_min))
