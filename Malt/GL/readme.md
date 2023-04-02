@@ -2,7 +2,6 @@
 
 The GL folder contains a series of modules that abstracts commonly needed OpenGL functionality.  
 It doesn't try to be a complete abstraction, so it's meant to be used alongside raw OpenGL calls.  
-> 💡 Malt limits itself to OpenGL 4.1 features to keep MacOS compatibility.
 
 ## [GL.py](GL.py) 
 Loads OpenGL functions via [PyOpenGL](https://pypi.org/project/PyOpenGL/), provides OpenGL enums reflection dictionaries and implements a Python to OpenGL types conversion function via the *gl_buffer function*.
@@ -90,4 +89,3 @@ result_target.bind()
 shader.bind()
 mesh.draw()
 ```
-

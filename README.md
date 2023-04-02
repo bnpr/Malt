@@ -27,8 +27,8 @@ Malt is software agnostic, but Blender is the only integration planned right now
 
 ## Requirements
 
-- OpenGL 4.1+
-- Blender 3.4
+- OpenGL 4.5
+- Latest Blender stable release.
 - Windows or Linux
 
 > A dedicated Nvidia or AMD graphics card is highly recomended.  
