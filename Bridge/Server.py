@@ -287,7 +287,7 @@ def main(pipeline_path, viewport_bit_depth, connection_addresses,
     glfw.init()
 
     glfw.window_hint(glfw.CONTEXT_VERSION_MAJOR, 4)
-    glfw.window_hint(glfw.CONTEXT_VERSION_MINOR, 1)
+    glfw.window_hint(glfw.CONTEXT_VERSION_MINOR, 5)
     glfw.window_hint(glfw.OPENGL_PROFILE, glfw.OPENGL_CORE_PROFILE)
     
     window = glfw.create_window(256, 256, 'Malt', None, None)

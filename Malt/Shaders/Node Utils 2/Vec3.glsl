@@ -73,10 +73,10 @@ vec3 Vec3_mix(vec3 a, vec3 b, vec3 c){ return safe_mix(a,b,c); }
 vec3 Vec3_mix_float(vec3 a, vec3 b, float fac){ return safe_mix(a,b,fac); }
 
 /*META @meta: label=Normalize; @a: subtype=Vector;*/
-vec3 Vec3_normalize(vec3 a){ return a != 0 ? normalize(a) : vec3(0); }
+vec3 Vec3_normalize(vec3 a){ return a != vec3(0) ? normalize(a) : vec3(0); }
 
 /*META @meta: label=Length; @a: subtype=Vector;*/
-float Vec3_length(vec3 a){ return a != 0 ? length(a) : 0; }
+float Vec3_length(vec3 a){ return a != vec3(0) ? length(a) : 0; }
 /*META @meta: label=Distance; @a: subtype=Vector; @b: subtype=Vector;*/
 float Vec3_distance(vec3 a, vec3 b){ return a != b ? distance(a,b) : 0; }
 /*META @meta: label=Dot Product; @a: subtype=Vector; @b: subtype=Vector;*/

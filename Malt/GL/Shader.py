@@ -156,6 +156,9 @@ class UBO():
 
 def shader_preprocessor(shader_source, include_directories=[], definitions=[]):
     import tempfile, subprocess, sys, platform
+
+    if hasGLExtension('GL_ARB_bindless_texture'):
+        definitions.append('GL_ARB_bindless_texture')
     
     shader_source = shader_source + '\n'
     tmp = tempfile.NamedTemporaryFile(delete=False)
@@ -254,11 +257,32 @@ def fix_line_directive_paths(source):
                     line = line.split('"',1)[0]
             else:
                 line = "\n"
-        result += line    
+        result += line
     return result
 
 
 def compile_gl_program(vertex, fragment):
+    def finalize_source(source):
+        bindless_setup = '''
+        #define OPTIONALLY_BINDLESS
+        '''
+        if hasGLExtension('GL_ARB_bindless_texture'):
+            bindless_setup = '''
+            #extension GL_ARB_bindless_texture : enable
+            #define OPTIONALLY_BINDLESS layout(bindless_sampler)
+            '''
+        import textwrap
+        source = textwrap.dedent(f'''
+        #version 450 core
+        #extension GL_ARB_shading_language_include : enable
+        {bindless_setup}
+        #line 1 "src"
+        ''') + source
+        return fix_line_directive_paths(source)
+    
+    vertex = finalize_source(vertex)
+    fragment = finalize_source(fragment)
+
     status = gl_buffer(GL_INT,1)
     info_log = gl_buffer(GL_BYTE, 1024)
 
@@ -296,21 +320,6 @@ def compile_gl_program(vertex, fragment):
             LOG.error(f"Failed to load cached program binary: {shader_hash} ({format})")
 
     def compile_shader (source, shader_type):
-        bindless_setup = ''
-        if hasGLExtension('GL_ARB_bindless_texture'):
-            bindless_setup = '''
-            #extension GL_ARB_bindless_texture : enable
-            layout(bindless_sampler) uniform;
-            '''
-        import textwrap
-        source = textwrap.dedent(f'''
-        #version 410 core
-        #extension GL_ARB_shading_language_include : enable
-        {bindless_setup}
-        #line 1 "src"
-        ''') + source
-        source = fix_line_directive_paths(source)
-        
         shader = glCreateShader(shader_type)
         glShaderSource(shader, source)
         glCompileShader(shader)

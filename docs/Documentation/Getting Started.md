@@ -2,7 +2,7 @@
 
 ## Requirements
 
-- OpenGL 4.1 support.
+- OpenGL 4.5 support.
 - Latest Blender stable release.
 
 > A dedicated Nvidia or AMD graphics card is highly recomended.  
