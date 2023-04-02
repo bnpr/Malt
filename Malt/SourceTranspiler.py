@@ -81,7 +81,10 @@ class GLSLTranspiler(SourceTranspiler):
 
     @classmethod
     def global_declaration(self, type, size, name, initialization=None):
-        return 'uniform ' + self.declaration(type, size, name, initialization)
+        uniform_declaration = 'uniform '
+        if 'sampler' in type:
+            uniform_declaration = 'OPTIONALLY_BINDLESS uniform '
+        return uniform_declaration + self.declaration(type, size, name, initialization)
     
     @classmethod
     def custom_io_reference(self, io, graph_io_type, name):
