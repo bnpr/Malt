@@ -13,8 +13,10 @@ class Material():
 
 class Mesh():
 
-    def __init__(self, mesh, parameters={}):
+    def __init__(self, mesh, bounding_box_min, bounding_box_max,  parameters={}):
         self.mesh = mesh
+        self.bounds_min = bounding_box_min
+        self.bounds_max = bounding_box_max
         self.parameters = parameters
 
 class Object():

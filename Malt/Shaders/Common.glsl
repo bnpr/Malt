@@ -16,6 +16,7 @@ vec4 COLOR[4];
 uvec4 ID;
 
 vertex_out mat4 MODEL;
+vertex_out vec3 BOUNDS_UVW;
 
 layout(std140) uniform COMMON_UNIFORMS
 {
@@ -28,6 +29,8 @@ layout(std140) uniform COMMON_UNIFORMS
     uniform float TIME;
 };
 
+uniform vec3 BOUNDS_MIN = vec3(0);
+uniform vec3 BOUNDS_MAX = vec3(0);
 uniform bool MIRROR_SCALE = false;
 uniform bool PRECOMPUTED_TANGENTS = false;
 
@@ -97,6 +100,8 @@ void DEFAULT_VERTEX_SHADER()
 {
     MODEL = BATCH_MODEL[gl_InstanceID];
     ID = uvec4(BATCH_ID(gl_InstanceID),0,0,0);
+
+    BOUNDS_UVW = map_range(in_position, BOUNDS_MIN, BOUNDS_MAX, vec3(0.0), vec3(1.0));
 
     POSITION = transform_point(MODEL, in_position);
     NORMAL = transform_normal(MODEL, in_normal);

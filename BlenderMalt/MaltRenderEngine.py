@@ -116,7 +116,13 @@ class MaltRenderEngine(bpy.types.RenderEngine):
                         malt_mesh = MaltMeshes.load_mesh(obj, name)
                     
                     if malt_mesh:
-                        meshes[name] = [Scene.Mesh(submesh, parameters) for submesh in malt_mesh]
+                        import sys
+                        bbox_min = tuple([sys.float_info.max]*3)
+                        bbox_max = tuple([sys.float_info.min]*3)
+                        for corner in obj.bound_box:
+                            bbox_min = tuple(min(bbox_min[i], corner[i]) for i in range(3))
+                            bbox_max = tuple(max(bbox_max[i], corner[i]) for i in range(3))
+                        meshes[name] = [Scene.Mesh(submesh, bbox_min, bbox_max, parameters) for submesh in malt_mesh]
                         for i, mesh in enumerate(meshes[name]):
                             scene.proxys[('mesh',name,i)] = mesh.mesh
                     else:

@@ -349,11 +349,17 @@ class Pipeline():
             _precomputed_tangents = None
             _scale_group = None
             _color_is_srgb = None
-            
+
             meshes = scene_batches[material]
             for mesh in meshes.keys():
                 mesh.mesh.bind()
                 
+                # TODO: All sub-meshes have the same bounding box
+                if 'BOUNDS_MIN' in shader.uniforms:
+                    shader.uniforms['BOUNDS_MIN'].bind(mesh.bounds_min)
+                if 'BOUNDS_MAX' in shader.uniforms:
+                    shader.uniforms['BOUNDS_MAX'].bind(mesh.bounds_max)
+
                 double_sided = mesh.parameters['double_sided']
                 if double_sided != _double_sided:
                     _double_sided = double_sided

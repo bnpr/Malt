@@ -1,5 +1,7 @@
 #include "NPR_Intellisense.glsl"
 #include "Common.glsl"
+#include "SDF/SDF.glsl"
+
 
 /* META GLOBAL
     @meta: internal=true; 
@@ -12,9 +14,11 @@ struct NPR_Settings
     bool Transparency;
     bool Transparency_Single_Layer;
     float Vertex_Displacement_Offset;
+    int SDF_Max_Steps;
+    float SDF_Min_Precision;
 };
 
-uniform NPR_Settings Settings = NPR_Settings(true, true, false, false, 0.001);
+uniform NPR_Settings Settings = NPR_Settings(true, true, false, false, 0.001, 100, 0.01);
 
 uniform ivec4 MATERIAL_LIGHT_GROUPS;
 
@@ -173,6 +177,11 @@ void PRE_PASS_PIXEL_SHADER(inout PrePassOutput PPO);
 #ifdef CUSTOM_DEPTH_OFFSET
 void DEPTH_OFFSET(inout float depth_offset, inout bool offset_position);
 #endif
+#ifdef CUSTOM_SDF
+float SDF(vec3 P);
+/* Wrap the SDF function to keep the NPR Pipeline API style */
+float scene_sdf(vec3 p) { return SDF(p); }
+#endif
 #ifdef MAIN_PASS
 void MAIN_PASS_PIXEL_SHADER();
 #endif
@@ -181,17 +190,41 @@ void main()
 {
     PIXEL_SETUP_INPUT();
 
+    float depth = gl_FragCoord.z;
+
+    // Discard pixel at the end of the shader, to avoid derivative glitches.
+    bool discard_pixel = false;
+
+    #ifdef CUSTOM_SDF
+    {
+        vec3 ray_start, ray_end;
+        ray_bounds_intersection(camera_position(), view_direction(), ray_start);
+        vec3 far_clip_position = transform_point(inverse(CAMERA), screen_to_camera(screen_uv(), 1.0));
+        ray_bounds_intersection(far_clip_position, -view_direction(), ray_end);
+        RayMarchResult raymarch_result = raymarch_scene(ray_start, ray_end,
+            Settings.SDF_Max_Steps, Settings.SDF_Min_Precision);
+        
+        if(!raymarch_result.hit)
+        {
+            discard_pixel = true;
+        }
+        else
+        {
+            POSITION = raymarch_result.position;
+            NORMAL = raymarch_result.normal;
+            depth = project_point_to_screen_coordinates(PROJECTION * CAMERA, POSITION).z;
+            gl_FragDepth = depth;
+        }
+    }
+    #endif
+
     PrePassOutput PPO;
     PPO.normal = NORMAL;
     PPO.id = ID;
     PPO.opacity = 1;
     PPO.transparent_shadowmap_color = vec3(0);
 
-    float depth = gl_FragCoord.z;
-    vec3 offset_position = POSITION;
-
-    // Discard pixel at the end of the shader, to avoid derivative glitches.
-    bool discard_pixel = false;
+    vec3 offset_position = POSITION;    
     
     #ifdef CUSTOM_PRE_PASS
     {

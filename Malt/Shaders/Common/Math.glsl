@@ -45,12 +45,21 @@ vec4 safe_mix(vec4 a, vec4 b, float f) {return f == 0.0 ? a : f == 1.0 ? b : mix
 
 #define vector_angle(a,b) (acos((dot(a,b))/(length(a) * length(b))))
 
-#include "Common.glsl"
+#define min2(v) min(v[0], v[1])
+#define max2(v) max(v[0], v[1])
+
+#define min3(v) min(min2(v), v[2])
+#define max3(v) max(max2(v), v[2])
+
+#define min4(v) min(min3(v), v[3])
+#define max4(v) max(max3(v), v[3])
 
 float pingpong(float a, float b)
 {
     return (b != 0.0)? abs(fract((a - b) / (b * 2.0)) * b * 2.0 - b) : 0.0;
 }
+
+#include "Common.glsl"
 
 /* META @meta: subcategory=Random; */
 vec4 random_per_object(float seed)

@@ -5,8 +5,8 @@
 
 // SDF functions adapted from https://www.iquilezles.org/www/articles/distfunctions/distfunctions.htm
 
-/* META GLOBAL
-    @meta: internal=true;
+/*  META GLOBAL
+    @meta: category=SDF;
 */
 
 float sdf_box(vec3 p, vec3 size)
@@ -82,9 +82,16 @@ struct RayMarchResult
     vec3 normal;
 };
 
+/*  META
+    @meta: internal=true;
+*/
 float scene_sdf(vec3 p);
 
 // To include this file and call this function you must define your own scene_sdf function
+
+/*  META
+    @meta: internal=true;
+*/
 RayMarchResult raymarch_scene(vec3 ray_start, vec3 ray_end, int max_steps, float min_precision)
 {
     RayMarchResult r = RayMarchResult(false, 0, 0, vec3(0), vec3(0));

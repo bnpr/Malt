@@ -220,6 +220,50 @@ float ray_plane_intersection(vec3 ray_origin, vec3 ray_direction, vec3 plane_pos
     return (p_position - r_origin) / r_direction;
 }
 
+float ray_aabb_intersection(vec3 ray_origin, vec3 ray_direction, vec3 aabb_min, vec3 aabb_max)
+{
+  //https://gdbooks.gitbooks.io/3dcollisions/content/Chapter3/raycast_aabb.html
+  vec3 t_mins = (aabb_min - ray_origin) / ray_direction;
+  vec3 t_maxs = (aabb_max - ray_origin) / ray_direction;
+
+  float t_min = max3(min(t_mins, t_maxs));
+  float t_max = min3(max(t_mins, t_maxs));
+
+  if(t_max < 0.0)
+  {
+    //AABB is in the opposite direction
+    return -1.0;
+  }
+  if(t_min > t_max)
+  {
+    //No intersection
+    return -1.0;
+  }
+  if(t_min < 0.0)
+  {
+    //The ray origin is inside the aabb
+    return 0.0;
+  }
+  return t_min;
+}
+
+float ray_bounds_intersection(vec3 ray_origin, vec3 ray_direction, out vec3 intersection)
+{
+    vec3 ray_origin_os = transform_point(inverse(MODEL), ray_origin);
+    vec3 ray_direction_os = transform_normal(inverse(MODEL), ray_direction);
+
+    float t = ray_aabb_intersection(ray_origin_os, ray_direction_os, BOUNDS_MIN, BOUNDS_MAX);
+    if(t < 0.0)
+    {
+        return t;
+    }
+
+    vec3 intersection_os = ray_origin + ray_direction_os * t;
+    intersection = transform_point(MODEL, intersection_os);
+
+    return distance(ray_origin, intersection);
+}
+
 vec2 rotate_2d(vec2 p, float angle)
 {
     mat2 rot = mat2(cos(angle), -sin(angle), sin(angle), cos(angle));
