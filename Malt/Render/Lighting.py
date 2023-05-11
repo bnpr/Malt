@@ -311,6 +311,11 @@ def get_sun_cascades(sun_from_world_matrix, projection_matrix, view_from_world_m
     for i in range(1, len(splits)):
         near = splits[i-1]
         far = splits[i]
+        # Make the cascades overlap a bit
+        if i > 1 :
+            near = lerp(near, splits[i-1], 0.01)
+        if i+1 < len(splits):
+            far = lerp(far, splits[i+1], 0.01)
         cascades.append(sun_shadowmap_matrix(sun_from_world_matrix, view_from_world_matrix, near, far, sample_offset, resolution))
     
     return cascades
