@@ -188,7 +188,7 @@ ShadowData sun_shadow(vec3 position, Light light, sampler2DArray shadowmap, floa
         
         S.light_uv = S.light_space * 0.5 + 0.5;
 
-        if(S.light_space == clamp(S.light_space, vec3(-1), vec3(1)))
+        if(S.light_space == clamp(S.light_space, vec3(-0.99), vec3(0.99)))
         {
             S.depth = texture(shadowmap, vec3(S.light_uv.xy, index)).x;
             S.shadow = S.depth < S.light_uv.z - bias;
