@@ -141,7 +141,15 @@ float pixel_depth()
 {
     #ifdef PIXEL_SHADER
     {
-        return gl_FragCoord.z;
+        #ifdef CUSTOM_PIXEL_DEPTH
+        {
+            return CUSTOM_PIXEL_DEPTH;
+        }
+        #else
+        {
+            return gl_FragCoord.z;
+        }
+        #endif
     }
     #endif
 
@@ -168,7 +176,7 @@ float pixel_world_size()
 {
     #ifdef PIXEL_SHADER
     {
-        return pixel_world_size_at(gl_FragCoord.z);
+        return pixel_world_size_at(pixel_depth());
     }
     #else
     {
