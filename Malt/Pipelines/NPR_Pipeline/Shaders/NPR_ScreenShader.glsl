@@ -7,6 +7,9 @@
 #ifdef PIXEL_SHADER
 vec3 DEFERRED_TRUE_NORMAL;
 #define CUSTOM_TRUE_NORMAL DEFERRED_TRUE_NORMAL
+
+float DEFERRED_PIXEL_DEPTH;
+#define CUSTOM_PIXEL_DEPTH DEFERRED_PIXEL_DEPTH
 #endif
 
 #include "Common.glsl"
@@ -32,6 +35,7 @@ void main()
     PIXEL_SETUP_INPUT();
     
     DEFERRED_TRUE_NORMAL = reconstruct_normal(IN_NORMAL_DEPTH, 3, screen_pixel());
+    DEFERRED_PIXEL_DEPTH = texelFetch(IN_NORMAL_DEPTH, screen_pixel(), 0).w;
 
     if(RENDER_LAYER_MODE)
     {

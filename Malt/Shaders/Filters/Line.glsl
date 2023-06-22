@@ -218,7 +218,7 @@ LineDetectionOutput line_detection_2(
         float offset_plane_distance = dot(true_normal_camera, sampled_position);
 
         // Scale by pixel world size so results are more stable at different distances and resolutions
-        float delta_distance = abs(plane_distance - offset_plane_distance) / pixel_world_size();
+        float delta_distance = abs(plane_distance - offset_plane_distance) / pixel_world_size_at(sampled_depth);
 
         /* Alternative depth computation
         {
