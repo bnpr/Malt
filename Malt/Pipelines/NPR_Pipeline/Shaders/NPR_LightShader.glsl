@@ -4,6 +4,11 @@
 #define NO_MODEL_INPUT
 #define NO_ID_INPUT
 
+#ifdef PIXEL_SHADER
+float DEFERRED_PIXEL_DEPTH;
+#define CUSTOM_PIXEL_DEPTH DEFERRED_PIXEL_DEPTH
+#endif
+
 #include "NPR_Intellisense.glsl"
 #include "Common.glsl"
 #include "Lighting/Lighting.glsl"
@@ -30,6 +35,7 @@ void main()
     PIXEL_SETUP_INPUT();
 
     float depth = texelFetch(IN_DEPTH, screen_pixel(), 0).x;
+    DEFERRED_PIXEL_DEPTH = depth;
     POSITION = screen_to_camera(screen_uv(), depth);
     POSITION = transform_point(inverse(CAMERA), POSITION);
 
