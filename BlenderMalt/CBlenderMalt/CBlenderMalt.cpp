@@ -87,35 +87,35 @@ void *CustomData_get_layer_n(const CustomData *data, int type, int n)
 
 // CBlenderMalt API
 
-EXPORT void retrieve_mesh_data(void* in_mesh, void* in_loop_tris, int loop_tri_count,
-    float* out_positions, float* out_normals, unsigned int** out_indices, unsigned int* out_index_lengths)
+EXPORT void retrieve_mesh_data(void* in_mesh, void* in_loop_tris, int* in_loop_tri_polys, int loop_tri_count,
+  float* out_positions, float* out_normals, unsigned int** out_indices, unsigned int* out_index_lengths)
 {
 	Mesh* mesh = (Mesh*)in_mesh;
-    MLoopTri* loop_tris = (MLoopTri*)in_loop_tris;
-    MLoop* loops = (MLoop*)CustomData_get_layer(&mesh->ldata, CD_MLOOP);
+  MLoopTri* loop_tris = (MLoopTri*)in_loop_tris;
 
-    float* positions = (float*)CustomData_get_layer_named(&mesh->vdata, CD_PROP_FLOAT3, "position");
+  int* loop_verts = (int*)CustomData_get_layer_named(&mesh->ldata, CD_PROP_INT32, ".corner_vert");
+  float* positions = (float*)CustomData_get_layer_named(&mesh->vdata, CD_PROP_FLOAT3, "position");
 	float* normals = (float*)CustomData_get_layer(&mesh->ldata, CD_NORMAL);
-    int* mat_indices = (int*)CustomData_get_layer_named(&mesh->pdata, CD_PROP_INT32, "material_index");
+  int* mat_indices = (int*)CustomData_get_layer_named(&mesh->pdata, CD_PROP_INT32, "material_index");
+  
+  for(int i = 0; i < mesh->totloop; i++)
+  {
+    out_positions[i*3+0] = positions[loop_verts[i]*3+0];
+    out_positions[i*3+1] = positions[loop_verts[i]*3+1];
+    out_positions[i*3+2] = positions[loop_verts[i]*3+2];
+  }
 
-    for(int i = 0; i < mesh->totloop; i++)
-    {
-        out_positions[i*3+0] = positions[loops[i].v*3+0];
-        out_positions[i*3+1] = positions[loops[i].v*3+1];
-        out_positions[i*3+2] = positions[loops[i].v*3+2];
-    }
+  memcpy(out_normals, normals, mesh->totloop * sizeof(float) * 3);
 
-    memcpy(out_normals, normals, mesh->totloop * sizeof(float) * 3);
+  unsigned int* mat_i = out_index_lengths;
 
-    unsigned int* mat_i = out_index_lengths;
-
-    for(int i = 0; i < loop_tri_count; i++)
-    {
-        int mat = mat_indices ? mat_indices[loop_tris[i].poly] : 0;
-        out_indices[mat][mat_i[mat]++] = loop_tris[i].tri[0];
-        out_indices[mat][mat_i[mat]++] = loop_tris[i].tri[1];
-        out_indices[mat][mat_i[mat]++] = loop_tris[i].tri[2];
-    }
+  for(int i = 0; i < loop_tri_count; i++)
+  {
+    int mat = mat_indices ? mat_indices[in_loop_tri_polys[i]] : 0;
+    out_indices[mat][mat_i[mat]++] = loop_tris[i].tri[0];
+    out_indices[mat][mat_i[mat]++] = loop_tris[i].tri[1];
+    out_indices[mat][mat_i[mat]++] = loop_tris[i].tri[2];
+  }
 }
 
 EXPORT float* mesh_tangents_ptr(void* in_mesh)
@@ -123,32 +123,34 @@ EXPORT float* mesh_tangents_ptr(void* in_mesh)
 	Mesh* mesh = (Mesh*)in_mesh;
 	float* ptr = (float*)CustomData_get_layer(&mesh->ldata, CD_MLOOPTANGENT);
     
-    return ptr;
+  return ptr;
 }
 
 EXPORT void pack_tangents(float* in_tangents, float* in_bitangent_signs, int loop_count, float* out_tangents)
 {
-    for(int i = 0; i < loop_count; i++)
-    {
-        out_tangents[i*4+0] = in_tangents[i*3+0];
-        out_tangents[i*4+1] = in_tangents[i*3+1];
-        out_tangents[i*4+2] = in_tangents[i*3+2];
-        out_tangents[i*4+3] = in_bitangent_signs[i];
-    }
+  for(int i = 0; i < loop_count; i++)
+  {
+    out_tangents[i*4+0] = in_tangents[i*3+0];
+    out_tangents[i*4+1] = in_tangents[i*3+1];
+    out_tangents[i*4+2] = in_tangents[i*3+2];
+    out_tangents[i*4+3] = in_bitangent_signs[i];
+  }
 }
 
-EXPORT bool has_flat_polys(void* in_polys, int polys_count)
+EXPORT bool has_flat_polys(void* in_mesh, int polys_count)
 {
-    MPoly* polys = (MPoly*)in_polys;
+  Mesh* mesh = (Mesh*)in_mesh;
+  const bool *sharp_faces = (bool*)CustomData_get_layer_named(&mesh->pdata, CD_PROP_BOOL, "sharp_face");
 
-    bool has_flat_poly = false;
-
-    for(int i = 0; i < polys_count; i++)
+  for(int i = 0; i < polys_count; i++)
+  {
+    if(sharp_faces[i])
     {
-        has_flat_poly |= (polys[i].flag & ME_SMOOTH) == 0;
+      return true;
     }
+  }
 
-    return has_flat_poly;
+  return false;
 }
 
 struct RenderPass {
@@ -168,5 +170,5 @@ struct RenderPass {
 
 EXPORT float* get_rect_ptr(void* render_pass_ptr)
 {
-    return ((RenderPass*)render_pass_ptr)->rect;
+  return ((RenderPass*)render_pass_ptr)->rect;
 }
