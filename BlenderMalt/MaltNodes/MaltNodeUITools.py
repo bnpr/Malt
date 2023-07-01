@@ -388,7 +388,7 @@ class NODE_OT_malt_add_search(NodeAddOperator, Operator):
                 return item
         return None
 
-    node_item: EnumProperty(
+    node_item: bpy.props.EnumProperty(
         name="Node Type",
         description="Node type",
         items=node_enum_items,

@@ -30,6 +30,7 @@ def load_mesh(object, name):
     
     mesh_ptr = ctypes.c_void_p(m.as_pointer())
     loop_tris_ptr = ctypes.c_void_p(m.loop_triangles[0].as_pointer())
+    loop_tri_polys_ptr = ctypes.c_int.from_address(m.loop_triangle_polygons[0].as_pointer())
 
     loop_count = len(m.loops)
     loop_tri_count = len(m.loop_triangles)
@@ -45,7 +46,7 @@ def load_mesh(object, name):
     
     indices_lengths = (ctypes.c_uint32 * material_count)()
 
-    CBlenderMalt.retrieve_mesh_data(mesh_ptr, loop_tris_ptr, loop_tri_count,
+    CBlenderMalt.retrieve_mesh_data(mesh_ptr, loop_tris_ptr, loop_tri_polys_ptr, loop_tri_count,
         positions.buffer(), normals.buffer(), indices_ptrs, indices_lengths)
     
     for i in range(material_count):
