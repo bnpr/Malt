@@ -840,7 +840,7 @@ class MALT_PT_World(MALT_PT_Base):
         return 'world'
     @classmethod
     def get_malt_property_owner(cls, context):
-        return context.scene.world
+        return context.world
 
 class MALT_PT_Camera(MALT_PT_Base):
     bl_context = "data"
@@ -849,10 +849,7 @@ class MALT_PT_Camera(MALT_PT_Base):
         return 'camera'
     @classmethod
     def get_malt_property_owner(cls, context):
-        if context.object.type == 'CAMERA':
-            return context.object.data
-        else:
-            return None
+        return context.camera
 
 class MALT_PT_Object(MALT_PT_Base):
     bl_context = "object"
@@ -880,17 +877,21 @@ class MALT_PT_Mesh(MALT_PT_Base):
         return 'mesh'
     @classmethod
     def get_malt_property_owner(cls, context):
-        if context.object and context.object.data and context.object.type in ('MESH', 'CURVE', 'SURFACE', 'META', 'FONT'):
+        if context.mesh:
+            return context.mesh
+        if context.curve:
+            return context.curve
+        if context.meta_ball:
+            return context.meta_ball
+        if context.object and context.object.type in ('SURFACE', 'FONT'):
             return context.object.data
 
 class MALT_PT_Light(MALT_PT_Base):
     bl_context = "data"
     @classmethod
     def get_malt_property_owner(cls, context):
-        if context.object.type == 'LIGHT':
-            return context.object.data
-        else:
-            return None
+        return context.light
+
     def draw(self, context):
         layout = self.layout
         owner = self.__class__.get_malt_property_owner(context)
