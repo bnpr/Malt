@@ -147,6 +147,14 @@ vec3 sample_normal_map(sampler2D normal_texture, int uv_index, vec2 uv)
 */
 vec3 radial_tangent(vec3 normal, vec3 axis)
 {
+    float d = abs(dot(normal, axis));
+    float epsilon = 1e-5;
+    if(d > 1.0 - epsilon)
+    {
+        // Avoid singularities when normal == axis.
+        vec3 alternative_axis = normalize(axis + vec3(0.1, 0.2, 0.3));
+        axis = mix(axis, alternative_axis, map_range_clamped(d, 1.0 - epsilon, 1.0, 0.0, epsilon));
+    }
     return normalize(cross(axis, normal));
 }
 
