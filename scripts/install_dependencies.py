@@ -34,7 +34,11 @@ for str in ['Linux', 'Darwin']:
 #Remove bin to avoid AVs false positives
 for e in os.listdir(malt_dependencies_path):
     if e.startswith('numpy') or e == 'bin':
-        shutil.rmtree(os.path.join(malt_dependencies_path, e))
+        path = os.path.join(malt_dependencies_path, e)
+        if os.path.isdir(path):
+            shutil.rmtree(path)
+        elif os.path.isfile(path):
+            os.remove(path)
 
 
 #subprocess.check_call([sys.executable, os.path.join(current_dir, 'get_glslang.py')])
