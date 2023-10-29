@@ -274,6 +274,7 @@ LineExpandOutput line_expand(vec2 uv, int max_width,
 
     vec4 line_color = vec4(0);
     float line_depth = 1.0;
+    float line_ldepth = -depth_to_z(line_depth);
 
     for(int x = -max_half_width; x <= max_half_width; x++)
     {
@@ -290,17 +291,22 @@ LineExpandOutput line_expand(vec2 uv, int max_width,
             {
                 vec4 offset_line_color = texture(line_color_texture, offset_uv);
                 float offset_line_depth = texture(depth_texture, offset_uv)[depth_channel];
+                float offset_line_ldepth = -depth_to_z(offset_line_depth);
                 uint offset_line_id = texture(id_texture, offset_uv)[id_channel];
                 
-                float alpha = clamp(offset_width / 2.0 - offset_length, 0.0, 1.0);
+                float alpha = offset_line_color.a;
+                float random_ldepth_offset = hash(vec4(offset, float(SAMPLE_COUNT), hash(uv).x)).x;
+
+                offset_line_ldepth += random_ldepth_offset * offset_width * 0.5 * pixel_world_size_at(offset_line_depth);
 
                 bool override = false;
-
-                if (alpha == 1.0 && offset_line_depth < line_depth)
+                
+                if(alpha == line_color.a && offset_line_ldepth < line_ldepth)
                 {
                     override = true;
                 }
-                else if(alpha > line_color.a)
+                
+                if(alpha > line_color.a)
                 {
                     override = true;
                 }
@@ -313,7 +319,7 @@ LineExpandOutput line_expand(vec2 uv, int max_width,
                 if(override)
                 {
                     line_color = offset_line_color;
-                    line_color.a *= alpha;
+                    line_ldepth = offset_line_ldepth;
                     line_depth = offset_line_depth;
                 }
             }
