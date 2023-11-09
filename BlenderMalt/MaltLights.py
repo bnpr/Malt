@@ -12,18 +12,18 @@ class MaltLight(bpy.types.PropertyGroup):
             light.spot_blend = self.spot_blend_angle / self.spot_angle
 
     strength : bpy.props.FloatProperty(name='Strength', default=1,
-        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
+        options={'LIBRARY_EDITABLE', 'ANIMATABLE'}, override={'LIBRARY_OVERRIDABLE'})
     
     override_global_settings : bpy.props.BoolProperty(name='Override Global Settings', default=False,
         options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
     max_distance : bpy.props.FloatProperty(name='Max Distance', default=100,
-        options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
+        options={'LIBRARY_EDITABLE', 'ANIMATABLE'}, override={'LIBRARY_OVERRIDABLE'})
 
     radius : bpy.props.FloatProperty(
         name='Radius',
         default=5,
         update=sync_data,
-        options={'LIBRARY_EDITABLE'},
+        options={'LIBRARY_EDITABLE', 'ANIMATABLE'},
         override={'LIBRARY_OVERRIDABLE'}
     )
     spot_angle : bpy.props.FloatProperty(
@@ -33,7 +33,7 @@ class MaltLight(bpy.types.PropertyGroup):
         min=0,
         max=math.pi,
         update=sync_data,
-        options={'LIBRARY_EDITABLE'},
+        options={'LIBRARY_EDITABLE', 'ANIMATABLE'},
         override={'LIBRARY_OVERRIDABLE'}
     )
     spot_blend_angle : bpy.props.FloatProperty(
@@ -43,7 +43,7 @@ class MaltLight(bpy.types.PropertyGroup):
         min=0,
         max=math.pi,
         update=sync_data,
-        options={'LIBRARY_EDITABLE'},
+        options={'LIBRARY_EDITABLE', 'ANIMATABLE'},
         override={'LIBRARY_OVERRIDABLE'}
     )
 
