@@ -281,7 +281,7 @@ LineExpandOutput line_expand(vec2 uv, int max_width,
         for(int y = -max_half_width; y <= max_half_width; y++)
         {
             vec2 offset = vec2(x,y);
-            float offset_length = length(offset);
+            float offset_length = length(offset) - 0.5;
             vec2 offset_uv = uv + offset / resolution;
 
             float offset_width = texture(line_width_texture, offset_uv)[line_width_channel] * line_width_scale;
@@ -293,6 +293,15 @@ LineExpandOutput line_expand(vec2 uv, int max_width,
                 float offset_line_depth = texture(depth_texture, offset_uv)[depth_channel];
                 float offset_line_ldepth = -depth_to_z(offset_line_depth);
                 uint offset_line_id = texture(id_texture, offset_uv)[id_channel];
+
+                if(offset_length <= 0 && offset_width <= 1.0)
+                {
+                    offset_line_color.a *= offset_width;
+                }
+                else
+                {
+                    offset_line_color.a *= clamp(offset_width / 2.0 - offset_length, 0.0, 1.0);
+                }
                 
                 float alpha = offset_line_color.a;
                 float random_ldepth_offset = hash(vec4(offset, float(SAMPLE_COUNT), hash(uv).x)).x;
