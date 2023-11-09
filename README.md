@@ -18,13 +18,6 @@ It's aimed at advanced users and technical artists who want more control over th
     - Automatic UI for *Shader* and *Pipeline* parameters.
     - 100% customizable *Python* Render Pipelines.
 
-## Current State
-
-We've been working on a full redesign of the default nodes before the 1.0 Release.  
-[Give it try and leave your feedback](https://github.com/bnpr/Malt/discussions/382).
-
-Malt is software agnostic, but Blender is the only integration planned right now.
-
 ## Requirements
 
 - OpenGL 4.5
