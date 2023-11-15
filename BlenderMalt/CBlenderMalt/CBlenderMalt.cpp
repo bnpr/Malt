@@ -93,10 +93,10 @@ EXPORT void retrieve_mesh_data(void* in_mesh, void* in_loop_tris, int* in_loop_t
 	Mesh* mesh = (Mesh*)in_mesh;
   MLoopTri* loop_tris = (MLoopTri*)in_loop_tris;
 
-  int* loop_verts = (int*)CustomData_get_layer_named(&mesh->ldata, CD_PROP_INT32, ".corner_vert");
-  float* positions = (float*)CustomData_get_layer_named(&mesh->vdata, CD_PROP_FLOAT3, "position");
-	float* normals = (float*)CustomData_get_layer(&mesh->ldata, CD_NORMAL);
-  int* mat_indices = (int*)CustomData_get_layer_named(&mesh->pdata, CD_PROP_INT32, "material_index");
+  int* loop_verts = (int*)CustomData_get_layer_named(&mesh->loop_data, CD_PROP_INT32, ".corner_vert");
+  float* positions = (float*)CustomData_get_layer_named(&mesh->vert_data, CD_PROP_FLOAT3, "position");
+	float* normals = (float*)CustomData_get_layer(&mesh->loop_data, CD_NORMAL);
+  int* mat_indices = (int*)CustomData_get_layer_named(&mesh->face_data, CD_PROP_INT32, "material_index");
   
   for(int i = 0; i < mesh->totloop; i++)
   {
@@ -121,7 +121,7 @@ EXPORT void retrieve_mesh_data(void* in_mesh, void* in_loop_tris, int* in_loop_t
 EXPORT float* mesh_tangents_ptr(void* in_mesh)
 {
 	Mesh* mesh = (Mesh*)in_mesh;
-	float* ptr = (float*)CustomData_get_layer(&mesh->ldata, CD_MLOOPTANGENT);
+	float* ptr = (float*)CustomData_get_layer(&mesh->loop_data, CD_MLOOPTANGENT);
     
   return ptr;
 }
@@ -140,7 +140,7 @@ EXPORT void pack_tangents(float* in_tangents, float* in_bitangent_signs, int loo
 EXPORT bool has_flat_polys(void* in_mesh, int polys_count)
 {
   Mesh* mesh = (Mesh*)in_mesh;
-  const bool *sharp_faces = (bool*)CustomData_get_layer_named(&mesh->pdata, CD_PROP_BOOL, "sharp_face");
+  const bool *sharp_faces = (bool*)CustomData_get_layer_named(&mesh->face_data, CD_PROP_BOOL, "sharp_face");
 
   for(int i = 0; i < polys_count; i++)
   {

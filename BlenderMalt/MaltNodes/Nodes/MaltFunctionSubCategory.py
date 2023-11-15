@@ -50,10 +50,10 @@ class MaltFunctionSubCategoryNode(bpy.types.Node, MaltFunctionNodeBase):
             r.operator('wm.malt_cycle_sub_categories', text='', icon='COLLAPSEMENU')
         return super().draw_buttons(context, layout)
     
-    def calc_node_width(self, point_size, dpi) -> float:
+    def calc_node_width(self, point_size) -> float:
         import blf
-        blf.size(0, point_size, dpi)
-        max_width = super().calc_node_width(point_size, dpi)
+        blf.size(0, point_size)
+        max_width = super().calc_node_width(point_size)
         layout_padding = 70 # account for the spaces on both sides of the enum dropdown
         label = next(enum[1] for enum in self.get_function_enums() if enum[0]==self.function_enum)
         return max(max_width, blf.dimensions(0, label)[0] + layout_padding)

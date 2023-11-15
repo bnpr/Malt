@@ -248,9 +248,9 @@ class MaltNode():
     def should_delete_outdated_links(self):
         return False
     
-    def calc_node_width(self, point_size, dpi) -> float:
+    def calc_node_width(self, point_size) -> float:
         import blf 
-        blf.size(0, point_size, dpi)
+        blf.size(0, point_size)
         header_padding = 36 # account for a little space for the arrow icon + extra padding on the side of a label
         socket_padding = 31 # account for little offset of the text from the node border
 
@@ -271,8 +271,7 @@ class MaltNode():
 
     def setup_width(self):
         point_size = bpy.context.preferences.ui_styles[0].widget_label.points
-        dpi = 72 #dont use bpy.context.preferences.system.dpi because that is influenced by the UI scale but the node widths are not 
-        self.width = self.calc_node_width(point_size, dpi)
+        self.width = self.calc_node_width(point_size)
 
     def get_source_name(self):
         return self.id_data.get_transpiler().get_source_name(self.internal_name)
