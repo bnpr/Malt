@@ -1,5 +1,6 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later
- * Copyright 2001-2002 NaN Holding BV. All rights reserved. */
+/* SPDX-FileCopyrightText: 2001-2002 NaN Holding BV. All rights reserved.
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later */
 
 /** \file
  * \ingroup DNA
@@ -10,10 +11,6 @@
  */
 
 #pragma once
-
-#ifdef UNDEFINED
-extern "C" {
-#endif
 
 /** Generic - all structs which are put into linked lists begin with this. */
 typedef struct Link {
@@ -26,13 +23,9 @@ typedef struct LinkData {
   void *data;
 } LinkData;
 
-/** Never change the size of this! dna_genfile.c detects pointer_size with it. */
+/** Never change the size of this! dna_genfile.cc detects pointer_size with it. */
 typedef struct ListBase {
   void *first, *last;
 } ListBase;
 
 /* 8 byte alignment! */
-
-#ifdef UNDEFINED
-}
-#endif
