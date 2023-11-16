@@ -111,7 +111,7 @@ class IBuffer():
         import ctypes
         return ctypes.sizeof(self.ctype()) * len(self)
     
-    def as_array_interface(self):
+    def as_array_interface(self, shape=None):
         import ctypes
         type_map = {
             ctypes.c_float : 'f',
@@ -120,12 +120,15 @@ class IBuffer():
             ctypes.c_bool : 'b',
         }
         
+        if shape is None:
+            shape = (len(self),)
+
         return Array_Interface(
             ctypes.addressof(self.buffer()),
             type_map[self.ctype()],
-            (len(self),)
+            shape
         )
     
-    def as_np_array(self):
+    def as_np_array(self, shape=None):
         import numpy as np
-        return np.array(self.as_array_interface(), copy=False)
+        return np.array(self.as_array_interface(shape), copy=False)
