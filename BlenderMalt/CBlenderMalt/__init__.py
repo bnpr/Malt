@@ -31,7 +31,3 @@ pack_tangents.restype = None
 has_flat_polys = CBlenderMalt['has_flat_polys']
 has_flat_polys.argtypes = [ctypes.c_void_p, ctypes.c_int]
 has_flat_polys.restype = ctypes.c_bool
-
-get_rect_ptr = CBlenderMalt['get_rect_ptr']
-get_rect_ptr.argtypes = [ctypes.c_void_p]
-get_rect_ptr.restype = ctypes.POINTER(ctypes.c_float)
