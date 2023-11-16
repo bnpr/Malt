@@ -275,8 +275,7 @@ class MaltRenderEngine(bpy.types.RenderEngine):
             if key == 'Combined': buffer_name = 'COLOR'
             if key == 'Depth': buffer_name = 'DEPTH'
             if buffer_name in buffers and hasattr(buffers[buffer_name], 'buffer'):
-                rect_ptr = CBlenderMalt.get_rect_ptr(value.as_pointer())
-                ctypes.memmove(rect_ptr, buffers[buffer_name].buffer(), size*4*value.channels)
+                value.rect = buffers[buffer_name].as_np_array((size , value.channels))
         
         self.end_result(result)
         # Delete the scene. Otherwise we get memory leaks.
@@ -287,7 +286,9 @@ class MaltRenderEngine(bpy.types.RenderEngine):
         self.request_new_frame = True
         self.request_scene_update = True
 
+        print('------------UPDATE---------------')
         for update in depsgraph.updates:
+            print(update.id, update.is_updated_transform, update.is_updated_geometry, update.is_updated_shading)
             if update.is_updated_geometry:
                 if isinstance(update.id, bpy.types.Object):
                     MaltMeshes.unload_mesh(update.id)
