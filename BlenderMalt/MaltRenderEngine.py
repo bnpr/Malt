@@ -286,9 +286,7 @@ class MaltRenderEngine(bpy.types.RenderEngine):
         self.request_new_frame = True
         self.request_scene_update = True
 
-        print('------------UPDATE---------------')
         for update in depsgraph.updates:
-            print(update.id, update.is_updated_transform, update.is_updated_geometry, update.is_updated_shading)
             if update.is_updated_geometry:
                 if isinstance(update.id, bpy.types.Object):
                     MaltMeshes.unload_mesh(update.id)
