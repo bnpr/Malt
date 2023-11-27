@@ -302,7 +302,7 @@ class OT_MaltCycleSubCategories(bpy.types.Operator):
         batch.draw(shader)
         gpu.state.blend_set('NONE')
 
-        blf.size(font_id, label_style.points * zoom, 72)
+        blf.size(font_id, label_style.points * zoom)
         blf.color(font_id, 1,1,1,1)
 
         for i, e in enumerate(reversed(prev_enums)):
@@ -483,10 +483,9 @@ class MaltNodeDrawCallbacks:
         text = ' > '.join(x.node_tree.name for x in path)
         preferences = context.preferences
         ui_scale = preferences.view.ui_scale
-        dpi = preferences.system.dpi
         size = preferences.ui_styles[0].widget.points * ui_scale
         color = preferences.themes[0].node_editor.space.text
-        blf.size(font_id, size, dpi)
+        blf.size(font_id, size)
         blf.position(font_id, 10, 10, 0)
         blf.color(font_id, *color, 1)
         blf.draw(font_id, text)
@@ -518,7 +517,7 @@ class MaltNodeDrawCallbacks:
         color = (Vector(socket.draw_color(context, node)) + Vector((1,1,1,1))) * 0.5
 
         def draw_text(text: str, size: float, loc: tuple[float, float], color: tuple[float, float, float, float]):
-            blf.size(font_id, size, 72)
+            blf.size(font_id, size)
             blf.position(font_id, *loc, 0)
             blf.color(font_id, *color)
             blf.draw(font_id, text)
