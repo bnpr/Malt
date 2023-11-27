@@ -100,7 +100,7 @@ class MaltRenderEngine(bpy.types.RenderEngine):
 
         #Objects
         def add_object(obj, matrix, id):
-            if obj.display_type in ['TEXTURED','SOLID'] and obj.type in ('MESH','CURVE','SURFACE','META', 'FONT'):
+            if obj.type in ('MESH','CURVE','SURFACE','META', 'FONT'):
                 name = MaltMeshes.get_mesh_name(obj)
                 if depsgraph.mode == 'RENDER':
                     name = '___F12___' + name
@@ -191,14 +191,20 @@ class MaltRenderEngine(bpy.types.RenderEngine):
 
         is_f12 = depsgraph.mode == 'RENDER'
 
+        def visible_display(obj):
+            return obj.display_type in ('TEXTURED','SOLID') or obj.type == 'LIGHT'
+
         for obj in depsgraph.objects:
-            if is_f12 or obj.visible_in_viewport_get(context.space_data):
+            if is_f12 or (visible_display(obj) and obj.visible_in_viewport_get(context.space_data)):
                 id = xxhash.xxh3_64_intdigest(obj.name_full.encode()) % (2**16)
                 add_object(obj, obj.matrix_world, id)
 
         for instance in depsgraph.object_instances:
             if instance.instance_object:
-                if is_f12 or instance.parent.visible_in_viewport_get(context.space_data):
+                obj = instance.instance_object
+                parent = instance.parent
+                if is_f12 or (visible_display(obj) and visible_display(parent) and
+                parent.visible_in_viewport_get(context.space_data)):
                     id = abs(instance.random_id) % (2**16)
                     add_object(instance.instance_object, instance.matrix_world, id)
         
