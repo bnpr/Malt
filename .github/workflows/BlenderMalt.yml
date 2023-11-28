@@ -33,7 +33,7 @@ jobs:
           [**BlenderMalt-Windows.zip**](https://github.com/${{github.repository}}/releases/download/${{env.BRANCH_NAME}}-latest/BlenderMalt-Windows.zip)
           [**BlenderMalt-Linux.zip**](https://github.com/${{github.repository}}/releases/download/${{env.BRANCH_NAME}}-latest/BlenderMalt-Linux.zip) 
           
-          *(Requires Blender 3.6)* 
+          *(Requires Blender 4.0)* 
     
     - name: Rollback Tagged Release
       uses: author/action-rollback@stable
@@ -56,7 +56,7 @@ jobs:
           [**BlenderMalt-Windows.zip**](https://github.com/${{github.repository}}/releases/download/${{github.ref_name}}/BlenderMalt-Windows.zip)
           [**BlenderMalt-Linux.zip**](https://github.com/${{github.repository}}/releases/download/${{github.ref_name}}/BlenderMalt-Linux.zip)
           
-          *(Requires Blender 3.6)*
+          *(Requires Blender 4.0)*
             
     outputs:
       upload_url: ${{ steps.create_release.outputs.upload_url }}  
