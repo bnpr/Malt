@@ -113,6 +113,46 @@ class Bridge():
     def get_parameters(self):
         return self.parameters
     
+    def generate_group_graphs(self):
+        import copy
+        group_graphs = {}
+        for name, graph in self.graphs.items():
+            if '(Group)' in name:
+                continue
+            if graph.language == 'GLSL':
+                group_graphs[f'{name} (Group)'] = copy.deepcopy(graph)
+        
+        for name, graph in group_graphs.items():
+            graph.name = name
+            from Malt.PipelineGraph import GLSLGraphIO
+            output_types = [
+                'float','vec2','vec3','vec4',
+                'int','ivec2','ivec3','ivec4',
+                'uint','uvec2','uvec3','uvec4',
+                'bool','mat4',
+            ]
+            input_types = [*output_types] + ['sampler1D','sampler2D']
+            graph.graph_io={
+                'NODE_GROUP_FUNCTION': GLSLGraphIO('NODE_GROUP_FUNCTION',
+                    dynamic_input_types=input_types,
+                    dynamic_output_types=output_types
+                )
+            }
+            io = graph.graph_io['NODE_GROUP_FUNCTION']
+            io.function = {
+                'meta': {},
+                'name': 'NODE_GROUP_FUNCTION',
+                'type': 'void',
+                'parameters': [],
+            }
+            io.signature = 'void NODE_GROUP_FUNCTION()'
+            graph.default_graph_path = None
+            graph.default_global_scope = ""
+            graph.default_shader_src = ""
+            graph.graph_type = graph.GLOBAL_GRAPH
+        
+        self.graphs.update(group_graphs)
+    
     @bridge_method
     def get_stats(self):
         if 'STATS' in self.shared_dict and self.shared_dict['STATS']:
@@ -182,6 +222,7 @@ class Bridge():
             'graph_types': graph_types
         })
         self.graphs.update(self.connections['REFLECTION'].recv())
+        self.generate_group_graphs()
     
     @bridge_method
     def get_shared_buffer(self, ctype, size):

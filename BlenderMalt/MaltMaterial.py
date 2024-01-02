@@ -51,6 +51,12 @@ class MaltMaterial(bpy.types.PropertyGroup):
         else:
             return ''
     
+    def get_parameters(self, overrides, proxys):
+        parameters = self.parameters.get_parameters(overrides, proxys)
+        if self.shader_nodes:
+            parameters.update(self.shader_nodes.get_group_parameters(overrides, proxys))
+        return parameters
+    
     def draw_ui(self, layout, extension, material_parameters):
         layout.active = self.id_data.library is None #only local data can be edited
         layout.prop_search(self, 'material_type', bpy.context.scene.world.malt, 'material_types')

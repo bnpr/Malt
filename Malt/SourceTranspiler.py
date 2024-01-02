@@ -4,9 +4,9 @@ import textwrap
 class SourceTranspiler():
     
     @classmethod
-    def get_source_name(self, name):
+    def get_source_name(self, name, prefix='_'):
         name = name.replace('.','_').replace(' ', '_')
-        name = '_' + ''.join(char for char in name if char.isalnum() or char == '_')
+        name = prefix + ''.join(char for char in name if char.isalnum() or char == '_')
         while '__' in name:
             name = name.replace('__','_')
         return name

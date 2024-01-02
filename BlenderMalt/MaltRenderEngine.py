@@ -143,7 +143,7 @@ class MaltRenderEngine(bpy.types.RenderEngine):
                             material_key = ('material',material_name)
                             if material_key not in scene.proxys.keys():
                                 path = slot.material.malt.get_source_path()
-                                shader_parameters = slot.material.malt.parameters.get_parameters(overrides, scene.proxys)
+                                shader_parameters = slot.material.malt.get_parameters(overrides, scene.proxys)
                                 material_parameters = slot.material.malt_parameters.get_parameters(overrides, scene.proxys)
                                 from Bridge.Proxys import MaterialProxy
                                 scene.proxys[material_key]  = MaterialProxy(path, shader_parameters, material_parameters)

@@ -139,6 +139,8 @@ class MaltIONode(bpy.types.Node, MaltNode):
     
     def get_source_global_parameters(self, transpiler):
         src = MaltNode.get_source_global_parameters(self, transpiler)
+        if self.id_data.is_group():
+            return src
         custom_outputs = ''
         graph_io = self.id_data.get_pipeline_graph().graph_io[self.io_type]
         index = graph_io.custom_output_start_index
@@ -172,11 +174,16 @@ class MaltIONode(bpy.types.Node, MaltNode):
     def draw_buttons_ext(self, context, layout):
         if self.allow_custom_parameters:
             def refresh():
-                #TODO: Overkill
+                self.id_data.reload_nodes()
                 for tree in bpy.data.node_groups:
-                    if tree.bl_idname == 'MaltTree':
-                        tree.reload_nodes()
-                        tree.update_ext(force_update=True)
+                    if tree.bl_idname == 'MaltTree' and tree is not self.id_data:
+                        for node in tree.nodes:
+                            if hasattr(node, 'get_linked_node_tree') and node.get_linked_node_tree() is self.id_data:
+                                tree.reload_nodes()
+                                tree.update_ext(force_update=True, force_track_shader_changes=False)
+                                break
+                self.id_data.update_ext(force_update=True)
+                                
             layout.operator("wm.malt_callback", text='Reload', icon='FILE_REFRESH').callback.set(refresh, 'Reload')
             def draw_parameters_list(owner, parameters_key):
                 row = layout.row()
@@ -206,6 +213,17 @@ class MaltIONode(bpy.types.Node, MaltNode):
                 def remove_custom_socket():
                     parameters.remove(index)
                 col.operator("wm.malt_callback", text='', icon='REMOVE').callback.set(remove_custom_socket, 'Remove')
+                def move_up():
+                    if index > 0:
+                        parameters.move(index, index - 1)
+                        setattr(owner, index_key, index - 1)
+                col.operator("wm.malt_callback", text='', icon='TRIA_UP').callback.set(move_up, 'Move Up')
+                def move_down():
+                    if index < len(parameters) - 1:
+                        parameters.move(index, index + 1)
+                        setattr(owner, index_key, index + 1)
+                col.operator("wm.malt_callback", text='', icon='TRIA_DOWN').callback.set(move_down, 'Move Down')
+
             if self.allow_custom_pass:
                 draw_parameters_list(self.get_custom_pass_io(), 'outputs' if self.is_output else 'inputs')
             else:

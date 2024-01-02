@@ -79,6 +79,7 @@ class MaltPipeline(bpy.types.PropertyGroup):
         bridge = Bridge.Client_API.Bridge(path, int(self.viewport_bit_depth), debug_mode, renderdoc_path, plugin_dirs, docs_path)
         from Malt.Utils import LOG
         LOG.info('Blender {} {} {}'.format(bpy.app.version_string, bpy.app.build_branch, bpy.app.build_hash))
+        bridge.generate_group_graphs()
         params = bridge.get_parameters()
 
         global _BRIDGE, _PIPELINE_PARAMETERS

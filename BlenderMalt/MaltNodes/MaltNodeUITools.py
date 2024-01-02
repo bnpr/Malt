@@ -117,8 +117,8 @@ class OT_MaltEditNodeTree(bpy.types.Operator):
         node = context.active_node
         space_path = context.space_data.path
         node_tree = None
-        if node and hasattr(node, 'get_pass_node_tree'):
-            node_tree = node.get_pass_node_tree()
+        if node and hasattr(node, 'get_linked_node_tree'):
+            node_tree = node.get_linked_node_tree()
         if node_tree:
             space_path.append(node_tree, node = node)
         else:
@@ -343,6 +343,80 @@ class NODE_OT_add_malt_subcategory_node(bpy.types.Operator):
             bpy.ops.wm.malt_cycle_sub_categories('INVOKE_DEFAULT')
         return{'FINISHED'}
 
+class OT_MaltAddNodeGroup(bpy.types.Operator):
+    bl_idname = 'wm.malt_add_node_group'
+    bl_label = 'Add Node Group'
+    bl_description = 'Add a new node group to a group node'
+    bl_options = {'UNDO'}
+
+    @classmethod
+    def poll(cls, context: bpy.types.Context):
+        from BlenderMalt.MaltNodes.Nodes import MaltGroupNode
+        return (
+            is_malt_tree_context(context)
+            and isinstance(context.active_node, MaltGroupNode.MaltGroupNode)
+        )
+
+    def execute(self, context: bpy.types.Context):
+        from BlenderMalt.MaltNodes.Nodes import MaltGroupNode
+        node: MaltGroupNode.MaltGroupNode = context.active_node
+        node.create_new_group()
+        return {'FINISHED'}
+    
+    @classmethod
+    def draw_ui(cls, layout: bpy.types.UILayout, node: bpy.types.Node, **layout_args):
+        layout.context_pointer_set('active_node', node)
+        layout.operator(cls.bl_idname, **layout_args)
+
+class OT_MaltNodesToGroup(bpy.types.Operator):
+    bl_idname = 'wm.malt_nodes_to_group'
+    bl_label = 'Convert Nodes to Group'
+    bl_description = 'Copies selected nodes and converts them into a new node group'
+
+    @classmethod
+    def poll(cls, context: bpy.types.Context):
+        return (
+            is_malt_tree_context(context)
+            and len(context.selected_nodes) > 0
+        )
+    
+    def execute(self, context: bpy.types.Context):
+        from BlenderMalt.MaltNodes.Nodes.MaltGroupNode import MaltGroupNode
+        from BlenderMalt.MaltNodes.MaltNodeTree import set_node_tree
+        from BlenderMalt.MaltNodes import MaltNodeTree
+        from mathutils import Vector
+        MaltNodeTree.SKIP_MATERIAL_UPDATE = True
+        sd: bpy.types.SpaceNodeEditor = context.space_data
+        initial_tree = sd.edit_tree
+        for n in context.selected_nodes:
+            if n.bl_idname == 'MaltIONode':
+                n.select = False
+        selected: list[bpy.types.Node] = context.selected_nodes
+        avg_loc = Vector((0.0, 0.0))
+        for node in selected:
+            avg_loc += Vector(get_absolute_node_position(node))
+        avg_loc /= len(selected)
+
+        bpy.ops.node.clipboard_copy()
+        new_group_node: MaltGroupNode = sd.edit_tree.nodes.new(MaltGroupNode.bl_idname)
+        new_nt = new_group_node.create_new_group()
+        new_group_node.location = avg_loc
+        sd.edit_tree.active = new_group_node
+        for n in sd.edit_tree.nodes:
+            n.select = n == new_group_node
+        set_node_tree(context, new_nt, new_group_node)
+        bpy.ops.node.clipboard_paste()
+        for n in new_nt.nodes.values():
+            n.location = Vector(n.location) - avg_loc
+        for n in selected:
+            initial_tree.nodes.remove(n)
+        MaltNodeTree.SKIP_MATERIAL_UPDATE = False
+        return {'FINISHED'}
+
+def get_absolute_node_position(node: bpy.types.Node):
+    if node.parent is None:
+        return node.location
+    return get_absolute_node_position(node.parent) + node.location
 
 # Blender 3.4 changed the way add_search works and broke NodeItems searches
 # See https://developer.blender.org/T103108
@@ -444,6 +518,8 @@ classes = [
     OT_MaltSetTreePreview,
     OT_MaltConnectTreePreview,
     OT_MaltCycleSubCategories,
+    OT_MaltAddNodeGroup,
+    OT_MaltNodesToGroup,
     NODE_OT_add_malt_subcategory_node,
     NODE_OT_malt_add_search,
 ]
@@ -540,6 +616,7 @@ def register_node_tree_shortcuts():
         add_shortcut(keymaps, OT_MaltEditNodeTree, type='TAB', value='PRESS')
         add_shortcut(keymaps, OT_MaltSetTreePreview, type='LEFTMOUSE', value='PRESS', shift=True, alt=True)
         add_shortcut(keymaps, OT_MaltConnectTreePreview, type='LEFTMOUSE', value='PRESS', shift=True, ctrl=True)
+        add_shortcut(keymaps, OT_MaltNodesToGroup, type='G', value='PRESS', ctrl=True)
 
 def register():
     for _class in classes: bpy.utils.register_class(_class)
