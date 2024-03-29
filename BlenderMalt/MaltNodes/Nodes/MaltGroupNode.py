@@ -69,7 +69,7 @@ class MaltGroupNode(bpy.types.Node, MaltFunctionNodeBase):
     
     def calc_node_width(self, point_size, dpi) -> float:
         import blf
-        blf.size(0, point_size, dpi)
+        blf.size(0, point_size * (dpi / 72.0))
 
         button_padding = 150 #Magic number to account for the other buttons on the node UI
         if getattr(self.group, 'users', 0) > 1:
