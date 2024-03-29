@@ -87,68 +87,36 @@ void *CustomData_get_layer_n(const CustomData *data, int type, int n)
 
 // CBlenderMalt API
 
-EXPORT void retrieve_mesh_data(void* in_mesh, void* in_loop_tris, int* in_loop_tri_polys, int loop_tri_count,
-  float* out_positions, float* out_normals, unsigned int** out_indices, unsigned int* out_index_lengths)
+EXPORT void retrieve_mesh_data(
+  float* in_positions,
+  int* in_loop_verts, int loop_count,
+  int* in_loop_tris,
+  int* in_loop_tri_polys, int loop_tri_count,
+  int* in_mat_indices,
+  float* out_positions, unsigned int** out_indices, unsigned int* out_index_lengths)
 {
-	Mesh* mesh = (Mesh*)in_mesh;
-  MLoopTri* loop_tris = (MLoopTri*)in_loop_tris;
-
-  int* loop_verts = (int*)CustomData_get_layer_named(&mesh->loop_data, CD_PROP_INT32, ".corner_vert");
-  float* positions = (float*)CustomData_get_layer_named(&mesh->vert_data, CD_PROP_FLOAT3, "position");
-	float* normals = (float*)CustomData_get_layer(&mesh->loop_data, CD_NORMAL);
-  int* mat_indices = (int*)CustomData_get_layer_named(&mesh->face_data, CD_PROP_INT32, "material_index");
-  
-  for(int i = 0; i < mesh->totloop; i++)
+  for(int i = 0; i < loop_count; i++)
   {
-    out_positions[i*3+0] = positions[loop_verts[i]*3+0];
-    out_positions[i*3+1] = positions[loop_verts[i]*3+1];
-    out_positions[i*3+2] = positions[loop_verts[i]*3+2];
+    out_positions[i*3+0] = in_positions[in_loop_verts[i]*3+0];
+    out_positions[i*3+1] = in_positions[in_loop_verts[i]*3+1];
+    out_positions[i*3+2] = in_positions[in_loop_verts[i]*3+2];
   }
-
-  memcpy(out_normals, normals, mesh->totloop * sizeof(float) * 3);
 
   unsigned int* mat_i = out_index_lengths;
 
   for(int i = 0; i < loop_tri_count; i++)
   {
-    int mat = mat_indices ? mat_indices[in_loop_tri_polys[i]] : 0;
-    out_indices[mat][mat_i[mat]++] = loop_tris[i].tri[0];
-    out_indices[mat][mat_i[mat]++] = loop_tris[i].tri[1];
-    out_indices[mat][mat_i[mat]++] = loop_tris[i].tri[2];
+    int mat = in_mat_indices ? in_mat_indices[in_loop_tri_polys[i]] : 0;
+    out_indices[mat][mat_i[mat]++] = in_loop_tris[i*3+0];
+    out_indices[mat][mat_i[mat]++] = in_loop_tris[i*3+1];
+    out_indices[mat][mat_i[mat]++] = in_loop_tris[i*3+2];
   }
 }
 
 EXPORT float* mesh_tangents_ptr(void* in_mesh)
 {
 	Mesh* mesh = (Mesh*)in_mesh;
-	float* ptr = (float*)CustomData_get_layer(&mesh->loop_data, CD_MLOOPTANGENT);
+	float* ptr = (float*)CustomData_get_layer(&mesh->corner_data, CD_MLOOPTANGENT);
     
   return ptr;
-}
-
-EXPORT void pack_tangents(float* in_tangents, float* in_bitangent_signs, int loop_count, float* out_tangents)
-{
-  for(int i = 0; i < loop_count; i++)
-  {
-    out_tangents[i*4+0] = in_tangents[i*3+0];
-    out_tangents[i*4+1] = in_tangents[i*3+1];
-    out_tangents[i*4+2] = in_tangents[i*3+2];
-    out_tangents[i*4+3] = in_bitangent_signs[i];
-  }
-}
-
-EXPORT bool has_flat_polys(void* in_mesh, int polys_count)
-{
-  Mesh* mesh = (Mesh*)in_mesh;
-  const bool *sharp_faces = (bool*)CustomData_get_layer_named(&mesh->face_data, CD_PROP_BOOL, "sharp_face");
-
-  for(int i = 0; i < polys_count; i++)
-  {
-    if(sharp_faces[i])
-    {
-      return true;
-    }
-  }
-
-  return false;
 }

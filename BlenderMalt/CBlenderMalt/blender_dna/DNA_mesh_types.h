@@ -11,27 +11,32 @@
 #include "DNA_ID.h"
 #include "DNA_customdata_types.h"
 #include "DNA_defs.h"
-#include "DNA_meshdata_types.h"
-#include "DNA_session_uuid_types.h"
+#include "DNA_session_uid_types.h"
 
 /** Workaround to forward-declare C++ type in C header. */
 #ifdef UNDEFINED
 
 #  include <optional>
 
-#  include "BLI_bounds_types.hh"
 #  include "BLI_math_vector_types.hh"
-#  include "BLI_offset_indices.hh"
 
 namespace blender {
-template<typename T> class Span;
+template<typename T> struct Bounds;
+namespace offset_indices {
+template<typename T> struct GroupedSpan;
+template<typename T> class OffsetIndices;
+}  // namespace offset_indices
+using offset_indices::GroupedSpan;
+using offset_indices::OffsetIndices;
 template<typename T> class MutableSpan;
+template<typename T> class Span;
 namespace bke {
 struct MeshRuntime;
 class AttributeAccessor;
 class MutableAttributeAccessor;
 struct LooseVertCache;
 struct LooseEdgeCache;
+enum class MeshNormalDomain : int8_t;
 }  // namespace bke
 }  // namespace blender
 using MeshRuntimeHandle = blender::bke::MeshRuntime;
@@ -45,7 +50,6 @@ struct Key;
 struct MCol;
 struct MEdge;
 struct MFace;
-struct MLoopTri;
 struct Material;
 
 typedef struct Mesh {
@@ -67,13 +71,13 @@ typedef struct Mesh {
   struct Material **mat;
 
   /** The number of vertices in the mesh, and the size of #vert_data. */
-  int totvert;
+  int verts_num;
   /** The number of edges in the mesh, and the size of #edge_data. */
-  int totedge;
+  int edges_num;
   /** The number of polygons/faces in the mesh, and the size of #face_data. */
   int faces_num;
-  /** The number of face corners in the mesh, and the size of #loop_data. */
-  int totloop;
+  /** The number of face corners in the mesh, and the size of #corner_data. */
+  int corners_num;
 
   /**
    * Array owned by mesh. See #Mesh::faces() and #OffsetIndices.
@@ -86,7 +90,7 @@ typedef struct Mesh {
   CustomData vert_data;
   CustomData edge_data;
   CustomData face_data;
-  CustomData loop_data;
+  CustomData corner_data;
 
   /**
    * List of vertex group (#bDeformGroup) names and flags only. Actual weights are stored in dvert.
@@ -149,10 +153,7 @@ typedef struct Mesh {
   /** Mostly more flags used when editing or displaying the mesh. */
   uint16_t flag;
 
-  /**
-   * The angle for auto smooth in radians. `M_PI` (180 degrees) causes all edges to be smooth.
-   */
-  float smoothresh;
+  float smoothresh_legacy DNA_DEPRECATED;
 
   /** Per-mesh settings for voxel remesh. */
   float remesh_voxel_size;
@@ -296,16 +297,15 @@ typedef struct Mesh {
   /**
    * Cached triangulation of mesh faces, depending on the face topology and the vertex positions.
    */
-  blender::Span<MLoopTri> looptris() const;
+  blender::Span<blender::int3> corner_tris() const;
 
   /**
-   * A map containing the face index that each cached triangle from #Mesh::looptris() came from.
+   * A map containing the face index that each cached triangle from #Mesh::corner_tris() came from.
    */
-  blender::Span<int> looptri_faces() const;
+  blender::Span<int> corner_tri_faces() const;
 
   /**
    * Calculate the largest and smallest position values of vertices.
-   * \note Does not take non-mesh data (edit mesh) into account, see #BKE_mesh_wrapper_minmax,
    */
   std::optional<blender::Bounds<blender::float3>> bounds_min_max() const;
 
@@ -341,6 +341,15 @@ typedef struct Mesh {
    * Cached information about vertices that aren't used by faces (but may be used by loose edges).
    */
   const blender::bke::LooseVertCache &verts_no_face() const;
+  /**
+   * True if the mesh has no faces or edges "inside" of other faces. Those edges or faces would
+   * reuse a subset of the vertices of a face. Knowing the mesh is "clean" or "good" can mean
+   * algorithms can skip checking for duplicate edges and faces when they create new edges and
+   * faces inside of faces.
+   *
+   * \note This is just a hint, so there still might be no overlapping geometry if it is false.
+   */
+  bool no_overlapping_topology() const;
 
   /**
    * Explicitly set the cached number of loose edges to zero. This can improve performance
@@ -358,7 +367,23 @@ typedef struct Mesh {
    * all vertices are used by faces, so #verts_no_faces() will be tagged empty as well.
    */
   void tag_loose_verts_none() const;
+  /** Set the #no_overlapping_topology() hint when the mesh is "clean." */
+  void tag_overlapping_none();
 
+  /**
+   * Returns the least complex attribute domain needed to store normals encoding all relevant mesh
+   * data. When all edges or faces are sharp, face normals are enough. When all are smooth, vertex
+   * normals are enough. With a combination of sharp and smooth, normals may be "split",
+   * requiring face corner storage.
+   *
+   * When possible, it's preferred to use face normals over vertex normals and vertex normals over
+   * face corner normals, since there is a 2-4x performance cost increase for each more complex
+   * domain.
+   *
+   * Optionally the consumer of the mesh can indicate that they support the sharp_face attribute
+   * natively, to avoid using corner normals in some cases.
+   */
+  blender::bke::MeshNormalDomain normals_domain(const bool support_sharp_face = false) const;
   /**
    * Normal direction of polygons, defined by positions and the winding direction of face corners.
    */
@@ -368,6 +393,31 @@ typedef struct Mesh {
    * surrounding each vertex and the normalized position for loose vertices.
    */
   blender::Span<blender::float3> vert_normals() const;
+  /**
+   * Normal direction at each face corner. Defined by a combination of face normals, vertex
+   * normals, the `sharp_edge` and `sharp_face` attributes, and potentially by custom normals.
+   *
+   * \note Because of the large memory requirements of storing normals per face corner, prefer
+   * using #face_normals() or #vert_normals() when possible (see #normals_domain()).
+   */
+  blender::Span<blender::float3> corner_normals() const;
+
+  /** Call after changing vertex positions to tag lazily calculated caches for recomputation. */
+  void tag_positions_changed();
+  /** Call after moving every mesh vertex by the same translation. */
+  void tag_positions_changed_uniformly();
+  /** Like #tag_positions_changed but doesn't tag normals; they must be updated separately. */
+  void tag_positions_changed_no_normals();
+  /** Call when changing "sharp_face" or "sharp_edge" data. */
+  void tag_sharpness_changed();
+  /** Call when changing #CD_CUSTOMLOOPNORMAL data. */
+  void tag_custom_normals_changed();
+  /** Call when face vertex order has changed but positions and faces haven't changed. */
+  void tag_face_winding_changed();
+  /** Call when new edges and vertices have been created but vertices and faces haven't changed. */
+  void tag_edges_split();
+  /** Call for topology updates not described by other update tags. */
+  void tag_topology_changed();
 #endif
 } Mesh;
 
@@ -422,17 +472,22 @@ enum {
   ME_FLAG_DEPRECATED_2 = 1 << 2, /* deprecated */
   ME_FLAG_UNUSED_3 = 1 << 3,     /* cleared */
   ME_FLAG_UNUSED_4 = 1 << 4,     /* cleared */
-  ME_AUTOSMOOTH = 1 << 5,
-  ME_FLAG_UNUSED_6 = 1 << 6, /* cleared */
-  ME_FLAG_UNUSED_7 = 1 << 7, /* cleared */
-  ME_REMESH_REPROJECT_VERTEX_COLORS = 1 << 8,
+  ME_AUTOSMOOTH_LEGACY = 1 << 5, /* deprecated */
+  ME_FLAG_UNUSED_6 = 1 << 6,     /* cleared */
+  ME_FLAG_UNUSED_7 = 1 << 7,     /* cleared */
+  ME_REMESH_REPROJECT_ATTRIBUTES = 1 << 8,
   ME_DS_EXPAND = 1 << 9,
   ME_SCULPT_DYNAMIC_TOPOLOGY = 1 << 10,
-  ME_FLAG_UNUSED_8 = 1 << 11, /* cleared */
-  ME_REMESH_REPROJECT_PAINT_MASK = 1 << 12,
+  /**
+   * Used to tag that the mesh has no overlapping topology (see #Mesh::no_overlapping_topology()).
+   * Theoretically this is runtime data that could always be recalculated, but since the intent is
+   * to improve performance and it only takes one bit, it is stored in the mesh instead.
+   */
+  ME_NO_OVERLAPPING_TOPOLOGY = 1 << 11,
+  ME_FLAG_UNUSED_8 = 1 << 12, /* deprecated */
   ME_REMESH_FIX_POLES = 1 << 13,
   ME_REMESH_REPROJECT_VOLUME = 1 << 14,
-  ME_REMESH_REPROJECT_SCULPT_FACE_SETS = 1 << 15,
+  ME_FLAG_UNUSED_9 = 1 << 15, /* deprecated */
 };
 
 #ifdef DNA_DEPRECATED_ALLOW

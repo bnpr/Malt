@@ -33,7 +33,7 @@ jobs:
           [**BlenderMalt-Windows.zip**](https://github.com/${{github.repository}}/releases/download/${{env.BRANCH_NAME}}-latest/BlenderMalt-Windows.zip)
           [**BlenderMalt-Linux.zip**](https://github.com/${{github.repository}}/releases/download/${{env.BRANCH_NAME}}-latest/BlenderMalt-Linux.zip) 
           
-          *(Requires Blender 4.0)* 
+          *(Requires Blender 4.1)* 
     
     - name: Rollback Tagged Release
       uses: author/action-rollback@stable
@@ -56,7 +56,7 @@ jobs:
           [**BlenderMalt-Windows.zip**](https://github.com/${{github.repository}}/releases/download/${{github.ref_name}}/BlenderMalt-Windows.zip)
           [**BlenderMalt-Linux.zip**](https://github.com/${{github.repository}}/releases/download/${{github.ref_name}}/BlenderMalt-Linux.zip)
           
-          *(Requires Blender 4.0)*
+          *(Requires Blender 4.1)*
             
     outputs:
       upload_url: ${{ steps.create_release.outputs.upload_url }}  
@@ -77,7 +77,7 @@ jobs:
         
     - uses: actions/setup-python@v2
       with:
-        python-version: '3.10'
+        python-version: '3.11'
     
     - name: setup_blender_addon.py
       run: python setup_blender_addon.py --copy-modules

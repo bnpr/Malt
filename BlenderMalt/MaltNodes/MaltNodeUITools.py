@@ -296,7 +296,7 @@ class OT_MaltCycleSubCategories(bpy.types.Operator):
             (4,5,6), (6,5,7),
         )
 
-        shader = gpu.shader.from_builtin('2D_SMOOTH_COLOR')
+        shader = gpu.shader.from_builtin('SMOOTH_COLOR')
         batch = batch_for_shader(shader, 'TRIS', {'pos': vertices, 'color': vertex_colors}, indices=indices)
         gpu.state.blend_set('ALPHA')
         batch.draw(shader)
