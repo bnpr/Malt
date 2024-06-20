@@ -5,12 +5,6 @@
     @meta: category=Vector;
 */
 
-mat4 TRANSFORM_CONVERSION_TABLE[3*3] = mat4[3*3](
-    mat4(1), MODEL, CAMERA*MODEL,
-    inverse(MODEL), mat4(1), CAMERA,
-    inverse(CAMERA*MODEL), inverse(CAMERA), mat4(1)
-);
-
 /*  META
     @Type: subtype=ENUM(Point,Vector,Normal);
     @From: subtype=ENUM(Object,World,Camera);
@@ -24,6 +18,12 @@ void Transform(
     inout vec3 Vector
 )
 {
+    mat4 TRANSFORM_CONVERSION_TABLE[3*3] = mat4[3*3](
+        mat4(1), MODEL, CAMERA*MODEL,
+        inverse(MODEL), mat4(1), CAMERA,
+        inverse(CAMERA*MODEL), inverse(CAMERA), mat4(1)
+    );
+
     mat4 m = TRANSFORM_CONVERSION_TABLE[clamp(From,0,2)*3 + clamp(To,0,2)];
     bool project = To == 3;
     if(Type==0)//Point
