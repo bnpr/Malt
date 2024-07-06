@@ -118,9 +118,14 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
 
     def get_rna(self):
         try:
-            if '_RNA_UI' not in self.keys():
-                self['_RNA_UI'] = {}
-            return self['_RNA_UI']
+            if '_MALT_' not in self.keys():
+                if '_RNA_UI' in self.keys():
+                    old_rna = self['_RNA_UI']
+                    self['_MALT_'] = {k : old_rna[k] for k in old_rna.keys()}
+                    self.pop('_RNA_UI')
+                else:
+                    self['_MALT_'] = {}
+            return self['_MALT_']
         except:
             return {}
 
@@ -355,32 +360,23 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
             rna_prop = rna[key]
             if rna_prop['active'] == False:
                 continue
+            if rna_prop['type'] not in (Type.FLOAT, Type.INT) or isinstance(rna_prop['default'], str):
+                continue
             #Default to color since it's the most common use case
             malt_subtype = rna_prop.get('malt_subtype')
             if rna_prop['type'] == Type.FLOAT and rna_prop['size'] >= 3 and (malt_subtype is None or malt_subtype == 'Color'):
                 rna_prop['subtype'] = 'COLOR'
-                rna_prop['use_soft_limits'] = True
                 rna_prop['soft_min'] = 0.0
                 rna_prop['soft_max'] = 1.0
             else:
-                rna_prop['subtype'] = 'BLEND'
-                rna_prop['use_soft_limits'] = False
+                rna_prop['subtype'] = 'NONE'
+
+            ui_properties = {}
+            for ui_key in ('default', 'subtype', 'min', 'max', 'soft_min', 'soft_max'):
+                if ui_key in rna_prop and rna_prop[ui_key] is not None:
+                    ui_properties[ui_key] = rna_prop[ui_key]
             
-            if bpy.app.version[0] >= 3:
-                if rna_prop['type'] in (Type.FLOAT, Type.INT) and not isinstance(rna_prop['default'], str):
-                    ui = self.id_properties_ui(key)
-                    step_size = {
-                        Type.FLOAT: 10,
-                        Type.INT: 1
-                    }[rna_prop['type']]
-                    updates = dict(default=rna_prop['default'], subtype='NONE', step=step_size)         
-                    if rna_prop['subtype'] == 'COLOR':
-                        updates.update(subtype='COLOR', soft_min=0.0, soft_max=1.0)
-                    if (soft_min := rna_prop.get('min')) != None:
-                        updates.update(soft_min=soft_min)
-                    if (soft_max := rna_prop.get('max')) != None:
-                        updates.update(soft_max=soft_max)
-                    ui.update(**updates)
+            self.id_properties_ui(key).update(**ui_properties)
 
         # Force a depsgraph update. 
         # Otherwise these won't be available inside scene_eval
@@ -469,7 +465,7 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
             gradient.texture = gradient.texture.copy()
 
     def get_parameters(self, overrides, proxys):
-        if '_RNA_UI' not in self.keys():
+        if '_MALT_' not in self.keys():
             return {}
         rna = self.get_rna()
         parameters = {}
@@ -572,7 +568,7 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
         layout.use_property_decorate = False
         #layout.prop(self, "parent")
 
-        if '_RNA_UI' not in self.keys():
+        if '_MALT_' not in self.keys():
             return #Can't modify ID classes from here
         rna = self.get_rna()
 
