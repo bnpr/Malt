@@ -349,7 +349,7 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
         for key, value in rna.items():
             if '@' in key and key not in parameters.keys():
                 main_name = key.split(' @ ')[0]
-                rna[key]['active'] = rna[main_name]['active'] and rna[key]['active']
+                rna[key]['active'] = main_name in rna.keys() and rna[main_name]['active'] and rna[key]['active']
                 if rna[key]['active']:
                     if rna[key]['type'] != rna[main_name]['type'] or rna[key]['size'] != rna[main_name]['size']:
                         parameter = Parameter(rna[main_name]['default'], rna[main_name]['type'],
