@@ -29,7 +29,7 @@ float ao(int samples, float radius, float distribution_exponent, float contrast,
         vec3 normal = NORMAL;
         #ifdef IS_MESH_SHADER
         {
-            normal = IO_NORMAL;
+            normal = is_front_facing() ? IO_NORMAL : -IO_NORMAL;
         }
         #endif
         float ao = ao(IN_NORMAL_DEPTH, 3, POSITION, normal, samples, radius, distribution_exponent, bias);
