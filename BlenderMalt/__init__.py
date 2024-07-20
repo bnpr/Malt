@@ -13,13 +13,6 @@ import sys, os
 from os import path
 import bpy
 
-def version_missmatch():
-    return bpy.app.version[:2] != bl_info['blender'][:2]
-def version_missmatch_message():
-    if version_missmatch():
-        v = bl_info['blender']
-        return f"Malt loading aborted. The installed Malt version only works with Blender {v[0]}.{v[1]}"
-
 #Add Malt and dependencies to the import path
 __CURRENT_DIR = path.dirname(path.realpath(__file__))
 __MALT_PATH = path.join(__CURRENT_DIR, '.MaltPath')
@@ -63,10 +56,6 @@ class Preferences(bpy.types.AddonPreferences):
     def draw(self, context):
         layout = self.layout
 
-        if version_missmatch():
-            layout.label(text=version_missmatch_message(), icon='ERROR')
-            return
-        
         if context.scene.render.engine == 'MALT':
             layout.operator('wm.path_open', text="Open Session Log").filepath=sys.stdout.log_path
         else:
@@ -130,9 +119,12 @@ def do_windows_fixes():
     if platform.system() == 'Windows':
         sys.executable = sys._base_executable
         # Use python-gpu on windows (patched python with NvOptimusEnablement and AmdPowerXpressRequestHighPerformance)
+        python_gpu_path = path.join(__MALT_DEPENDENCIES_PATH, 'python-gpu-{}.exe'.format(_PY_VERSION))
+        if os.path.exists(python_gpu_path) == False:
+            print(f"MALT WARNING: python-gpu-{_PY_VERSION}.exe not found. Performance might be affected.")
+            return
         python_executable = path.join(sys.exec_prefix, 'bin', 'python-gpu-{}.exe'.format(_PY_VERSION))
         if os.path.exists(python_executable) == False:
-            python_gpu_path = path.join(__MALT_DEPENDENCIES_PATH, 'python-gpu-{}.exe'.format(_PY_VERSION))
             try:
                 copy(python_gpu_path, python_executable)
             except PermissionError as e:
@@ -201,10 +193,6 @@ classes=[
 
 def register():
     for _class in classes: bpy.utils.register_class(_class)
-    
-    if version_missmatch():
-        print(version_missmatch_message())
-        return
 
     import importlib
     for module in get_modules():

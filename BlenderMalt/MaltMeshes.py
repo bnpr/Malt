@@ -74,11 +74,14 @@ def load_mesh(object, name):
         ctypes.memmove(uv_buffer.buffer(), uvs, uv_buffer.size_in_bytes())
         uvs_list.append(uv_buffer)
         if i == 0 and object.original.data.malt_parameters.bools['precomputed_tangents'].boolean:
-            m.calc_tangents(uvmap=uv_layer.name)
-            tangents_ptr = CBlenderMalt.mesh_tangents_ptr(ctypes.c_void_p(m.as_pointer()))
-            tangents = (ctypes.c_float * (loop_count * 4)).from_address(ctypes.addressof(tangents_ptr.contents))
             tangents_buffer = get_load_buffer('tangents'+str(i), ctypes.c_float, (loop_count * 4))
-            ctypes.memmove(tangents_buffer.buffer(), tangents, tangents_buffer.size_in_bytes())
+            CBlenderMalt.mesh_tangents(
+                to_ptr(m.loop_triangles[0].as_pointer(), ctypes.c_int),
+                loop_tri_count * 3,
+                positions.buffer(),
+                normals.buffer(),
+                uv_buffer.buffer(),
+                tangents_buffer.buffer())
     
     colors_list = [None]*4
     if object.type == 'MESH':
@@ -100,7 +103,6 @@ def load_mesh(object, name):
                 ctypes.memmove(color_buffer.buffer(), color, color_buffer.size_in_bytes())
                 colors_list[i] = color_buffer
 
-    #TODO: Optimize. Create load buffers from bytearrays and retrieve them later
     mesh_data = {
         'positions': positions,
         'indices': indices,

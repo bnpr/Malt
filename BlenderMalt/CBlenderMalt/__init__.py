@@ -23,6 +23,10 @@ retrieve_mesh_data.argtypes = [
 ]
 retrieve_mesh_data.restype = None
 
-mesh_tangents_ptr = CBlenderMalt['mesh_tangents_ptr']
-mesh_tangents_ptr.argtypes = [ctypes.c_void_p]
-mesh_tangents_ptr.restype = ctypes.POINTER(ctypes.c_float)
+mesh_tangents = CBlenderMalt['mesh_tangents']
+mesh_tangents.argtypes = [
+    ctypes.POINTER(ctypes.c_int), ctypes.c_int,
+    ctypes.POINTER(ctypes.c_float), ctypes.POINTER(ctypes.c_float), ctypes.POINTER(ctypes.c_float),
+    ctypes.POINTER(ctypes.c_float)
+]
+mesh_tangents.restype = ctypes.c_bool
