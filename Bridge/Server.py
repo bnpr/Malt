@@ -273,6 +273,21 @@ class Viewport():
 
 PROFILE = False
 
+@GLDEBUGPROC
+def gl_debug_callback(source, type, id, severity, length, message, user_param):
+    def fmt(enum):
+        try:
+            return GL_ENUMS[enum].removeprefix("GL_DEBUG_").removesuffix("_KHR").removesuffix("_ARB").replace("_"," ")
+        except:
+            return "(format error)"
+    msg = f"OPENGL DEBUG CALLBACK ({id}):\n{fmt(type)} > {fmt(severity)} > {fmt(source)}\n{message.decode('utf-8')}"
+    if type == GL_DEBUG_TYPE_ERROR:
+        LOG.error(msg)
+    elif severity == GL_DEBUG_SEVERITY_NOTIFICATION:
+        LOG.info(msg)
+    else:
+        LOG.warning(msg)
+
 def main(pipeline_path, viewport_bit_depth, connection_addresses,
     shared_dic, lock, log_path, debug_mode, plugins_paths, docs_path):
     LOG.info('DEBUG MODE: {}'.format(debug_mode))
@@ -290,8 +305,16 @@ def main(pipeline_path, viewport_bit_depth, connection_addresses,
     glfw.window_hint(glfw.CONTEXT_VERSION_MINOR, 5)
     glfw.window_hint(glfw.OPENGL_PROFILE, glfw.OPENGL_CORE_PROFILE)
     
+    if debug_mode:
+        glfw.window_hint(glfw.OPENGL_DEBUG_CONTEXT, True)
+    
     window = glfw.create_window(256, 256, 'Malt', None, None)
     glfw.make_context_current(window)
+    
+    if debug_mode:
+        glEnable(GL_DEBUG_OUTPUT)
+        glDebugMessageCallback(gl_debug_callback, None)
+
     # Don't hide for better OS/Drivers schedule priority
     #glfw.hide_window(window)
     # Minimize instead:

@@ -215,9 +215,6 @@ def register():
 def unregister():
     for _class in reversed(classes): bpy.utils.unregister_class(_class)
     
-    if version_missmatch():
-        return
-
     unregister_plugins()
 
     for module in reversed(get_modules()):
