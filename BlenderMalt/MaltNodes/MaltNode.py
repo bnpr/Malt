@@ -158,9 +158,13 @@ class MaltNode():
                 except:
                     current[name].ui_label = name
                 try:
-                    default = dic['meta']['default']
-                    if isinstance(default, str):
-                        current[name].default_initialization = default
+                    meta = dic['meta']
+                    if 'default_initialization' in meta:
+                        current[name].default_initialization = meta['default_initialization']
+                    else:
+                        default = meta['default']
+                        if isinstance(default, str):
+                            current[name].default_initialization = default
                 except:
                     pass
                 if is_new_socket:
