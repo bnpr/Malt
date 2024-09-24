@@ -376,7 +376,9 @@ class MaltPropertyGroup(bpy.types.PropertyGroup):
                 if ui_key in rna_prop and rna_prop[ui_key] is not None:
                     ui_properties[ui_key] = rna_prop[ui_key]
             
-            self.id_properties_ui(key).update(**ui_properties)
+            ui = self.id_properties_ui(key)
+            ui.clear()
+            ui.update(**ui_properties)
 
         # Force a depsgraph update. 
         # Otherwise these won't be available inside scene_eval
