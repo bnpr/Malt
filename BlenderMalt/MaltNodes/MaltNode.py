@@ -274,7 +274,7 @@ class MaltNode():
         return max_width
 
     def setup_width(self):
-        point_size = bpy.context.preferences.ui_styles[0].widget_label.points
+        point_size = bpy.context.preferences.ui_styles[0].widget.points
         self.width = self.calc_node_width(point_size)
 
     def get_source_name(self):

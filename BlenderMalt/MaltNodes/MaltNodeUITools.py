@@ -260,7 +260,7 @@ class OT_MaltCycleSubCategories(bpy.types.Operator):
             return
 
         prefs = context.preferences
-        label_style = prefs.ui_styles[0].widget_label
+        label_style = prefs.ui_styles[0].widget
         zoom = MaltNodeDrawCallbacks.get_view_zoom(context)
         dpifac = MaltNodeDrawCallbacks.get_dpifac(context)
         to_region_loc = MaltNodeDrawCallbacks.real_region_loc
@@ -581,7 +581,7 @@ class MaltNodeDrawCallbacks:
             return
         
         preferences = context.preferences
-        label_style = preferences.ui_styles[0].widget_label
+        label_style = preferences.ui_styles[0].widget
         size = label_style.points
         #calculate the zoom of the view by taking the difference of transformed points in the x-axis
         zoom = MaltNodeDrawCallbacks.get_view_zoom(context)
