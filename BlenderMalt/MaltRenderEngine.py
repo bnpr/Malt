@@ -32,7 +32,8 @@ class MaltRenderEngine(bpy.types.RenderEngine):
     bl_use_postprocess = True
     bl_use_shading_nodes_custom = False
 
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.display_draw = None
         self.scene = Scene.Scene()
         self.view_matrix = None
@@ -49,7 +50,8 @@ class MaltRenderEngine(bpy.types.RenderEngine):
         except:
             # Sometimes Blender seems to call the destructor on unitialiazed instances (???)
             pass
-    
+        super().__del__()
+
     def get_scene(self, context, depsgraph, request_scene_update, overrides):
         if request_scene_update == True:
             scene = Scene.Scene()
