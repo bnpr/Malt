@@ -19,7 +19,7 @@ def load_mesh(object, name):
     from . import CBlenderMalt
 
     m = object.data
-    if object.type != 'MESH' or bpy.context.mode == 'EDIT_MESH':
+    if object.type != 'MESH' or object.mode == 'EDIT':
         m = object.to_mesh()
     
     if m is None or len(m.polygons) == 0:
