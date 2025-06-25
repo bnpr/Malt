@@ -1,6 +1,7 @@
 import ctypes, time, platform
 import xxhash
 import bpy
+import gpu
 from mathutils import Vector, Matrix, Quaternion
 from Malt import Scene
 from Malt.Pipeline import SHADER_DIR
@@ -42,6 +43,7 @@ class MaltRenderEngine(bpy.types.RenderEngine):
         self.bridge = MaltPipeline.get_bridge()
         self.bridge_id = self.bridge.get_viewport_id() if self.bridge else None
         self.last_frame_time = 0
+        self.render_backend = gpu.platform.backend_type_get()
 
     def __del__(self):
         try:
@@ -357,32 +359,43 @@ class MaltRenderEngine(bpy.types.RenderEngine):
             if region.type == 'UI':
                 region.tag_redraw()
 
-        fbo = GL.gl_buffer(GL.GL_INT, 1)
-        GL.glGetIntegerv(GL.GL_FRAMEBUFFER_BINDING, fbo)
+        if self.render_backend == 'OPENGL':
+            fbo = GL.gl_buffer(GL.GL_INT, 1)
+            GL.glGetIntegerv(GL.GL_FRAMEBUFFER_BINDING, fbo)
 
-        data_format = GL.GL_FLOAT
-        texture_format = GL.GL_RGBA32F
-        if self.bridge.viewport_bit_depth == 8:
-            data_format = GL.GL_UNSIGNED_BYTE
-            texture_format = GL.GL_RGBA8
-            if GL.glGetInternalformativ(GL.GL_TEXTURE_2D, texture_format, GL.GL_READ_PIXELS, 1) != GL.GL_ZERO:
-                data_format = GL.glGetInternalformativ(GL.GL_TEXTURE_2D, texture_format, GL.GL_TEXTURE_IMAGE_TYPE, 1)
-        elif self.bridge.viewport_bit_depth == 16:
-            data_format = GL.GL_HALF_FLOAT
-            texture_format = GL.GL_RGBA16F
-        
-        try:
-            render_texture = Texture(resolution, texture_format, data_format, pixels.buffer(),
-                mag_filter=mag_filter, pixel_format=GL.GL_RGBA)
-        except:
-            # Fallback to unsigned byte, just in case (matches Server behavior)
-            render_texture = Texture(resolution, GL.GL_RGBA8, GL.GL_UNSIGNED_BYTE, pixels.buffer(),
-                mag_filter=mag_filter)
-        
-        global DISPLAY_DRAW
-        if DISPLAY_DRAW is None:
-            DISPLAY_DRAW = DisplayDraw()
-        DISPLAY_DRAW.draw(fbo, render_texture)
+            data_format = GL.GL_FLOAT
+            texture_format = GL.GL_RGBA32F
+            if self.bridge.viewport_bit_depth == 8:
+                data_format = GL.GL_UNSIGNED_BYTE
+                texture_format = GL.GL_RGBA8
+                if GL.glGetInternalformativ(GL.GL_TEXTURE_2D, texture_format, GL.GL_READ_PIXELS, 1) != GL.GL_ZERO:
+                    data_format = GL.glGetInternalformativ(GL.GL_TEXTURE_2D, texture_format, GL.GL_TEXTURE_IMAGE_TYPE, 1)
+            elif self.bridge.viewport_bit_depth == 16:
+                data_format = GL.GL_HALF_FLOAT
+                texture_format = GL.GL_RGBA16F
+            
+            try:
+                render_texture = Texture(resolution, texture_format, data_format, pixels.buffer(),
+                    mag_filter=mag_filter, pixel_format=GL.GL_RGBA)
+            except:
+                # Fallback to unsigned byte, just in case (matches Server behavior)
+                render_texture = Texture(resolution, GL.GL_RGBA8, GL.GL_UNSIGNED_BYTE, pixels.buffer(),
+                    mag_filter=mag_filter)
+            
+            global DISPLAY_DRAW
+            if DISPLAY_DRAW is None:
+                DISPLAY_DRAW = DisplayDraw()
+            DISPLAY_DRAW.draw(fbo, render_texture)
+        else:
+            import gpu
+            from gpu_extras.presets import draw_texture_2d
+            data_format = 'FLOAT' # GPUTexture only supports 'FLOAT' buffer types
+            texture_format = 'RGBA32F'
+            #TODO do we need the sRGBConversion shader?
+            buffer = gpu.types.Buffer(data_format, len(pixels), pixels.buffer())
+            render_texture = gpu.types.GPUTexture(viewport_resolution, format=texture_format, data=buffer)
+            draw_texture_2d(render_texture, (0, 0), render_texture.width, render_texture.height)
+
 
 DISPLAY_DRAW = None
 
