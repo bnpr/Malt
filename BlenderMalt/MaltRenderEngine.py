@@ -50,9 +50,13 @@ class MaltRenderEngine(bpy.types.RenderEngine):
             self.bridge.free_viewport_id(self.bridge_id)
             self.bridge = None
         except:
-            # Sometimes Blender seems to call the destructor on unitialiazed instances (???)
+            # Sometimes Blender seems to call the destructor on un-initialized instances (???)
             pass
-        super().__del__()
+        try:
+            super().__del__()
+        except AttributeError:
+            # Quiet __del__ not being defined on bpy.types.RenderEngine
+            pass
 
     def get_scene(self, context, depsgraph, request_scene_update, overrides):
         if request_scene_update == True:
