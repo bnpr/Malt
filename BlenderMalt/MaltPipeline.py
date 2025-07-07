@@ -1,6 +1,5 @@
 import os, platform, time
 import bpy
-import gpu
 from BlenderMalt.MaltUtils import malt_path_getter, malt_path_setter
 from . import MaltMaterial, MaltMeshes, MaltTextures
 
@@ -76,13 +75,8 @@ class MaltPipeline(bpy.types.PropertyGroup):
         docs_path = docs_path if os.path.exists(docs_path) else None
         
         path = bpy.path.abspath(pipeline, library=self.id_data.library)
-
-        viewport_bit_depth = int(self.viewport_bit_depth)
-        if gpu.platform.backend_type_get() != 'OPENGL':
-            viewport_bit_depth = 32 # force 32 bit depth since gpu module only supports FLOAT data_format on GPUTexture
-
         import Bridge
-        bridge = Bridge.Client_API.Bridge(path, viewport_bit_depth, debug_mode, renderdoc_path, plugin_dirs, docs_path)
+        bridge = Bridge.Client_API.Bridge(path, int(self.viewport_bit_depth), debug_mode, renderdoc_path, plugin_dirs, docs_path)
         from Malt.Utils import LOG
         LOG.info('Blender {} {} {}'.format(bpy.app.version_string, bpy.app.build_branch, bpy.app.build_hash))
         params = bridge.get_parameters()
