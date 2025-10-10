@@ -169,6 +169,17 @@ def shader_preprocessor(shader_source, include_directories=[], definitions=[]):
     dependencies_path = os.path.join(os.path.dirname(__file__), '..', f'.Dependencies-{py_version}')
     mcpp = os.path.join(dependencies_path, f'mcpp-{platform.system()}')
 
+    if platform.system() == "Linux":
+        # NixOS and Guix System will cannot run the included mcpp binary
+        result = subprocess.run(f'"{mcpp}"', shell=True, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        if result.returncode != 0:
+            # Search for system mcpp
+            for directory in os.get_exec_path():
+                path = os.path.join(directory, "mcpp")
+                if os.path.isfile(path) and os.access(path, os.X_OK):
+                    mcpp = path
+
+
     command = f'"{mcpp}"'
     command += ' -C' #keep comments
     for directory in include_directories:
