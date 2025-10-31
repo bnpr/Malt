@@ -1,6 +1,7 @@
 import ctypes, time, platform
 import xxhash
 import bpy
+import gpu
 from mathutils import Vector, Matrix, Quaternion
 from Malt import Scene
 from Malt.Pipeline import SHADER_DIR
@@ -42,15 +43,20 @@ class MaltRenderEngine(bpy.types.RenderEngine):
         self.bridge = MaltPipeline.get_bridge()
         self.bridge_id = self.bridge.get_viewport_id() if self.bridge else None
         self.last_frame_time = 0
+        self.render_backend = gpu.platform.backend_type_get()
 
     def __del__(self):
         try:
             self.bridge.free_viewport_id(self.bridge_id)
             self.bridge = None
         except:
-            # Sometimes Blender seems to call the destructor on unitialiazed instances (???)
+            # Sometimes Blender seems to call the destructor on un-initialized instances (???)
             pass
-        super().__del__()
+        try:
+            super().__del__()
+        except AttributeError:
+            # Quiet __del__ not being defined on bpy.types.RenderEngine
+            pass
 
     def get_scene(self, context, depsgraph, request_scene_update, overrides):
         if request_scene_update == True:
@@ -357,36 +363,57 @@ class MaltRenderEngine(bpy.types.RenderEngine):
             if region.type == 'UI':
                 region.tag_redraw()
 
-        fbo = GL.gl_buffer(GL.GL_INT, 1)
-        GL.glGetIntegerv(GL.GL_FRAMEBUFFER_BINDING, fbo)
-
-        data_format = GL.GL_FLOAT
-        texture_format = GL.GL_RGBA32F
-        if self.bridge.viewport_bit_depth == 8:
-            data_format = GL.GL_UNSIGNED_BYTE
-            texture_format = GL.GL_RGBA8
-            if GL.glGetInternalformativ(GL.GL_TEXTURE_2D, texture_format, GL.GL_READ_PIXELS, 1) != GL.GL_ZERO:
-                data_format = GL.glGetInternalformativ(GL.GL_TEXTURE_2D, texture_format, GL.GL_TEXTURE_IMAGE_TYPE, 1)
-        elif self.bridge.viewport_bit_depth == 16:
-            data_format = GL.GL_HALF_FLOAT
-            texture_format = GL.GL_RGBA16F
-        
-        try:
-            render_texture = Texture(resolution, texture_format, data_format, pixels.buffer(),
-                mag_filter=mag_filter, pixel_format=GL.GL_RGBA)
-        except:
-            # Fallback to unsigned byte, just in case (matches Server behavior)
-            render_texture = Texture(resolution, GL.GL_RGBA8, GL.GL_UNSIGNED_BYTE, pixels.buffer(),
-                mag_filter=mag_filter)
-        
         global DISPLAY_DRAW
-        if DISPLAY_DRAW is None:
-            DISPLAY_DRAW = DisplayDraw()
-        DISPLAY_DRAW.draw(fbo, render_texture)
+        if self.render_backend == 'OPENGL':
+            fbo = GL.gl_buffer(GL.GL_INT, 1)
+            GL.glGetIntegerv(GL.GL_FRAMEBUFFER_BINDING, fbo)
+
+            data_format = GL.GL_FLOAT
+            texture_format = GL.GL_RGBA32F
+            if self.bridge.viewport_bit_depth == 8:
+                data_format = GL.GL_UNSIGNED_BYTE
+                texture_format = GL.GL_RGBA8
+                if GL.glGetInternalformativ(GL.GL_TEXTURE_2D, texture_format, GL.GL_READ_PIXELS, 1) != GL.GL_ZERO:
+                    data_format = GL.glGetInternalformativ(GL.GL_TEXTURE_2D, texture_format, GL.GL_TEXTURE_IMAGE_TYPE, 1)
+            elif self.bridge.viewport_bit_depth == 16:
+                data_format = GL.GL_HALF_FLOAT
+                texture_format = GL.GL_RGBA16F
+            
+            try:
+                render_texture = Texture(resolution, texture_format, data_format, pixels.buffer(),
+                    mag_filter=mag_filter, pixel_format=GL.GL_RGBA)
+            except:
+                # Fallback to unsigned byte, just in case (matches Server behavior)
+                render_texture = Texture(resolution, GL.GL_RGBA8, GL.GL_UNSIGNED_BYTE, pixels.buffer(),
+                    mag_filter=mag_filter)
+            
+            if DISPLAY_DRAW is None:
+                DISPLAY_DRAW = DisplayDrawGL()
+            DISPLAY_DRAW.draw(fbo, render_texture)
+        else:
+            import gpu
+            data_size = len(pixels)
+            w,h = resolution
+            if self.bridge.viewport_bit_depth == 8:
+                data_size = data_size // 4
+                h = h // 4
+            elif self.bridge.viewport_bit_depth == 16:
+                data_size = data_size // 2
+                h = h // 2
+            data_format = 'FLOAT' #Pretend we are uploading float data, since it's the only supported format.
+            texture_format = 'RGBA32F'
+            data_as_float = (ctypes.c_float * data_size).from_address(pixels._buffer.data)
+            buffer = gpu.types.Buffer(data_format, data_size, data_as_float)
+            render_texture = gpu.types.GPUTexture((w, h), format=texture_format, data=buffer)
+
+            if DISPLAY_DRAW is None:
+                DISPLAY_DRAW = DisplayDrawGPU()
+            DISPLAY_DRAW.draw(self.bridge.viewport_bit_depth, resolution, render_texture)
+
 
 DISPLAY_DRAW = None
 
-class DisplayDraw():
+class DisplayDrawGL():
     def __init__(self):
         positions=[
              1.0,  1.0, 1.0,
@@ -411,6 +438,108 @@ class DisplayDraw():
         self.shader.textures["input_texture"] = texture
         self.shader.bind()
         self.quad.draw()
+
+class DisplayDrawGPU():    
+    def __init__(self):
+        import gpu
+        from gpu_extras.batch import batch_for_shader
+
+        vertex_src = """
+        void main()
+        {
+            IO_POSITION = IN_POSITION * vec3(1000, 1000, 0.5);
+            gl_Position = vec4(IO_POSITION, 1);
+        }
+        """
+
+        pixel_src = """
+        vec3 srgb_to_linear(vec3 srgb)
+        {
+            vec3 low = srgb / 12.92;
+            vec3 high = pow((srgb + 0.055)/1.055, vec3(2.4));
+            return mix(low, high, greaterThan(srgb, vec3(0.04045)));
+        }
+
+        void main()
+        {
+            vec2 uv =  IO_POSITION.xy * 0.5 + 0.5;
+
+            int divisor = 32 / bit_depth;
+
+            ivec2 output_texel = ivec2(vec2(output_res) * uv);
+            int output_texel_linear = output_texel.y * output_res.x + output_texel.x;
+            
+            int texel_linear_read = output_texel_linear / divisor;
+            ivec2 texel_read = ivec2(texel_linear_read % output_res.x, texel_linear_read / output_res.x);
+            int sub_texel_index = output_texel_linear % divisor;
+
+            vec4 texel_value = texelFetch(input_texture, texel_read, 0);
+
+            if(bit_depth == 32)
+            {
+                OUT_COLOR = texel_value;
+            }
+            else if(bit_depth == 16)
+            {
+                vec2 sub_texel_value = sub_texel_index == 0 ? texel_value.xy : texel_value.zw;
+
+                uint packed_xy = floatBitsToUint(sub_texel_value.x);
+                uint packed_yz = floatBitsToUint(sub_texel_value.y);
+
+                OUT_COLOR.rg = unpackHalf2x16(packed_xy);
+                OUT_COLOR.ba = unpackHalf2x16(packed_yz);
+            }
+            else if(bit_depth == 8)
+            {
+                float sub_texel_value = texel_value[sub_texel_index];
+                uint packed_value = floatBitsToUint(sub_texel_value);
+                OUT_COLOR = unpackUnorm4x8(packed_value);
+                OUT_COLOR.rgb = srgb_to_linear(OUT_COLOR.rgb);
+            }
+            else{
+                OUT_COLOR = vec4(1,1,0,1);
+            }
+        }
+        """
+
+        self.iface = gpu.types.GPUStageInterfaceInfo("IFace")
+        self.iface.smooth('VEC3', "IO_POSITION")
+        
+        self.sh_info = gpu.types.GPUShaderCreateInfo()
+        self.sh_info.push_constant('INT', "bit_depth")
+        self.sh_info.push_constant('IVEC2', "output_res")
+        self.sh_info.sampler(0, 'FLOAT_2D', "input_texture")
+        self.sh_info.vertex_source(vertex_src)
+        self.sh_info.vertex_in(0, 'VEC3', "IN_POSITION")
+        self.sh_info.vertex_out(self.iface)
+        self.sh_info.fragment_source(pixel_src)
+        self.sh_info.fragment_out(0, 'VEC4', "OUT_COLOR")
+
+        self.shader = gpu.shader.create_from_info(self.sh_info)
+
+        positions=[
+            ( 1.0,  1.0, 1.0),
+            ( 1.0, -1.0, 1.0),
+            (-1.0, -1.0, 1.0),
+            (-1.0,  1.0, 1.0),
+        ]
+        indices=[
+            (0, 1, 3),
+            (1, 2, 3),
+        ]
+        
+        self.quad = batch_for_shader(
+            self.shader, 'TRIS',
+            {"IN_POSITION": positions},
+            indices=indices
+        )
+
+    def draw(self, bit_depth, resolution, texture):
+        self.shader.bind()
+        self.shader.uniform_int("bit_depth", bit_depth)
+        self.shader.uniform_int("output_res", resolution)
+        self.shader.uniform_sampler("input_texture", texture)
+        self.quad.draw(self.shader)
 
 
 class OT_MaltRenderDocCapture(bpy.types.Operator):
