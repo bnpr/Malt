@@ -124,6 +124,18 @@ class EnumParameter(Parameter):
     
     def from_index(self, index):
         return self.enum_options[index]
+    
+class FloatParameter(Parameter):
+    def __init__(self, default_value, min=None, max=None, size=1, filter=None, doc=None):
+        self.min = min
+        self.max = max
+        super().__init__(default_value, Type.FLOAT, size, filter, None, doc)
+
+class IntParameter(Parameter):
+    def __init__(self, default_value, min=None, max=None, size=1, filter=None, doc=None):
+        self.min = min
+        self.max = max
+        super().__init__(default_value, Type.INT, size, filter, None, doc)
 
 def gl_type_to_malt_type(gl_type):
     from Malt.GL import GL
