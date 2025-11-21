@@ -1,0 +1,296 @@
+# Melt / Malt Repository Documentation
+
+## 1. Overview
+
+**Malt** is a fully customizable real-time rendering framework designed for animation and illustration. It prioritizes image quality, flexibility, and simplicity over raw performance, making it ideal for stylized non-photorealistic rendering (NPR).
+
+The repository contains the source code for the Malt framework and its integration with Blender, known as **BlenderMalt**.
+
+## 2. Architecture
+
+The project is divided into three main components:
+
+### 2.1. Malt (Core Framework)
+Located in the `Malt/` directory.
+This is the core rendering engine written in Python and OpenGL. It is designed to be host-agnostic but is primarily used with Blender.
+
+*   **Pipeline (`Malt/Pipeline.py`)**: The central class. Users can create custom render pipelines by inheriting from this class. It handles resource registration, render target setup, and the main render loop.
+*   **Scene (`Malt/Scene.py`)**: Represents the scene data to be rendered. It is designed to be flexible, allowing pipelines to define custom parameters for scene objects.
+*   **Shaders (`Malt/Shaders/`)**: Contains GLSL shader libraries and utilities.
+*   **Render (`Malt/Render/`)**: Rendering utilities.
+*   **GL (`Malt/GL/`)**: OpenGL wrapper classes.
+
+### 2.2. BlenderMalt (Blender Integration)
+Located in the `BlenderMalt/` directory.
+This acts as the "Host" application for Malt. It bridges the gap between Blender's data structures and Malt's requirements.
+
+*   **RenderEngine (`BlenderMalt/MaltRenderEngine.py`)**: Implements `bpy.types.RenderEngine`. It converts Blender's dependency graph into a Malt Scene and sends it to the Bridge.
+*   **Pipeline Integration (`BlenderMalt/MaltPipeline.py`)**: Manages Bridge instances and synchronizes pipeline parameters.
+*   **Properties (`BlenderMalt/MaltProperties.py`)**: Maps Malt pipeline parameters to Blender's `PropertyGroup` system, allowing them to be edited in the Blender UI.
+*   **Materials (`BlenderMalt/MaltMaterial.py`)**: Handles compilation, hot-reloading, and UI for Malt materials within Blender.
+*   **Meshes (`BlenderMalt/MaltMeshes.py`)**: Optimized extraction of mesh data (vertex/index buffers) from Blender to be sent to Malt. Uses `CBlenderMalt` for direct C-level data access when possible.
+
+### 2.3. Bridge (Communication Layer)
+Located in the `Bridge/` directory.
+Handles the communication between the Host (Blender) and the Malt rendering process. This separation allows Malt to run independently, potentially preventing Blender crashes if the renderer fails.
+
+*   **Server (`Bridge/Server.py`)**: The Malt process that listens for commands.
+*   **Client API (`Bridge/Client_API.py`)**: Used by the host to send data and commands to the server.
+*   **IPC (`Bridge/ipc/`)**: Inter-Process Communication implementation.
+
+## 3. Key Features
+
+*   **Free and Open Source**: MIT License.
+*   **Real-Time Rendering**: Uses OpenGL 4.5.
+*   **Code-First Approach**:
+    *   Automatic reloading of shaders and pipelines.
+    *   VSCode integration with GLSL autocompletion.
+    *   Automatic UI generation for shader and pipeline parameters.
+*   **NPR Focus**: Built-in tools and pipelines specifically for stylized rendering.
+
+## 4. Installation & Requirements
+
+### Requirements
+*   OpenGL 4.5 capable GPU (Nvidia or AMD recommended).
+*   Latest Blender stable release.
+*   Windows or Linux.
+
+### Installation
+1.  Download the latest **BlenderMalt** release from the GitHub releases page.
+2.  In Blender, go to **Preferences > Add-ons > Install...** and select the downloaded zip file.
+3.  Enable the add-on.
+
+## 5. Developing a Custom Pipeline
+
+To create a custom rendering pipeline in Malt:
+
+1.  **Inherit from `Pipeline`**: Create a new class inheriting from `Malt.Pipeline`.
+2.  **Register Parameters**: In `__init__`, define global parameters and scene object parameters.
+3.  **Setup Render Targets**: Override `setup_render_targets` to create textures and framebuffers based on resolution.
+4.  **Compile Materials**: Override `compile_material_from_source` to define how shaders are generated from material source code.
+5.  **Implement Render Loop**: Override `do_render` to execute the drawing commands.
+
+Example structure:
+```python
+class MyPipeline(Pipeline):
+    def __init__(self):
+        super().__init__()
+        # Register parameters
+    
+    def setup_render_targets(self, resolution):
+        # Create FBOs
+        pass
+
+    def do_render(self, resolution, scene, is_final_render, is_new_frame):
+        # Render scene
+        pass
+```
+
+## 6. Directory Structure Summary
+
+*   `Malt/`: Core rendering engine.
+*   `BlenderMalt/`: Blender add-on code.
+*   `Bridge/`: IPC and client-server logic.
+*   `docs/`: Documentation files.
+*   `scripts/`: Utility scripts.
+*   `thirdparty/`: External dependencies.
+
+## 7. In-Depth: Custom Pipelines
+
+The `Malt.Pipeline.Pipeline` class is the heart of any Malt renderer. It bridges the Python render logic with the OpenGL backend and the Blender interface.
+
+### 7.1. The Pipeline Lifecycle
+
+1.  **Initialization (`__init__`)**:
+    *   The pipeline is instantiated.
+    *   `setup_parameters()` is called to register global settings.
+    *   `setup_graphs()` is called to register node tree types.
+    *   `setup_resources()` is called to initialize OpenGL resources (textures, buffers, shaders).
+
+2.  **Render Loop (`render` -> `do_render`)**:
+    *   Called every frame (or sample).
+    *   Handles resolution changes and sample accumulation.
+    *   Delegates the actual rendering to `do_render()`.
+
+### 7.2. Registering Parameters
+
+Parameters defined in `setup_parameters` are automatically exposed in the Blender UI.
+
+```python
+def setup_parameters(self):
+    super().setup_parameters()
+    
+    # World Parameter (Scene Settings)
+    self.parameters.world['My Setting'] = Parameter(1.0, Type.FLOAT, doc="A float setting")
+    
+    # Material Parameter (Object Settings)
+    self.parameters.material['Roughness'] = Parameter(0.5, Type.FLOAT, doc="Surface roughness")
+    
+    # Light Parameter (Light Settings)
+    self.parameters.light['Intensity'] = Parameter(1.0, Type.FLOAT, doc="Light intensity")
+```
+
+### 7.3. Pipeline Graphs (Node Trees)
+
+Malt supports custom node trees for shaders and render logic. These are defined in `setup_graphs`.
+
+*   **GLSLPipelineGraph**: Generates GLSL code for materials, lights, or screen effects.
+    *   Defines input/output sockets for nodes.
+    *   Specifies the boilerplate GLSL code (headers, main functions).
+*   **PythonPipelineGraph**: Executes Python code for high-level render logic (e.g., render layers, compositing).
+
+Example:
+```python
+def setup_graphs(self):
+    super().setup_graphs()
+    
+    mesh_graph = GLSLPipelineGraph(
+        name='Mesh',
+        graph_type=GLSLPipelineGraph.SCENE_GRAPH, # Used for Materials
+        shaders=['MAIN_PASS', 'SHADOW_PASS'], # Shaders to generate
+        # ...
+    )
+    self.add_graph(mesh_graph)
+```
+
+### 7.4. The Render Loop (`do_render`)
+
+This is where the magic happens. You receive the scene data and must return the final image.
+
+```python
+def do_render(self, resolution, scene, is_final_render, is_new_frame):
+    # 1. Update Uniforms
+    self.common_buffer.load(scene, resolution)
+    
+    # 2. Prepare Resources (if resolution changed)
+    if self.resolution != resolution:
+        self.t_color = Texture(resolution, GL_RGBA32F)
+        self.fbo = RenderTarget([self.t_color])
+        
+    # 3. Clear Framebuffer
+    self.fbo.clear([(0,0,0,1)])
+    
+    # 4. Draw Scene
+    # Batches are pre-grouped by Material and Mesh for efficiency
+    self.draw_scene_pass(self.fbo, scene.batches, 'MAIN_PASS', self.default_shader)
+    
+    # 5. Return Result
+    return {
+        'COLOR': self.t_color
+    }
+```
+
+### 7.5. Handling Sampling
+
+For effects like anti-aliasing or motion blur, you can render multiple samples per frame.
+
+1.  Override `get_samples()` to return a list of sample offsets.
+2.  In `do_render`, use `self.sample_count` to determine the current sample index.
+3.  Malt automatically accumulates the result if `needs_more_samples()` returns true.
+
+## 8. Q&A: Rendering from a Secondary Camera
+
+**Q: How can I render from a specific camera in the Blender scene to an FBO and use it as a texture?**
+
+**A:** By default, Malt only exports the *active* scene camera. To render from a secondary camera, you need to work around this by using a "Proxy Object" (like a Mesh) to represent the secondary camera's transform, and then manually perform a render pass from its point of view.
+
+### Step 1: Blender Setup
+1.  Create a **Mesh Object** (e.g., a Cube) to act as your secondary camera. Let's call it "CameraProxy".
+2.  Position and rotate it to match your desired view.
+3.  (Optional) Add custom properties to this object to define the Field of View (FOV), Near, and Far clipping planes if you want them to be adjustable.
+
+### Step 2: Pipeline Implementation
+In your custom Pipeline's `do_render` method, you need to:
+1.  Find the "CameraProxy" object in the scene.
+2.  Compute the **View Matrix** (Inverse of the Proxy's Model Matrix).
+3.  Compute the **Projection Matrix** (Perspective or Orthographic).
+4.  Render the scene to an FBO using these matrices.
+
+Here is a code snippet demonstrating this:
+
+```python
+import math
+from Malt.GL.GL import *
+from Malt.GL.RenderTarget import RenderTarget
+from Malt.GL.Texture import Texture
+
+def get_perspective_matrix(fov_radians, aspect_ratio, near, far):
+    # Simple perspective matrix calculation
+    f = 1.0 / math.tan(fov_radians / 2.0)
+    return (
+        f / aspect_ratio, 0, 0, 0,
+        0, f, 0, 0,
+        0, 0, (far + near) / (near - far), -1,
+        0, 0, (2 * far * near) / (near - far), 0
+    )
+
+def invert_matrix_4x4(m):
+    # You might want to use numpy for this: numpy.linalg.inv(m)
+    # For now, assuming the user handles matrix inversion (e.g. via numpy)
+    import numpy as np
+    mat = np.array(m).reshape(4,4).transpose() # Malt matrices are column-major tuples
+    inv = np.linalg.inv(mat)
+    return tuple(inv.transpose().flatten())
+
+class MyPipeline(Pipeline):
+    
+    def do_render(self, resolution, scene, is_final_render, is_new_frame):
+        # ... (Standard setup) ...
+
+        # 1. Find the Proxy Object
+        camera_proxy = None
+        for obj in scene.objects:
+            # Identify by name or custom tag
+            if obj.parameters.get('Name') == 'CameraProxy': 
+                camera_proxy = obj
+                break
+        
+        secondary_texture = None
+        
+        if camera_proxy:
+            # 2. Setup FBO for Secondary View
+            if 'SecondaryView' not in self.textures:
+                self.textures['SecondaryView'] = Texture(resolution, GL_RGBA32F)
+                self.fbo_secondary = RenderTarget([self.textures['SecondaryView']])
+            
+            # 3. Calculate Matrices
+            # View Matrix is the inverse of the Object's World Matrix
+            view_matrix = invert_matrix_4x4(camera_proxy.matrix)
+            
+            # Projection Matrix (Example: 90 deg FOV)
+            aspect_ratio = resolution[0] / resolution[1]
+            projection_matrix = get_perspective_matrix(math.radians(90), aspect_ratio, 0.1, 100.0)
+            
+            # 4. Render Secondary Pass
+            # Load the secondary camera matrices into the CommonBuffer
+            self.common_buffer.load(scene, resolution, camera=view_matrix, projection=projection_matrix)
+            
+            self.fbo_secondary.clear([(0,0,0,0)])
+            self.draw_scene_pass(self.fbo_secondary, scene.batches, 'MAIN_PASS', self.default_shader)
+            
+            secondary_texture = self.textures['SecondaryView']
+            
+            # IMPORTANT: Restore Main Camera State for the rest of the render
+            self.common_buffer.load(scene, resolution)
+
+        # ... (Main Render Pass using 'secondary_texture' if available) ...
+```
+
+**Notes:**
+*   **Optimization**: You might want to render the secondary view at a lower resolution.
+*   **Recursion**: Be careful not to create infinite loops if you have mirrors looking at mirrors.
+*   **Culling**: Malt's default culling might not be optimized for the secondary camera if the frustum is very different, but it should work correctly for rendering.
+
+### Step 3: GLSL Node Code
+
+To sample the texture in a material, use the following GLSL code. Malt will generate a node from this function.
+
+```glsl
+void SampleSecondaryView(sampler2D SecondaryView, vec2 UV, out vec4 Color)
+{
+    Color = texture(SecondaryView, UV);
+}
+```
+
+
+
