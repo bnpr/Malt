@@ -393,6 +393,35 @@ class Pipeline():
                         glDrawElementsInstanced(GL_TRIANGLES, mesh.mesh.index_count, GL_UNSIGNED_INT, NULL, batch['instances_count'])
 
 
+    def render_custom_fbos(self, scene):
+        from Malt.GL.RenderTarget import RenderTarget
+        from Malt.GL.Texture import Texture
+        from Malt.Scene import TextureShaderResource
+
+        if not hasattr(self, 'custom_fbo_textures'):
+            self.custom_fbo_textures = {}
+        
+        for fbo_info in scene.custom_fbos:
+            name = fbo_info['name']
+            camera = fbo_info['camera']
+            resolution = fbo_info['resolution']
+            
+            if name not in self.custom_fbo_textures or self.custom_fbo_textures[name].resolution != resolution:
+                 self.custom_fbo_textures[name] = Texture(resolution, GL_RGBA32F)
+            
+            texture = self.custom_fbo_textures[name]
+            target = RenderTarget([texture])
+            
+            self.common_buffer.load(scene, resolution, camera=camera.camera_matrix, projection=camera.projection_matrix)
+            
+            target.clear([(0,0,0,0)])
+            
+            shader = getattr(self, 'default_shader', None)
+            if shader:
+                self.draw_scene_pass(target, scene.batches, 'MAIN_PASS', shader)
+            
+            scene.shader_resources[name] = TextureShaderResource(name, texture)
+
     def render(self, resolution, scene, is_final_render, is_new_frame):
         self.is_final_render = is_final_render
         if self.resolution != resolution:
@@ -402,6 +431,8 @@ class Pipeline():
         
         if is_new_frame:
             self.sample_count = 0
+            self.render_custom_fbos(scene)
+
         
         if self.needs_more_samples() == False:
             return self.result

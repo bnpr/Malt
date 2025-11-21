@@ -54,6 +54,7 @@ class Scene():
 
         self.batches = None
         self.shader_resources = {}
+        self.custom_fbos = []
 
 class ShaderResource():
     

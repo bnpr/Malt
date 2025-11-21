@@ -285,9 +285,8 @@ class NPR_Pipeline(Pipeline):
         opaque_batches, transparent_batches = self.get_scene_batches(scene)
         
         self.common_buffer.load(scene, resolution, sample_offset, self.sample_count)
-        scene.shader_resources = {
-            'COMMON_UNIFORMS' : self.common_buffer
-        }
+        scene.shader_resources['COMMON_UNIFORMS'] = self.common_buffer
+
         
         result = {
             'COLOR': None,

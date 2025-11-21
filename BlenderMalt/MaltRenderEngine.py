@@ -216,7 +216,28 @@ class MaltRenderEngine(bpy.types.RenderEngine):
                     id = abs(instance.random_id) % (2**16)
                     add_object(instance.instance_object, instance.matrix_world, id)
         
+        for fbo in depsgraph.scene_eval.malt_fbo_collection:
+            if fbo.camera:
+                camera_obj = fbo.camera
+                camera_eval = camera_obj.evaluated_get(depsgraph)
+                
+                camera_matrix = flatten_matrix(camera_eval.matrix_world.inverted())
+                projection_matrix = flatten_matrix(
+                    camera_eval.data.calc_matrix_camera( depsgraph, 
+                        x=fbo.resolution_x, 
+                        y=fbo.resolution_y
+                ))
+                
+                name = camera_obj.name.replace('.', '_').replace(' ', '_')
+                
+                scene.custom_fbos.append({
+                    'name': name,
+                    'camera': Scene.Camera(camera_matrix, projection_matrix),
+                    'resolution': (fbo.resolution_x, fbo.resolution_y)
+                })
+
         return scene
+
     
     def get_AOVs(self, scene):
         #TODO: Hardcoded for now

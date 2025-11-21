@@ -46,6 +46,12 @@ class MaltTexturePropertyWrapper(bpy.types.PropertyGroup):
     texture : bpy.props.PointerProperty(type=bpy.types.Image,
         options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
 
+class MaltFBOProperty(bpy.types.PropertyGroup):
+    camera : bpy.props.PointerProperty(type=bpy.types.Object, poll=lambda self, obj: obj.type == 'CAMERA')
+    resolution_x : bpy.props.IntProperty(default=512, min=1)
+    resolution_y : bpy.props.IntProperty(default=512, min=1)
+
+
 class MaltMaterialPropertyWrapper(bpy.types.PropertyGroup):
     def poll(self, material):
         return material.malt.material_type == self.type or self.type == ''
@@ -788,6 +794,25 @@ class OT_MaltNewOverride(bpy.types.Operator):
         self.callback.call(self.override)
         return {'FINISHED'}
 
+class MALT_OT_AddFBO(bpy.types.Operator):
+    bl_idname = "malt.add_fbo"
+    bl_label = "Add FBO"
+    
+    def execute(self, context):
+        context.scene.malt_fbo_collection.add()
+        return {'FINISHED'}
+
+class MALT_OT_RemoveFBO(bpy.types.Operator):
+    bl_idname = "malt.remove_fbo"
+    bl_label = "Remove FBO"
+    
+    def execute(self, context):
+        index = context.scene.malt_fbo_collection_index
+        context.scene.malt_fbo_collection.remove(index)
+        context.scene.malt_fbo_collection_index = min(max(0, index - 1), len(context.scene.malt_fbo_collection) - 1)
+        return {'FINISHED'}
+
+
 
 class MALT_PT_Base(bpy.types.Panel):
     bl_space_type = 'PROPERTIES'
@@ -830,6 +855,36 @@ class MALT_PT_Scene(MALT_PT_Base):
     @classmethod
     def get_malt_property_owner(cls, context):
         return context.scene
+
+class MALT_PT_FBO_Collection(bpy.types.Panel):
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = "scene"
+    bl_label = "FBO Collection"
+    COMPAT_ENGINES = {'MALT'}
+
+    @classmethod
+    def poll(cls, context):
+        return context.scene.render.engine == 'MALT'
+
+    def draw(self, context):
+        layout = self.layout
+        scene = context.scene
+        
+        row = layout.row()
+        row.template_list("UI_UL_list", "malt_fbo_collection", scene, "malt_fbo_collection", scene, "malt_fbo_collection_index")
+        
+        col = row.column(align=True)
+        col.operator("malt.add_fbo", icon='ADD', text="")
+        col.operator("malt.remove_fbo", icon='REMOVE', text="")
+
+        if scene.malt_fbo_collection_index >= 0 and len(scene.malt_fbo_collection) > 0:
+            item = scene.malt_fbo_collection[scene.malt_fbo_collection_index]
+            layout.prop(item, "camera")
+            row = layout.row(align=True)
+            row.prop(item, "resolution_x", text="X")
+            row.prop(item, "resolution_y", text="Y")
+
 
 class MALT_PT_World(MALT_PT_Base):
     bl_context = "world"
@@ -911,12 +966,17 @@ classes = (
     MaltEnumPropertyWrapper,
     MaltGradientPropertyWrapper,
     MaltTexturePropertyWrapper,
+    MaltFBOProperty,
     MaltMaterialPropertyWrapper,
     MaltGraphPropertyWrapper,
     MaltPropertyGroup,
     OT_MaltNewOverride,
+    MALT_OT_AddFBO,
+    MALT_OT_RemoveFBO,
     MALT_PT_Base,
     MALT_PT_Scene,
+    MALT_PT_FBO_Collection,
+
     MALT_PT_World,
     MALT_PT_Camera,
     MALT_PT_Object,
@@ -929,6 +989,9 @@ def register():
 
     bpy.types.Scene.malt_parameters = bpy.props.PointerProperty(type=MaltPropertyGroup,
         options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
+    bpy.types.Scene.malt_fbo_collection = bpy.props.CollectionProperty(type=MaltFBOProperty)
+    bpy.types.Scene.malt_fbo_collection_index = bpy.props.IntProperty()
+
     bpy.types.World.malt_parameters = bpy.props.PointerProperty(type=MaltPropertyGroup,
         options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
     bpy.types.Camera.malt_parameters = bpy.props.PointerProperty(type=MaltPropertyGroup,
@@ -951,6 +1014,9 @@ def unregister():
     for _class in reversed(classes): bpy.utils.unregister_class(_class)
 
     del bpy.types.Scene.malt_parameters
+    del bpy.types.Scene.malt_fbo_collection
+    del bpy.types.Scene.malt_fbo_collection_index
+
     del bpy.types.World.malt_parameters
     del bpy.types.Camera.malt_parameters
     del bpy.types.Object.malt_parameters
