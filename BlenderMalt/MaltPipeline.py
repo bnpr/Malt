@@ -1,6 +1,6 @@
 import os, platform, time
 import bpy
-from BlenderMalt.MaltUtils import malt_path_getter, malt_path_setter
+from BlenderMalt.MaltUtils import malt_path_set_transform, malt_path_get_transform
 from . import MaltMaterial, MaltMeshes, MaltTextures
 
 _BRIDGE = None
@@ -105,11 +105,11 @@ class MaltPipeline(bpy.types.PropertyGroup):
         self.update_pipeline(context)
 
     pipeline : bpy.props.StringProperty(name="Malt Pipeline", subtype='FILE_PATH', update=update_pipeline_settings,
-        set=malt_path_setter('pipeline'), get=malt_path_getter('pipeline'),
+        set_transform=malt_path_set_transform, get_transform=malt_path_get_transform,
         options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
     
     plugins_dir : bpy.props.StringProperty(name="Local Plugins", subtype='DIR_PATH', update=update_pipeline_settings,
-        set=malt_path_setter('plugins_dir'), get=malt_path_getter('plugins_dir'),
+        set_transform=malt_path_set_transform, get_transform=malt_path_get_transform,
         options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
 
     viewport_bit_depth : bpy.props.EnumProperty(items=[('8', '8', ''),('16', '16', ''),('32', '32', '')], 

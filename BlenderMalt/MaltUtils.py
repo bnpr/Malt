@@ -25,15 +25,11 @@ class OT_MaltPrintError(bpy.types.Operator):
         return {'RUNNING_MODAL'}
 
 # Always store paths in UNIX format so saved files work across OSs
-def malt_path_setter(property_name):
-    def setter(self, value):
-        self[property_name] = value.replace('\\','/')
-    return setter
+def malt_path_set_transform(self, new_value, curr_value, is_set):
+    return new_value.replace('\\','/')
 
-def malt_path_getter(property_name):
-    def getter(self):
-        return self.get(property_name,'').replace('\\','/')
-    return getter
+def malt_path_get_transform(self, curr_value, is_set):
+    return curr_value.replace('\\','/')
 
 # Operator buttons are generated every time the UI is redrawn.
 # The UI is redrawn for every frame the cursor hovers over it

@@ -21,7 +21,7 @@ _PY_VERSION = str(sys.version_info[0])+str(sys.version_info[1])
 __MALT_DEPENDENCIES_PATH = path.join(__MALT_PATH,'Malt','.Dependencies-{}'.format(_PY_VERSION))
 if __MALT_DEPENDENCIES_PATH not in sys.path: sys.path.append(__MALT_DEPENDENCIES_PATH)
 
-from BlenderMalt.MaltUtils import malt_path_getter, malt_path_setter
+from BlenderMalt.MaltUtils import malt_path_set_transform, malt_path_get_transform
 
 class Preferences(bpy.types.AddonPreferences):
     # this must match the addon name
@@ -31,13 +31,13 @@ class Preferences(bpy.types.AddonPreferences):
         description="Setups a VSCode project on your .blend file folder")
 
     renderdoc_path : bpy.props.StringProperty(name="RenderDoc Path", subtype='FILE_PATH',
-        set=malt_path_setter('renderdoc_path'), get=malt_path_getter('renderdoc_path'))
+        set_transform=malt_path_set_transform, get_transform=malt_path_get_transform)
     
     plugins_dir : bpy.props.StringProperty(name="Global Plugins", subtype='DIR_PATH',
-        set=malt_path_setter('plugins_dir'), get=malt_path_getter('plugins_dir'))
+        set_transform=malt_path_set_transform, get_transform=malt_path_get_transform)
     
     docs_path : bpy.props.StringProperty(name="Docs Path", subtype='DIR_PATH',
-        set=malt_path_setter('docs_path'), get=malt_path_getter('docs_path'))
+        set_transform=malt_path_set_transform, get_transform=malt_path_get_transform)
     
     render_fps_cap : bpy.props.IntProperty(name="Max Viewport Render Framerate", default=30)
     
