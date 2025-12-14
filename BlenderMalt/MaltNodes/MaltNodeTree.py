@@ -3,7 +3,7 @@ from Malt.SourceTranspiler import GLSLTranspiler, PythonTranspiler
 import bpy
 from BlenderMalt.MaltProperties import MaltPropertyGroup
 from BlenderMalt import MaltPipeline
-from BlenderMalt.MaltUtils import malt_path_setter, malt_path_getter
+from BlenderMalt.MaltUtils import malt_path_set_transform, malt_path_get_transform
 
 from BlenderMalt.MaltNodes.MaltNode import MaltNode
 
@@ -73,7 +73,7 @@ class MaltTree(bpy.types.NodeTree):
     library_source : bpy.props.StringProperty(name="Local Library", subtype='FILE_PATH',
         options={'LIBRARY_EDITABLE'},
         override={'LIBRARY_OVERRIDABLE'},
-        set=malt_path_setter('library_source'), get=malt_path_getter('library_source'))
+        set_transform=malt_path_set_transform, get_transform=malt_path_get_transform)
 
     disable_updates : bpy.props.BoolProperty(name="Disable Updates", default=False,
         options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})

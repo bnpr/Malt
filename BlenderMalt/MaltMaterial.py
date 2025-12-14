@@ -1,6 +1,6 @@
 import os
 import bpy
-from BlenderMalt.MaltUtils import malt_path_getter, malt_path_setter
+from BlenderMalt.MaltUtils import malt_path_set_transform, malt_path_get_transform
 from . MaltProperties import MaltPropertyGroup
 
 _MATERIALS = {}
@@ -28,7 +28,7 @@ class MaltMaterial(bpy.types.PropertyGroup):
         options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
 
     shader_source : bpy.props.StringProperty(name="Shader Source", subtype='FILE_PATH', update=update_source,
-        set=malt_path_setter('shader_source'), get=malt_path_getter('shader_source'),
+        set_transform=malt_path_set_transform, get_transform=malt_path_get_transform,
         options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
         
     shader_nodes : bpy.props.PointerProperty(name="Node Tree", type=bpy.types.NodeTree, update=update_nodes, poll=poll_tree,
