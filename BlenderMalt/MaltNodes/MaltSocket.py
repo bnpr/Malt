@@ -76,6 +76,8 @@ class MaltSocket(bpy.types.NodeSocket):
         assert(self.active)
         transpiler = self.id_data.get_transpiler()
         result = transpiler.global_reference(self.node.get_source_name(), self.name)
+        if self.id_data.is_group():
+            result = result.replace('U_0_',f'_U_0_{self.id_data.get_group_source_name()}_')
         if len(result) > 63:
             #Blender dictionary keys are limited to 63 characters
             import xxhash

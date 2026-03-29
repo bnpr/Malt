@@ -145,18 +145,25 @@ class GLSLPipelineGraph(PipelineGraph):
         import textwrap
         from Malt.SourceTranspiler import GLSLTranspiler
         code = ''
+        include_guard = parameters.get('INCLUDE GUARD')
+        if include_guard:
+            code += f'#ifndef {include_guard}\n'
+            code += f'#define {include_guard}\n\n'
         for graph_io in self.graph_io.values():
             if graph_io.name in parameters.keys() and graph_io.define:
                 code += '#define {}\n'.format(graph_io.define)
         code += '\n\n' + self.default_global_scope + '\n\n'
-        for file in self.lib_files:
-            code += f'#include "{file}"\n'
+        if parameters.get('SKIP INCLUDES', False) == False:
+            for file in self.lib_files:
+                code += f'#include "{file}"\n'
         code += '\n\n' + parameters['GLOBAL'] + '\n\n'
         for graph_io in self.graph_io.values():
             if graph_io.name in parameters.keys():
                 code += GLSLTranspiler.preprocessor_wrap(graph_io.shader_type,
                 '{}\n{{\n{}\n}}'.format(graph_io.signature, textwrap.indent(parameters[graph_io.name],'\t')))
         code += '\n\n'
+        if include_guard:
+            code += '#endif\n\n'
         return code
     
     def compile_material(self, source, include_paths=[]):

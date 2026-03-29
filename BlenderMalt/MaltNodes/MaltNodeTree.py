@@ -42,6 +42,7 @@ class MaltTree(bpy.types.NodeTree):
         return material.malt.shader_nodes is self
     
     def update_graph_type(self, context):
+        self.is_group_type = self.graph_type.endswith(' (Group)')
         graph = self.get_pipeline_graph()
         if graph and graph.default_graph_path and len(self.nodes) == 0:
             blend_path, tree_name = graph.default_graph_path
@@ -59,9 +60,14 @@ class MaltTree(bpy.types.NodeTree):
             self.user_remap(copy)
             bpy.data.node_groups.remove(self)
             copy.name = name
+        else:
+            self.reload_nodes()
+            self.update_ext(force_update=True)
     
     graph_type: bpy.props.StringProperty(name='Type', update=update_graph_type,
         options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
+    is_group_type : bpy.props.BoolProperty(default=False,
+        options={'SKIP_SAVE','LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
 
     #deprecated
     library_source : bpy.props.StringProperty(name="Local Library", subtype='FILE_PATH',
@@ -83,6 +89,55 @@ class MaltTree(bpy.types.NodeTree):
 
     def is_active(self):
         return self.get_pipeline_graph() is not None
+    
+    def is_group(self):
+        return self.is_group_type
+    
+    def get_group_source_name(self):
+        name = self.get_transpiler().get_source_name(self.name, prefix='').upper()
+        return name
+
+    def get_group_function(self, force_update=False):
+        if force_update == False and self.get('group_function'):
+            return self['group_function']
+        parameters = []
+        for node in self.nodes:
+            if node.bl_idname == 'MaltIONode':
+                sockets = node.inputs if node.is_output else node.outputs
+                for socket in sockets:
+                    parameters.append({
+                        'meta': {
+                            'label': socket.name,    
+                        },
+                        'name': socket.get_source_reference(),
+                        'type': socket.data_type,
+                        'size': socket.array_size,
+                        'io': 'out' if node.is_output else 'in'
+                    })
+        parameter_signature = ', '.join([f"{p['io']} {p['type']} {p['name']}" for p in parameters])
+        signature = f'void {self.get_group_source_name()}({parameter_signature})'
+        self['group_function'] = {
+            'meta': {},
+            'name': self.get_group_source_name(),
+            'type': 'void',
+            'parameters': parameters,
+            'signature': signature,
+        }
+        return self['group_function']
+    
+    def get_group_parameters(self, overrides, proxys):
+        groups = []
+        parameters = {}
+        def get_groups(tree):
+            for node in tree.nodes:
+                if node.bl_idname == 'MaltGroupNode' and node.group is not None:
+                    if node.group not in groups:
+                        groups.append(node.group)
+                        get_groups(node.group)
+        get_groups(self)
+        for group in groups:
+            parameters.update(group.malt_parameters.get_parameters(overrides, proxys))
+        return parameters
 
     def get_source_language(self):
         return self.get_pipeline_graph().language
@@ -242,7 +297,13 @@ class MaltTree(bpy.types.NodeTree):
         for node in linked_nodes:
             if hasattr(node, 'get_source_global_parameters'):
                 shader['GLOBAL'] += node.get_source_global_parameters(transpiler)
-        self['source'] = pipeline_graph.generate_source(shader)
+        if self.is_group():
+            shader['SKIP INCLUDES'] = True
+            shader['INCLUDE GUARD'] = self.get_group_source_name() + '_GLSL'
+        source = pipeline_graph.generate_source(shader)
+        if self.is_group():
+            source = source.replace('void NODE_GROUP_FUNCTION()', self.get_group_function()['signature'])
+        self['source'] = source
         return self['source']
     
     def reload_nodes(self):
@@ -254,10 +315,21 @@ class MaltTree(bpy.types.NodeTree):
             for node in self.nodes:
                 if hasattr(node, 'update'):
                     node.update()
+            self.get_group_function(force_update=True)
         except:
             import traceback
             traceback.print_exc()
         self.disable_updates = False
+    
+    def on_name_change(self, old_src_name):
+        if self.is_group():
+            new_src_name = self.get_group_source_name()
+            for key in list(self.malt_parameters.get_rna().keys()):
+                if old_src_name in key:
+                    self.malt_parameters.rename_property(key, key.replace(old_src_name, new_src_name))
+            bpy.msgbus.clear_by_owner(self)
+            self.subscribed = False
+        self.update_ext(force_update=True)
 
     def update(self):
         if self.is_active():
@@ -272,7 +344,7 @@ class MaltTree(bpy.types.NodeTree):
         
         if self.subscribed == False:
             bpy.msgbus.subscribe_rna(key=self.path_resolve('name', False),
-                owner=self, args=(None,), notify=lambda _ : self.update_ext(force_update=True))
+                owner=self, args=(self.get_group_source_name(),), notify=lambda arg : self.on_name_change(arg))
             self.subscribed = True
         
         links_str = ''
@@ -310,7 +382,26 @@ class MaltTree(bpy.types.NodeTree):
             pathlib.Path(source_dir).mkdir(parents=True, exist_ok=True)
             with open(source_path,'w') as f:
                 f.write(source)
+            
             if force_track_shader_changes:
+                if self.is_group():
+                    from pathlib import Path
+                    visited_trees = set()
+                    def recompile_users(updated_tree):
+                        visited_trees.add(updated_tree)
+                        if updated_tree.is_group():
+                            for tree in bpy.data.node_groups:
+                                if tree.bl_idname == 'MaltTree' and tree not in visited_trees:
+                                    for node in tree.nodes:
+                                        if node.bl_idname == 'MaltGroupNode' and node.group is updated_tree:
+                                            recompile_users(tree)
+                                            break
+                        else:
+                            #Touch the file to force a recompilation
+                            Path(updated_tree.get_generated_source_path()).touch()
+                            return
+                    recompile_users(self)
+            
                 from BlenderMalt import MaltMaterial
                 MaltMaterial.track_shader_changes()
         except:
@@ -334,7 +425,10 @@ def setup_node_trees():
     for tree in bpy.data.node_groups:
         if tree.bl_idname == 'MaltTree' and tree.is_active():
             tree.reload_nodes()
+    for tree in bpy.data.node_groups:
+        if tree.bl_idname == 'MaltTree' and tree.is_active():
             tree.update_ext(force_track_shader_changes=False, force_update=True)
+            
     from BlenderMalt import MaltMaterial
     MaltMaterial.track_shader_changes()
 
@@ -370,6 +464,8 @@ def track_library_changes(force_update=False, is_initial_setup=False):
     updated_graphs = []
     if is_initial_setup == False:
         for name, graph in graphs.items():
+            if '(Group)' in name:
+                continue
             if graph.needs_reload():
                 updated_graphs.append(name)
         if len(updated_graphs) > 0:        
@@ -486,7 +582,7 @@ def preload_menus(structs, functions, graph=None):
             super().__init__(nodetype, category, label=label, settings=settings, poll=poll, draw=draw_nothing)
 
 
-    category_id = f'BLENDERMALT_{graph.name.upper()}'
+    category_id = f'MALT{graph.name.upper()}'
 
     try:
         unregister_node_categories(category_id) # you could also check the hidden <nodeitems_utils._node_categories>
@@ -526,6 +622,9 @@ def preload_menus(structs, functions, graph=None):
         }))
         categories['Other'].append(NodeItem('MaltArrayIndexNode', label='Array Element', settings={
             'name' : repr('Array Element')
+        }))
+        categories['Other'].append(NodeItem('MaltGroupNode', label='Node Group', settings={
+            'name' : repr('Node Group')
         }))
 
     subcategories = set()
@@ -635,6 +734,7 @@ def node_header_ui(self, context):
         context.space_data.node_tree = node_tree.get_copy()
     self.layout.operator('wm.malt_callback', text='', icon='DUPLICATE').callback.set(duplicate, 'Duplicate')
     def recompile():
+        node_tree.reload_nodes()
         node_tree.update_ext(force_update=True)
     self.layout.operator("wm.malt_callback", text='', icon='FILE_REFRESH').callback.set(recompile, 'Recompile')
     self.layout.prop_search(node_tree, 'graph_type', context.scene.world.malt, 'graph_types',text='')
@@ -666,7 +766,11 @@ def set_node_tree(context, node_tree, node = None):
             locked_spaces[0].node_tree = node_tree
 
 
+SKIP_MATERIAL_UPDATE = False
 def active_material_update(dummy=None):
+    global SKIP_MATERIAL_UPDATE
+    if SKIP_MATERIAL_UPDATE:
+        return
     try:
         material = bpy.context.object.active_material
         node_tree = material.malt.shader_nodes
