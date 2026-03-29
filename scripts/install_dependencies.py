@@ -22,8 +22,8 @@ for dependency in dependencies:
         traceback.print_exc()
 
 
-from distutils.dir_util import copy_tree
-copy_tree(os.path.join(current_dir, 'PatchDependencies'), malt_dependencies_path) 
+from shutil import copytree
+copytree(os.path.join(current_dir, "PatchDependencies"), malt_dependencies_path, dirs_exist_ok=True)
 
 #make sure mcpp has executable permissions
 for str in ['Linux', 'Darwin']:
