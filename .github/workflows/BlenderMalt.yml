@@ -73,9 +73,9 @@ jobs:
     steps:
     - uses: actions/checkout@v2
         
-    - uses: actions/setup-python@v2
+    - uses: actions/setup-python@v6
       with:
-        python-version: '3.11'
+        python-version: '3.13'
     
     - name: setup_blender_addon.py
       run: python setup_blender_addon.py --copy-modules

@@ -3,7 +3,7 @@ bl_info = {
     "description" : "Extensible Python Render Engine",
     "author" : "Miguel Pozo",
     "version": (1,0,0,'Release'),
-    "blender" : (4, 1, 0),
+    "blender" : (5, 1, 0),
     "doc_url": "https://malt3d.com",
     "tracker_url": "https://github.com/bnpr/Malt/issues/new/choose",
     "category": "Render"
@@ -112,26 +112,6 @@ def setup_vs_code(dummy):
             with open(path.join(settings_dir, 'settings.json'), 'w') as f:
                 f.write(vscode_settings)
 
-def do_windows_fixes():
-    import platform, multiprocessing as mp, ctypes
-    from shutil import copy
-    # Workaround https://developer.blender.org/rB04c5471ceefb41c9e49bf7c86f07e9e7b8426bb3
-    if platform.system() == 'Windows':
-        sys.executable = sys._base_executable
-        # Use python-gpu on windows (patched python with NvOptimusEnablement and AmdPowerXpressRequestHighPerformance)
-        python_gpu_path = path.join(__MALT_DEPENDENCIES_PATH, 'python-gpu-{}.exe'.format(_PY_VERSION))
-        if os.path.exists(python_gpu_path) == False:
-            print(f"MALT WARNING: python-gpu-{_PY_VERSION}.exe not found. Performance might be affected.")
-            return
-        python_executable = path.join(sys.exec_prefix, 'bin', 'python-gpu-{}.exe'.format(_PY_VERSION))
-        if os.path.exists(python_executable) == False:
-            try:
-                copy(python_gpu_path, python_executable)
-            except PermissionError as e:
-                command = '/c copy "{}" "{}"'.format(python_gpu_path, python_executable)
-                result = ctypes.windll.shell32.ShellExecuteW(None, 'runas', 'cmd.exe', command, None, 0)
-        mp.set_executable(python_executable)
-
 _PLUGINS = []
 _PLUGIN_DIRS = []
 
@@ -200,8 +180,6 @@ def register():
     
     import Bridge
     Bridge.reload()
-
-    do_windows_fixes()
 
     for module in get_modules():
         module.register()

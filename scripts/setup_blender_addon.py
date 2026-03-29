@@ -43,8 +43,8 @@ def make_link(point_from, point_to):
         os.symlink(point_to, point_from, True)
 
 def make_copy(copy_to, copy_from):
-    from distutils.dir_util import copy_tree
-    copy_tree(copy_from, copy_to)
+    from shutil import copytree
+    copytree(copy_from, copy_to)
 
 import_path = os.path.join(blender_malt_folder, '.MaltPath')
 ensure_dir(import_path)
