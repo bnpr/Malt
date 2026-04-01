@@ -1,11 +1,12 @@
 # From Nodes To Code
+_Last Updated **2025-02-28**_ for Malt release [2b81a03](https://github.com/bnpr/Malt/commit/2b81a03980c41824166b75f39ee5842de2306bcf)
 
 This tutorial will teach you how to make your own *Malt* shaders.
 
 *Malt* shaders are written in *GLSL* (OpenGL Shading Language), the shader programming language used by *OpenGL* and *Vulkan*.
 
 This tutorial assumes you are already familiar with *EEVEE* nodes.  
-You may be surprised by how much of your knowledge about node based programming can easily be applied to code and how much more powerfull and convenient can be for advanced tasks.
+You may be surprised by how much of your knowledge about node based programming can easily be applied to code and how much more powerfull and convenient it can be for advanced tasks.
 
 ## Before we start
 
@@ -35,7 +36,7 @@ Now we can make changes in our shader file and as soon as we save it (*Ctrl+S*) 
 Let's start by looking at some basic *Malt* examples and what would be their *EEVEE* counterparts, so you can see how they compare to each other.  
 Read the code, but don't worry if you don't really understand it, we will take a more detailed look at it later.  
 
-To get a better feel of it, let's test this examples as we go.  
+To get a better feel of it, let's test these examples as we go.  
 You could just copy-paste them, but you will get a better grasp by typing them yourself.  
 It will also serve to get familiar with the extra goodies VSCode provides, like code auto-completion.
 
@@ -48,12 +49,14 @@ Try to play with the examples, modify them, break them on purpose and take a loo
 <div style="width: 50%; float:left">
 
 ```glsl
-#include "NPR_Pipeline.glsl"
+#include "NPR_MeshShader.glsl"
 
-void COMMON_PIXEL_SHADER(Surface S, inout PixelOutput PO)
+#ifdef PIXEL_SHADER
+void MAIN_PASS_PIXEL_SHADER()
 {
 
 }
+#endif // PIXEL_SHADER
 ```
 
 </div>
@@ -74,14 +77,22 @@ void COMMON_PIXEL_SHADER(Surface S, inout PixelOutput PO)
 <div style="width: 50%; float:left">
 
 ```glsl
-#include "NPR_Pipeline.glsl"
+#include "NPR_MeshShader.glsl"
 
-uniform vec3 color = vec3(0,1,0);
+uniform vec4 color = vec4(0,1,0,1);
 
-void COMMON_PIXEL_SHADER(Surface S, inout PixelOutput PO)
+#ifdef MAIN_PASS
+layout (location = 0) out vec4 OUT_COLOR;
+#endif // MAIN_PASS
+
+#ifdef PIXEL_SHADER
+void MAIN_PASS_PIXEL_SHADER()
 {
-    PO.color.rgb = color;
+    #ifdef MAIN_PASS
+    OUT_COLOR = color;
+    #endif // MAIN_PASS
 }
+#endif // PIXEL_SHADER
 ```
 
 </div>
@@ -95,8 +106,8 @@ void COMMON_PIXEL_SHADER(Surface S, inout PixelOutput PO)
 <div style="clear: both"></div>
 
 *See how a new color property has appeared in your Material panel?*  
-*Could you change the default green value ```vec3(0,1,0)``` in the code to red?*  
-*What happens if you set ```vec3(0.5)``` as the default value?*  
+*Could you change the default green value ```vec4(0,1,0,1)``` in the code to red?*  
+*What happens if you set ```vec4(0.5)``` as the default value?*  
 
 > If you have edited a property in the UI, you can always *Right Click > Reset to Defaul Value*
 
@@ -105,19 +116,41 @@ void COMMON_PIXEL_SHADER(Surface S, inout PixelOutput PO)
 <div style="width: 50%; float:left">
 
 ```glsl
-#include "NPR_Pipeline.glsl"
+#include "NPR_MeshShader.glsl"
+#include "Node Utils 2/node_utils_2.glsl"
+#include "Node Utils/node_utils.glsl"
 
+#ifdef MAIN_PASS
+layout (location = 0) out vec4 OUT_COLOR;
+#endif // MAIN_PASS
+
+// set from within blender
+OPTIONALLY_BINDLESS uniform sampler2D color_texture;
 uniform int uv_channel = 0;
-uniform sampler2D color_texture;
+uniform bool smooth_interpolation = true;
 
-void COMMON_PIXEL_SHADER(Surface S, inout PixelOutput PO)
+#ifdef PIXEL_SHADER
+void MAIN_PASS_PIXEL_SHADER()
 {
-    vec2 texture_coordinates = S.uv[uv_channel];
-    
-    vec4 sampled_color = texture(color_texture, texture_coordinates);
-    
-    PO.color = sampled_color;
+    vec2 texture_coordinates;
+    UV_Map(uv_channel, texture_coordinates);
+
+    vec4 sampled_color;
+    vec2 out_resolution;
+    Image(
+        color_texture,
+        texture_coordinates,
+        smooth_interpolation,
+        sampled_color,
+        out_resolution
+    );
+
+    #ifdef MAIN_PASS
+    OUT_COLOR = sampled_color;
+    #endif // MAIN_PASS
+
 }
+#endif // PIXEL_SHADER
 ```
 
 </div>
@@ -138,14 +171,41 @@ void COMMON_PIXEL_SHADER(Surface S, inout PixelOutput PO)
 <div style="width: 50%; float:left">
 
 ```glsl
-#include "NPR_Pipeline.glsl"
+#include "NPR_MeshShader.glsl"
+#include "Node Utils 2/node_utils_2.glsl"
+#include "Node Utils/node_utils.glsl"
 
-uniform vec3 color = vec3(0,1,0);
+#ifdef MAIN_PASS
+layout (location = 0) out vec4 OUT_COLOR;
+#endif // MAIN_PASS
 
-void COMMON_PIXEL_SHADER(Surface S, inout PixelOutput PO)
+OPTIONALLY_BINDLESS uniform sampler1D diffuse_gradient;
+uniform vec3 base_color;
+uniform vec3 color;
+
+#ifdef PIXEL_SHADER
+void MAIN_PASS_PIXEL_SHADER()
 {
-    PO.color.rgb = color * get_diffuse();
+    vec3 base_color_result = Vec3_color_property(base_color);
+    vec3 color_result = Vec3_color_property(color);
+    vec3 diffuse_result = NPR_diffuse_shading(
+        base_color_result,
+        color_result,
+        diffuse_gradient,
+        /*diffuse_offset=*/0,
+        /*diffuse_full_range=*/false,
+        /*diffuse_max_contribution=*/false,
+        /*diffuse_shadows=*/0,
+        MATERIAL_LIGHT_GROUPS,
+        POSITION,
+        NORMAL
+    );
+
+    #ifdef MAIN_PASS
+    OUT_COLOR = vec4_from_vec3(diffuse_result);
+    #endif // MAIN_PASS
 }
+#endif // PIXEL_SHADER
 ```
 
 </div>
@@ -173,25 +233,62 @@ Let's combine the previous examples!
 <div style="width: 50%; float:left">
 
 ```glsl
-#include "NPR_Pipeline.glsl"
+#include "NPR_MeshShader.glsl"
+#include "Node Utils 2/node_utils_2.glsl"
+#include "Node Utils/node_utils.glsl"
 
-uniform vec3 ambient_color = vec3(0.5,0.5,0.5);
+#ifdef MAIN_PASS
+layout (location = 0) out vec4 OUT_COLOR;
+#endif // MAIN_PASS
 
+OPTIONALLY_BINDLESS uniform sampler1D diffuse_gradient;
+OPTIONALLY_BINDLESS uniform sampler2D color_texture;
+uniform vec3 base_color;
+uniform vec3 color;
 uniform int uv_channel;
-uniform sampler2D color_texture;
+uniform bool smooth_interpolation;
 
-void COMMON_PIXEL_SHADER(Surface S, inout PixelOutput PO)
+#ifdef PIXEL_SHADER
+void MAIN_PASS_PIXEL_SHADER()
 {
-    vec3 light_color = get_diffuse() + ambient_color;
-    
-    vec2 texture_coordinates = S.uv[uv_channel];
-    
-    vec4 surface_color = texture(color_texture, texture_coordinates);
+    vec3 base_color_result = Vec3_color_property(base_color);
+    vec3 color_result = Vec3_color_property(color);
+    vec3 diffuse_result = NPR_diffuse_shading(
+        base_color_result,
+        color_result,
+        diffuse_gradient,
+        /*diffuse_offset=*/0,
+        /*diffuse_full_range=*/false,
+        /*diffuse_max_contribution=*/false,
+        /*diffuse_shadows=*/0,
+        MATERIAL_LIGHT_GROUPS,
+        POSITION,
+        NORMAL
+    );
 
-    vec3 result = surface_color.rgb * light_color;
-    
-    PO.color.rgb = result;
+    vec2 texture_coordinates;
+    UV_Map(uv_channel, texture_coordinates);
+
+    vec4 sampled_color;
+    vec2 out_resolution;
+    Image(
+        color_texture,
+        texture_coordinates,
+        smooth_interpolation,
+        sampled_color,
+        out_resolution
+    );
+
+    vec4 computed_color = Vec4_multiply(
+        vec4_from_vec3(diffuse_result),
+        sampled_color
+    );
+
+    #ifdef MAIN_PASS
+    OUT_COLOR = computed_color;
+    #endif // MAIN_PASS
 }
+#endif // PIXEL_SHADER
 ```
 
 </div>
@@ -368,3 +465,4 @@ void third_example()
 >I'm working on new chapters, meanwhile, [The Book of Shaders](https://thebookofshaders.com/) is a great resource\!  
 
 
+**Fun Fact:** Malt ([2b81a03](https://github.com/bnpr/Malt/commit/2b81a03980c41824166b75f39ee5842de2306bcf)) auto-generates GLSL files from your node graphs and saves them to `/your-blender-project/.malt-autogenerated/[your-material].mesh.glsl`
