@@ -123,7 +123,7 @@ class MaltFunctionNodeBase(MaltNode):
                 return pass_type
         return ''
     
-    def get_pass_node_tree(self):
+    def get_linked_node_tree(self):
         if self.pass_graph_type != '':
             graph = self.id_data.get_pipeline_graph(self.pass_graph_type)
             if graph.graph_type == graph.GLOBAL_GRAPH:
@@ -179,6 +179,7 @@ class MaltFunctionNodeBase(MaltNode):
             return transpiler.parameter_reference(self.get_source_name(), socket.name, 'out' if socket.is_output else 'in')
         else:
             source = self.get_source_code(transpiler)
+            #TODO: Assumes return type, support out and inout parameters
             return source.splitlines()[-1].split('=')[-1].split(';')[0]
 
     def get_source_code(self, transpiler):
