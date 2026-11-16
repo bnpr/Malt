@@ -44,6 +44,11 @@ def sync_pipeline_settings(default_world=None):
 
 _ON_PIPELINE_SETTINGS_UPDATE = False
 
+# Since Blender 5.3, the name property of PropertyGroup is read-only.
+# Except for subtypes, so we create a dummy subtype.
+class MaltPropertyGroup(bpy.types.PropertyGroup):
+    pass
+
 class MaltPipeline(bpy.types.PropertyGroup):
 
     def update_pipeline(self, context):
@@ -116,10 +121,10 @@ class MaltPipeline(bpy.types.PropertyGroup):
     viewport_bit_depth : bpy.props.EnumProperty(items=[('8', '8', ''),('16', '16', ''),('32', '32', '')], 
         name="Bit Depth (Viewport)", update=update_pipeline_settings,
         options={'LIBRARY_EDITABLE'}, override={'LIBRARY_OVERRIDABLE'})
-    graph_types : bpy.props.CollectionProperty(type=bpy.types.PropertyGroup,
+    graph_types : bpy.props.CollectionProperty(type=MaltPropertyGroup,
         options={'LIBRARY_EDITABLE'},
         override={'LIBRARY_OVERRIDABLE', 'USE_INSERTION'})
-    material_types : bpy.props.CollectionProperty(type=bpy.types.PropertyGroup,
+    material_types : bpy.props.CollectionProperty(type=MaltPropertyGroup,
         options={'LIBRARY_EDITABLE'},
         override={'LIBRARY_OVERRIDABLE', 'USE_INSERTION'})
     overrides : bpy.props.StringProperty(name='Pipeline Overrides', default='Preview,Final Render',
@@ -166,6 +171,7 @@ class MALT_PT_Pipeline(bpy.types.Panel):
         context.scene.world.malt.draw_ui(self.layout)
 
 classes = (
+    MaltPropertyGroup,
     MaltPipeline,
     OT_MaltReloadPipeline,
     MALT_PT_Pipeline,
